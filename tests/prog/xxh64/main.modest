@@ -225,13 +225,13 @@ var testNum = Int32 0
 
 @inline
 func hi32: (w: Word64) -> Nat32 {
-	return unsafe Nat32 (w >> 32)
+	return unsafe(Nat32 (w >> 32))
 }
 
 
 @inline
 func lo32: (w: Word64) -> Nat32 {
-	return unsafe Nat32 (w & 0xFFFFFFFF)
+	return unsafe(Nat32 (w & 0xFFFFFFFF))
 }
 
 
@@ -260,7 +260,7 @@ func main: () -> Int {
 
 	var i = SizeT 0
 	while i < testDataSize {
-		testData[i] = unsafe Word8 (byteGen >> 24)
+		testData[i] = unsafe(Word8 (byteGen >> 24))
 		byteGen = Word32 (Nat32 byteGen * Nat32 byteGen)
 		++i
 	}

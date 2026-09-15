@@ -37,7 +37,7 @@ public func write: (fd: Int, buf: Ptr, n: Size) -> Size
 pragma unsafe
 pragma c_include "./sha256.h"
 
-let bytes = unsafe *[]Word8 data
+let bytes = unsafe(*[]Word8 data)
 ```
 
 ## `$`-directives

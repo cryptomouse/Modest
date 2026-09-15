@@ -27,7 +27,7 @@ Ptr           // built-in alias for *Unit (free pointer)
   reinterpret the pointer as a byte array first:
 
   ```modest
-  let bytes = unsafe *[]Word8 p     // view memory as bytes
+  let bytes = unsafe(*[]Word8 p)    // view memory as bytes
   let q = &bytes[4]                 // "p + 4"
   ```
 
@@ -38,7 +38,7 @@ Ptr           // built-in alias for *Unit (free pointer)
 - Constructing one typed pointer from another of a different pointee
   type is a reinterpretation and requires `unsafe`
   (see [construction rules](../value/cons.md)).
-- Pointer ↔ integer conversions are `unsafe`: `unsafe Nat64 p` for the
+- Pointer ↔ integer conversions are `unsafe`: `unsafe(Nat64 p)` for the
   address value.
 
 ## Examples

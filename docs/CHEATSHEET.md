@@ -383,8 +383,8 @@ Every binary level is left-associative: `10 - 3 - 2` is `5`, and a chain of
 | 3 | `==` `!=` `<` `>` `<=` `>=` | |
 | 4 | `+` `-` `&` <code>&#124;</code> `^` `<<` `>>` | |
 | 5 | `*` `/` `%` | |
-| 6 | `Type value` (construction), `unsafe Type value` | |
-| 7 | unary `-` `+` `not` `~` `&x` `*p`, `sizeof` `alignof` `lengthof` `offsetof` | |
+| 6 | `Type value` (construction) | |
+| 7 | unary `-` `+` `not` `~` `&x` `*p`, `sizeof` `alignof` `lengthof` `offsetof`, `unsafe(...)` `new(...)` | |
 | 8 | `f(args)` `x.field` `a[i]` `a[i:j]` | tightest |
 
 > **All comparisons share one level, and all the bitwise operators share
@@ -409,8 +409,10 @@ Every binary level is left-associative: `10 - 3 - 2` is `5`, and a chain of
 > **A unary operator takes only a level-8 operand** — a name, literal, call,
 > field, index or a parenthesized expression. `-x`, `~w`, `&arr[0]`, `not f()`
 > are fine; `- -x`, `~ ~w` and `~ Word64 w` are syntax errors — parenthesize:
-> `~ (Word64 w)`. Two exceptions: `*` (dereference) chains freely (`**pp`), and
-> `unsafe` takes a whole expression (`unsafe Nat64 &x`).
+> `~ (Word64 w)`. One exception: `*` (dereference) chains freely (`**pp`).
+> `unsafe(...)` and `new(...)` are call-shaped like `sizeof(...)` — the
+> parentheses delimit a full expression, so precedence never comes up
+> (`unsafe(Nat64 &x)`).
 
 ## Value Construction
 
@@ -421,7 +423,7 @@ Syntax: `TargetType sourceValue`
 Int32 10                           // integer literal → Int32
 Float64 3.14                       // rational literal → Float64
 Nat8 0xFF                          // integer literal → Nat8
-unsafe *Int32 ptr                  // pointer reinterpretation (needs pragma unsafe)
+unsafe(*Int32 ptr)                 // pointer reinterpretation (needs pragma unsafe)
 Point {x = 1, y = 2}               // record construction
 [4]Int32 [1, 2, 3]                 // explicit array (fills remaining with 0)
 Unit value                         // discard a value (suppress warnings)
@@ -430,9 +432,9 @@ Unit value                         // discard a value (suppress warnings)
 ### Construction rules
 
 > **Safe** — written as plain construction: `Nat8 x`.
-> **Unsafe** — needs `pragma unsafe` in the module *and* the `unsafe` operator
-> at the use site: `unsafe Nat8 x`. Permission lives in the source, not on the
-> command line — the `-funsafe` flag is currently ignored (see
+> **Unsafe** — needs `pragma unsafe` in the module *and* the `unsafe(...)`
+> operator at the use site: `unsafe(Nat8 x)`. Permission lives in the source,
+> not on the command line — the `-funsafe` flag is currently ignored (see
 > [BUG#19](BUGS.md)).
 > Width notation: `Y≤X` means source width is narrower or equal; `Y>X` means wider.
 

@@ -403,13 +403,13 @@ def str_value_cons(x, ctx):
 		if x.method in ['implicit', 'default']:
 			return str_value(value)
 
-	s = ""
-	if x.method == 'unsafe':
-		s += 'unsafe '
-
-	s += str_type(to_type)
+	s = str_type(to_type)
 	s += " "
 	s += str_value(value, ctx=ctx)
+
+	if x.method == 'unsafe':
+		s = 'unsafe(%s)' % s
+
 	return s
 
 
@@ -616,7 +616,7 @@ def str_value_by_id(x, ctx):
 
 
 def str_value_new(x, ctx):
-	return "new " + str_value(x.value)
+	return "new(%s)" % str_value(x.value)
 
 
 # Сделал отдельный метод печати строк и есть отдельный для печати

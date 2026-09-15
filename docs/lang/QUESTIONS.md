@@ -269,7 +269,7 @@ What each direction does today:
 | `Word8 c` | safe |
 | `Nat8 c` | `cannot construct 'Nat8' from 'Char8' value` |
 | `Int32 c` | `cannot construct 'Int32' from 'Char8' value` |
-| `unsafe Nat8 c` | rejected too — there is no escape hatch at all |
+| `unsafe(Nat8 c)` | rejected too — there is no escape hatch at all |
 | `Char8 w` (`WordX`), `Char8 65` (literal) | safe |
 | `Char8 n` (`NatX`) | needs `unsafe`, and then works |
 

@@ -10,14 +10,14 @@ return), *explicit* (written in code) or *unsafe* (explicit, requires the
 
 ```
 <#type#> <#value_expression#>            // explicit
-unsafe <#type#> <#value_expression#>     // unsafe
+unsafe(<#type#> <#value_expression#>)    // unsafe
 ```
 
 ```modest
 Int32 x
 Float64 (a + b)
 *Point nil
-unsafe Nat64 p           // pointer address as integer
+unsafe(Nat64 p)          // pointer address as integer
 ```
 
 ## Semantics
@@ -71,8 +71,8 @@ var a: [10]Int32 = [10]Int32 [1, 2, 3]   // tail zero-filled
 var p: Point3D = Point3D {x = 1}         // y, z zero-filled
 
 pragma unsafe                      // module opts into unsafe
-let addr = unsafe Nat64 &i         // pointer -> address
-let q = unsafe *Float32 &i         // reinterpret pointee
+let addr = unsafe(Nat64 &i)        // pointer -> address
+let q = unsafe(*Float32 &i)        // reinterpret pointee
 ```
 
 ## See also

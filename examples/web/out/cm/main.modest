@@ -42,7 +42,7 @@ func handleRequest (clientSocket: Int32) -> Unit {
 	}
 	buffer[bytesReceived] = 0
 
-	printf("Received request:\n%s\n", unsafe *Str8 &buffer)
+	printf("Received request:\n%s\n", unsafe(*Str8 &buffer))
 
 	var response: [sendBufferSize]Char8
 	sprintf(&response, "%s<html><body><h1>Hello, World! (%d)</h1></body></html>"
@@ -68,8 +68,8 @@ func main () -> Int32 {
 		}
 		sin_port = UnsignedShort htons(port)
 	}
-	let socadr: *SockAddr = unsafe *SockAddr &serverAddr
-	var rc: Int = bind(serverSocket, socadr, unsafe SocklenT sizeof serverAddr)
+	let socadr: *SockAddr = unsafe(*SockAddr &serverAddr)
+	var rc: Int = bind(serverSocket, socadr, unsafe(SocklenT sizeof serverAddr))
 	if rc < 0 {
 		perror("cannot bind socket")
 		close(serverSocket)
@@ -85,8 +85,8 @@ func main () -> Int32 {
 	printf("Server listening on port %d...\n", Nat32 port)
 	while true {
 		var clientAddr: SockAddrIn
-		let socadr: *SockAddr = unsafe *SockAddr &clientAddr
-		var clientAdrLen: SocklenT = unsafe SocklenT sizeof clientAddr
+		let socadr: *SockAddr = unsafe(*SockAddr &clientAddr)
+		var clientAdrLen: SocklenT = unsafe(SocklenT sizeof clientAddr)
 		let clientSocket: Int = accept(serverSocket, socadr, &clientAdrLen)
 		if clientSocket < 0 {
 			perror("cannot accept connection")

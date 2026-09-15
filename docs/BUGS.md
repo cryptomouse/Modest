@@ -572,7 +572,7 @@ var f: Float32 = 1.0
 printf("0x%08x\n", Word32 f)        // c11: 0x00000001, expected 0x3F800000
 
 var w: Word32 = 0x3F800000
-var g: Float32 = unsafe Float32 w
+var g: Float32 = unsafe(Float32 w)
 printf("%f\n", Float64 g)           // c11: 1065353216.0, expected 1.0
 ```
 
@@ -587,8 +587,8 @@ printf("%f\n", Float64 g)           // c11: 1065353216.0, expected 1.0
   it prints `%4 = cast %Float32 %3 to %Word32`, and `cast` has not been an
   LLVM instruction since 2.9, so the module does not assemble. The
   `Word → Float` direction assembles and is numeric, like C.
-- The compile-time fold is a third path and a third failure. `unsafe Word32
-  one` on a `const Float32` dies in `value_word_cons`
+- The compile-time fold is a third path and a third failure. `unsafe(Word32
+  one)` on a `const Float32` dies in `value_word_cons`
   (`src/value/word.py:54`), which passes the folded float to `int_zext`:
 
   ```
@@ -1270,7 +1270,7 @@ type GPIO = @layout("packed") {
 	out: Word8
 }
 
-const port = unsafe * @volatile GPIO Word16 0x23
+const port = unsafe(* @volatile GPIO Word16 0x23)
 
 func main () -> Int16 {
 	port.dir = 0xff
@@ -1413,7 +1413,7 @@ const int32_t c = (int32_t)i16;   /* -1 */
 
   ```modest
   func apart (x: Fixed32) -> Int32 {
-  	let w16 = unsafe Word16 (Word32 x >> 16)
+  	let w16 = unsafe(Word16 (Word32 x >> 16))
   	return Int32 Int16 w16
   }
   ```

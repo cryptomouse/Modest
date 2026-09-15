@@ -52,7 +52,7 @@ func main () -> Int {
 	}
 
 	let sockaddr = *SockAddr Ptr &server_addr
-	var e: Int = connect(sockFd, sockaddr, unsafe SocklenT sizeof(SockAddrIn))
+	var e: Int = connect(sockFd, sockaddr, unsafe(SocklenT sizeof(SockAddrIn)))
 	if e < 0 {
 		perror("[-] Error in Connecting")
 		exit(1)

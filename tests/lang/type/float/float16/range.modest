@@ -58,13 +58,13 @@ func testOverflow: () -> Bool {
 
 	// 65520 is the first value that rounds up rather than down — halfway
 	// to the exponent that does not exist.
-	var just = unsafe Float16 65520.0
+	var just = unsafe(Float16 65520.0)
 	if not (Float64 just > 65504.0) {
 		printf("65520 = %f, expected infinity\n", Float64 just)
 		return false
 	}
 
-	var over = unsafe Float16 70000.0
+	var over = unsafe(Float16 70000.0)
 	if not (over > max) {
 		printf("70000 is not above the finite range\n")
 		return false

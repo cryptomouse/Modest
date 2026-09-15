@@ -49,7 +49,7 @@ public func run: (buf: *[]Word8, len: Nat32) -> Word32 {
 		let x = Word32 buf[i]
 		let y = (crc ^ x) & 0xFF
 		// 2
-		let yy = unsafe Nat8 y
+		let yy = unsafe(Nat8 y)
 		crc = table[yy] ^ (crc >> 8)
 		++i
 	}

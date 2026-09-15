@@ -41,7 +41,7 @@ func cipher: (ctx: *Context, data: *[]Byte, len: Nat32) -> Unit {
 	while i < len {
 		if ctx.blockOffset == sizeof(cc.Block) {
 			var state = cc.makeState(
-				key = unsafe *cc.Key ctx.key
+				key = unsafe(*cc.Key ctx.key)
 				counter = Word32 ctx.blockCounter
 				nonce = &ctx.nonce
 			)
@@ -49,7 +49,7 @@ func cipher: (ctx: *Context, data: *[]Byte, len: Nat32) -> Unit {
 
 			ctx.block = cc.chacha20Block(state)
 			ctx.blockOffset = 0
-			bptr = unsafe *[]Byte &ctx.block
+			bptr = unsafe(*[]Byte &ctx.block)
 		}
 
 		data[i] = data[i] ^ bptr[ctx.blockOffset]
@@ -100,7 +100,7 @@ var xlorem1024 = lorem1024
 func main: () -> Int {
 	printf("test ChaCha20 ")
 	var ctx = init(&testKey, testNonce2)
-	let dptr = unsafe *[]Byte &xlorem1024
+	let dptr = unsafe(*[]Byte &xlorem1024)
 	cipher(&ctx, dptr, 1024)
 
 	var i = 0
@@ -125,9 +125,9 @@ func main: () -> Int {
 
 func test0: () -> Bool {
 	var counter: Word32 = 1
-	var state = cc.makeState(unsafe *cc.Key &testKey, counter, unsafe *[3]Word32 &testNonce)
+	var state = cc.makeState(unsafe(*cc.Key &testKey), counter, unsafe(*[3]Word32 &testNonce))
 	var block = cc.chacha20Block(state)
-	let bptr = unsafe *[sizeof(cc.Block)]Byte &block
+	let bptr = unsafe(*[sizeof(cc.Block)]Byte &block)
 	return *bptr == testResult
 }
 

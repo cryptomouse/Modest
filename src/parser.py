@@ -1001,23 +1001,31 @@ class Parser:
 			}
 
 		elif self.match("new"):
+			mid_ti = self.textInfo()
+			self.need("(")
 			v = self.expr_value()
+			end_ti = self.tokenInfo()
+			self.need(")")
 			return {
 				'isa': 'ast_value',
 				'kind': HLIR_VALUE_OP_NEW,
 				'value': v,
 				'anno': [],
-				'ti': TextInfo(start=start_ti, mid=start_ti, end=v['ti'].end)
+				'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
 			}
 
 		elif self.match("unsafe"):
+			mid_ti = self.textInfo()
+			self.need("(")
 			v = self.expr_value()
+			end_ti = self.tokenInfo()
+			self.need(")")
 			return {
 				'isa': 'ast_value',
 				'kind': HLIR_VALUE_OP_UNSAFE,
 				'value': v,
 				'anno': [],
-				'ti': TextInfo(start=start_ti, mid=start_ti, end=v['ti'].end)
+				'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
 			}
 
 		elif self.match("sizeof"):

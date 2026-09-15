@@ -126,14 +126,14 @@ func testFloat64: () -> Bool {
 // The other direction, which is the only way to write the values IEEE 754
 // has and the language has no literal for.
 func testFromBits: () -> Bool {
-	var one: Float32 = unsafe Float32 Word32 0x3F800000
+	var one: Float32 = unsafe(Float32 Word32 0x3F800000)
 	if Float64 one != 1.0 {
 		printf("0x3F800000 = %f, expected 1.0\n", Float64 one)
 		return false
 	}
 
 	// Exponent all ones, significand zero: infinity.
-	var inf: Float32 = unsafe Float32 Word32 0x7F800000
+	var inf: Float32 = unsafe(Float32 Word32 0x7F800000)
 	var big: Float32 = 100000000000000000000000000000.0
 	if not (inf > big) {
 		printf("0x7F800000 is not above a finite value\n")
@@ -142,14 +142,14 @@ func testFromBits: () -> Bool {
 
 	// Exponent all ones with a non-zero significand: a NaN, which is not
 	// equal to itself.
-	var nan: Float32 = unsafe Float32 Word32 0x7FC00000
+	var nan: Float32 = unsafe(Float32 Word32 0x7FC00000)
 	if nan == nan {
 		printf("0x7FC00000 equals itself, expected NaN\n")
 		return false
 	}
 
 	// The smallest positive denormal: exponent zero, significand 1.
-	var tiny: Float32 = unsafe Float32 Word32 0x00000001
+	var tiny: Float32 = unsafe(Float32 Word32 0x00000001)
 	var zero: Float32 = 0.0
 	if not (tiny > zero) {
 		printf("0x00000001 is not above zero\n")
@@ -158,7 +158,7 @@ func testFromBits: () -> Bool {
 
 	// Round trip: bits out, bits back.
 	var half: Float64 = 0.5
-	var again: Float64 = unsafe Float64 Word64 half
+	var again: Float64 = unsafe(Float64 Word64 half)
 	if again != 0.5 {
 		printf("0.5 through Word64 = %f, expected 0.5\n", again)
 		return false

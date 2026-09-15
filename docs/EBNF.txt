@@ -134,8 +134,8 @@ prefix_op ::=
     | '~'                                              (* bitwise not *)
     | '+'                                              (* unary plus  *)
     | '-'                                              (* unary minus *)
-    | 'new'
-    | 'unsafe'
+    | 'new'      '(' value_expr ')'
+    | 'unsafe'   '(' value_expr ')'
     | 'sizeof'   '(' (type_expr | value_expr) ')'
     | 'alignof'  '(' (type_expr | value_expr) ')'
     | 'offsetof' '(' type_expr '.' id ')'

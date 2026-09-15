@@ -153,7 +153,7 @@ Value
 |-------|---------|
 | `'implicit'` | automatic coercion (generic → concrete) |
 | `'explicit'` | `Int32 x` — explicit construction |
-| `'unsafe'`   | `unsafe Nat64 &ptr` — reinterpret |
+| `'unsafe'`   | `unsafe(Nat64 &ptr)` — reinterpret |
 | `'default'`  | zero/default value |
 | `'extra_arg'`| variadic argument promotion |
 
