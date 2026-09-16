@@ -1253,8 +1253,6 @@ def transmission(to_type, value, ti):
 	return value_cons_implicit_check(to_type, value)
 
 
-
-
 def do_value_call(x):
 	fn = do_rvalue(x['left'])
 

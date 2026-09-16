@@ -1000,214 +1000,6 @@ class Parser:
 				'ti': TextInfo(start=start_ti, mid=start_ti, end=v['ti'].end)
 			}
 
-		elif self.match("new"):
-			mid_ti = self.textInfo()
-			self.need("(")
-			v = self.expr_value()
-			end_ti = self.tokenInfo()
-			self.need(")")
-			return {
-				'isa': 'ast_value',
-				'kind': HLIR_VALUE_OP_NEW,
-				'value': v,
-				'anno': [],
-				'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			}
-
-		elif self.match("unsafe"):
-			mid_ti = self.textInfo()
-			self.need("(")
-			v = self.expr_value()
-			end_ti = self.tokenInfo()
-			self.need(")")
-			return {
-				'isa': 'ast_value',
-				'kind': HLIR_VALUE_OP_UNSAFE,
-				'value': v,
-				'anno': [],
-				'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			}
-
-		elif self.match("sizeof"):
-			mid_ti = self.textInfo()
-			self.skip("(")
-			rv = None
-			if self.is_type_expr():
-				t = self.expr_type()
-				rv = {
-					'isa': 'ast_value',
-					'kind': HLIR_VALUE_OP_SIZEOF_TYPE,
-					'type': t,
-					'anno': [],
-				}
-			else:
-				v = self.expr_value()
-				rv = {
-					'isa': 'ast_value',
-					'kind': HLIR_VALUE_OP_SIZEOF_VALUE,
-					'value': v,
-					'anno': [],
-				}
-			end_ti = self.tokenInfo()
-			self.need(")")
-			rv['ti'] = TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			return rv
-
-		elif self.match("alignof"):
-			mid_ti = self.textInfo()
-			self.skip("(")
-			rv = None
-			if self.is_type_expr():
-				t = self.expr_type()
-				rv = {
-					'isa': 'ast_value',
-					'kind': HLIR_VALUE_OP_ALIGNOF_TYPE,
-					'type': t,
-					'anno': [],
-				}
-			else:
-				v = self.expr_value()
-				rv = {
-					'isa': 'ast_value',
-					'kind': HLIR_VALUE_OP_ALIGNOF_VALUE,
-					'value': v,
-					'anno': [],
-				}
-			end_ti = self.tokenInfo()
-			self.need(")")
-			rv['ti'] = TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			return rv
-
-		elif self.match("offsetof"):
-			mid_ti = self.textInfo()
-			self.skip("(")
-			t = self.expr_type()
-			self.need('.')
-			f = self.parse_identifier()
-			end_ti = self.tokenInfo()
-			self.need(")")
-			return {
-				'isa': 'ast_value',
-				'kind': HLIR_VALUE_OP_OFFSETOF,
-				'type': t,
-				'field': f,
-				'anno': [],
-				'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			}
-
-		elif self.match("lengthof"):
-			mid_ti = self.textInfo()
-			self.need("(")
-			if self.is_type_expr():
-				t = self.expr_type()
-				end_ti = self.tokenInfo()
-				self.need(")")
-				return {
-					'isa': 'ast_value',
-					'kind': HLIR_VALUE_OP_LENGTHOF_TYPE,
-					'type': t,
-					'anno': [],
-					'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-				}
-			else:
-				v = self.expr_value()
-				end_ti = self.tokenInfo()
-				self.need(")")
-				return {
-					'isa': 'ast_value',
-					'kind': HLIR_VALUE_OP_LENGTHOF_VALUE,
-					'value': v,
-					'anno': [],
-					'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-				}
-
-		elif self.match("__va_start"):
-			mid_ti = self.textInfo()
-			self.skip("(")
-			v0 = self.expr_value()
-			self.need(",")
-			v1 = self.expr_value()
-			end_ti = self.tokenInfo()
-			self.need(")")
-			return {
-				'isa': 'ast_value',
-				'kind': HLIR_VALUE_OP_VA_START,
-				'values': [v0, v1],
-				'anno': [],
-				'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			}
-
-		elif self.match("__va_copy"):
-			mid_ti = self.textInfo()
-			self.skip("(")
-			v0 = self.expr_value()
-			self.need(",")
-			v1 = self.expr_value()
-			end_ti = self.tokenInfo()
-			self.need(")")
-			return {
-				'isa': 'ast_value',
-				'kind': HLIR_VALUE_OP_VA_COPY,
-				'values': [v0, v1],
-				'anno': [],
-				'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			}
-
-		elif self.match("__va_end"):
-			mid_ti = self.textInfo()
-			self.need("(")
-			v = self.expr_value()
-			end_ti = self.tokenInfo()
-			self.need(")")
-			return {
-				'isa': 'ast_value',
-				'kind': HLIR_VALUE_OP_VA_END,
-				'value': v,
-				'anno': [],
-				'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			}
-
-		elif self.match("__va_arg"):
-			mid_ti = self.textInfo()
-			self.need("(")
-			v = self.expr_value()
-			self.need(",")
-			t = self.expr_type()
-			end_ti = self.tokenInfo()
-			self.need(")")
-			return {
-				'isa': 'ast_value',
-				'kind': HLIR_VALUE_OP_VA_ARG,
-				'va_list': v,
-				'type': t,
-				'anno': [],
-				'ti': TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			}
-
-		elif self.match("__defined"):
-			mid_ti = self.textInfo()
-			self.skip("(")
-			rv = None
-			if self.is_type_expr():
-				t = self.expr_type()
-				rv = {
-					'isa': 'ast_value',
-					'kind': HLIR_VALUE_OP_DEFINED_TYPE,
-					'type': t,
-					'anno': [],
-				}
-			else:
-				v = self.expr_value()
-				rv = {
-					'isa': 'ast_value',
-					'kind': HLIR_VALUE_OP_DEFINED_VALUE,
-					'value': v,
-					'anno': [],
-				}
-			end_ti = self.tokenInfo()
-			self.need(")")
-			rv['ti'] = TextInfo(start=start_ti, mid=mid_ti, end=end_ti)
-			return rv
 		else:
 			y = self.expr_value_8()
 			return y
@@ -1591,6 +1383,215 @@ class Parser:
 				'anno': [],
 				'ti': TextInfo(start=ti_start, mid=v['ti'].mid, end=ti_end)
 			}
+
+		elif self.match("new"):
+			mid_ti = self.textInfo()
+			self.need("(")
+			v = self.expr_value()
+			end_ti = self.tokenInfo()
+			self.need(")")
+			return {
+				'isa': 'ast_value',
+				'kind': HLIR_VALUE_OP_NEW,
+				'value': v,
+				'anno': [],
+				'ti': TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			}
+
+		elif self.match("unsafe"):
+			mid_ti = self.textInfo()
+			self.need("(")
+			v = self.expr_value()
+			end_ti = self.tokenInfo()
+			self.need(")")
+			return {
+				'isa': 'ast_value',
+				'kind': HLIR_VALUE_OP_UNSAFE,
+				'value': v,
+				'anno': [],
+				'ti': TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			}
+
+		elif self.match("sizeof"):
+			mid_ti = self.textInfo()
+			self.skip("(")
+			rv = None
+			if self.is_type_expr():
+				t = self.expr_type()
+				rv = {
+					'isa': 'ast_value',
+					'kind': HLIR_VALUE_OP_SIZEOF_TYPE,
+					'type': t,
+					'anno': [],
+				}
+			else:
+				v = self.expr_value()
+				rv = {
+					'isa': 'ast_value',
+					'kind': HLIR_VALUE_OP_SIZEOF_VALUE,
+					'value': v,
+					'anno': [],
+				}
+			end_ti = self.tokenInfo()
+			self.need(")")
+			rv['ti'] = TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			return rv
+
+		elif self.match("alignof"):
+			mid_ti = self.textInfo()
+			self.skip("(")
+			rv = None
+			if self.is_type_expr():
+				t = self.expr_type()
+				rv = {
+					'isa': 'ast_value',
+					'kind': HLIR_VALUE_OP_ALIGNOF_TYPE,
+					'type': t,
+					'anno': [],
+				}
+			else:
+				v = self.expr_value()
+				rv = {
+					'isa': 'ast_value',
+					'kind': HLIR_VALUE_OP_ALIGNOF_VALUE,
+					'value': v,
+					'anno': [],
+				}
+			end_ti = self.tokenInfo()
+			self.need(")")
+			rv['ti'] = TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			return rv
+
+		elif self.match("offsetof"):
+			mid_ti = self.textInfo()
+			self.skip("(")
+			t = self.expr_type()
+			self.need('.')
+			f = self.parse_identifier()
+			end_ti = self.tokenInfo()
+			self.need(")")
+			return {
+				'isa': 'ast_value',
+				'kind': HLIR_VALUE_OP_OFFSETOF,
+				'type': t,
+				'field': f,
+				'anno': [],
+				'ti': TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			}
+
+		elif self.match("lengthof"):
+			mid_ti = self.textInfo()
+			self.need("(")
+			if self.is_type_expr():
+				t = self.expr_type()
+				end_ti = self.tokenInfo()
+				self.need(")")
+				return {
+					'isa': 'ast_value',
+					'kind': HLIR_VALUE_OP_LENGTHOF_TYPE,
+					'type': t,
+					'anno': [],
+					'ti': TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+				}
+			else:
+				v = self.expr_value()
+				end_ti = self.tokenInfo()
+				self.need(")")
+				return {
+					'isa': 'ast_value',
+					'kind': HLIR_VALUE_OP_LENGTHOF_VALUE,
+					'value': v,
+					'anno': [],
+					'ti': TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+				}
+
+		elif self.match("__va_start"):
+			mid_ti = self.textInfo()
+			self.skip("(")
+			v0 = self.expr_value()
+			self.need(",")
+			v1 = self.expr_value()
+			end_ti = self.tokenInfo()
+			self.need(")")
+			return {
+				'isa': 'ast_value',
+				'kind': HLIR_VALUE_OP_VA_START,
+				'values': [v0, v1],
+				'anno': [],
+				'ti': TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			}
+
+		elif self.match("__va_copy"):
+			mid_ti = self.textInfo()
+			self.skip("(")
+			v0 = self.expr_value()
+			self.need(",")
+			v1 = self.expr_value()
+			end_ti = self.tokenInfo()
+			self.need(")")
+			return {
+				'isa': 'ast_value',
+				'kind': HLIR_VALUE_OP_VA_COPY,
+				'values': [v0, v1],
+				'anno': [],
+				'ti': TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			}
+
+		elif self.match("__va_end"):
+			mid_ti = self.textInfo()
+			self.need("(")
+			v = self.expr_value()
+			end_ti = self.tokenInfo()
+			self.need(")")
+			return {
+				'isa': 'ast_value',
+				'kind': HLIR_VALUE_OP_VA_END,
+				'value': v,
+				'anno': [],
+				'ti': TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			}
+
+		elif self.match("__va_arg"):
+			mid_ti = self.textInfo()
+			self.need("(")
+			v = self.expr_value()
+			self.need(",")
+			t = self.expr_type()
+			end_ti = self.tokenInfo()
+			self.need(")")
+			return {
+				'isa': 'ast_value',
+				'kind': HLIR_VALUE_OP_VA_ARG,
+				'va_list': v,
+				'type': t,
+				'anno': [],
+				'ti': TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			}
+
+		elif self.match("__defined"):
+			mid_ti = self.textInfo()
+			self.skip("(")
+			rv = None
+			if self.is_type_expr():
+				t = self.expr_type()
+				rv = {
+					'isa': 'ast_value',
+					'kind': HLIR_VALUE_OP_DEFINED_TYPE,
+					'type': t,
+					'anno': [],
+				}
+			else:
+				v = self.expr_value()
+				rv = {
+					'isa': 'ast_value',
+					'kind': HLIR_VALUE_OP_DEFINED_VALUE,
+					'value': v,
+					'anno': [],
+				}
+			end_ti = self.tokenInfo()
+			self.need(")")
+			rv['ti'] = TextInfo(start=ti_start, mid=mid_ti, end=end_ti)
+			return rv
 
 		elif self.is_identifier():
 			id = self.parse_identifier()
