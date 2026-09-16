@@ -421,6 +421,9 @@ def do_field(x):
 	if field_type.is_forbidden_field():
 		error("unsuitable type", x['ti'])
 
+	if field_type.is_incompleted():
+		error("using of an incompleted type", field_type.ti)
+
 	f = Field(id, field_type, init_value=init_value, access_level = x['access_modifier'], ti=x['ti'])
 	f.add_atts(x['anno'])
 	f.nl = x['nl']
@@ -529,7 +532,7 @@ def change_type_layout(t, layout, ti):
 		t.size, t.align = calc_record_size_align(t.fields, layout)
 
 		if t.layout != layout:
-			# copy() перед вызовом (do_type_internal) - поверхностный и
+			# copy() перед вызовом (do_type) - поверхностный и
 			# сохраняет uid исходной записи, а раскладка - её часть: две
 			# записи с одинаковыми полями, но разными смещениями/размером -
 			# это разные C-структуры, и бэкенды используют uid именно
@@ -545,12 +548,16 @@ def change_type_layout(t, layout, ti):
 
 
 def do_type_pointer(x, anno):
-	to = do_type_internal(x['to'])
+	to = do_type(x['to'])
 	return TypePointer(to, ti=x['ti'])
 
 
 def do_type_array(x, anno):
-	of = do_type_internal(x['of'])
+	of = do_type(x['of'])
+
+	if of.is_incompleted():
+		error("using of an incompleted type", of.ti)
+
 	volume = do_value(x['size'])
 
 	if volume.is_bad():
@@ -640,6 +647,9 @@ def do_type_func(x, anno, func_id="_"):
 
 	to = do_type(x['to'])
 
+	if to.is_incompleted():
+		error("using of an incompleted type", to.ti)
+
 	if to.is_forbidden_retval():
 		error("forbidden retval type", to.ti)
 
@@ -665,7 +675,7 @@ def anno_to_attribute(x, annos, anno):
 		x.addAttribute(anno, {})
 
 
-def do_type_internal(x):
+def do_type(x):
 	t = None
 
 	annos = copy.copy(x['anno'])
@@ -680,12 +690,33 @@ def do_type_internal(x):
 	else: t = TypeBad(x['ti'])
 	t.ti = x['ti']
 
+	t = append_common_type_annos(t, annos)
+
+	t.ast_annotations = x['anno']
+
+	if k == 'record' and not t.is_unit():
+		# кароч прикол такой:
+		# тк t.add_atts вызывается здесь и создает НОВЫЙ тип то в таблице cmodule.anon_recs
+		# оказывается оригинальная структура, а при поиске для удаления ее оттуда ищется новая (обернутая)
+		# поэтому этот костыль тут а не в do_type_record где ему казалось бы - место
+		anon_tag = '__anonymous_struct_%d' % t.uid
+		t.c_anon_id = anon_tag
+		cmodule.anon_recs.append(t)
+
+	if k == 'variant':
+		anon_tag = '__anonymous_variant_%d' % t.uid
+		t.c_anon_id = anon_tag
+		cmodule.anon_vars.append(t)
+
+	return t
+
+
+def append_common_type_annos(t, annos):
 	if annos != []:
 		# аннотированный тип - новый тип, а не имя исходного: копия не
 		# должна отвечать за чужое определение (is_local_entity, getModule)
 		t = t.copy()
 		t.definition = None
-		t.ast_annotations = x['anno']
 
 		layout_anno = pop_anno(annos, 'layout')
 		if layout_anno != None:
@@ -707,48 +738,13 @@ def do_type_internal(x):
 		anno_to_attribute(t, annos, 'register')
 		anno_to_attribute(t, annos, 'restrict')
 		anno_to_attribute(t, annos, 'volatile')
-	
 
 	if annos != []:
 		for a in annos:
 			error("annotation '%s' not defined\n" % a['kind'], a['ti'])
 
-
-	if k == 'record' and not t.is_unit():
-		# кароч прикол такой:
-		# тк t.add_atts вызывается здесь и создает НОВЫЙ тип то в таблице cmodule.anon_recs
-		# оказывается оригинальная структура, а при поиске для удаления ее оттуда ищется новая (обернутая)
-		# поэтому этот костыль тут а не в do_type_record где ему казалось бы - место
-		anon_tag = '__anonymous_struct_%d' % t.uid
-		t.c_anon_id = anon_tag
-		cmodule.anon_recs.append(t)
-
-	if k == 'variant':
-		anon_tag = '__anonymous_variant_%d' % t.uid
-		t.c_anon_id = anon_tag
-		cmodule.anon_vars.append(t)
-
 	return t
 
-
-def do_type(x):
-	#info("do_type", x['ti'])
-	t = do_type_internal(x)
-
-# TODO: not good for func type !
-#	if t.is_incompleted():
-#		error("using of an incompleted type", t.ti)
-
-	if t.is_record():
-		for f in t.fields:
-			if f.type.is_incompleted():
-				error("using of an incompleted type", f.type.ti)
-
-	if t.is_array():
-		if t.of.is_incompleted():
-			error("using of an incompleted type", t.of.ti)
-
-	return t
 
 
 def do_value_shift(x):
