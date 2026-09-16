@@ -139,38 +139,6 @@ modest -o out/prog -mbackend=c11 main.modest
 - Went unnoticed because every existing invocation follows the
   `-o <dir>/main main.modest` shape, where the two coincide.
 
-## BUG#18: `@cbyvalue` on a type definition crashes the compiler
-
-```modest
-@cbyvalue
-type ByValue = {
-	a: Int32
-}
-```
-
-```
-AttributeError: 'StmtDefType' object has no attribute 'value'
-```
-
-- A Python traceback reaches the user instead of a diagnostic; the
-  compiler does not get as far as reporting anything.
-- Cause: `def_add_annotations` (`src/semantic.py:3166`) handles the
-  annotation with `x.value.addAttribute("cbyvalue")`, but `x` here is a
-  `StmtDefType`, which has no `.value` — only value definitions (`var`,
-  `const`) do.
-- Verified placements: `const`, `var` and `func` all accept `@cbyvalue`
-  without complaint; only `type` crashes.
-- Expected: whatever the annotation is supposed to mean on a type — apply
-  it, or reject it with `annotation not applicable here`. Crashing is not
-  one of the options.
-- Worth settling at the same time: `docs/lang/attribute.md` describes
-  `@cbyvalue` as "pass record by value in the C ABI", which reads like it
-  belongs on a record type, while the implementation only ever consults
-  it on a value (`src/backend/c11.py:1114`, where it means "print the
-  constant's value rather than its identifier"). The documentation and
-  the code describe two different features.
-
-
 ## BUG#19: `-funsafe` is never consulted; only `pragma unsafe` grants permission
 
 ```bash

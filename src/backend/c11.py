@@ -1264,7 +1264,7 @@ def do_cvalue_pos(x, ctx):
 def do_cvalue_const(x, ctx):
 	if x.hasAttribute('cbyvalue'):
 		# cbyvalue говорит о том что следует печатать значение константы (а не ее id)
-		return do_cvalue_literal_with_type(x, x.type, ctx=ctx)
+		return do_cvalue(x.init_value, ctx=ctx)
 
 	id_str = get_id_str(x)
 	if x.is_global(): #and not x.id.hasAttribute('nodecorate'):

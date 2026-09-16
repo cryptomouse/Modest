@@ -14,6 +14,7 @@ static Packed makePacked(void) {
 	printf("called\n");
 	return (Packed){.tag = 1, .len = 2};
 }
+#define X 5
 
 int main(void) {
 	printf("Hello World!\n");
@@ -22,6 +23,7 @@ int main(void) {
 		.len = makePacked().len
 	};
 	printf("%x %u\n", (uint32_t)e.tag, e.len);
+	int32_t xx = (int32_t)5;
 	return 0;
 }
 

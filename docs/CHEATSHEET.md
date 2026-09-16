@@ -476,7 +476,7 @@ Unit value                         // discard a value (suppress warnings)
 ```modest
 @extern                            // external symbol (C linkage)
 @extern("C", "symbol_name")        // maps to a different C symbol name
-@cbyvalue                          // pass record by value in C ABI (not by pointer)
+@cbyvalue                          // on a const: print its literal value at each use (C backend only)
 ```
 
 > `@extern` applies to global definitions only — a local `var` cannot be

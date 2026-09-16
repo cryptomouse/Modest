@@ -31,7 +31,7 @@ Annotations are written before a definition, or inside a type expression
 | `@extern("C", "name")` | link to a specific C symbol |
 | `@alias("name")` | output symbol name (C and LLVM) |
 | `@alias("c"\|"llvm", "name")` | per-backend output name |
-| `@cbyvalue` | pass record by value in the C ABI |
+| `@cbyvalue` | on a `const`: print its literal value at each use site instead of the identifier (C backend only) |
 | `@nonstatic` | suppress `static` in C output |
 | `@no_print`, `@c_no_print`, `@ll_no_print` | omit the definition from output (both / C / LLVM) |
 

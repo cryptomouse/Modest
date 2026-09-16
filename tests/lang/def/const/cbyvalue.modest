@@ -1,0 +1,27 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: cbyvalue
+//
+// Guards BUG#18 (fixed 2026-09-16): @cbyvalue on a global const used to
+// crash the C11 backend (AttributeError on ValueConst.nsigns) instead of
+// printing the constant's literal value at each use site.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+@cbyvalue
+const answer: Int32 = 42
+
+
+func main: () -> Int {
+	var x = answer
+	if x != 42 {
+		printf("x = %d, expected 42\n", x)
+		return exitFailure
+	}
+
+	printf("passed: cbyvalue\n")
+	return exitSuccess
+}

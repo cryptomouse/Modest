@@ -16,12 +16,16 @@ func makePacked: () -> Packed {
 	return {tag = 1, len = 2}
 }
 
+@cbyvalue
+const x = Int32 5
 
 func main: () -> Int {
 	printf("Hello World!\n")
 
 	var e = Exact makePacked()
 	printf("%x %u\n", Nat32 e.tag, e.len)
+
+	var xx = x
 
 	return 0
 }

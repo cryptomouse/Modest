@@ -2034,7 +2034,8 @@ def do_stmt_let(x):
 	if id_already_used(x['id']['str'], shallow=True):
 		error("redefinition of '%s'" % x['id']['str'], x['id']['ti'])
 
-	df = def_const_common(x)
+	annos = x['anno'].copy()
+	df = def_const_common(x, annos)
 
 	if df.is_stmt_bad():
 		return df
@@ -2532,7 +2533,7 @@ def process_field_common(x, allow_cons_default=False):
 
 
 # common method for global & local consts
-def def_const_common(x):
+def def_const_common(x, annos):
 	global cmodule
 	global cdef
 	global csymtab
@@ -2650,7 +2651,7 @@ def def_const_global(x, annos):
 	if id_already_used(x['id']['str']):
 		error("redefinition of '%s'" % x['id']['str'], x['id']['ti'])
 
-	df = def_const_common(x)
+	df = def_const_common(x, annos)
 	if df.is_stmt_bad():
 		return df
 
@@ -2661,6 +2662,8 @@ def def_const_global(x, annos):
 	if not iv.is_undefined():
 		if iv.is_runtime():
 			error("expected immediate value", iv.ti)
+
+	anno_to_attribute(df.value, annos, 'cbyvalue')
 	
 	return df
 
