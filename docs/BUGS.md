@@ -1190,10 +1190,37 @@ func main () -> Int {
 - Related but distinct from BUG#60: that one is about a local `var`'s
   annotations never being read at all. This holds for a *global*
   `@immutable var`, whose annotation is read and does stop assignment.
-- Fix: the mutability test behind `&` should ask the same question
-  assignment asks. Whether `&` on an immutable value should instead yield a
-  pointer-to-immutable is a language question the pointer type does not
-  currently have an answer for.
+- Root cause: `&` doesn't consult `is_immutable()` at all. It goes through
+  `is_good_value_for_ref` (`src/semantic.py:1085`), which is a whitelist of
+  value *kinds* (`is_var()`, `is_func()`, `is_index()`, ...), not a
+  mutability check. `let`/`const`/parameters are `ValueConst` under the
+  hood, so they fail the whitelist and get rejected by accident, never
+  because anyone asked whether they're mutable. An `@immutable var` is a
+  `ValueVar`, so it passes the whitelist cleanly and the question never
+  gets asked.
+- 2026-09-17: confirmed live, not just theoretical — before
+  `def_var_common` actually wired `@immutable` to `var_value.immutable`
+  (`src/semantic.py:2644-2645`), neither the assignment check nor this one
+  fired, so the repro above did nothing on either line. Now that assignment
+  is enforced, this bug is a real, reproducible gap — verified with the
+  repro above on `-mbackend=c11` (`gimm = 9` errors, `*p = 99` silently
+  compiles and writes through).
+- Fix options, from smallest to largest scope:
+  1. Add an explicit `is_immutable()` check in `is_good_value_for_ref` (or
+     right after it in `do_value_ref`), same question `do_stmt_assign`
+     already asks at `src/semantic.py:2199`. Closes the hole completely;
+     strictly more restrictive — `&imm_var` starts failing outright, even
+     for read-only use.
+  2. Give pointers a notion of a const pointee (`*const T`, C-style):
+     `&` on an immutable value succeeds but yields a pointer type through
+     which writes are rejected. Bigger: `TypePointer`
+     (`src/hlir/types.py:1701`) has no such concept today, so type
+     equality, deref-assignment checks, and both backends' signature
+     printing would all need it.
+  - Leaning towards (1) for the actual fix — it's the same shape as every
+    other enforcement in this file, and (2) is a real language feature
+    (const-correct pointers) that deserves its own design pass, not a
+    bugfix side effect.
 - No reproducer in the suite; it belongs with the `@immutable` tests
   wherever the annotation cases land.
 

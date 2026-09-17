@@ -1,11 +1,15 @@
 // TEST: run
 // BACKENDS: c11, llvm, modest
 // EXPECT-EXIT: 0
+// EXPECT-OUT: passed: cbyvalue global
+// EXPECT-OUT: passed: cbyvalue local
 // EXPECT-OUT: passed: cbyvalue
 //
 // Guards BUG#18 (fixed 2026-09-16): @cbyvalue on a global const used to
 // crash the C11 backend (AttributeError on ValueConst.nsigns) instead of
-// printing the constant's literal value at each use site.
+// printing the constant's literal value at each use site. Also covers the
+// local `let` path, which was wired up separately and used to silently
+// ignore the annotation instead of applying or rejecting it.
 
 include "libc/ctypes64"
 include "libc/stdio"
@@ -15,10 +19,40 @@ include "libc/stdlib"
 const answer: Int32 = 42
 
 
-func main: () -> Int {
+func testGlobal: () -> Bool {
 	var x = answer
 	if x != 42 {
 		printf("x = %d, expected 42\n", x)
+		return false
+	}
+
+	printf("passed: cbyvalue global\n")
+	return true
+}
+
+
+func testLocal: () -> Bool {
+	@cbyvalue
+	let local: Int32 = 7
+
+	var x = local
+	if x != 7 {
+		printf("x = %d, expected 7\n", x)
+		return false
+	}
+
+	printf("passed: cbyvalue local\n")
+	return true
+}
+
+
+func main: () -> Int {
+	var result = true
+	result = testGlobal() and result
+	result = testLocal() and result
+
+	if not result {
+		printf("failed: cbyvalue\n")
 		return exitFailure
 	}
 

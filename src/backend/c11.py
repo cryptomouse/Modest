@@ -682,7 +682,7 @@ def do_cvalue_cons_record(x, ctx):
 	# RecordA -> RecordB
 	#if to_type.is_record():
 	if from_type.is_record() and from_type.is_concretic():
-		if from_type.layout != to_type.layout:
+		if from_type.layout != to_type.layout and from_type.layout != TYPE_RECORD_LAYOUT_UNKNOWN:
 			return do_cvalue_cast_layout(to_type, value, ctx, ti=x.ti)
 
 		if to_type.uid == from_type.uid:
@@ -691,11 +691,12 @@ def do_cvalue_cons_record(x, ctx):
 			return cv
 
 		# C cannot just cast struct to struct ⚠️
-		return do_cvalue_cast_raw(to_type, x.value, ctx)
+		vv = do_cvalue_cast_raw(to_type, x.value, ctx)
+		return vv
 
 	tt = do_ctype(to_type)
 
-	if x.value.is_immediate():
+	if x.value.is_immediate():  #mass
 		# Если у нас в ValueCons asset отличается от asset в ValueCons#value
 		# То печатаем литерал структуры из нашего asset
 		asset = []
@@ -716,7 +717,8 @@ def do_cvalue_cons_record(x, ctx):
 				if not cons_ini.value.is_zero():
 					asset.append(cons_ini)
 
-		return do_cvalue_literal_record_from_asset_list(asset, ctx, ctype=tt)
+		cv = do_cvalue_literal_record_from_asset_list(asset, ctx, ctype=tt)
+		return cv
 
 	cv = do_cvalue(value, ctx=ctx)
 	cv = CValueCast(tt, cv)
@@ -1275,7 +1277,6 @@ def do_cvalue_const(x, ctx):
 
 #	if x.is_global() and x.type.is_array() and not x.type.is_generic():
 #		cv = CValueCast(do_ctype(x.type), cv)
-
 	return cv
 
 

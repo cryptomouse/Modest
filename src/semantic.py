@@ -2029,12 +2029,11 @@ def do_value(x):
 #
 
 
-def do_stmt_let(x):
+def do_stmt_let(x, annos):
 	global cfunc
 	if id_already_used(x['id']['str'], shallow=True):
 		error("redefinition of '%s'" % x['id']['str'], x['id']['ti'])
 
-	annos = x['anno'].copy()
 	df = def_const_common(x, annos)
 
 	if df.is_stmt_bad():
@@ -2045,23 +2044,24 @@ def do_stmt_let(x):
 
 	df.parent = cfunc
 	df.value.storage_class = HLIR_VALUE_STORAGE_CLASS_LOCAL
+
+	anno_to_attribute(df.value, annos, 'cbyvalue')
+
 	return df
 
 
-def do_stmt_const(x):
-	return do_stmt_let(x)
+def do_stmt_const(x, annos):
+	return do_stmt_let(x, annos=annos)
 
 
-def do_stmt_var(x):
+def do_stmt_var(x, annos):
 	#info("do_stmt_var", x['ti'])
 	global cfunc
-
-	annos = x['anno'].copy()
 
 	if id_already_used(x['id']['str'], shallow=True):
 		error("redefinition of '%s'" % x['id']['str'], x['id']['ti'])
 
-	df = def_var_common(x, annos=x['anno'].copy())
+	df = def_var_common(x, annos=annos)
 
 	if df.is_stmt_bad():
 		return df
@@ -2336,11 +2336,13 @@ def do_stmt_asm(x):
 def do_stmt(x):
 	s = None
 
+	annos = x['anno'].copy()
+
 	k = x['kind']
 	if k == 'value': s = do_stmt_value(x)
 	elif k == 'assign': s = do_stmt_assign(x)
-	elif k == 'let': s = do_stmt_let(x)
-	elif k == 'var': s = do_stmt_var(x)
+	elif k == 'let': s = do_stmt_let(x, annos=annos)
+	elif k == 'var': s = do_stmt_var(x, annos=annos)
 	elif k == 'block': s = do_stmt_block(x)
 	elif k == 'if': s = do_stmt_if(x)
 	elif k == 'while': s = do_stmt_while(x)
@@ -2353,9 +2355,13 @@ def do_stmt(x):
 	elif k == 'dec': s = do_stmt_incdec(x, HLIR_VALUE_OP_SUB)
 	elif k == 'type': s = do_stmt_type(x)
 	elif k == 'func': s = do_stmt_func(x)
-	elif k == 'const': s = do_stmt_const(x)
+	elif k == 'const': s = do_stmt_const(x, annos=annos)
 	elif k == 'asm': s = do_stmt_asm(x)
 	else: s = StmtBad(x['ti'])
+
+	if annos != []:
+		for a in annos:
+			error("annotation '%s' not defined2\n" % a['kind'], a['ti'])
 
 	assert(s != None)
 	s.nl = x['nl']
@@ -2634,6 +2640,10 @@ def def_var_common(x, annos):
 		definition.addAttribute("section", do_value(section_anno['args'][0]['value']))
 
 	anno_to_attribute(definition, annos, 'nonstatic')
+
+	if pop_anno(annos, 'immutable') != None:
+		var_value.immutable = True
+
 	#nonstatic_anno = pop_anno(annos, 'nonstatic')
 	#if nonstatic_anno != None:
 	#	definition.addAttribute('nonstatic')
