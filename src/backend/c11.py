@@ -702,7 +702,9 @@ def do_cvalue_cons_record(x, ctx):
 	return cv
 
 
-# То печатаем литерал структуры из нашего asset
+# Принимает cons с типом Record
+# Печатает его как литерал, но с полями из cons, а не из литерала
+# Но сам список полей берется из value, а не из cons, чтобы не печатать лишние поля с zero
 def do_cvalue_cons_record_literal_from_cons_asset(x, ctx):
 	value = x.value
 	tt = do_ctype(x.type)
