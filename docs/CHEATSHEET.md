@@ -161,6 +161,8 @@ let local = 42                     // immutable binding — only inside function
 
 > `var` always gets a concrete type: declared explicitly, inferred from the initializer, or — for generic literals (`var i = 0`) — the target default type (Integer → Int, Rational → Float). `const` and `let` retain the compile-time generic type of their initializer.
 
+> **`public const` must have a non-generic type** — give it an explicit type annotation or construct a branded value; a private/default `const` may stay generic.
+
 ### Types
 ```modest
 type Point = {x: Float64, y: Float64}

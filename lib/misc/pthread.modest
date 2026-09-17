@@ -55,18 +55,18 @@ public type PThreadSpinlockT = Ptr
 
 
 @extern("C", "PTHREAD_MUTEX_INITIALIZER")
-public const mutexInitializer = nil
+public const mutexInitializer: *Unit = nil
 @extern("C", "PTHREAD_COND_INITIALIZER")
-public const condInitializer = nil
+public const condInitializer: *Unit = nil
 @extern("C", "PTHREAD_RWLOCK_INITIALIZER")
-public const rwlockInitializer = nil
+public const rwlockInitializer: *Unit = nil
 
 @extern("C", "PTHREAD_PRIO_NONE")
-public const pthreadPrioNone = nil
+public const pthreadPrioNone: *Unit = nil
 @extern("C", "PTHREAD_PRIO_INHERIT")
-public const pthreadPrioInherit = nil
+public const pthreadPrioInherit: *Unit = nil
 @extern("C", "PTHREAD_PRIO_PROTECT")
-public const pthreadPrioProtect = nil
+public const pthreadPrioProtect: *Unit = nil
 
 
 pragma prefix "pthread_"

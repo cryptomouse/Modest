@@ -1,0 +1,12 @@
+// TEST: reject
+// EXPECT-ERROR: public constant must have a non-generic type
+//
+// A `public const` crosses the module boundary, but a generic type
+// (Integer, Rational, String, ...) is only a compile-time type that adapts
+// independently at each use site — it has no single concrete
+// representation to export. See public_generic.modest for the accepted
+// forms (explicit type, or value construction, on a public const; a
+// generic type stays fine on a private/default one).
+
+public const answer = 42
+

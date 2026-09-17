@@ -7,54 +7,54 @@ pragma c_include "limits.h"
 
 
 @extern("C", "INT8_MIN")
-public const int8MinValue  = -128
+public const int8MinValue: Int8  = -128
 @extern("C", "INT8_MAX")
-public const int8MaxValue  = 127
+public const int8MaxValue: Int8  = 127
 
 @extern("C", "INT16_MIN")
-public const int16MinValue = -32768
+public const int16MinValue: Int16 = -32768
 @extern("C", "INT16_MAX")
-public const int16MaxValue = 32767
+public const int16MaxValue: Int16 = 32767
 
 @extern("C", "INT32_MIN")
-public const int32MinValue = -2147483648
+public const int32MinValue: Int32 = -2147483648
 @extern("C", "INT32_MAX")
-public const int32MaxValue = 2147483647
+public const int32MaxValue: Int32 = 2147483647
 
 @extern("C", "INT64_MIN")
-public const int64MinValue = -9223372036854775808
+public const int64MinValue: Int64 = -9223372036854775808
 @extern("C", "INT64_MAX")
-public const int64MaxValue = 9223372036854775807
+public const int64MaxValue: Int64 = 9223372036854775807
 
 @cbyvalue
-public const int128MinValue = -170141183460469231731687303715884105728
+public const int128MinValue: Int128 = -170141183460469231731687303715884105728
 @cbyvalue
-public const int128MaxValue = 170141183460469231731687303715884105727
+public const int128MaxValue: Int128 = 170141183460469231731687303715884105727
 
 
 @cbyvalue
-public const nat8MinValue  = 0
+public const nat8MinValue: Nat8  = 0
 @extern("C", "UINT8_MAX")
-public const nat8MaxValue  = 255
+public const nat8MaxValue: Nat8  = 255
 
 @cbyvalue
-public const nat16MinValue = 0
+public const nat16MinValue: Nat16 = 0
 @extern("C", "UINT16_MAX")
-public const nat16MaxValue = 65535
+public const nat16MaxValue: Nat16 = 65535
 
 @cbyvalue
-public const nat32MinValue = 0
+public const nat32MinValue: Nat32 = 0
 @extern("C", "UINT32_MAX")
-public const nat32MaxValue = 4294967295
+public const nat32MaxValue: Nat32 = 4294967295
 
 @cbyvalue
-public const nat64MinValue = 0
+public const nat64MinValue: Nat64 = 0
 @extern("C", "UINT64_MAX")
-public const nat64MaxValue = 18446744073709551615
+public const nat64MaxValue: Nat64 = 18446744073709551615
 
 @cbyvalue
-public const nat128MinValue = 0
+public const nat128MinValue: Nat128 = 0
 @cbyvalue
-public const nat128MaxValue = 340282366920938463463374607431768211455
+public const nat128MaxValue: Nat128 = 340282366920938463463374607431768211455
 
 

@@ -1,0 +1,35 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: public_generic
+//
+// Companion to public_generic_reject.modest: a public const is only
+// rejected when its type is *generic* (the bare compile-time type of a
+// literal). Giving it an explicit type, or constructing a branded value,
+// makes it concrete and public is fine; a private/default const keeps its
+// generic type either way.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+type Branded = @branded Int32
+
+public const answer: Int32 = 42       // public + explicit type: concrete
+public const branded = Branded 7      // public + construction: concrete
+const hidden = 42 + 1                 // private + generic: still fine
+
+
+func main: () -> Int {
+	var x = answer
+	var y = hidden
+	var z = Int32 branded
+
+	if x != 42 or y != 43 or z != 7 {
+		printf("x=%d y=%d z=%d\n", x, y, z)
+		return exitFailure
+	}
+
+	printf("passed: public_generic\n")
+	return exitSuccess
+}

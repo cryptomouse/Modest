@@ -28,14 +28,14 @@ public const stderr: *File = nil
 
 
 @extern("C", "EOF")
-public const eof = -1
+public const eof: Int32 = -1
 
 @extern("C", "SEEK_SET")
-public const seekSet = 0
+public const seekSet: Int32 = 0
 @extern("C", "SEEK_CUR")
-public const seekCur = 1
+public const seekCur: Int32 = 1
 @extern("C", "SEEK_END")
-public const seekEnd = 2
+public const seekEnd: Int32 = 2
 
 
 public func fclose: (f: *File) -> @unused Int

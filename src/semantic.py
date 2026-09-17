@@ -2563,6 +2563,9 @@ def def_const_common(x, annos):
 	if const_type.is_forbidden_const():
 		error("unsuitable type", x['ti'])
 
+	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC and const_type.is_generic():
+		error("public constant must have a non-generic type", x['ti'])
+
 	const_type = const_type.copy()
 	const_type.addAttribute('const', {})
 

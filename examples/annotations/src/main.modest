@@ -53,7 +53,7 @@ var u: Word64
 var u2: Word64
 
 
-public const const0 = 0
+public const const0: Int32 = 0
 
 
 var rp: @restrict *Word32

@@ -7,7 +7,7 @@ include "libc/ctypes64"
 include "libc/string"
 
 
-public const hashSize = 32
+public const hashSize: Nat32 = 32
 
 public type Hash = [hashSize]Word8
 

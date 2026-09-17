@@ -25,23 +25,23 @@ public type Dirent = @public {
 
 /* File types for `d_type'.  */
 @extern("C", "DT_UNKNOWN")
-public const dt_UNKNOWN = 0
+public const dt_UNKNOWN: Nat8 = 0
 @extern("C", "DT_FIFO")
-public const dt_FIFO = 1
+public const dt_FIFO: Nat8 = 1
 @extern("C", "DT_CHR")
-public const dt_CHR = 2
+public const dt_CHR: Nat8 = 2
 @extern("C", "DT_DIR")
-public const dt_DIR = 4
+public const dt_DIR: Nat8 = 4
 @extern("C", "DT_BLK")
-public const dt_BLK = 6
+public const dt_BLK: Nat8 = 6
 @extern("C", "DT_REG")
-public const dt_REG = 8
+public const dt_REG: Nat8 = 8
 @extern("C", "DT_LNK")
-public const dt_LNK = 10
+public const dt_LNK: Nat8 = 10
 @extern("C", "DT_SOCK")
-public const dt_SOCK = 12
+public const dt_SOCK: Nat8 = 12
 @extern("C", "DT_WHT")
-public const dt_WHT = 14
+public const dt_WHT: Nat8 = 14
 
 
 public func opendir: (dirname: *[]Char8) -> *Dir
