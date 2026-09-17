@@ -3,27 +3,13 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
-#define RAWCAST(type_dst, type_src, value) (((union { type_src src; type_dst dst; }){ .src = (value) }).dst)
-struct exact {uint8_t tag; uint32_t len;};
-typedef union unionx Unionx;
-union unionx {uint8_t tag; uint32_t len;};
-typedef struct packed Packed;
-struct packed {uint8_t tag; uint32_t len;} __attribute__((packed));
-
-static Packed makePacked(void) {
-	printf("called\n");
-	return (Packed){.tag = 1, .len = 2};
-}
-#define X 5
+#include "fixed.h"
+struct point {__fixed32 x; __fixed32 y;};
+#define POINTX {.x = 1.0, .y = 2.0}
+static struct point p = (struct point){.x = FIXED32(1.0, 16), .y = FIXED32(2.0, 16)};
 
 int main(void) {
 	printf("Hello World!\n");
-	struct exact e = (struct exact){
-		.tag = makePacked().tag,
-		.len = makePacked().len
-	};
-	printf("%x %u\n", (uint32_t)e.tag, e.len);
-	int32_t xx = (int32_t)5;
 	return 0;
 }
 
