@@ -694,36 +694,39 @@ def do_cvalue_cons_record(x, ctx):
 		vv = do_cvalue_cast_raw(to_type, x.value, ctx)
 		return vv
 
-	tt = do_ctype(to_type)
-
-	if x.value.is_immediate():  #mass
-		# Если у нас в ValueCons asset отличается от asset в ValueCons#value
-		# То печатаем литерал структуры из нашего asset
-		asset = []
-
-		# сперва добавим в asset те поля что указаны в литерале из которого конструируем
-		# (⚠️ но сами поля берем свои а не из литерала ⚠️)
-		for value_ini in x.value.asset:
-			cons_ini = get_initializer_by_id_str(x.asset, value_ini.id.str)
-			assert(cons_ini != None)
-			asset.append(cons_ini)
-
-		if x.type.layout != TYPE_RECORD_LAYOUT_UNION:
-			# затем добавим поля, которые имеют default value отличное от zero
-			# add extra non-zero items ⚠️
-			for cons_ini in x.asset:
-				if get_initializer_by_id_str(asset, get_id_str(cons_ini)) != None:
-		 			continue
-				if not cons_ini.value.is_zero():
-					asset.append(cons_ini)
-
-		cv = do_cvalue_literal_record_from_asset_list(asset, ctx, ctype=tt)
-		return cv
+	if x.value.is_immediate():
+		return do_cvalue_cons_record_literal_from_cons_asset(x, ctx)
 
 	cv = do_cvalue(value, ctx=ctx)
-	cv = CValueCast(tt, cv)
+	cv = CValueCast(do_ctype(to_type), cv)
 	return cv
 
+
+# То печатаем литерал структуры из нашего asset
+def do_cvalue_cons_record_literal_from_cons_asset(x, ctx):
+	value = x.value
+	tt = do_ctype(x.type)
+
+	asset = []
+
+	# сперва добавим в asset те поля что указаны в литерале из которого конструируем
+	# (⚠️ но сами поля берем свои а не из литерала ⚠️)
+	for value_ini in value.asset:
+		cons_ini = get_initializer_by_id_str(x.asset, value_ini.id.str)
+		assert(cons_ini != None)
+		asset.append(cons_ini)
+
+	if x.type.layout != TYPE_RECORD_LAYOUT_UNION:
+		# затем добавим поля, которые имеют default value отличное от zero
+		# add extra non-zero items ⚠️
+		for cons_ini in x.asset:
+			if get_initializer_by_id_str(asset, get_id_str(cons_ini)) != None:
+				continue
+			if not cons_ini.value.is_zero():
+				asset.append(cons_ini)
+
+	cv = do_cvalue_literal_record_from_asset_list(asset, ctx, ctype=tt)
+	return cv
 
 
 # FIXED32(x, f) накладывает масштаб средствами C. Это читается куда лучше
