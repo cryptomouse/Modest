@@ -264,8 +264,9 @@ declare %SSizeT @write(%Int %fildes, i8* %buf, %SizeT %nbyte)
 };
 
 declare %Int @setsockopt(%Int %socket, %Int %level, %Int %option_name, i8* %option_value, %SocklenT %option_len)
+%AddressFamily = type %Nat8;
 declare %InAddrT @inet_addr([0 x %ConstChar]* %cp)
-declare %Int @socket(%Int %domain, %Int %_type, %Int %protocol)
+declare %Int @socket(%AddressFamily %domain, %Int %_type, %Int %protocol)
 declare %Int @bind(%Int %socket, %SockAddr* %addr, %SocklenT %addrlen)
 declare %Int @listen(%Int %socket, %Int %backlog)
 declare %Int @connect(%Int %socket, %SockAddr* %addr, %SocklenT %addrlen)
@@ -343,7 +344,7 @@ endif_0:
 }
 
 define %Int32 @main() {
-	%1 = call %Int @socket(%Int 2, %Int 1, %Int 0)
+	%1 = call %Int @socket(%AddressFamily 2, %Int 1, %Int 0)
 ; if_0
 	%2 = icmp slt %Int %1, 0
 	br %Bool %2 , label %then_0, label %endif_0
@@ -353,7 +354,7 @@ then_0:
 	br label %endif_0
 endif_0:
 	%3 = alloca %SockAddrIn, align 4
-	%4 = insertvalue %SockAddrIn zeroinitializer, %Nat8 2, 1
+	%4 = insertvalue %SockAddrIn zeroinitializer, %AddressFamily 2, 1
 	%5 = bitcast i16 8080 to %Word16
 	%6 = call %Word16 @htons(%Word16 %5)
 	%7 = bitcast %Word16 %6 to %UnsignedShort

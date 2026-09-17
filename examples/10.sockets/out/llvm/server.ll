@@ -165,8 +165,9 @@ declare %Int @system([0 x %ConstChar]* %string)
 };
 
 declare %Int @setsockopt(%Int %socket, %Int %level, %Int %option_name, i8* %option_value, %SocklenT %option_len)
+%AddressFamily = type %Nat8;
 declare %InAddrT @inet_addr([0 x %ConstChar]* %cp)
-declare %Int @socket(%Int %domain, %Int %_type, %Int %protocol)
+declare %Int @socket(%AddressFamily %domain, %Int %_type, %Int %protocol)
 declare %Int @bind(%Int %socket, %SockAddr* %addr, %SocklenT %addrlen)
 declare %Int @listen(%Int %socket, %Int %backlog)
 declare %Int @connect(%Int %socket, %SockAddr* %addr, %SocklenT %addrlen)
@@ -235,7 +236,7 @@ break_1:
 }
 
 define %Int @main() {
-	%1 = call %Int @socket(%Int 2, %Int 1, %Int 0)
+	%1 = call %Int @socket(%AddressFamily 2, %Int 1, %Int 0)
 ; if_0
 	%2 = icmp slt %Int %1, 0
 	br %Bool %2 , label %then_0, label %endif_0
@@ -246,7 +247,7 @@ then_0:
 endif_0:
 	%3 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([27 x i8]* @.str6 to [0 x i8]*))
 	%4 = alloca %SockAddrIn, align 4
-	%5 = insertvalue %SockAddrIn zeroinitializer, %Nat8 2, 1
+	%5 = insertvalue %SockAddrIn zeroinitializer, %AddressFamily 2, 1
 	%6 = insertvalue %SockAddrIn %5, %UnsignedShort 8080, 2
 	%7 = call %InAddrT @inet_addr([0 x %ConstChar]* bitcast ([10 x i8]* @.str7 to [0 x i8]*))
 	%8 = insertvalue %Struct_in_addr zeroinitializer, %InAddrT %7, 0

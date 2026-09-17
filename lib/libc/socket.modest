@@ -81,50 +81,53 @@ public func setsockopt: (
 /*
  * Address families.
  */
-@extern("C", "AF_UNSPEC") public const afUnspec: Int = 0       // unspecified
-@extern("C", "AF_UNIX") public const afUnix: Int = 1         // local to host
-@extern("C", "AF_LOCAL") public const afLocal: Int = afUnix   // draft POSIX compatibility
 
-@extern("C", "AF_INET") public const afInet: Int = 2         // internetwork: UDP, TCP, etc.
+public type AddressFamily = Nat8
 
-@extern("C", "AF_IMPLINK") public const afImplink: Int = 3      // arpanet imp addresses
-@extern("C", "AF_PUP") public const afPup: Int = 4          // pup protocols: e.g. BSP
-@extern("C", "AF_CHAOS") public const afChaos: Int = 5        // mit CHAOS protocols
-@extern("C", "AF_NS") public const afNs: Int = 6           // XEROX NS protocols
-@extern("C", "AF_ISO") public const afIso: Int = 7          // ISO protocols
-@extern("C", "AF_OSI") public const afOsi: Int = afIso      // OSI protocols
-@extern("C", "AF_ECMA") public const afEcma: Int = 8         // european computer manufacturers
-@extern("C", "AF_DATKIT") public const afDatakit: Int = 9      // datakit protocols
-@extern("C", "AF_CCITT") public const afCcitt: Int = 10       // CCITT protocols, X.25 etc
-@extern("C", "AF_SNA") public const afSna: Int = 11         // IBM SNA
-@extern("C", "AF_DECNET") public const afDecnet: Int = 12      // DECnet
-@extern("C", "AF_DLI") public const afDli: Int = 13         // DEC Direct data link interface
-@extern("C", "AF_LAT") public const afLat: Int = 14         // LAT
-@extern("C", "AF_HYLINK") public const afHylink: Int = 15      // NSC Hyperchannel
-@extern("C", "AF_APPLETALK") public const afAppletalk: Int = 16   // Apple Talk
-@extern("C", "AF_ROUTE") public const afRoute: Int = 17       // Internal Routing Protocol
-@extern("C", "AF_LINK") public const afLink: Int = 18        // Link layer interface
-@extern("C", "AF_XTP") public const pseudoAfXtp: Int = 19   // eXpress Transfer Protocol (no AF)
-@extern("C", "AF_COIP") public const afCoip: Int = 20        // connection-oriented IP, aka ST II
-@extern("C", "AF_CNT") public const afCnt: Int = 21         // Computer Network Technology
-@extern("C", "AF_RTIP") public const pseudoAfRtip: Int = 22  // Help Identify RTIP packets
-@extern("C", "AF_IPX") public const afIpx: Int = 23         // Novell Internet Protocol
-@extern("C", "AF_INET6") public const afInet6: Int = 24       // IPv6
-@extern("C", "AF_PIP") public const pseudoAfPip: Int = 25   // Help Identify PIP packets
-@extern("C", "AF_ISDN") public const afIsdn: Int = 26        // Integrated Services Digital Network*/
-@extern("C", "AF_E164") public const afE164: Int = afIsdn    // CCITT E.164 recommendation
-@extern("C", "AF_NATM") public const afNatm: Int = 27        // native ATM access
-@extern("C", "AF_ENCAP") public const afEncap: Int = 28       //
-@extern("C", "AF_SIP") public const afSip: Int = 29         // Simple Internet Protocol
-@extern("C", "AF_KEY") public const afKey: Int = 30
+@extern("C", "AF_UNSPEC") public const afUnspec = AddressFamily 0       // unspecified
+@extern("C", "AF_UNIX") public const afUnix = AddressFamily 1         // local to host
+@extern("C", "AF_LOCAL") public const afLocal = afUnix   // draft POSIX compatibility
+
+@extern("C", "AF_INET") public const afInet = AddressFamily 2         // internetwork: UDP, TCP, etc.
+
+@extern("C", "AF_IMPLINK") public const afImplink = AddressFamily 3      // arpanet imp addresses
+@extern("C", "AF_PUP") public const afPup = AddressFamily 4          // pup protocols: e.g. BSP
+@extern("C", "AF_CHAOS") public const afChaos = AddressFamily 5        // mit CHAOS protocols
+@extern("C", "AF_NS") public const afNs = AddressFamily 6           // XEROX NS protocols
+@extern("C", "AF_ISO") public const afIso = AddressFamily 7          // ISO protocols
+@extern("C", "AF_OSI") public const afOsi = AddressFamily 7      // OSI protocols
+@extern("C", "AF_ECMA") public const afEcma = AddressFamily 8         // european computer manufacturers
+@extern("C", "AF_DATKIT") public const afDatakit = AddressFamily 9      // datakit protocols
+@extern("C", "AF_CCITT") public const afCcitt = AddressFamily 10       // CCITT protocols, X.25 etc
+@extern("C", "AF_SNA") public const afSna = AddressFamily 11         // IBM SNA
+@extern("C", "AF_DECNET") public const afDecnet = AddressFamily 12      // DECnet
+@extern("C", "AF_DLI") public const afDli = AddressFamily 13         // DEC Direct data link interface
+@extern("C", "AF_LAT") public const afLat = AddressFamily 14         // LAT
+@extern("C", "AF_HYLINK") public const afHylink = AddressFamily 15      // NSC Hyperchannel
+@extern("C", "AF_APPLETALK") public const afAppletalk = AddressFamily 16   // Apple Talk
+@extern("C", "AF_ROUTE") public const afRoute = AddressFamily 17       // Internal Routing Protocol
+@extern("C", "AF_LINK") public const afLink = AddressFamily 18        // Link layer interface
+@extern("C", "AF_XTP") public const pseudoAfXtp = AddressFamily 19   // eXpress Transfer Protocol (no AF)
+@extern("C", "AF_COIP") public const afCoip = AddressFamily 20        // connection-oriented IP, aka ST II
+@extern("C", "AF_CNT") public const afCnt = AddressFamily 21         // Computer Network Technology
+@extern("C", "AF_RTIP") public const pseudoAfRtip = AddressFamily 22  // Help Identify RTIP packets
+@extern("C", "AF_IPX") public const afIpx = AddressFamily 23         // Novell Internet Protocol
+@extern("C", "AF_INET6") public const afInet6 = AddressFamily 24       // IPv6
+@extern("C", "AF_PIP") public const pseudoAfPip = AddressFamily 25   // Help Identify PIP packets
+@extern("C", "AF_ISDN") public const afIsdn = AddressFamily 26        // Integrated Services Digital Network*/
+@extern("C", "AF_E164") public const afE164 = AddressFamily 26    // CCITT E.164 recommendation
+@extern("C", "AF_NATM") public const afNatm = AddressFamily 27        // native ATM access
+@extern("C", "AF_ENCAP") public const afEncap = AddressFamily 28       //
+@extern("C", "AF_SIP") public const afSip = AddressFamily 29         // Simple Internet Protocol
+@extern("C", "AF_KEY") public const afKey = AddressFamily 30
 // Used by BPF to not rewrite headers
 // in interface output routine
-@extern("C", "AF_HDRCMPLT") public const pseudoAfHdrcmplt: Int = 31
-@extern("C", "AF_BLUETOOTH") public const afBluetooth: Int = 32     // Bluetooth
-@extern("C", "AF_MPLS") public const afMpls: Int = 33          // MPLS
-@extern("C", "AF_PFLOW") public const pseudoAfPflow: Int = 34   // pflow
-@extern("C", "AF_PIPEX") public const pseudoAfPipex: Int = 35   // PIPEX
-@extern("C", "AF_MAX") public const afMax: Int = 36
+@extern("C", "AF_HDRCMPLT") public const pseudoAfHdrcmplt = AddressFamily 31
+@extern("C", "AF_BLUETOOTH") public const afBluetooth = AddressFamily 32     // Bluetooth
+@extern("C", "AF_MPLS") public const afMpls = AddressFamily 33          // MPLS
+@extern("C", "AF_PFLOW") public const pseudoAfPflow = AddressFamily 34   // pflow
+@extern("C", "AF_PIPEX") public const pseudoAfPipex = AddressFamily 35   // PIPEX
+@extern("C", "AF_MAX") public const afMax = AddressFamily 36
 
 
 public func inet_addr: (cp: *[]ConstChar) -> InAddrT
@@ -137,7 +140,7 @@ func inet_network: (cp: *ConstChar) -> InAddrT
 func inet_ntoa: (in: Struct_in_addr) -> *Char
 */
 
-public func socket: (domain: Int, _type: Int, protocol: Int) -> Int
+public func socket: (domain: AddressFamily, _type: Int, protocol: Int) -> Int
 public func bind: (socket: Int, addr: *SockAddr, addrlen: SocklenT) -> Int
 public func listen: (socket: Int, backlog: Int) -> Int
 public func connect: (socket: Int, addr: *SockAddr, addrlen: SocklenT) -> Int
