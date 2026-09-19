@@ -822,8 +822,6 @@ def str_stmt_def(x, operator='const'):
 
 
 def str_stmt_func(x):
-	if x.stmt == None:
-		return
 
 #	if x.hasAttribute('inlinehint'):
 #		ss.append("@inlinehint\n")
@@ -842,6 +840,11 @@ def str_stmt_func(x):
 	else:
 		ss.append(" ")
 	ss.append(str_type(ft))
+
+	# a declaration (prototype) has no body to print
+	if x.stmt == None:
+		return ''.join(ss)
+
 	ss.append(" ")
 	ss.append(str_stmt_block(x.stmt))
 	return ''.join(ss)

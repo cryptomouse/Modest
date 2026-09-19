@@ -1,0 +1,79 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: brace same line
+// EXPECT-OUT: passed: brace next line
+// EXPECT-OUT: passed: declarations interleaved with bodies
+//
+// A func signature's opening '{' may be on the same line or alone on the
+// next line (single newline only) — see docs/lang/def/func.md. A signature
+// followed by anything else is a bodyless declaration (prototype).
+// Exercises both forms plus declarations interleaved with bodied
+// functions, to make sure the parser's one-newline lookahead never eats
+// more than intended.
+//
+// Also guards two fixed backend bugs on bodyless declarations:
+// - LLVM: a private, non-extern declaration used to print
+//   `declare internal @foo()`, which LLVM rejects (a declaration without
+//   a body can never have internal linkage) — get_linkage() in
+//   src/backend/llvm.py.
+// - modest: str_stmt_func() used to return None for a bodyless func,
+//   crashing str_top_level_stmt2()'s ''.join() — src/backend/modest.py.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+func sameLine: (a: Int32, b: Int32) -> Int32 {
+	return a + b
+}
+
+func nextLine: (a: Int32, b: Int32) -> Int32
+{
+	return a - b
+}
+
+// bodyless declaration (prototype) — never defined, never called
+func protoBefore: () -> Int32
+
+func afterProto: () -> Int32
+{
+	return 7
+}
+
+// another bodyless declaration, right after a bodied function
+func protoAfter: () -> Int32
+
+
+func main: () -> Int {
+	var result = true
+
+	var sum = sameLine(3, 4)
+	if sum != 7 {
+		printf("sameLine(3, 4) = %d, expected 7\n", sum)
+		result = false
+	} else {
+		printf("passed: brace same line\n")
+	}
+
+	var diff = nextLine(10, 3)
+	if diff != 7 {
+		printf("nextLine(10, 3) = %d, expected 7\n", diff)
+		result = false
+	} else {
+		printf("passed: brace next line\n")
+	}
+
+	if afterProto() != 7 {
+		printf("afterProto() = %d, expected 7\n", afterProto())
+		result = false
+	} else {
+		printf("passed: declarations interleaved with bodies\n")
+	}
+
+	if not result {
+		return exitFailure
+	}
+	return exitSuccess
+}
+

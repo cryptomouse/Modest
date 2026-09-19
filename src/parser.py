@@ -2075,9 +2075,18 @@ class Parser:
 
 		end_ti = ftyp['ti'].end
 		stmt = None
+
+		# allow a single newline between the signature and '{' — a bare '{'
+		# can never start a top-level or nested statement on its own, so this
+		# is unambiguous with the no-body (prototype) case
+		pos = self.getpos()
+		if self.look_nl():
+			self.skip1()
 		if self.look("{"):
 			stmt = self.stmt_block()
 			end_ti= stmt['ti'].end
+		else:
+			self.setpos(pos)
 
 		return {
 			'isa': 'ast_definition',

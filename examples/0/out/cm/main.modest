@@ -6,23 +6,15 @@ include "libc/ctypes64"
 include "libc/stdio"
 
 
-type Exact = {tag: Word8, len: Nat32}
-type Unionx = @layout("union") Exact
-type Packed = @layout("packed") Exact
+type Point = {x: Fixed32, y: Fixed32}
 
+const pointx = {x = 1.0, y = 2.0}
 
-func makePacked () -> Packed {
-	printf("called\n")
-	return {tag = 1, len = 2}
-}
-
+var p: Point = pointx
 
 @nonstatic
 func main () -> Int {
 	printf("Hello World!\n")
-
-	var e = Exact makePacked()
-	printf("%x %u\n", Nat32 e.tag, e.len)
 
 	return 0
 }

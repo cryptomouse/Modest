@@ -2655,17 +2655,22 @@ def is_private(x):
 
 
 #['private', 'internal', 'weak', 'external'] # etc..
-def get_linkage(x):
+def get_linkage(x, is_decl=False):
 	if x.hasAttribute('extern'):
 		return "external"
+	# a declaration has no body/initializer, so it can never be 'internal'
+	# — that linkage requires a definition in this module, which LLVM
+	# rejects otherwise
+	if is_decl:
+		return ""
 	if is_private(x):
 		if not x.hasAttribute('nonstatic'):
 			return "internal"
 	return ""
 
 
-def print_linkage(x):
-	linkage = get_linkage(x)
+def print_linkage(x, is_decl=False):
+	linkage = get_linkage(x, is_decl=is_decl)
 	if linkage != "":
 		out("%s " % linkage)
 
@@ -2674,7 +2679,7 @@ def print_linkage(x):
 
 def print_decl_func(x):
 	out("\ndeclare ")
-	print_linkage(x)
+	print_linkage(x, is_decl=True)
 	fn = x.value
 	str = get_id_str(fn)
 	print_func_signature(fn.type, str)
@@ -2861,7 +2866,7 @@ def print_def_var(x, as_extern=False):
 
 	var = x.value
 	out("\n@%s = " % get_id_str(var))
-	print_linkage(x)
+	print_linkage(x, is_decl=as_extern)
 	out(mod + ' ')
 	print_type(var.type)
 

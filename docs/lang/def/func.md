@@ -15,6 +15,26 @@ The return type is mandatory; use `Unit` for functions returning nothing.
 A definition without a body is a *declaration* — it names an external
 function and is normally combined with `@extern`.
 
+The opening `{` may be written right after the signature or alone on the
+next line — a single newline between them is allowed:
+
+```modest
+func foo: () -> Unit
+{
+	...
+}
+```
+
+Whether a definition is a declaration is decided by what follows that one
+newline: `{` continues it as a body, anything else (another `func`, EOF,
+...) ends it as a bodyless declaration. Only one newline is skipped this
+way — a blank line before `{` still ends the declaration.
+
+```modest
+func bar: () -> Int32   // declaration — next line isn't '{'
+func baz: () -> Int32   // declaration
+```
+
 The `:` before the signature is required. Omitting it (`func name (...)  ->
 ...`) still compiles for backward compatibility but raises a warning —
 write new code with the colon.

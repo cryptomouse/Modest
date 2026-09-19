@@ -12,7 +12,8 @@ const pointx = {x = 1.0, y = 2.0}
 
 var p: Point = pointx
 
-func main: () -> Int {
+func main: () -> Int
+{
 	printf("Hello World!\n")
 
 	return 0
