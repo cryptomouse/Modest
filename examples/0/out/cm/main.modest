@@ -8,13 +8,17 @@ include "libc/stdio"
 
 type Point = {x: Fixed32, y: Fixed32}
 
-const pointx = {x = 1.0, y = 2.0}
+const genericPoint = {x = 1.0, y = 2.0}
 
-var p: Point = pointx
+const constantPoint: Point = genericPoint
+var variablePoint: Point = genericPoint
 
 @nonstatic
 func main () -> Int {
 	printf("Hello World!\n")
+
+	printf("constantPoint = {x=%f, y=%f}\n", Float32 constantPoint.x, Float32 constantPoint.y)
+	printf("variablePoint = {x=%f, y=%f}\n", Float32 variablePoint.x, Float32 variablePoint.y)
 
 	return 0
 }

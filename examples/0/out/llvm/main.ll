@@ -206,18 +206,30 @@ declare void @perror(%ConstCharStr* %str)
 ; -- end print imports 'main' --
 ; -- strings --
 @.str1 = private constant [14 x i8] [i8 72, i8 101, i8 108, i8 108, i8 111, i8 32, i8 87, i8 111, i8 114, i8 108, i8 100, i8 33, i8 10, i8 0]
+@.str2 = private constant [30 x i8] [i8 99, i8 111, i8 110, i8 115, i8 116, i8 97, i8 110, i8 116, i8 80, i8 111, i8 105, i8 110, i8 116, i8 32, i8 61, i8 32, i8 123, i8 120, i8 61, i8 37, i8 102, i8 44, i8 32, i8 121, i8 61, i8 37, i8 102, i8 125, i8 10, i8 0]
+@.str3 = private constant [30 x i8] [i8 118, i8 97, i8 114, i8 105, i8 97, i8 98, i8 108, i8 101, i8 80, i8 111, i8 105, i8 110, i8 116, i8 32, i8 61, i8 32, i8 123, i8 120, i8 61, i8 37, i8 102, i8 44, i8 32, i8 121, i8 61, i8 37, i8 102, i8 125, i8 10, i8 0]
 ; -- endstrings --
 %Point = type {
 	%Fixed32,
 	%Fixed32
 };
 
-@p = internal global %Point {
+@variablePoint = internal global %Point {
 	%Fixed32 65536,
 	%Fixed32 131072
 }
 define %Int @main() {
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([14 x i8]* @.str1 to [0 x i8]*))
+	%2 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([30 x i8]* @.str2 to [0 x i8]*), %Float32 1.0, %Float32 2.0)
+	%3 = getelementptr %Point, %Point* @variablePoint, %Int32 0, %Int32 0
+	%4 = load %Fixed32, %Fixed32* %3
+	%5 = sitofp %Fixed32 %4 to %Float32
+	%6 = fdiv %Float32 %5, 65536.0
+	%7 = getelementptr %Point, %Point* @variablePoint, %Int32 0, %Int32 1
+	%8 = load %Fixed32, %Fixed32* %7
+	%9 = sitofp %Fixed32 %8 to %Float32
+	%10 = fdiv %Float32 %9, 65536.0
+	%11 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([30 x i8]* @.str3 to [0 x i8]*), %Float32 %6, %Float32 %10)
 	ret %Int 0
 }
 
