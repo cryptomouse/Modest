@@ -1,0 +1,9 @@
+// Fixture for cons_from_import.modest — not a test of its own.
+//
+// Constants of every source type FixedX can be built from, living in a
+// module other than the one that constructs from them.
+
+public const natValue: Nat8 = 255
+public const intValue: Int32 = -3
+public const floatValue: Float32 = 0.5
+public const fixedValue: Fixed32 = 0.25

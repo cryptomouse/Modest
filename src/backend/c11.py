@@ -753,6 +753,13 @@ def fixed_cons_via_macro(value, x):
 	if value.type.is_fixed():
 		return False
 
+	# константа из другого модуля ('ext.w') приходит сюда обернутой в
+	# ValueAccessModule: stage и asset он берет из нее, а вот is_const()
+	# на самой обертке уже False. Без этого 'Fixed32 ext.w' сваливалось
+	# в печать свернутого хранилища, хотя EXT_W в ext.h есть
+	while value.is_access_module():
+		value = value.value
+
 	return value.is_literal() or value.is_const()
 
 

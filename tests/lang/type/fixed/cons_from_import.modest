@@ -1,0 +1,69 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: fixed cons from imported const
+// LINK: ./_fixture/consts.modest
+//
+// Constructing FixedX from a `const` that lives in another module.
+//
+// Such a const reaches codegen wrapped in a ValueAccessModule: the wrapper
+// copies the stage and the asset of the constant it stands for, so the value
+// is still folded, but it is no longer a ValueConst itself.  The C backend
+// asks exactly that question when it decides between the FIXED*() macro and
+// the folded storage (fixed_cons_via_macro, src/backend/c11.py), and used to
+// answer it on the wrapper — so `Fixed32 consts.natValue` came out as the
+// bare number 16711680 while `Fixed32 natValue` next door came out as
+// FIXED32(NAT_VALUE, 16).
+//
+// Both spellings are worth the same number, which is why this is checked on
+// the storage rather than through arithmetic: the two paths apply the scale
+// in different places, and only the bit pattern tells them apart.  The
+// FixedX source is here for the opposite reason — it must NOT take the macro
+// path, which would scale an already-scaled value a second time.
+//
+// Every value below is folded before the program starts, and each `var` is a
+// static initializer, where the macro has to stay a constant expression.
+
+pragma unsafe
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+import "./_fixture/consts"
+
+
+// 16.16: one whole unit is 0x10000
+var fromNat: Fixed32 = Fixed32 consts.natValue
+var fromInt: Fixed32 = Fixed32 consts.intValue
+var fromFloat: Fixed32 = Fixed32 consts.floatValue
+var fromFixed: Fixed32 = Fixed32 consts.fixedValue
+
+
+func check: (name: *ConstCharStr, got: Word32, expected: Word32) -> Bool {
+	if got == expected {
+		return true
+	}
+	printf("%s = 0x%08x, expected 0x%08x\n", name, got, expected)
+	return false
+}
+
+
+func main: () -> Int {
+	var ok = true
+
+	ok = check("fromNat", unsafe(Word32 fromNat), 0x00ff0000) and ok
+	ok = check("fromInt", unsafe(Word32 fromInt), 0xfffd0000) and ok
+	ok = check("fromFloat", unsafe(Word32 fromFloat), 0x00008000) and ok
+
+	// already scaled — the scale is carried over, never applied twice
+	ok = check("fromFixed", unsafe(Word32 fromFixed), 0x00004000) and ok
+
+	if not ok {
+		printf("failed: fixed cons from imported const\n")
+		return exitFailure
+	}
+
+	printf("passed: fixed cons from imported const\n")
+	return exitSuccess
+}
