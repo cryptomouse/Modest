@@ -2070,7 +2070,7 @@ def do_def_const(x):
 		return []
 
 	if x.hasAttribute('extern'):
-  		return (CRawText(""),)
+		return (CRawText(""),)
 
 	id_str = camel_to_upper_snake(get_id_str(x.value))
 	iv = do_cinitializer(x.value.type, x.init_value, ctx=[])
