@@ -1,7 +1,5 @@
 import "queue"
 
-import "queue" as queue
-
 
 public type QueueWord8 = {
 	queue: Queue

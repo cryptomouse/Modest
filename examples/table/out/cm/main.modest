@@ -1,12 +1,8 @@
-import "table"
-include "stdio"
-include "stdlib"
-include "string"
 
 include "libc/stdio"
 include "libc/stdlib"
 include "libc/string"
-import "table" as table
+import "table"
 
 
 var table_header0: [3]*Str8 = [

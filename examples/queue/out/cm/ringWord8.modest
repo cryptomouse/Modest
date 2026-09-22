@@ -1,7 +1,5 @@
 import "queue"
 
-import "queue" as queue
-
 
 public type RingWord8 = {
 	queue: Queue

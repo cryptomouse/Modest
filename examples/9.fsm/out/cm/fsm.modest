@@ -1,5 +1,3 @@
-include "assert"
-include "stdio"
 
 include "libc/assert"
 include "libc/stdio"

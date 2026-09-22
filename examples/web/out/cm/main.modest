@@ -1,9 +1,3 @@
-include "stdio"
-include "stdlib"
-include "string"
-include "unistd"
-include "socket"
-include "inet"
 
 include "libc/stdio"
 include "libc/stdlib"

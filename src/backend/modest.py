@@ -1016,7 +1016,9 @@ def print_import(x):
 	ss = []
 	if not x.include:
 		ss.append("import \"%s\"" % x.impline)
-		if x.name != None:
+		# имя без 'as' по умолчанию — basename пути (см. do_import), печатать
+		# 'import "libc/stdio" as stdio' незачем
+		if x.name != None and x.name != os.path.basename(x.impline):
 			ss.append(" as %s" % x.name)
 	else:
 		ss.append("include \"%s\"" % x.impline)
@@ -1087,17 +1089,19 @@ def run(module, fname):
 
 	ss = []
 
-	for x in module.imports:
-		stmt_import = module.imports[x]
-		if stmt_import.hasAttribute('no_print'):
-			continue
-		ss.append('import "%s"\n' % (stmt_import.impline))
-
-	for x in module.included_modules:
-		ss.append('include "%s"\n' % (str(x.id)))
-
+	# импорты и инклюды печатаются вместе с остальным из defs: там сохранён
+	# порядок исходника, настоящий путь ('libc/stdio', а не id модуля 'stdio')
+	# и форма 'as'.  module.imports / module.included_modules — те же самые
+	# StmtImport, печатать их отдельно значило бы печатать каждый дважды.
 	for x in module.defs:
+		if x.is_stmt_import() and x.hasAttribute('no_print'):
+			continue
 		ss.append(str_top_level_stmt2(x))
+
+	# каждый top-level оператор печатает отступ перед собой, поэтому первый
+	# из них открывает файл пустыми строками
+	if ss != []:
+		ss[0] = ss[0].lstrip(nl_symbol)
 
 	dirname = os.path.dirname(fname)
 	if dirname != '':

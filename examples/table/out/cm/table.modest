@@ -1,6 +1,3 @@
-include "stdio"
-include "stdlib"
-include "string"
 
 include "libc/stdio"
 include "libc/stdlib"
