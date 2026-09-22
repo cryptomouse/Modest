@@ -1089,6 +1089,8 @@ def run(module, fname):
 
 	for x in module.imports:
 		stmt_import = module.imports[x]
+		if stmt_import.hasAttribute('no_print'):
+			continue
 		ss.append('import "%s"\n' % (stmt_import.impline))
 
 	for x in module.included_modules:

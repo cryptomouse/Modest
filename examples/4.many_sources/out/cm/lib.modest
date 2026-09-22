@@ -1,4 +1,3 @@
-import "builtin"
 include "stdio"
 
 include "libc/stdio"

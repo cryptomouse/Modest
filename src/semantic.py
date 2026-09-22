@@ -3078,6 +3078,9 @@ def process_module(idStr, sourcename, ast):
 
 	import_builtin = StmtImport(impline="builtin", name="builtin", module=builtin_module, ti=builtin_ti, include=False)
 	import_builtin.usecnt = 1
+	# синтетический импорт: модуля 'builtin' на диске нет, и напечатанный
+	# 'import "builtin"' не импортируется обратно ("module builtin not found")
+	import_builtin.addAttribute('no_print')
 	cmodule.imports["builtin"] = import_builtin
 
 	# 0. do imports & directives
