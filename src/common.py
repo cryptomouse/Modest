@@ -8,6 +8,9 @@ features = []
 DEFAULTS = {
 	'encoding': 'utf-8',          # кодировка исходников
 	'backend.encoding': 'utf-8',  # кодировка того, что пишет бекенд
+	# бекенд modest: '{' тела и 'else' — на той же строке или на следующей
+	'backend.modest.brace_style': 'same-line',
+	'backend.modest.else_style': 'same-line',
 }
 
 

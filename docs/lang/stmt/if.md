@@ -29,7 +29,9 @@ if <#condition1#> {
 - The condition is an expression of type `Bool`; there is no implicit
   conversion from numbers or pointers — write `x != 0`, `p != nil`.
 - Parentheses around the condition are not required.
-- Braces are mandatory for every branch.
+- Braces are mandatory for every branch. The opening `{` may go on the
+  line after `if <cond>` / `else`; `else` on the line after the closing
+  `}` is experimental — see [block](./block.md).
 - `else if` chains may be arbitrarily long; the final `else` is optional.
 
 ## Example

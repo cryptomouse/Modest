@@ -128,9 +128,10 @@ func onDiskFail: FailHandler {
 }
 ```
 
-> The opening `{` may go on its own line, one newline after the signature.
-> A function with no body at all (nothing but `{` would follow) is a
-> declaration — see `@extern` below.
+> The opening `{` may go on its own line, one newline after the signature
+> (same for `if`, `else` and `while` bodies; `else` itself starting the
+> line after the `}` is experimental). A function with no body at
+> all (nothing but `{` would follow) is a declaration — see `@extern` below.
 
 > **Parameters are immutable.** A parameter cannot be assigned to, and
 > neither can anything inside it — the argument arrives as a value the

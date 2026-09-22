@@ -14,6 +14,14 @@ func_stoppers = ['let', 'var', 'if', 'while', 'return', 'type']
 # with no warning, while this syntax change is still being decided.
 WARN_MISSING_FUNC_COLON = False
 
+# The opening '{' of a body (func, if, else, while) may sit alone on the next
+# line, one newline after the header; likewise 'else' may start the line
+# after the '}' that closes the preceding branch. Set to False to require
+# both on the same line — 'func f: () -> T' followed by a newline then
+# always reads as a bodyless declaration, 'if c' / 'while c' followed by a
+# newline is an error, and an 'else' on its own line is an unknown name.
+ALLOW_BRACE_ON_NEXT_LINE = True
+
 
 def ast_value_bad(ti):
 	return {
@@ -158,6 +166,17 @@ class Parser:
 
 	def look_nl(self):
 		return self.ctok_class() == 'nl'
+
+
+	# step over the single newline that may separate `token` from what
+	# precedes it — 'header\n{' and '}\nelse' (see ALLOW_BRACE_ON_NEXT_LINE);
+	# only one, so a blank line is never skipped
+	def skip_nl_before(self, token):
+		if ALLOW_BRACE_ON_NEXT_LINE and self.look_nl() and self.nextok() == token:
+			self.skip1()
+
+	def skip_nl_before_brace(self):
+		self.skip_nl_before('{')
 
 
 	def match(self, token):
@@ -1686,6 +1705,7 @@ class Parser:
 		c = self.expr_value()
 		t = self.stmt_block()
 		e = None
+		self.skip_nl_before('else')
 		if self.match('else'):
 			ti = self.textInfo()
 			if self.match('if'):
@@ -1848,6 +1868,7 @@ class Parser:
 
 		comment = None
 		spaceline_cnt = 0
+		self.skip_nl_before_brace()
 		self.need("{")
 		stmts = []
 		while True:
@@ -2079,14 +2100,10 @@ class Parser:
 		# allow a single newline between the signature and '{' — a bare '{'
 		# can never start a top-level or nested statement on its own, so this
 		# is unambiguous with the no-body (prototype) case
-		pos = self.getpos()
-		if self.look_nl():
-			self.skip1()
+		self.skip_nl_before_brace()
 		if self.look("{"):
 			stmt = self.stmt_block()
 			end_ti= stmt['ti'].end
-		else:
-			self.setpos(pos)
 
 		return {
 			'isa': 'ast_definition',

@@ -1,0 +1,101 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: if brace next line
+// EXPECT-OUT: passed: else brace next line
+// EXPECT-OUT: passed: else if brace next line
+// EXPECT-OUT: passed: while brace next line
+// EXPECT-OUT: passed: nested brace next line
+//
+// The opening '{' of an if / else / while body may sit alone on the next
+// line, one newline after the header — the same rule as for a func body
+// (docs/lang/stmt/block.md, parser.py ALLOW_BRACE_ON_NEXT_LINE). 'else'
+// stays on the '}' line here; next-line 'else' is experimental and lives
+// in else_next_line.modest.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+func main: () -> Int {
+	var result = true
+	var x: Int32 = 3
+
+	var hit = false
+	if x == 3
+	{
+		hit = true
+	}
+	if hit {
+		printf("passed: if brace next line\n")
+	} else {
+		printf("if with brace on next line did not run\n")
+		result = false
+	}
+
+	hit = false
+	if x == 0 {
+		hit = false
+	} else
+	{
+		hit = true
+	}
+	if hit {
+		printf("passed: else brace next line\n")
+	} else {
+		printf("else with brace on next line did not run\n")
+		result = false
+	}
+
+	hit = false
+	if x == 0
+	{
+		hit = false
+	} else if x == 3
+	{
+		hit = true
+	} else
+	{
+		hit = false
+	}
+	if hit {
+		printf("passed: else if brace next line\n")
+	} else {
+		printf("else if with brace on next line did not run\n")
+		result = false
+	}
+
+	var i: Int32 = 0
+	while i < 5
+	{
+		++i
+	}
+	if i == 5 {
+		printf("passed: while brace next line\n")
+	} else {
+		printf("while with brace on next line: i = %d, expected 5\n", i)
+		result = false
+	}
+
+	var n: Int32 = 0
+	i = 0
+	while i < 3
+	{
+		if i != 1
+		{
+			n = n + 1
+		}
+		++i
+	}
+	if n == 2 {
+		printf("passed: nested brace next line\n")
+	} else {
+		printf("nested: n = %d, expected 2\n", n)
+		result = false
+	}
+
+	if not result {
+		return exitFailure
+	}
+	return exitSuccess
+}

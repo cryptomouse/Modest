@@ -1,7 +1,7 @@
 
 from hlir import *
 from common import get_setting
-from error import info
+from error import info, fatal
 #from .common import *
 from real import str_fractional
 
@@ -71,6 +71,16 @@ def str_nl_indent(nl=1):
 	if nl > 0:
 		s += str_indent()
 	return s
+
+
+# where a body's '{' goes relative to its header, and where 'else' goes
+# relative to the '}' before it: 'same-line' or 'next-line' — settings
+# backend.modest.brace_style / backend.modest.else_style
+def style_setting(name):
+	v = get_setting('backend.modest.%s' % name)
+	if v not in ('same-line', 'next-line'):
+		fatal("backend.modest.%s: expected 'same-line' or 'next-line', got '%s'" % (name, v))
+	return v
 
 
 
@@ -821,6 +831,15 @@ def str_stmt_def(x, operator='const'):
 	return ''.join(ss)
 
 
+
+# 'header {' or 'header\n{' — the block that follows a func signature, an
+# 'if'/'while' condition or an 'else'
+def str_body(block):
+	if style_setting('brace_style') == 'next-line':
+		return str_nl_indent(1) + str_stmt_block(block)
+	return " " + str_stmt_block(block)
+
+
 def str_stmt_func(x):
 
 #	if x.hasAttribute('inlinehint'):
@@ -845,8 +864,7 @@ def str_stmt_func(x):
 	if x.stmt == None:
 		return ''.join(ss)
 
-	ss.append(" ")
-	ss.append(str_stmt_block(x.stmt))
+	ss.append(str_body(x.stmt))
 	return ''.join(ss)
 
 
@@ -867,22 +885,27 @@ def str_stmt_if(x):
 	ss = []
 	ss.append("if ")
 	ss.append(str_value(x.cond))
-	ss.append(" ")
-	ss.append(str_stmt_block(x.then))
+	ss.append(str_body(x.then))
 
 	e = x.els
 	if e != None:
+		ss.append(str_else())
 		if e.is_stmt_if():
-			ss.append(" else ")
+			ss.append(" ")
 			ss.append(str_stmt_if(e))
 		else:
-			ss.append(" else ")
-			ss.append(str_stmt_block(e))
+			ss.append(str_body(e))
 	return ''.join(ss)
+
+# '} else' or '}\nelse'
+def str_else():
+	if style_setting('else_style') == 'next-line':
+		return str_nl_indent(1) + "else"
+	return " else"
 
 
 def str_stmt_while(x):
-	return "while %s %s" % (str_value(x.cond), str_stmt_block(x.stmt))
+	return "while %s%s" % (str_value(x.cond), str_body(x.stmt))
 
 
 def str_stmt_return(x):

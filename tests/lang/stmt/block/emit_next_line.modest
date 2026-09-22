@@ -1,0 +1,40 @@
+// TEST: run
+// BACKENDS: modest
+// FLAGS: -mbackend.modest.brace_style=next-line -mbackend.modest.else_style=next-line
+//
+// The modest backend can print bodies in next-line style: '{' alone on the
+// line after a func signature / if / while / else header, and 'else' on the
+// line after the '}' — settings backend.modest.brace_style / else_style
+// (default same-line for both). Under this backend a test stops after code
+// generation, so this only exercises the printer; that its output parses
+// back is covered by the next-line parser tests (brace_next_line.modest,
+// else_next_line.modest — same layout).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+func classify: (x: Int32) -> Int32 {
+	if x < 0 {
+		return -1
+	} else if x == 0 {
+		return 0
+	} else {
+		return 1
+	}
+}
+
+func main: () -> Int {
+	var i: Int32 = 0
+	var n: Int32 = 0
+	while i < 3 {
+		n = n + classify(i)
+		++i
+	}
+	if n != 2 {
+		printf("n = %d, expected 2\n", n)
+		return exitFailure
+	}
+	printf("passed: emit next-line\n")
+	return exitSuccess
+}

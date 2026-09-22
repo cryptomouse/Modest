@@ -15,6 +15,8 @@ while <#condition#> {
 
 - The condition has type `Bool` and is evaluated before each iteration.
 - `while true { ... }` is the idiomatic infinite loop.
+- The opening `{` may go on the line after the condition — see
+  [block](./block.md).
 - Iteration is controlled with [`break` and `again`](./break_again.md).
 
 ## Examples

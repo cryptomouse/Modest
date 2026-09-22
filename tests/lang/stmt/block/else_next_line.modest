@@ -1,0 +1,61 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: else on next line
+// EXPECT-OUT: passed: else if on next line
+//
+// Next-line 'else': it starts the line after the '}' that closes the
+// previous branch, with its own '{' on the line after that. EXPERIMENTAL —
+// gated by the same ALLOW_BRACE_ON_NEXT_LINE in src/parser.py as the
+// next-line '{' (brace_next_line.modest); may be dropped, keep it separate
+// from the rest.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+func main: () -> Int {
+	var result = true
+	var x: Int32 = 3
+	var hit = false
+
+	if x == 0
+	{
+		hit = false
+	}
+	else
+	{
+		hit = true
+	}
+	if hit {
+		printf("passed: else on next line\n")
+	} else {
+		printf("else on its own line did not run\n")
+		result = false
+	}
+
+	hit = false
+	if x == 0
+	{
+		hit = false
+	}
+	else if x == 3
+	{
+		hit = true
+	}
+	else
+	{
+		hit = false
+	}
+	if hit {
+		printf("passed: else if on next line\n")
+	} else {
+		printf("else if on its own line did not run\n")
+		result = false
+	}
+
+	if not result {
+		return exitFailure
+	}
+	return exitSuccess
+}

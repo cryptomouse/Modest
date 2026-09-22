@@ -48,4 +48,12 @@ true_literal = "true"
 false_literal = "false"
 output_style = "legacy"
 
+[backend.modest]
+# where a body's '{' goes: "same-line" (func f: () -> T {) or "next-line"
+# ('{' alone on the line after the header) — applies to func, if, else, while
+brace_style = "same-line"
+# where 'else' goes: "same-line" (} else) or "next-line" (else on the line
+# after the '}'). next-line is experimental — see docs/lang/stmt/block.md
+else_style = "same-line"
+
 
