@@ -74,7 +74,6 @@ def value_record_can(to, from_type, method, ti):
 	if method == 'implicit':
 		if to.layout != from_type.layout:
 			if to.layout != TYPE_RECORD_LAYOUT_UNKNOWN and from_type.layout != TYPE_RECORD_LAYOUT_UNKNOWN:
-				print("value_record_can: layouts are different: '%s' != '%s'" % (to.layout, from_type.layout))
 				return False  # Layouts are different
 	
 	return True

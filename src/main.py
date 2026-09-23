@@ -38,6 +38,8 @@ def main():
 	parser.add_argument('-m', action='append', help='-m<var>=<value>')
 	parser.add_argument('-d', action='append', help='-d<constant_name>="<value_expression>"')
 	parser.add_argument('--config', help='--config=<./main.cfg>')
+	parser.add_argument('--metrics', action='store_true', help='print a report about each source')
+	parser.add_argument('--metrics-format', choices=['yaml', 'json'], help='--metrics-format=<yaml|json> (default: yaml)')
 	#parser.add_argument('-s', '--setup', help='-setup=<value>')
 	#parser.add_argument('-v', '--verbose')
 	#args = parser.parse_args()
@@ -83,14 +85,21 @@ def main():
 		include_dir = os.path.dirname(outname)
 	settings['include_dir'] = include_dir
 
+	# --metrics-format сам по себе включает отчёт: просить формат для того,
+	# что не печатается, никто не станет
+	metrics_format = args.metrics_format
+	metrics = args.metrics or metrics_format != None
+	if metrics_format == None:
+		metrics_format = 'yaml'
+
 	# handle source files
 	for src_filename in files:
 		src_name = os.path.normpath(src_filename)
-		do_file(src_name, outname, settings)
+		do_file(src_name, outname, settings, metrics=metrics, metrics_format=metrics_format)
 
 
 
-def do_file(src_name, outname, settings):
+def do_file(src_name, outname, settings, metrics=False, metrics_format='yaml'):
 	if not os.path.isfile(src_name):
 		error.fatal("file \"%s\" not found" % src_name)
 
@@ -99,6 +108,11 @@ def do_file(src_name, outname, settings):
 
 	if error.get_errcnt() > 0 or module == None:
 		exit(1)
+
+	# --metrics: отчёт по исходнику, до генерации кода
+	if metrics:
+		import metrics as metrics_report
+		metrics_report.run(module, metrics_format)
 
 	# select & run backend
 	name = get_setting('backend.default')

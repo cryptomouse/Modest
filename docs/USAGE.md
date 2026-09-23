@@ -15,6 +15,8 @@ modest -o main -mbackend=modest main.modest    # → main.modest (pretty-printed
 | :-- | :-- |
 | `-o <path>` | output base name (extension is added by the backend) |
 | `-mbackend=c11\|llvm\|modest` | backend selection (any `-m<key>=<value>` overrides a config key) |
+| `--metrics` | print a report about each source to stdout ([details](./compiler/usage.md#metrics)) |
+| `--metrics-format=yaml\|json` | format of that report (default `yaml`; implies `--metrics`) |
 | `-funsafe` | ignored — [unsafe constructions](./lang/value/cons.md) are enabled by `pragma unsafe` in the module ([BUG#19](./BUGS.md)) |
 | `-fparanoid` | warnings become errors |
 | `--config=<file.toml>` | target config, applied over `cfg/default.toml` |

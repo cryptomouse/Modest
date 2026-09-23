@@ -1496,7 +1496,6 @@ def do_value_index(x):
 		_type = type_char_create(width=char_width, ti=ti)
 		nv = ValueIndex(_type, left, index, ti=ti)
 		nv.is_initialized = left.is_initialized
-		print("CC = %x" % char_code)
 		nv.set_asset(char_code)
 		nv.stage = HLIR_VALUE_STAGE_COMPILETIME
 		return nv
