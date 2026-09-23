@@ -11,9 +11,9 @@
 
 include "libc/ctypes64"
 
-func take: (b: Word8) -> Unit {}
+func take (b: Word8) -> Unit {}
 
-func main: () -> Int {
+func main () -> Int {
 	var w: Word32 = 0x12345
 	var i: Int32 = 5
 

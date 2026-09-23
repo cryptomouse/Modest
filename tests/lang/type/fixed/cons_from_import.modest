@@ -40,7 +40,7 @@ var fromFloat: Fixed32 = Fixed32 consts.floatValue
 var fromFixed: Fixed32 = Fixed32 consts.fixedValue
 
 
-func check: (name: *ConstCharStr, got: Word32, expected: Word32) -> Bool {
+func check (name: *ConstCharStr, got: Word32, expected: Word32) -> Bool {
 	if got == expected {
 		return true
 	}
@@ -49,7 +49,7 @@ func check: (name: *ConstCharStr, got: Word32, expected: Word32) -> Bool {
 }
 
 
-func main: () -> Int {
+func main () -> Int {
 	var ok = true
 
 	ok = check("fromNat", unsafe(Word32 fromNat), 0x00ff0000) and ok

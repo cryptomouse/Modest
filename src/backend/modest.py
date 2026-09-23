@@ -854,10 +854,7 @@ def str_stmt_func(x):
 	ss = []
 	ss.append("func ")
 	ss.append(get_id_str(func))
-	if hasattr(ft, 'id'):
-		ss.append(": ")
-	else:
-		ss.append(" ")
+	ss.append(" ")
 	ss.append(str_type(ft))
 
 	# a declaration (prototype) has no body to print

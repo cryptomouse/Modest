@@ -29,11 +29,11 @@ type Packed = @layout("packed") {
 }
 
 
-func take: (p: Packed) -> Unit {
+func take (p: Packed) -> Unit {
 }
 
 
-func main: () -> Int {
+func main () -> Int {
 	var e: Exact = {tag = 1, len = 2}
 
 	// Same fields, different layout: not the same type, so not an implicit

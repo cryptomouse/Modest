@@ -11,8 +11,8 @@ import "errno_abi"
 public type Errno = Int32
 
 
-public func get: () -> Int32 { return *errno_abi.__errno_location() }
-public func set: (value: Int32) -> Unit { *errno_abi.__errno_location() = value }
+public func get () -> Int32 { return *errno_abi.__errno_location() }
+public func set (value: Int32) -> Unit { *errno_abi.__errno_location() = value }
 
 /*
  * Error codes

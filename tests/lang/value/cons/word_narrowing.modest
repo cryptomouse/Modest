@@ -14,7 +14,7 @@ include "libc/stdio"
 include "libc/stdlib"
 
 
-func testRuntime: () -> Bool {
+func testRuntime () -> Bool {
 	var w: Word32 = 0x12345
 
 	let low = Word8 w
@@ -40,7 +40,7 @@ func testRuntime: () -> Bool {
 }
 
 
-func testExpression: () -> Bool {
+func testExpression () -> Bool {
 	var w: Word32 = 0x12345
 	var v: Word32 = 0xf0f0
 
@@ -67,7 +67,7 @@ func testExpression: () -> Bool {
 }
 
 
-func testCompileTime: () -> Bool {
+func testCompileTime () -> Bool {
 	// constant folding truncates exactly as run time would
 	let x = Word8 (Word32 0x12345)
 	if x != 0x45 {
@@ -85,7 +85,7 @@ func testCompileTime: () -> Bool {
 }
 
 
-func main: () -> Int {
+func main () -> Int {
 	var result = true
 	result = testRuntime() and result
 	result = testExpression() and result

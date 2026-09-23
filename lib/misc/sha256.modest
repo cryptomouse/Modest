@@ -1,7 +1,6 @@
 // sha256.modest
 
 pragma do_not_include
-pragma unsafe
 
 include "libc/ctypes64"
 include "libc/string"
@@ -21,48 +20,48 @@ type Context = {
 
 
 //@inline
-//func rotleft: (a: Word32, b: Nat32) -> Word32 {
+//func rotleft (a: Word32, b: Nat32) -> Word32 {
 //	return (a << b) | (a >> (32 - b))
 //}
 
 @inline
-func rotright: (a: Word32, b: Nat32) -> Word32 {
+func rotright (a: Word32, b: Nat32) -> Word32 {
 	return (a >> b) | (a << (32 - b))
 }
 
 
 @inline
-func ch: (x: Word32, y: Word32, z: Word32) -> Word32 {
+func ch (x: Word32, y: Word32, z: Word32) -> Word32 {
 	return (x & y) ^ (~x & z)
 }
 
 
 @inline
-func maj: (x: Word32, y: Word32, z: Word32) -> Word32 {
+func maj (x: Word32, y: Word32, z: Word32) -> Word32 {
 	return (x & y) ^ (x & z) ^ (y & z)
 }
 
 
 @inline
-func ep0: (x: Word32) -> Word32 {
+func ep0 (x: Word32) -> Word32 {
 	return rotright(x, 2) ^ rotright(x, 13) ^ rotright(x, 22)
 }
 
 
 @inline
-func ep1: (x: Word32) -> Word32 {
+func ep1 (x: Word32) -> Word32 {
 	return rotright(x, 6) ^ rotright(x, 11) ^ rotright(x, 25)
 }
 
 
 @inline
-func sig0: (x: Word32) -> Word32 {
+func sig0 (x: Word32) -> Word32 {
 	return rotright(x, 7) ^ rotright(x, 18) ^ (x >> 3)
 }
 
 
 @inline
-func sig1: (x: Word32) -> Word32 {
+func sig1 (x: Word32) -> Word32 {
 	return rotright(x, 17) ^ rotright(x, 19) ^ (x >> 10)
 }
 
@@ -74,7 +73,7 @@ const initalState = [
 ]
 
 
-func contextInit: (ctx: *Context) -> Unit {
+func contextInit (ctx: *Context) -> Unit {
 	ctx.state = initalState
 }
 
@@ -99,7 +98,7 @@ const k: []Word32 = [
 ]
 
 
-func transform: (ctx: *Context, data: *[]Word8) -> Unit {
+func transform (ctx: *Context, data: *[]Word8) -> Unit {
 	var m = [64]Word32 []
 
 	var i = Nat32 0
@@ -145,7 +144,7 @@ func transform: (ctx: *Context, data: *[]Word8) -> Unit {
 }
 
 
-func update: (ctx: *Context, msg: *[]Word8, msgLen: Nat32) -> Unit {
+func update (ctx: *Context, msg: *[]Word8, msgLen: Nat32) -> Unit {
 	var i = Nat32 0
 	while i < msgLen {
 		ctx.data[ctx.datalen] = msg[i]
@@ -160,7 +159,7 @@ func update: (ctx: *Context, msg: *[]Word8, msgLen: Nat32) -> Unit {
 }
 
 
-func final: (ctx: *Context) -> Hash {
+func final (ctx: *Context) -> Hash {
 	var i: Nat32 = ctx.datalen
 
 	// Pad whatever data is left in the buffer.
@@ -186,14 +185,14 @@ func final: (ctx: *Context) -> Hash {
 	// Append to the padding the total message's length in bits and transform.
 	ctx.bitlen = ctx.bitlen + Nat64 ctx.datalen * 8
 
-	ctx.data[63] = unsafe(Word8 (Word64 ctx.bitlen >> 00))
-	ctx.data[62] = unsafe(Word8 (Word64 ctx.bitlen >> 08))
-	ctx.data[61] = unsafe(Word8 (Word64 ctx.bitlen >> 16))
-	ctx.data[60] = unsafe(Word8 (Word64 ctx.bitlen >> 24))
-	ctx.data[59] = unsafe(Word8 (Word64 ctx.bitlen >> 32))
-	ctx.data[58] = unsafe(Word8 (Word64 ctx.bitlen >> 40))
-	ctx.data[57] = unsafe(Word8 (Word64 ctx.bitlen >> 48))
-	ctx.data[56] = unsafe(Word8 (Word64 ctx.bitlen >> 56))
+	ctx.data[63] = Word8 (Word64 ctx.bitlen >> 00)
+	ctx.data[62] = Word8 (Word64 ctx.bitlen >> 08)
+	ctx.data[61] = Word8 (Word64 ctx.bitlen >> 16)
+	ctx.data[60] = Word8 (Word64 ctx.bitlen >> 24)
+	ctx.data[59] = Word8 (Word64 ctx.bitlen >> 32)
+	ctx.data[58] = Word8 (Word64 ctx.bitlen >> 40)
+	ctx.data[57] = Word8 (Word64 ctx.bitlen >> 48)
+	ctx.data[56] = Word8 (Word64 ctx.bitlen >> 56)
 
 	transform(ctx, &ctx.data)
 
@@ -206,14 +205,14 @@ func final: (ctx: *Context) -> Hash {
 	i = 0
 	while i < 4 {
 		let sh = 24 - i * 8
-		hash[i + 00] = unsafe(Word8 (ctx.state[0] >> sh))
-		hash[i + 04] = unsafe(Word8 (ctx.state[1] >> sh))
-		hash[i + 08] = unsafe(Word8 (ctx.state[2] >> sh))
-		hash[i + 12] = unsafe(Word8 (ctx.state[3] >> sh))
-		hash[i + 16] = unsafe(Word8 (ctx.state[4] >> sh))
-		hash[i + 20] = unsafe(Word8 (ctx.state[5] >> sh))
-		hash[i + 24] = unsafe(Word8 (ctx.state[6] >> sh))
-		hash[i + 28] = unsafe(Word8 (ctx.state[7] >> sh))
+		hash[i + 00] = Word8 (ctx.state[0] >> sh)
+		hash[i + 04] = Word8 (ctx.state[1] >> sh)
+		hash[i + 08] = Word8 (ctx.state[2] >> sh)
+		hash[i + 12] = Word8 (ctx.state[3] >> sh)
+		hash[i + 16] = Word8 (ctx.state[4] >> sh)
+		hash[i + 20] = Word8 (ctx.state[5] >> sh)
+		hash[i + 24] = Word8 (ctx.state[6] >> sh)
+		hash[i + 28] = Word8 (ctx.state[7] >> sh)
 		++i
 	}
 
@@ -221,7 +220,7 @@ func final: (ctx: *Context) -> Hash {
 }
 
 
-public func hash: (msg: *[]Word8, msgLen: Nat32) -> Hash {
+public func hash (msg: *[]Word8, msgLen: Nat32) -> Hash {
 	var ctx = Context {}
 	contextInit(&ctx)
 	update(&ctx, msg, msgLen)

@@ -14,7 +14,7 @@ include "libc/ctypes64"
 include "libc/stdio"
 include "libc/stdlib"
 
-func main: () -> Int {
+func main () -> Int {
 	var result = true
 	var x: Int32 = 3
 	var hit = false

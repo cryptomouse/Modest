@@ -24,28 +24,28 @@ include "libc/ctypes64"
 include "libc/stdio"
 include "libc/stdlib"
 
-func sameLine: (a: Int32, b: Int32) -> Int32 {
+func sameLine (a: Int32, b: Int32) -> Int32 {
 	return a + b
 }
 
-func nextLine: (a: Int32, b: Int32) -> Int32
+func nextLine (a: Int32, b: Int32) -> Int32
 {
 	return a - b
 }
 
 // bodyless declaration (prototype) — never defined, never called
-func protoBefore: () -> Int32
+func protoBefore () -> Int32
 
-func afterProto: () -> Int32
+func afterProto () -> Int32
 {
 	return 7
 }
 
 // another bodyless declaration, right after a bodied function
-func protoAfter: () -> Int32
+func protoAfter () -> Int32
 
 
-func main: () -> Int {
+func main () -> Int {
 	var result = true
 
 	var sum = sameLine(3, 4)

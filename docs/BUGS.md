@@ -1519,12 +1519,12 @@ void f(struct padded v) { ... }   /* the padded one, unpacked */
 type Exact = {tag: Word8, len: Nat32}
 type Packed = @layout("packed") {tag: Word8, len: Nat32}
 
-func makePacked: () -> Packed {
+func makePacked () -> Packed {
 	printf("called\n")
 	return {tag = 1, len = 2}
 }
 
-func main: () -> Int {
+func main () -> Int {
 	var e = Exact makePacked()
 	printf("%x %u\n", Nat32 e.tag, e.len)
 	return 0

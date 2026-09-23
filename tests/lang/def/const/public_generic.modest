@@ -20,7 +20,7 @@ public const branded = Branded 7      // public + construction: concrete
 const hidden = 42 + 1                 // private + generic: still fine
 
 
-func main: () -> Int {
+func main () -> Int {
 	var x = answer
 	var y = hidden
 	var z = Int32 branded

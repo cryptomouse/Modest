@@ -13,7 +13,7 @@ const genericPoint = {x = 1.0, y = 2.0}
 const constantPoint: Point = genericPoint
 var variablePoint: Point = genericPoint
 
-func main: () -> Int
+func main () -> Int
 {
 	printf("Hello World!\n")
 

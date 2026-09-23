@@ -6,7 +6,7 @@ Binds an [identifier](../identifier.md) to a function with the given
 ## Form
 
 ```
-func <#identifier#>: (<#parameters#>) -> <#return_type#> {
+func <#identifier#> (<#parameters#>) -> <#return_type#> {
 	<#statements#>
 }
 ```
@@ -19,7 +19,7 @@ The opening `{` may be written right after the signature or alone on the
 next line — a single newline between them is allowed:
 
 ```modest
-func foo: () -> Unit
+func foo () -> Unit
 {
 	...
 }
@@ -31,8 +31,8 @@ newline: `{` continues it as a body, anything else (another `func`, EOF,
 way — a blank line before `{` still ends the declaration.
 
 ```modest
-func bar: () -> Int32   // declaration — next line isn't '{'
-func baz: () -> Int32   // declaration
+func bar () -> Int32   // declaration — next line isn't '{'
+func baz () -> Int32   // declaration
 ```
 
 The `:` before the signature is required. Omitting it (`func name (...)  ->
@@ -51,10 +51,10 @@ Parameters are [fields](../fields.md): `name: Type`. Additionally:
   argument list (used for C interop, see [va_arg](../va_arg.md)).
 
 ```modest
-func greet: (name: *Str8 = "World") -> Unit { ... }
+func greet (name: *Str8 = "World") -> Unit { ... }
 
 @extern("C")
-public func printf: (format: *Str8, ...) -> @unused Int
+public func printf (format: *Str8, ...) -> @unused Int
 ```
 
 ## Nested functions
@@ -64,8 +64,8 @@ function whose name is local to the enclosing body — it does **not**
 capture variables (no closures). Local `type` definitions are also allowed.
 
 ```modest
-func main: () -> Int {
-	func twice: (x: Int32) -> Int32 {
+func main () -> Int {
+	func twice (x: Int32) -> Int32 {
 		return x * 2
 	}
 	return twice(21) - 42
@@ -75,7 +75,7 @@ func main: () -> Int {
 ## Signature from a named function type
 
 ```
-func <#identifier#>: <#FuncType#> {
+func <#identifier#> <#FuncType#> {
 	<#statements#>
 }
 ```
@@ -88,11 +88,11 @@ need to be repeated at every definition that shares the same shape:
 ```modest
 type FailHandler = (code: Int32) -> Unit
 
-func onDiskFail: FailHandler {
+func onDiskFail FailHandler {
 	printf("disk failed with code %d\n", code)
 }
 
-func onNetworkFail: FailHandler {
+func onNetworkFail FailHandler {
 	printf("network failed with code %d\n", code)
 }
 ```
@@ -107,7 +107,7 @@ share one signature.
 
 ## Notes
 
-- The program entry point is `func main: () -> Int`.
+- The program entry point is `func main () -> Int`.
 - A function's address is taken with `&name` and stored in a
   [pointer to function](../type/func.md).
 - Inlining is controlled with `@inline` / `@inlinehint` / `@noinline`
@@ -116,11 +116,11 @@ share one signature.
 ## Example
 
 ```modest
-func sum: (a: Int32, b: Int32) -> Int32 {
+func sum (a: Int32, b: Int32) -> Int32 {
 	return a + b
 }
 
-func main: () -> Int {
+func main () -> Int {
 	printf("%d\n", sum(10, 20))
 	return 0
 }

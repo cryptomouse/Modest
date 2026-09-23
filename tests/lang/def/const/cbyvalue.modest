@@ -19,7 +19,7 @@ include "libc/stdlib"
 const answer: Int32 = 42
 
 
-func testGlobal: () -> Bool {
+func testGlobal () -> Bool {
 	var x = answer
 	if x != 42 {
 		printf("x = %d, expected 42\n", x)
@@ -31,7 +31,7 @@ func testGlobal: () -> Bool {
 }
 
 
-func testLocal: () -> Bool {
+func testLocal () -> Bool {
 	@cbyvalue
 	let local: Int32 = 7
 
@@ -46,7 +46,7 @@ func testLocal: () -> Bool {
 }
 
 
-func main: () -> Int {
+func main () -> Int {
 	var result = true
 	result = testGlobal() and result
 	result = testLocal() and result

@@ -40,7 +40,7 @@ type Packed = @layout("packed") {
 }
 
 
-func testExactToPacked: () -> Bool {
+func testExactToPacked () -> Bool {
 	var e: Exact = {tag = 0x7F, len = 0x11223344}
 	var p = Packed e
 
@@ -62,7 +62,7 @@ func testExactToPacked: () -> Bool {
 }
 
 
-func testPackedToExact: () -> Bool {
+func testPackedToExact () -> Bool {
 	var p: Packed = {tag = 0x11, len = 99}
 	var e = Exact p
 
@@ -76,7 +76,7 @@ func testPackedToExact: () -> Bool {
 }
 
 
-func testSourceUntouched: () -> Bool {
+func testSourceUntouched () -> Bool {
 	// Construction copies field values; it does not alias the source's
 	// storage the way reinterpreting its bytes would.
 	var e: Exact = {tag = 1, len = 1000}
@@ -94,7 +94,7 @@ func testSourceUntouched: () -> Bool {
 }
 
 
-func testRoundTrip: () -> Bool {
+func testRoundTrip () -> Bool {
 	var e: Exact = {tag = 0xAB, len = 0xCAFEBABE}
 	var back = Exact (Packed e)
 
@@ -109,7 +109,7 @@ func testRoundTrip: () -> Bool {
 }
 
 
-func main: () -> Int {
+func main () -> Int {
 	var result = true
 	result = testExactToPacked() and result
 	result = testPackedToExact() and result
