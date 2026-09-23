@@ -1,0 +1,101 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: word narrowing
+//
+// A WordX is a bag of bits, not a number: it has neither arithmetic nor
+// ordering (docs/lang/value/binary.md).  Taking its low X bits therefore
+// loses no meaning the way `Int8 i` does — it *is* the operation, and the
+// explicit construction says so.  So a wider Word narrows without
+// `unsafe`, while IntX and NatX still guard their narrowing.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func testRuntime: () -> Bool {
+	var w: Word32 = 0x12345
+
+	let low = Word8 w
+	if low != 0x45 {
+		printf("Word8 w = 0x%x, expected 0x45\n", Word32 low)
+		return false
+	}
+
+	let half = Word16 w
+	if half != 0x2345 {
+		printf("Word16 w = 0x%x, expected 0x2345\n", Word32 half)
+		return false
+	}
+
+	// Widening back does not recover what was cut — those bits are gone
+	let back = Word32 low
+	if back != 0x45 {
+		printf("Word32 (Word8 w) = 0x%x, expected 0x45\n", back)
+		return false
+	}
+
+	return true
+}
+
+
+func testExpression: () -> Bool {
+	var w: Word32 = 0x12345
+	var v: Word32 = 0xf0f0
+
+	// what used to need `unsafe`: a masked byte and a shifted one
+	let masked = Word8 (w & 0xff)
+	if masked != 0x45 {
+		printf("Word8 (w & 0xff) = 0x%x, expected 0x45\n", Word32 masked)
+		return false
+	}
+
+	let shifted = Word8 (w >> 8)
+	if shifted != 0x23 {
+		printf("Word8 (w >> 8) = 0x%x, expected 0x23\n", Word32 shifted)
+		return false
+	}
+
+	let both = Word8 (w & v)
+	if both != 0x40 {
+		printf("Word8 (w & v) = 0x%x, expected 0x40\n", Word32 both)
+		return false
+	}
+
+	return true
+}
+
+
+func testCompileTime: () -> Bool {
+	// constant folding truncates exactly as run time would
+	let x = Word8 (Word32 0x12345)
+	if x != 0x45 {
+		printf("Word8 (Word32 0x12345) = 0x%x, expected 0x45\n", Word32 x)
+		return false
+	}
+
+	let y = Word8 (Word32 0x12345 & 0xff)
+	if y != 0x45 {
+		printf("Word8 (Word32 0x12345 & 0xff) = 0x%x, expected 0x45\n", Word32 y)
+		return false
+	}
+
+	return true
+}
+
+
+func main: () -> Int {
+	var result = true
+	result = testRuntime() and result
+	result = testExpression() and result
+	result = testCompileTime() and result
+
+	if not result {
+		printf("failed: word narrowing\n")
+		return exitFailure
+	}
+
+	printf("passed: word narrowing\n")
+	return exitSuccess
+}

@@ -17,6 +17,8 @@ func main: () -> Int
 {
 	printf("Hello World!\n")
 
+	let x = Word8 (Word32 5 & 0xff)
+
 	printf("constantPoint = {x=%f, y=%f}\n", Float32 constantPoint.x, Float32 constantPoint.y)
 	printf("variablePoint = {x=%f, y=%f}\n", Float32 variablePoint.x, Float32 variablePoint.y)
 

@@ -23,8 +23,15 @@ def value_word_can(to, from_type, method, ti):
 	if method == 'implicit':
 		return False
 
+	# WordX - это мешок бит, а не число: у него нет ни арифметики, ни
+	# порядка (docs/lang/value/binary.md).  Взять его младшие X бит -
+	# не потеря значения, а сама операция, и явная конструкция её и
+	# выражает; unsafe тут нечего охранять.  IntX/NatX - другое дело:
+	# там усечение врёт о числе, и они остаются как были.
+	if from_type.is_word():
+		return True
+
 	c0 = from_type.is_integer()
-	c1 = from_type.is_word()
 	c2 = from_type.is_int()
 	c3 = from_type.is_char()
 	c4 = from_type.is_bool()
@@ -33,7 +40,7 @@ def value_word_can(to, from_type, method, ti):
 	c7 = from_type.is_nat()
 	c8 = from_type.is_fixed()
 
-	if c0 or c1 or c2 or c3 or c4 or c5 or c6 or c7 or c8:
+	if c0 or c2 or c3 or c4 or c5 or c6 or c7 or c8:
 		if from_type.width <= to.width:
 			return True
 		return method == 'unsafe'

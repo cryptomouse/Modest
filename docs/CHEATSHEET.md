@@ -449,7 +449,7 @@ Unit value                         // discard a value (suppress warnings)
 |---|---|---|---|
 | `IntX` | `Integer`, `IntY`(Y≤X), `NatY`(Y≤X), `WordY`(Y≤X), `FloatY`, `FixedY`(Y≤X), `Rational` | `IntY`(Y>X), `NatY`(Y>X), `WordY`(Y>X), `FixedY`(Y>X), `*T` | `FloatY→IntX` and `FixedY→IntX` truncate the fraction toward zero; compile-time overflow = error; `*T` only if pointer width ≤ X |
 | `NatX` | `Integer`, `NatY`(Y≤X), `WordY`(Y≤X), `IntY`(Y≤X), `FloatY`, `Rational` | `NatY`(Y>X), `WordY`(Y>X), `IntY`(Y>X), `*T` | `IntY→NatX` applies `abs()`; `FloatY→NatX` truncates fraction |
-| `WordX` | `Integer`, `WordY`(Y≤X), `IntY`(Y≤X), `NatY`(Y≤X), `CharY`(Y≤X), `FloatY`(Y≤X), `FixedY`(Y≤X), `Bool` | `WordY`(Y>X), `IntY`(Y>X), `NatY`(Y>X), `FloatY`(Y>X), `FixedY`(Y>X), `*T` | signed→Word zero-extends (not sign-extends); `FloatY→WordX` reinterprets bits; `FixedY→WordX` gives the raw scaled storage |
+| `WordX` | `Integer`, `WordY`(any Y), `IntY`(Y≤X), `NatY`(Y≤X), `CharY`(Y≤X), `FloatY`(Y≤X), `FixedY`(Y≤X), `Bool` | `IntY`(Y>X), `NatY`(Y>X), `FloatY`(Y>X), `FixedY`(Y>X), `*T` | `WordY`(Y>X) truncates to the low X bits; signed→Word zero-extends (not sign-extends); `FloatY→WordX` reinterprets bits; `FixedY→WordX` gives the raw scaled storage |
 | `FloatX` | `Integer`, `Rational`, `IntY`, `NatY`, `FloatY`, `FixedY` | `WordY` | `WordY→FloatX` reinterprets bits; `FixedY→FloatX` removes the scale; compile-time overflow = error (`Float16 70000.0`), at run time IEEE infinity |
 | `FixedX` | `Integer`, `Rational`, `IntY`, `NatY`, `FloatY`, `FixedY` | `WordY` | applies the scale of the target's own `@fraction`; `WordY→FixedX` takes the raw storage as is |
 | `*T` | `nil`, `*[N]T→*[]T`, `*Unit`, `String→*[]CharX`, `*[]T→*[N]T` | `*U`, `WordY`, `IntY` | `*[]T→*[N]T` safe only if element types match; otherwise full reinterpret = unsafe |
@@ -461,6 +461,10 @@ Unit value                         // discard a value (suppress warnings)
 
 > **Non-obvious behaviors to keep in mind:**
 > - `IntY → NatX` applies `abs()` — this is a semantic conversion, not a bitwise reinterpretation.
+> - `WordY → WordX` narrows without `unsafe` and keeps the low X bits — `Word8 (Word32 0x12345)`
+>   is `0x45`. A `WordX` is a bag of bits with neither arithmetic nor ordering, so dropping the
+>   high ones is the operation being asked for. `IntX`/`NatX` carry a number and still need `unsafe`.
+>   Only the written construction narrows: `var b: Word8 = w` is still a type error.
 > - `signed → WordX` zero-extends, **not** sign-extends. `Int32 -1` → `Word64` gives `0x00000000FFFFFFFF`, not `0xFFFFFFFFFFFFFFFF`.
 > - `FloatY → WordX` and `WordY → FloatX` always **reinterpret bits** (like `memcpy`), never do numeric conversion.
 > - `FixedX` values are stored scaled by `2^fraction`. Every construction into or out of `FixedX`

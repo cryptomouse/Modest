@@ -1,0 +1,25 @@
+// TEST: reject
+// EXPECT-ERROR: type mismatch Word8 & Word32
+// EXPECT-ERROR: cannot implicitly construct `Word8` from `Word32`
+// EXPECT-ERROR: cannot construct 'Int8' from 'Int32' value
+//
+// Narrowing a Word is an operation one asks for, not one that happens on
+// the way somewhere: written out it is fine, but an initializer or an
+// argument never truncates on its own.  And the licence is the Word's
+// alone — IntX carries a number, where dropping the high bits changes
+// what the value says, so it still wants `unsafe`.
+
+include "libc/ctypes64"
+
+func take: (b: Word8) -> Unit {}
+
+func main: () -> Int {
+	var w: Word32 = 0x12345
+	var i: Int32 = 5
+
+	var implicit: Word8 = w
+	take(w)
+	let narrowInt = Int8 i
+
+	return 0
+}

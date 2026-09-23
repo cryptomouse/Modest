@@ -28,7 +28,7 @@ Per-target rules (`X`, `Y` — widths; verified against the compiler):
 | :-- | :-- | :-- | :-- |
 | `IntX` | `Integer`, `IntY` Y≤X | + `NatY`, `WordY` Y≤X; `FloatY`; `Rational` | wider sources; `*T` |
 | `NatX` | `Integer`, `NatY` Y≤X | + `IntY`, `WordY` Y≤X; `FloatY` (`IntY` applies `abs`) | wider sources; `*T` |
-| `WordX` | `Integer`, `WordY` Y≤X | + `IntY`, `NatY`, `CharY`, `FloatY` Y≤X; `Bool` | wider sources; `*T` |
+| `WordX` | `Integer`, `WordY` Y≤X | + `WordY` any Y (truncates); `IntY`, `NatY`, `CharY`, `FloatY` Y≤X; `Bool` | wider `IntY`/`NatY`/`FloatY`; `*T` |
 | `FloatX` | `Rational`, `Integer`, `FloatY` | + `IntY`, `NatY`, `Fixed` | `WordY` (bit reinterpret) |
 | `CharX` | length-1 `String`; generic char | + `Integer`, `WordY` Y≤X | any numeric |
 | `Bool` | `Bool` | — (use `x != 0`) | — |
@@ -48,6 +48,13 @@ Key behaviors:
 - `IntY → NatX` applies `abs()` — a numeric conversion, not bit
   reinterpretation.
 - signed → `WordX` zero-extends, **not** sign-extends.
+- `WordY → WordX` narrows without `unsafe`, keeping the low X bits: a
+  `WordX` holds bits, not a number — it has neither arithmetic nor
+  ordering (see [binary](./binary.md)) — so dropping the high ones is the
+  operation asked for, not a value quietly going wrong. `IntX` and `NatX`
+  do carry a number and still guard their narrowing. Only the written
+  construction narrows: an initializer, an argument or a return never
+  truncates on its own.
 - `FloatY ↔ WordX` reinterprets bits (like `memcpy`), never converts
   numerically. **Not implemented**: both backends convert numerically
   instead, and the LLVM one emits IR that does not assemble
