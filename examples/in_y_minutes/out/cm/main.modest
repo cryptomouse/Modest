@@ -59,7 +59,7 @@ func sum (n: Int32) -> Int32 {
 }
 
 
-func announce: Action {
+func announce Action {
 	printf("modest says hi\n")
 }
 

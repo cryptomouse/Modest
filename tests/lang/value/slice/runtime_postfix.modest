@@ -1,0 +1,82 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECTED-FAIL(c11): BUG#7 postfix after a slice emits arr[from][i]
+// EXPECTED-FAIL(llvm): BUG#76 index into a slice with run-time bounds crashes the backend
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: index after a run-time slice
+// EXPECT-OUT: passed: slice after a run-time slice
+// EXPECT-OUT: passed: postfix after a run-time slice
+//
+// postfix.modest with run-time bounds.  Under LLVM the literal version
+// passes — it bitcasts to a pointer to `[N x T]` and indexes that — but a
+// run-time `N` has no such array type to index through.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func opaque (n: Int32) -> Int32 {
+	return n
+}
+
+
+func testIndex () -> Bool {
+	var a: [6]Int32 = [10, 20, 30, 40, 50, 60]
+	let i = opaque(2)
+	let j = opaque(5)
+
+	if a[i:j][0] != 30 or a[i:j][2] != 50 {
+		printf("a[2:5][0], a[2:5][2] = %d, %d, expected 30, 50\n", a[i:j][0], a[i:j][2])
+		return false
+	}
+
+	// Open bound, run-time index into the slice.
+	let k = opaque(1)
+	if a[i:][k] != 40 {
+		printf("a[2:][1] = %d, expected 40\n", a[i:][k])
+		return false
+	}
+
+	// Written through.
+	a[i:j][1] = 99
+	if a[3] != 99 {
+		printf("a[2:5][1] = 99 left a[3] = %d\n", a[3])
+		return false
+	}
+
+	printf("passed: index after a run-time slice\n")
+	return true
+}
+
+
+func testSliceOfSlice () -> Bool {
+	var a: [8]Int32 = [0, 1, 2, 3, 4, 5, 6, 7]
+	let i = opaque(1)
+
+	// a[1:7] is [1..6]; its [2:4] is [3, 4] — the offsets add up.
+	if a[i:i + 6][2:4][1] != 4 {
+		printf("a[1:7][2:4][1] = %d, expected 4\n", a[i:i + 6][2:4][1])
+		return false
+	}
+
+	printf("passed: slice after a run-time slice\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testIndex() and result
+	result = testSliceOfSlice() and result
+
+	if not result {
+		printf("failed: postfix after a run-time slice\n")
+		return exitFailure
+	}
+
+	printf("passed: postfix after a run-time slice\n")
+	return exitSuccess
+}
+
+

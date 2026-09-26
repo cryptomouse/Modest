@@ -1,0 +1,133 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECTED-FAIL(llvm): BUG#75 a slice with run-time bounds, read as a value, copies nothing
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: run-time slice into a variable
+// EXPECT-OUT: passed: run-time slice into a slice
+// EXPECT-OUT: passed: run-time slice as an argument
+// EXPECT-OUT: passed: run-time slice of a value in a register
+// EXPECT-OUT: passed: run-time slice as a value
+//
+// A slice with run-time bounds read as a value: stored, copied into another
+// slice, passed by value.  Its length is not a constant here, so the copy
+// has to be sized at run time — the literal-bounds counterpart is
+// value.modest, which passes on every backend.
+//
+// Every bound goes through `opaque`, so it cannot be folded away.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func opaque (n: Int32) -> Int32 {
+	return n
+}
+
+
+func sum3 (a: [3]Int32) -> Int32 {
+	return a[0] + a[1] + a[2]
+}
+
+
+func make () -> [5]Int32 {
+	return [5]Int32 [1, 2, 3, 4, 5]
+}
+
+
+func testVariable () -> Bool {
+	var a: [6]Int32 = [10, 20, 30, 40, 50, 60]
+	let i = opaque(2)
+	let j = opaque(5)
+
+	var s = a[i:j]
+	if s[0] != 30 or s[2] != 50 {
+		printf("s = a[2:5] = [%d, .., %d], expected [30, .., 50]\n", s[0], s[2])
+		return false
+	}
+
+	printf("passed: run-time slice into a variable\n")
+	return true
+}
+
+
+func testIntoSlice () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+	var b: [6]Int32 = [7, 8, 9, 10, 11, 12]
+	let i = opaque(1)
+	let j = opaque(4)
+
+	// Same range on both sides.
+	a[i:j] = b[i:j]
+	if a[0] != 1 or a[1] != 8 or a[2] != 9 or a[3] != 10 or a[4] != 5 {
+		printf("a[1:4] = b[1:4] gave [%d, %d, %d, %d, %d, ..], expected [1, 8, 9, 10, 5, ..]\n",
+			a[0], a[1], a[2], a[3], a[4])
+		return false
+	}
+
+	// Shifted ranges of the same length.
+	a[i:j] = b[i + 2:j + 2]
+	if a[1] != 10 or a[2] != 11 or a[3] != 12 or a[4] != 5 {
+		printf("a[1:4] = b[3:6] gave [.., %d, %d, %d, %d, ..], expected [.., 10, 11, 12, 5, ..]\n",
+			a[1], a[2], a[3], a[4])
+		return false
+	}
+
+	// Run-time source into a literal target.
+	a[0:2] = b[j:j + 2]
+	if a[0] != 11 or a[1] != 12 {
+		printf("a[0:2] = b[4:6] gave [%d, %d], expected [11, 12]\n", a[0], a[1])
+		return false
+	}
+
+	printf("passed: run-time slice into a slice\n")
+	return true
+}
+
+
+func testArgument () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+	let i = opaque(3)
+
+	if sum3(a[i:i + 3]) != 15 {
+		printf("sum3(a[3:6]) = %d, expected 15\n", sum3(a[i:i + 3]))
+		return false
+	}
+
+	printf("passed: run-time slice as an argument\n")
+	return true
+}
+
+
+func testRegisterValue () -> Bool {
+	let r = make()
+	let i = opaque(2)
+
+	var s = r[i:5]
+	if s[0] != 3 or s[2] != 5 {
+		printf("s = r[2:5] = [%d, .., %d], expected [3, .., 5]\n", s[0], s[2])
+		return false
+	}
+
+	printf("passed: run-time slice of a value in a register\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testVariable() and result
+	result = testIntoSlice() and result
+	result = testArgument() and result
+	result = testRegisterValue() and result
+
+	if not result {
+		printf("failed: run-time slice as a value\n")
+		return exitFailure
+	}
+
+	printf("passed: run-time slice as a value\n")
+	return exitSuccess
+}
+
+

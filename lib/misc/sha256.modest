@@ -173,13 +173,11 @@ func final (ctx: *Context) -> Hash {
 
 	++i
 
-	memset(&ctx.data[i], 0, SizeT (n - i))
-	//ctx.data[i:n-i] = []
+	ctx.data[i:n] = []
 
 	if ctx.datalen >= 56 {
 		transform(ctx, &ctx.data)
-		memset(&ctx.data, 0, 56)
-		//ctx.data[0:56] = []
+		ctx.data[0:56] = []
 	}
 
 	// Append to the padding the total message's length in bits and transform.

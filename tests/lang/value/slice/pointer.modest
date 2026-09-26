@@ -1,0 +1,174 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: slice of a pointer to array
+// EXPECT-OUT: passed: slice of a pointer to unsized array
+// EXPECT-OUT: passed: address of a slice
+// EXPECT-OUT: passed: slice of a field behind a pointer
+// EXPECT-OUT: passed: slice through a pointer
+//
+// A slice of a pointer to array dereferences it on its own, the same as an
+// index does.  `&a[i:j]` is a pointer to the sub-array — that is how
+// misc/aes256 hands half of its key to `addRoundKey(block, &ctx.key[16:32])`:
+// the callee sees a `*[N]T` whose element 0 is element `i` of the
+// original, and what it writes lands in the original.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Key = {
+	rounds: Nat32
+	key: [8]Nat32
+}
+
+
+func opaque (n: Nat32) -> Nat32 {
+	return n
+}
+
+
+func sum4 (p: *[4]Nat32) -> Nat32 {
+	return p[0] + p[1] + p[2] + p[3]
+}
+
+
+func sumN (p: *[]Nat32, n: Nat32) -> Nat32 {
+	var s = Nat32 0
+	var i = Nat32 0
+	while i < n {
+		s = s + p[i]
+		++i
+	}
+	return s
+}
+
+
+func bump4 (p: *[4]Nat32) -> Unit {
+	var i = Nat32 0
+	while i < 4 {
+		p[i] = p[i] + 100
+		++i
+	}
+}
+
+
+func testPointerToArray () -> Bool {
+	var a: [6]Nat32 = [1, 2, 3, 4, 5, 6]
+	let p = &a
+
+	p[2:4] = [2]Nat32 [30, 40]
+	if a[1] != 2 or a[2] != 30 or a[3] != 40 or a[4] != 5 {
+		printf("p[2:4] = [30, 40] did not reach a\n")
+		return false
+	}
+
+	let i = opaque(4)
+	p[i:i + 2] = [2]Nat32 [50, 60]
+	if a[3] != 40 or a[4] != 50 or a[5] != 60 {
+		printf("p[i:i + 2] = [50, 60] did not reach a\n")
+		return false
+	}
+
+	printf("passed: slice of a pointer to array\n")
+	return true
+}
+
+
+func testPointerToUnsized () -> Bool {
+	var a: [6]Nat32 = [1, 2, 3, 4, 5, 6]
+	let p: *[]Nat32 = &a
+
+	// No length on the type — only the bounds say how much.
+	p[1:3] = [2]Nat32 [20, 30]
+	if a[0] != 1 or a[1] != 20 or a[2] != 30 or a[3] != 4 {
+		printf("p[1:3] = [20, 30] did not reach a\n")
+		return false
+	}
+
+	let i = opaque(3)
+	p[i:i + 2] = []
+	if a[2] != 30 or a[3] != 0 or a[4] != 0 or a[5] != 6 {
+		printf("p[i:i + 2] = [] did not reach a\n")
+		return false
+	}
+
+	printf("passed: slice of a pointer to unsized array\n")
+	return true
+}
+
+
+func testAddressOf () -> Bool {
+	var a: [8]Nat32 = [1, 2, 3, 4, 5, 6, 7, 8]
+
+	// &a[i:j] points at a[i].
+	if sum4(&a[4:8]) != 26 or sum4(&a[0:4]) != 10 {
+		printf("sum4(&a[4:8]) = %d, expected 26\n", sum4(&a[4:8]))
+		return false
+	}
+
+	// With a run-time bound, and as a pointer to unsized array.
+	let i = opaque(2)
+	if sum4(&a[i:i + 4]) != 18 {
+		printf("sum4(&a[i:i + 4]) = %d, expected 18\n", sum4(&a[i:i + 4]))
+		return false
+	}
+	if sumN(&a[i:], 3) != 12 {
+		printf("sumN(&a[i:], 3) = %d, expected 12\n", sumN(&a[i:], 3))
+		return false
+	}
+
+	// What the callee writes lands in a.
+	bump4(&a[2:6])
+	if a[1] != 2 or a[2] != 103 or a[5] != 106 or a[6] != 7 {
+		printf("bump4(&a[2:6]) gave a[1..6] = [%d, %d, .., %d, %d]\n", a[1], a[2], a[5], a[6])
+		return false
+	}
+
+	printf("passed: address of a slice\n")
+	return true
+}
+
+
+func testFieldBehindPointer () -> Bool {
+	var k: Key
+	k.key = [1, 2, 3, 4, 5, 6, 7, 8]
+	let ctx = &k
+
+	// The misc/aes256 shape.
+	if sum4(&ctx.key[4:8]) != 26 or sum4(&ctx.key[0:4]) != 10 {
+		printf("sum4(&ctx.key[..]) wrong\n")
+		return false
+	}
+
+	// Copy the upper half over the lower one, both through the pointer.
+	ctx.key[0:4] = ctx.key[4:8]
+	if k.key[0] != 5 or k.key[3] != 8 or k.key[4] != 5 or k.key[7] != 8 {
+		printf("ctx.key[0:4] = ctx.key[4:8] gave [%d, .., %d, %d, .., %d]\n",
+			k.key[0], k.key[3], k.key[4], k.key[7])
+		return false
+	}
+
+	printf("passed: slice of a field behind a pointer\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testPointerToArray() and result
+	result = testPointerToUnsized() and result
+	result = testAddressOf() and result
+	result = testFieldBehindPointer() and result
+
+	if not result {
+		printf("failed: slice through a pointer\n")
+		return exitFailure
+	}
+
+	printf("passed: slice through a pointer\n")
+	return exitSuccess
+}
+
+

@@ -1,0 +1,20 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECTED-FAIL: BUG#78 a negative literal slice bound is accepted
+// EXPECT-ERROR: must be non-negative
+//
+// `a[-1]` is refused (`array index must be non-negative`); a slice bound
+// is an index into the same array and a negative literal is as wrong there.
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	var a: [8]Int32
+
+	a[-1:2] = []
+
+	return 0
+}
+
+

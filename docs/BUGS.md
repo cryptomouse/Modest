@@ -1564,3 +1564,82 @@ func main () -> Int {
   backends at once.
 - No reproducer in the suite yet - `layout_convert.modest` (BUG#73) only
   exercises `var` sources, which this does not affect.
+
+## BUG#75: LLVM backend copies a slice with run-time bounds as `[0 x T]`
+
+```modest
+var a: [6]Int32 = [10, 20, 30, 40, 50, 60]
+let i = opaque(2)
+let j = opaque(5)
+var s = a[i:j]                   // s[0] should be 30
+a[i:j] = b[i:j]                  // should copy three elements
+sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
+```
+
+- Every read of such a slice as a *value* — into a `var`, into another
+  slice, as a by-value argument, of a `let` bound to a call — comes out
+  wrong: the target keeps its old contents or gets garbage. Writing *into*
+  a run-time slice (a literal, `= []`) and `&a[i:j]` are fine, as is
+  everything under `-mbackend=c11`.
+- Cause: `do_eval_slice` (`src/backend/llvm.py:1341`) bitcasts the element
+  pointer to a pointer to the slice's type, and a slice whose volume is not
+  a constant becomes `[0 x %Int32]*`. The copy is then a `load` / `store`
+  of `[0 x %Int32]` — zero bytes — into an `alloca %Int32, %n`:
+  `%29 = load [0 x %Int32], [0 x %Int32]* %28`.
+- Fix, probably: a VLA-typed slice has to be copied with `llvm.memcpy` and
+  a run-time byte count (`(j - i) * sizeof(T)`), the way the C backend
+  already does.
+- Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
+  `EXPECTED-FAIL(llvm)`.
+
+## BUG#76: LLVM backend crashes on an index into a slice with run-time bounds
+
+```modest
+let x = a[i:j][0]
+```
+
+```
+step = lt.of.runtimeSizeRoots
+AttributeError: 'TypeSimple' object has no attribute 'runtimeSizeRoots'
+```
+
+- The slice has a VLA type, so `ass` (`src/backend/llvm.py:1305`) takes the
+  VLA path, which computes the step of each index from
+  `lt.of.runtimeSizeRoots` — an attribute only VLA *array* types get (from
+  `handleVLA`). For a one-dimensional slice `lt.of` is the element type
+  itself and the step is simply 1.
+- The literal-bounds case (`a[1:4][0]`) works under LLVM; under C11 both
+  hit BUG#7.
+- Reproducer: `tests/lang/value/slice/runtime_postfix.modest`, marked
+  `EXPECTED-FAIL(llvm)` (and `EXPECTED-FAIL(c11)` for BUG#7).
+
+## BUG#77: `lengthof` a slice with run-time bounds emits ill-typed LLVM IR
+
+```modest
+if lengthof(a[i:j]) != 5 { ... }       // i, j: Int32
+```
+
+```
+'%7' defined with type 'i32' but expected 'i64'
+```
+
+- `do_eval_lengthof_value` (`src/backend/llvm.py:2219`) returns the slice's
+  `runtimeVolume` as it is — `j - i`, computed in the type of the bounds —
+  while `lengthof` is typed `Size`. Nothing widens it. The C backend is
+  fine: C converts the operands of `!=` itself.
+- Reproducer: `tests/lang/value/slice/lengthof.modest`, marked
+  `EXPECTED-FAIL(llvm)`.
+
+## BUG#78: A negative literal slice bound is accepted
+
+```modest
+var a: [8]Int32
+a[-1] = 0                        // error: array index must be non-negative
+a[-1:2] = []                     // accepted, writes before the array
+```
+
+- `do_value_index` (`src/semantic.py:1477`) checks an immediate index for
+  `< 0`; `do_value_slice` (`src/semantic.py:1550`) checks only that the
+  length `to - from` is not negative.
+- Reproducer: `tests/lang/value/slice/reject_negative.modest`, marked
+  `EXPECTED-FAIL`.

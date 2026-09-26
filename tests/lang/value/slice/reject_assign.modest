@@ -1,0 +1,39 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: expected mutable value
+// EXPECT-ERROR: cannot implicitly construct `[2 - 0]Int32` from `[3]Int32`
+// EXPECT-ERROR: cannot implicitly construct `[3 - 0]Int32` from `[6 - 4]Int32`
+// EXPECT-ERROR: cannot implicitly construct `[2 - 0]Int32` from `[2]Nat32`
+// EXPECT-ERROR: type mismatch
+// EXPECT-ERROR: expected mutable value
+//
+// Assigning to a slice copies exactly its length of exactly its element
+// type — a longer or shorter array, or one of another element type, does
+// not fit, whether it is a literal or another slice.  The same holds the
+// other way round, a slice into a variable of another length.  And a slice
+// of something immutable is immutable: a `let`, a parameter.
+
+include "libc/ctypes64"
+
+
+func param (a: [4]Int32) -> Unit {
+	a[0:2] = []
+}
+
+
+func main () -> Int {
+	var a: [8]Int32
+	var n: [2]Nat32
+	let c: [4]Int32 = [1, 2, 3, 4]
+
+	a[0:2] = [3]Int32 [1, 2, 3]
+	a[0:3] = a[4:6]
+	a[0:2] = n
+	var s: [3]Int32 = a[0:2]
+	c[0:2] = []
+
+	param(c)
+	return 0
+}
+
+

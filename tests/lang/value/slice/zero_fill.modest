@@ -1,0 +1,187 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: zero fill with literal bounds
+// EXPECT-OUT: passed: zero fill with run-time bounds
+// EXPECT-OUT: passed: zero fill through a pointer
+// EXPECT-OUT: passed: zero fill of records
+// EXPECT-OUT: passed: slice zero fill
+//
+// `s = []` fills a slice with zeros — what misc/sha256 writes in place of
+// `memset(&ctx.data[i], 0, n - i)`: `ctx.data[i:n] = []`.
+//
+// The thing to get wrong is the size: it must be the length of the slice
+// times the size of an element — not the size of the whole array, not the
+// length in elements, not the distance from `i` to the end.  So the arrays
+// here are not of bytes, and every check looks at the neighbours on both
+// sides of the range as well as inside it.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+type Context = {
+	datalen: Nat32
+	data: [16]Word8
+	words: [8]Nat32
+}
+
+
+func opaque (n: Nat32) -> Nat32 {
+	return n
+}
+
+
+func zeros (a: *[8]Nat32) -> Nat32 {
+	var c = Nat32 0
+	var i = Nat32 0
+	while i < 8 {
+		if a[i] == 0 {
+			++c
+		}
+		++i
+	}
+	return c
+}
+
+
+func testLiteral () -> Bool {
+	var a: [8]Nat32 = [1, 2, 3, 4, 5, 6, 7, 8]
+
+	a[2:5] = []
+	if a[1] != 2 or a[2] != 0 or a[4] != 0 or a[5] != 6 or zeros(&a) != 3 {
+		printf("a[2:5] = [] gave [%d, %d, %d, %d, %d, %d, %d, %d]\n",
+			a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7])
+		return false
+	}
+
+	// The whole array, both bounds open.
+	a[:] = []
+	if zeros(&a) != 8 {
+		printf("a[:] = [] left %d elements non-zero\n", 8 - zeros(&a))
+		return false
+	}
+
+	printf("passed: zero fill with literal bounds\n")
+	return true
+}
+
+
+func testRuntime () -> Bool {
+	var a: [8]Nat32 = [1, 2, 3, 4, 5, 6, 7, 8]
+	let i = opaque(3)
+	let n = opaque(7)
+
+	a[i:n] = []
+	if a[2] != 3 or a[3] != 0 or a[6] != 0 or a[7] != 8 or zeros(&a) != 4 {
+		printf("a[i:n] = [] (3..7) gave [%d, %d, %d, %d, %d, %d, %d, %d]\n",
+			a[0], a[1], a[2], a[3], a[4], a[5], a[6], a[7])
+		return false
+	}
+
+	// An empty range is a no-op.
+	var b: [8]Nat32 = [1, 2, 3, 4, 5, 6, 7, 8]
+	b[n:n] = []
+	if zeros(&b) != 0 {
+		printf("b[n:n] = [] zeroed %d elements\n", zeros(&b))
+		return false
+	}
+
+	// One bound open, the other run-time.
+	b[i:] = []
+	if b[2] != 3 or zeros(&b) != 5 {
+		printf("b[i:] = [] zeroed %d elements, expected 5\n", zeros(&b))
+		return false
+	}
+	b[:i] = []
+	if zeros(&b) != 8 {
+		printf("b[:i] = [] left %d elements non-zero\n", 8 - zeros(&b))
+		return false
+	}
+
+	printf("passed: zero fill with run-time bounds\n")
+	return true
+}
+
+
+func testPointer () -> Bool {
+	var ctx: Context
+	var k = Nat32 0
+	while k < 16 {
+		ctx.data[k] = 0xFF
+		++k
+	}
+	k = 0
+	while k < 8 {
+		ctx.words[k] = 9
+		++k
+	}
+
+	let p = &ctx
+	let i = opaque(5)
+	let n = opaque(14)
+
+	// The misc/sha256 shape: a field of a record behind a pointer.
+	p.data[i:n] = []
+	if p.data[4] != 0xFF or p.data[5] != 0 or p.data[13] != 0 or p.data[14] != 0xFF {
+		printf("p.data[i:n] = [] wrong at the edges\n")
+		return false
+	}
+
+	// A wider element in the same record: two elements are eight bytes.
+	p.words[opaque(3):opaque(5)] = []
+	if zeros(&ctx.words) != 2 or ctx.words[2] != 9 or ctx.words[5] != 9 {
+		printf("p.words[3:5] = [] zeroed %d elements, expected 2\n", zeros(&ctx.words))
+		return false
+	}
+
+	// A pointer to the array itself.
+	let pw = &ctx.words
+	pw[0:opaque(1)] = []
+	if ctx.words[0] != 0 or ctx.words[1] != 9 {
+		printf("pw[0:1] = [] wrong: [%d, %d]\n", ctx.words[0], ctx.words[1])
+		return false
+	}
+
+	printf("passed: zero fill through a pointer\n")
+	return true
+}
+
+
+func testRecords () -> Bool {
+	var ps: [4]Point = [{x = 1, y = 1}, {x = 2, y = 2}, {x = 3, y = 3}, {x = 4, y = 4}]
+
+	ps[opaque(1):opaque(3)] = []
+	if ps[0].y != 1 or ps[1].x != 0 or ps[1].y != 0 or ps[2].x != 0 or ps[2].y != 0 or ps[3].x != 4 {
+		printf("ps[1:3] = [] wrong\n")
+		return false
+	}
+
+	printf("passed: zero fill of records\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testLiteral() and result
+	result = testRuntime() and result
+	result = testPointer() and result
+	result = testRecords() and result
+
+	if not result {
+		printf("failed: slice zero fill\n")
+		return exitFailure
+	}
+
+	printf("passed: slice zero fill\n")
+	return exitSuccess
+}
+
+
