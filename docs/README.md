@@ -1,6 +1,3 @@
-<p align="center">
-  <img src="modest_logo.png" alt="Modest" width="480">
-</p>
 
 # Modest
 

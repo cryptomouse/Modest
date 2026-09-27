@@ -1,4 +1,10 @@
 # Modest
+
+<p align="center">
+  <img src="modest_logo.png" alt="Modest" width="480">
+</p>
+
+
  Swift&Golang-like programming language, created for medium level system programming and embedded development.
  
 * Modern syntax for clear and readable code
