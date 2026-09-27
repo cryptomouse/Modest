@@ -1,7 +1,7 @@
 # Modest
 
 <p align="center">
-  <img src="docs/modest_logo.png" alt="Modest" width="480">
+  <img src="docs/modest_logo.png" alt="Modest" width="640">
 </p>
 
 
