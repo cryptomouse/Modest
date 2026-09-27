@@ -1,0 +1,45 @@
+// bits32.modest
+//
+
+
+@inline
+public func bitmask (len: Nat8) -> Word32 {
+	return Word32 (Nat32 (Word32 1 << len) - 1)
+}
+
+
+@inline
+public func extract (value: Word32, pos: Nat8, len: Nat8) -> Word32 {
+	return (value >> pos) & bitmask(len)
+}
+
+
+@inline
+public func set (x: Word32, no: Nat8) -> Word32 {
+	let mask = Word32 1 << no
+	return x | mask
+}
+
+
+@inline
+public func reset (x: Word32, no: Nat8) -> Word32 {
+	let mask = Word32 1 << no
+	return x & ~mask
+}
+
+
+public func switch (x: Word32, no: Nat8, val: Bool) -> Word32 {
+	if val {
+		return set(x, no)
+	} else {
+		return reset(x, no)
+	}
+	return 0
+}
+
+@inline
+public func check (x: Word32, no: Nat8) -> Bool {
+	let mask = Word32 1 << no
+	return x & mask != 0
+}
+

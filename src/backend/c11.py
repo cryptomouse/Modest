@@ -841,9 +841,12 @@ def do_cvalue_cons_int(x, ctx):
 	value = x.value
 	from_type = value.type
 
+	# WordN -> IntN: в C WordN это uintN_t, поэтому приведение обязательно,
+	# иначе сравнения/деление/сдвиги останутся беззнаковыми
 	if from_type.is_word() and type.width == from_type.width:
-		cv = do_cvalue(value, ctx=ctx)
-		return cv
+		if type.is_signed():
+			return do_cvalue_cast(type, value, ctx=ctx)
+		return do_cvalue(value, ctx=ctx)
 
 	if x.method in ['implicit', 'default']:
 		if value.is_literal():

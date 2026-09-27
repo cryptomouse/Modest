@@ -61,7 +61,7 @@ int main(void) {
 	#define fixed 30
 	int32_t locked = 40;
 	uint64_t w = (uint64_t)1 << 63;
-	int64_t asInt = w;
+	int64_t asInt = (int64_t)w;
 	printf("w = %llx -> asInt = %lld\n", w, asInt);
 	Meters height = 1.8;
 	printf("height = %f\n", (double)height);
