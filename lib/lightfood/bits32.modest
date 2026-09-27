@@ -28,6 +28,7 @@ public func reset (x: Word32, no: Nat8) -> Word32 {
 }
 
 
+@inline
 public func switch (x: Word32, no: Nat8, val: Bool) -> Word32 {
 	if val {
 		return set(x, no)
@@ -36,6 +37,7 @@ public func switch (x: Word32, no: Nat8, val: Bool) -> Word32 {
 	}
 	return 0
 }
+
 
 @inline
 public func check (x: Word32, no: Nat8) -> Bool {
