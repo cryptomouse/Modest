@@ -1,0 +1,201 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: write after slice
+// EXPECT-OUT: passed: assign to a slice of a slice
+// EXPECT-OUT: passed: slice of a slice as a value
+// EXPECT-OUT: passed: pointer to a slice of a slice
+// EXPECT-OUT: passed: slice of a slice through a pointer
+// EXPECT-OUT: passed: postfix use
+//
+// postfix.modest reads through a postfix after a slice; this test uses the
+// result every other way a slice can be used — as an assignment target, as
+// a value that is copied, passed and compared, and behind `&`.  The C
+// backend prints a slice as a pointer to its first element, `&a[from]`, so
+// a slice of a slice nests, `&(&a[from])[i]`, and every one of these uses
+// must take that pointer as it is instead of taking its address again.
+//
+// Guards BUG#7 (fixed 2026-09-28).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+
+type Key = {
+	rounds: Nat32
+	key: [8]Nat32
+}
+
+
+func sum2 (a: [2]Int32) -> Int32 {
+	return a[0] + a[1]
+}
+
+
+func sum2p (p: *[2]Int32) -> Int32 {
+	return p[0] + p[1]
+}
+
+
+func bump2 (p: *[2]Int32) -> Unit {
+	p[0] = p[0] + 100
+	p[1] = p[1] + 100
+}
+
+
+func sum2n (p: *[2]Nat32) -> Nat32 {
+	return p[0] + p[1]
+}
+
+
+func testWrite () -> Bool {
+	var a: [5]Int32 = [1, 2, 3, 4, 5]
+
+	// a[1:4][0] is a[1]; a[1:5][1:3][1] is a[3].
+	a[1:4][0] = 20
+	a[1:5][1:3][1] = 40
+	if a[0] != 1 or a[1] != 20 or a[2] != 3 or a[3] != 40 or a[4] != 5 {
+		printf("a = [%d, %d, %d, %d, %d], expected [1, 20, 3, 40, 5]\n", a[0], a[1], a[2], a[3], a[4])
+		return false
+	}
+
+	var ps: [3]Point = [{x = 1, y = 2}, {x = 3, y = 4}, {x = 5, y = 6}]
+	ps[1:3][1].x = 50
+	if ps[2].x != 50 or ps[2].y != 6 or ps[1].x != 3 {
+		printf("ps[1:3][1].x = 50 gave ps[2] = {%d, %d}\n", ps[2].x, ps[2].y)
+		return false
+	}
+
+	printf("passed: write after slice\n")
+	return true
+}
+
+
+func testAssign () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+
+	// a[1:5][1:3] is a[2:4].
+	a[1:5][1:3] = [2]Int32 [70, 80]
+	if a[1] != 2 or a[2] != 70 or a[3] != 80 or a[4] != 5 {
+		printf("a[1..4] = [%d, %d, %d, %d], expected [2, 70, 80, 5]\n", a[1], a[2], a[3], a[4])
+		return false
+	}
+
+	// And from another slice of a slice.
+	var b: [6]Int32 = [10, 20, 30, 40, 50, 60]
+	a[0:4][0:2] = b[2:6][2:4]
+	if a[0] != 50 or a[1] != 60 or a[2] != 70 {
+		printf("a[0..2] = [%d, %d, %d], expected [50, 60, 70]\n", a[0], a[1], a[2])
+		return false
+	}
+
+	printf("passed: assign to a slice of a slice\n")
+	return true
+}
+
+
+func testValue () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+
+	var s = a[1:5][1:3]
+	if lengthof(s) != 2 or s[0] != 3 or s[1] != 4 {
+		printf("s = a[1:5][1:3] = [%d, %d], expected [3, 4]\n", s[0], s[1])
+		return false
+	}
+
+	s[0] = 100
+	if a[2] != 3 {
+		printf("writing to a copy of a[1:5][1:3] changed a[2] to %d\n", a[2])
+		return false
+	}
+
+	if sum2(a[1:5][1:3]) != 7 {
+		printf("sum2(a[1:5][1:3]) = %d, expected 7\n", sum2(a[1:5][1:3]))
+		return false
+	}
+
+	var b: [4]Int32 = [0, 0, 3, 4]
+	if a[1:5][1:3] != b[2:4] {
+		printf("a[1:5][1:3] != b[2:4], expected equal\n")
+		return false
+	}
+
+	if a[1:5][0:2] == b[2:4] {
+		printf("a[1:5][0:2] == b[2:4], expected different\n")
+		return false
+	}
+
+	printf("passed: slice of a slice as a value\n")
+	return true
+}
+
+
+func testPointer () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+
+	// &a[1:5][1:3] points at a[2].
+	if sum2p(&a[1:5][1:3]) != 7 {
+		printf("sum2p(&a[1:5][1:3]) = %d, expected 7\n", sum2p(&a[1:5][1:3]))
+		return false
+	}
+
+	bump2(&a[1:5][2:4])
+	if a[2] != 3 or a[3] != 104 or a[4] != 105 or a[5] != 6 {
+		printf("bump2(&a[1:5][2:4]) gave a[2..5] = [%d, %d, %d, %d]\n", a[2], a[3], a[4], a[5])
+		return false
+	}
+
+	printf("passed: pointer to a slice of a slice\n")
+	return true
+}
+
+
+func testThroughPointer () -> Bool {
+	var k: Key = {rounds = 14, key = [1, 2, 3, 4, 5, 6, 7, 8]}
+	let ctx = &k
+
+	// ctx.key[2:6][1:3] is key[3:5] = [4, 5].
+	if ctx.key[2:6][1:3][0] != 4 {
+		printf("ctx.key[2:6][1:3][0] = %d, expected 4\n", ctx.key[2:6][1:3][0])
+		return false
+	}
+
+	if sum2n(&ctx.key[2:6][1:3]) != 9 {
+		printf("sum2n(&ctx.key[2:6][1:3]) = %d, expected 9\n", sum2n(&ctx.key[2:6][1:3]))
+		return false
+	}
+
+	ctx.key[4:8][2:4] = [2]Nat32 [70, 80]
+	if k.key[5] != 6 or k.key[6] != 70 or k.key[7] != 80 {
+		printf("k.key[5..7] = [%d, %d, %d], expected [6, 70, 80]\n", k.key[5], k.key[6], k.key[7])
+		return false
+	}
+
+	printf("passed: slice of a slice through a pointer\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testWrite() and result
+	result = testAssign() and result
+	result = testValue() and result
+	result = testPointer() and result
+	result = testThroughPointer() and result
+
+	if not result {
+		printf("failed: postfix use\n")
+		return exitFailure
+	}
+
+	printf("passed: postfix use\n")
+	return exitSuccess
+}

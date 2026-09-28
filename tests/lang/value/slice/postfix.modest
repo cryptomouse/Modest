@@ -15,6 +15,8 @@
 //
 // Every check goes through `opaque` so the indices are run-time values and
 // the answer cannot be folded out of the program.
+//
+// Guards BUG#7 (fixed 2026-09-28).
 
 include "libc/ctypes64"
 include "libc/stdio"

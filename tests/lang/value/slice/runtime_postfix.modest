@@ -9,6 +9,8 @@
 // postfix.modest with run-time bounds.  Under LLVM the literal version
 // passes — it bitcasts to a pointer to `[N x T]` and indexes that — but a
 // run-time `N` has no such array type to index through.
+//
+// Guards BUG#7 (fixed 2026-09-28).
 
 include "libc/ctypes64"
 include "libc/stdio"
