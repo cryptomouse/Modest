@@ -22,8 +22,8 @@ func main () -> Int
 	printf("constantPoint = {x=%f, y=%f}\n", Float32 constantPoint.x, Float32 constantPoint.y)
 	printf("variablePoint = {x=%f, y=%f}\n", Float32 variablePoint.x, Float32 variablePoint.y)
 
-	var a = []Int32 [1, 2, 3, 4]
-	a[2:2] = []
+	const K: Int32 = 5
+	printf("%d\n", K)             // no hang any more, but see below
 
 	return 0
 }

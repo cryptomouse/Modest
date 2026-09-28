@@ -1,0 +1,73 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: operator after call
+// EXPECT-OUT: passed: nested calls
+// EXPECT-OUT: passed: composite arguments
+// EXPECT-OUT: passed: multiline call
+//
+// An argument list laid out over several lines, one argument per line,
+// with the `)` on a line of its own.  The token after that `)` belongs to
+// the expression around the call: it was once consumed together with the
+// `)`, so `f(...) * 10` quietly compiled as `f(...)` followed by a
+// statement `10`.
+//
+// Guards BUG#20 (fixed 2026-09-28).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func add (a: Int32, b: Int32) -> Int32 {
+	return a + b
+}
+
+func sum3 (a: [3]Int32) -> Int32 {
+	return a[0] + a[1] + a[2]
+}
+
+
+func main () -> Int {
+	let scaled = add(
+		1
+		2
+	) * 10
+	if scaled != 30 {
+		printf("add(1, 2) * 10 = %d, expected 30\n", scaled)
+		printf("failed: operator after call\n")
+		return exitFailure
+	}
+	printf("passed: operator after call\n")
+
+	let nested = add(
+		add(
+			1
+			2
+		) * 2,
+		add(3, 4)
+	) + 100
+	if nested != 113 {
+		printf("nested = %d, expected 113\n", nested)
+		printf("failed: nested calls\n")
+		return exitFailure
+	}
+	printf("passed: nested calls\n")
+
+	let composite = sum3(
+		[
+			1
+			2
+			3
+		]
+	) - 1
+	if composite != 5 {
+		printf("composite = %d, expected 5\n", composite)
+		printf("failed: composite arguments\n")
+		return exitFailure
+	}
+	printf("passed: composite arguments\n")
+
+	printf("passed: multiline call\n")
+	return exitSuccess
+}

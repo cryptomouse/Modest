@@ -119,42 +119,6 @@ error: for use 'unsafe' operator required -funsafe option
 - Docs updated to match the current behaviour: `docs/CHEATSHEET.md`
   (construction rules), `docs/lang/value/cons.md`, `docs/USAGE.md`.
 
-## BUG#20: Malformed expression in a call argument makes `parse_args` spin
-
-```modest
-const K: Int32 = 5
-printf("%d\n", K)             // no hang any more, but see below
-```
-
-- Cause: `parse_args` (`src/parser.py`) has no progress guard — when
-  `expr_value` stops without consuming the offending token, the loop keeps
-  re-parsing it.
-- The malformed argument here is a capitalized value identifier: `K` is a type
-  name to the parser, so in a value position `expr_value` stops without
-  consuming it and the argument list is left standing on `)`. Since 2026-09-08
-  the definition is refused first, at its own site (`value identifier must
-  start with a small letter; 'K' names a type`), but the call behind it still
-  derails: `unexpected token1 ')'`, then `expected separator`, and only then
-  does `parse_args` start spinning — so the useful diagnostic is not the last
-  thing the user sees.
-- Since the lexer got a real end-of-input token (2026-08-30), this no longer
-  hangs: the loop drains the rest of the file, then hits `MAX_ERRORS` at EOF
-  and exits. That is termination by accident, not a fix — the loop still makes
-  no progress, and `expected separator` / `unexpected token1 'end-of-file'`
-  alternate until the ten-error limit (`MAX_ERRORS`, `src/error.py`) cuts the
-  run off; verified 2026-09-08. `parse_args` still needs a no-progress guard.
-- The original triggers no longer reproduce at all:
-
-  ```modest
-  let w = Word32 0x0F
-  printf("%d\n", ~ Word64 w)  // compiles cleanly now
-  ```
-
-  Both were unary operators applied above the postfix level of the precedence table;
-  verified 2026-08-30 that this compiles without a diagnostic, and again
-  2026-09-08. Whether it *should* is a question about the operand-type rules,
-  not about this bug.
-
 ## BUG#22: An inline comment after a trailing operator breaks line continuation
 
 ```modest
@@ -1597,3 +1561,60 @@ a[-1:2] = []                     // accepted, writes before the array
   length `to - from` is not negative.
 - Reproducer: `tests/lang/value/slice/reject_negative.modest`, marked
   `EXPECTED-FAIL`.
+
+## BUG#79: A block left open at the end of the file makes `stmt_block` spin
+
+```modest
+func main () -> Int {
+	if 1 == 1 {
+	return 0
+}
+```
+
+```
+error: unexpected token1 'end-of-file'      (ten times, then the run stops)
+```
+
+- The loop of `stmt_block` (`src/parser.py`) ends only on `}`; it never asks
+  `is_end()`.  At the end of the file the statement it tries to parse is an
+  expression that starts with end-of-file, and `skip1()` cannot step past
+  the last token, so the same statement is re-parsed until `MAX_ERRORS`
+  (`src/error.py`) cuts the run off.
+- None of the ten diagnostics says what is wrong — a `}` is missing — or
+  points at the `{` that was left open.  Wanted: one `expected '}'` at the
+  end of the file, ideally naming the line of the open brace.
+- Same family as the argument-list spin fixed with BUG#20: a list loop
+  without an end-of-input or no-progress guard.
+- Reproducer: `tests/lang/stmt/block/reject_unclosed.modest`, marked
+  `EXPECTED-FAIL`.
+
+## BUG#80: A record literal with a bad field is reported again, and its type prints as a Python object
+
+```modest
+func take (a: Int32, b: Int32 = 0) -> Int32 { return a }
+
+let x = take({x = )}, 2)
+```
+
+```
+error: unexpected token1 ')'
+error: cannot implicitly construct `Int32` from `{x: <hlir.types.TypeBad object at 0x109f65940>}`
+```
+
+- The first diagnostic is the real one.  The second is a cascade: the field
+  value that failed to parse became a `ValueBad` of `TypeBad`, the record
+  literal around it got the type `{x: TypeBad}`, and implicit construction
+  into the parameter type fails on it.  `value_cons_implicit`
+  (`src/value/cons.py`) skips a value that is bad itself (`v.is_bad()`),
+  but not a composite value with a bad part, so the error is raised in
+  `value_cons_implicit_check`.
+- The type is printed by `str_type2` (`src/backend/modest.py`), which has a
+  branch for every kind of type except a bad one; `TypeBad` falls through to
+  `str(t)`, the default Python `repr`.
+- Two fixes, independent: treat a type with a bad part as bad for the
+  purpose of reporting (so the cascade is not reported at all), and give
+  `str_type2` an `is_bad()` branch so a bad type can never print as an
+  object address anywhere.
+- No reproducer: `EXPECT-ERROR` can require a diagnostic but not its
+  absence, so the suite cannot state "reported once".  The leak itself can
+  be checked by eye with the example above.

@@ -8,6 +8,9 @@ from unicode import utf32cc_to_utf8_str
 
 top_level_stoppers = ['type', 'let', 'const', 'var', 'func']
 func_stoppers = ['let', 'var', 'if', 'while', 'return', 'type']
+# Tokens no argument can start with: an argument list that reaches one has
+# lost its `)`
+args_stoppers = ['}'] + top_level_stoppers + func_stoppers
 
 # 'func name: (...) -> Ret' is the recommended form; 'func name (...) -> Ret'
 # still parses. Set to False to accept the colon-less form silently again,
@@ -72,6 +75,8 @@ def isUpperIdentifierToken(token):
 class Parser:
 	def __init__(self):
 		self.comment = None
+		# closing tokens of the lists being parsed, innermost last
+		self.closers = []
 		pass
 
 	def is_end(self):
@@ -241,7 +246,7 @@ class Parser:
 		return {'isa': 'ast_id', 'kind': 'id', 'str': s, 'ti': ti}
 
 
-	def need_sep(self, separators=['\n', ';'], stoppers=['}'], eat=True):
+	def need_sep(self, separators=['\n', ';'], stoppers=['}'], eat=True, restore_to=top_level_stoppers + func_stoppers):
 		if self.ctok() in separators:
 			if eat:
 				while self.is_operator() and self.ctok() in separators:
@@ -254,7 +259,7 @@ class Parser:
 			pass
 		else:
 			error("expected separator", self.textInfo())
-			self.restore(top_level_stoppers + func_stoppers)
+			self.restore(restore_to)
 			return False
 
 		return True
@@ -1024,18 +1029,30 @@ class Parser:
 			return y
 
 
+	def in_list(self, closer, parse, *args):
+		self.closers.append(closer)
+		try:
+			return parse(*args)
+		finally:
+			self.closers.pop()
+
+
 	def parse_args(self):
+		# Leaves the closing `)` to the caller.  When it is missing, reports
+		# it and stops where the enclosing statement can resume.
 		args = []
-		while not self.look(")"):
-			arg = None
-			#print(self.ctok())
-			#self.skip_tokens_class(['nl'])
+		self.closers.append(')')
+		while True:
 			nl_cnt = 0
 			while self.token_class_is('nl'):
 				self.skip1()
 				nl_cnt += 1
 
-			if self.match(")"):
+			if self.look(")"):
+				break
+
+			if self.is_end() or self.ctok() in args_stoppers:
+				error("expected ')' token", self.textInfo())
 				break
 
 			comm = self.parse_if_comment()
@@ -1044,6 +1061,7 @@ class Parser:
 				#args.append(comm)
 				continue
 
+			pos = self.getpos()
 			mid_ti = self.textInfo()
 			start_ti = mid_ti
 			end_ti = mid_ti
@@ -1069,8 +1087,15 @@ class Parser:
 			args.append(arg)
 
 			if not self.token_class_is('nl'):
-				self.need_sep(separators=[',', '\n'], stoppers=[')'])
+				self.need_sep(separators=[',', '\n'], stoppers=[')'], restore_to=[')', '\n'] + args_stoppers)
 
+			# An argument that stopped on a token it cannot use would be
+			# re-parsed from the same place forever (BUG#20).
+			if self.getpos() == pos:
+				error("expected ')' token", self.textInfo())
+				break
+
+		self.closers.pop()
 		return args
 
 
@@ -1082,7 +1107,7 @@ class Parser:
 			if self.match("("):
 				args = self.parse_args()
 				end_ti = self.textInfo()
-				self.skip(")")
+				self.match(")")
 				v = {
 					'isa': 'ast_value',
 					'kind': HLIR_VALUE_OP_CALL,
@@ -1642,10 +1667,10 @@ class Parser:
 #			return {'isa': 'ast_value', 'kind': 'tag', 'tag': num, 'ti': ti_start}
 
 		elif self.look("["):
-			return self.parse_value_array(ti_start)
+			return self.in_list(']', self.parse_value_array, ti_start)
 
 		elif self.look("{"):
-			return self.parse_value_record(ti_start)
+			return self.in_list('}', self.parse_value_record, ti_start)
 
 		else:
 			cl = self.ctok_class()
@@ -1657,7 +1682,10 @@ class Parser:
 				tokstr = 'end-of-file'
 
 			error("unexpected token1 '%s'" % tokstr, self.textInfo())
-			self.skip1()
+			# The closer of the list around this value is left for that
+			# list to end on.
+			if not (len(self.closers) > 0 and tokstr in [self.closers[-1], ',']):
+				self.skip1()
 			return ast_value_bad(ti_start)
 
 
@@ -2268,7 +2296,7 @@ class Parser:
 		args = []
 		if self.match("("):
 			args = self.parse_args()
-			self.need(")")
+			self.match(")")
 
 		return {
 			'isa': 'ast_annotation',

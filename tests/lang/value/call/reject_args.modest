@@ -1,0 +1,63 @@
+// TEST: reject
+// EXPECT-ERROR: value identifier must start with a small letter; 'K' names a type
+// EXPECT-ERROR: unexpected token1 ')'
+// EXPECT-ERROR: unexpected token1 ','
+// EXPECT-ERROR: expected separator
+// EXPECT-ERROR: unexpected token1 ')'
+// EXPECT-ERROR: expected ')' token
+// EXPECT-ERROR: undefined value 'reached'
+//
+// A malformed argument costs one diagnostic, and the parser resumes after
+// the call it sits in — past its `)`, or, when that is missing, at the
+// statement that follows.  Each function below is a separate way for an
+// argument to stop short.
+//
+// What the order checks: EXPECT-ERROR is matched in sequence, and every
+// site's diagnostic can only appear if the one before it let go of the
+// argument list.  The last function is a plain semantic error; it is
+// reported only if the whole file was parsed, so it fails the test when
+// recovery swallows the rest of the file (the argument loop used to
+// re-parse the same token until the error limit cut the run off).
+//
+// Guards BUG#20 (fixed 2026-09-28).
+
+include "libc/ctypes64"
+
+
+const K: Int32 = 5
+
+func take (a: Int32, b: Int32 = 0) -> Int32 {
+	return a + b
+}
+
+
+// `K` is a type name to the parser, so it starts a construction whose
+// operand would be the call's own `)`
+func capitalized () -> Int32 {
+	return take(K)
+}
+
+// the same, stopping on a `,`
+func typeArgument () -> Int32 {
+	return take(Int32, 2)
+}
+
+func noSeparator () -> Int32 {
+	return take(1 2)
+}
+
+// the `)` inside the array literal is not the call's
+func insideArray () -> Int32 {
+	let x = take([1, )], 2)
+	return 0
+}
+
+func unclosed () -> Int32 {
+	let x = take(1, 2
+	return x
+}
+
+
+func main () -> Int {
+	return reached
+}
