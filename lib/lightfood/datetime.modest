@@ -6,7 +6,6 @@ include "libc/string"
 include "libc/stdio"
 
 
-
 public type Date = @public {
 	year: Nat32
 	month: Nat8

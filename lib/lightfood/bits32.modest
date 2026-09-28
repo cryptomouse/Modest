@@ -15,6 +15,12 @@ public func extract (value: Word32, pos: Nat8, len: Nat8) -> Word32 {
 
 
 @inline
+public func insert (value: Word32, bitfield: Word32, pos: Nat8, len: Nat8) -> Word32 {
+	return (value & ~(bitmask(len) << pos)) | ((bitfield & bitmask(len)) << pos)
+}
+
+
+@inline
 public func set (x: Word32, no: Nat8) -> Word32 {
 	let mask = Word32 1 << no
 	return x | mask
