@@ -47,6 +47,71 @@ declare void @llvm.stackrestore(i8*)
 
 
 
+%CPU.Word = type i64
+define weak i1 @memeq(i8* %mem0, i8* %mem1, i64 %len) {
+	%1 = udiv i64 %len, 8
+	%2 = bitcast i8* %mem0 to [0 x %CPU.Word]*
+	%3 = bitcast i8* %mem1 to [0 x %CPU.Word]*
+	%4 = alloca i64
+	store i64 0, i64* %4
+	br label %again_1
+again_1:
+	%5 = load i64, i64* %4
+	%6 = icmp ult i64 %5, %1
+	br i1 %6 , label %body_1, label %break_1
+body_1:
+	%7 = load i64, i64* %4
+	%8 = getelementptr inbounds [0 x %CPU.Word], [0 x %CPU.Word]* %2, i32 0, i64 %7
+	%9 = load %CPU.Word, %CPU.Word* %8
+	%10 = load i64, i64* %4
+	%11 = getelementptr inbounds [0 x %CPU.Word], [0 x %CPU.Word]* %3, i32 0, i64 %10
+	%12 = load %CPU.Word, %CPU.Word* %11
+	%13 = icmp ne %CPU.Word %9, %12
+	br i1 %13 , label %then_0, label %endif_0
+then_0:
+	ret i1 0
+	br label %endif_0
+endif_0:
+	%15 = load i64, i64* %4
+	%16 = add i64 %15, 1
+	store i64 %16, i64* %4
+	br label %again_1
+break_1:
+	%17 = urem i64 %len, 8
+	%18 = load i64, i64* %4
+	%19 = getelementptr inbounds [0 x %CPU.Word], [0 x %CPU.Word]* %2, i32 0, i64 %18
+	%20 = bitcast %CPU.Word* %19 to [0 x i8]*
+	%21 = load i64, i64* %4
+	%22 = getelementptr inbounds [0 x %CPU.Word], [0 x %CPU.Word]* %3, i32 0, i64 %21
+	%23 = bitcast %CPU.Word* %22 to [0 x i8]*
+	store i64 0, i64* %4
+	br label %again_2
+again_2:
+	%24 = load i64, i64* %4
+	%25 = icmp ult i64 %24, %17
+	br i1 %25 , label %body_2, label %break_2
+body_2:
+	%26 = load i64, i64* %4
+	%27 = getelementptr inbounds [0 x i8], [0 x i8]* %20, i32 0, i64 %26
+	%28 = load i8, i8* %27
+	%29 = load i64, i64* %4
+	%30 = getelementptr inbounds [0 x i8], [0 x i8]* %23, i32 0, i64 %29
+	%31 = load i8, i8* %30
+	%32 = icmp ne i8 %28, %31
+	br i1 %32 , label %then_1, label %endif_1
+then_1:
+	ret i1 0
+	br label %endif_1
+endif_1:
+	%34 = load i64, i64* %4
+	%35 = add i64 %34, 1
+	store i64 %35, i64* %4
+	br label %again_2
+break_2:
+	ret i1 1
+}
+
+
 define internal %Fixed32 @__fixed32_mul(%Fixed32 %a, %Fixed32 %b, i8 %f) {
 	%1 = sext %Fixed32 %a to i64
 	%2 = sext %Fixed32 %b to i64
@@ -208,6 +273,7 @@ declare void @perror(%ConstCharStr* %str)
 @.str1 = private constant [14 x i8] [i8 72, i8 101, i8 108, i8 108, i8 111, i8 32, i8 87, i8 111, i8 114, i8 108, i8 100, i8 33, i8 10, i8 0]
 @.str2 = private constant [30 x i8] [i8 99, i8 111, i8 110, i8 115, i8 116, i8 97, i8 110, i8 116, i8 80, i8 111, i8 105, i8 110, i8 116, i8 32, i8 61, i8 32, i8 123, i8 120, i8 61, i8 37, i8 102, i8 44, i8 32, i8 121, i8 61, i8 37, i8 102, i8 125, i8 10, i8 0]
 @.str3 = private constant [30 x i8] [i8 118, i8 97, i8 114, i8 105, i8 97, i8 98, i8 108, i8 101, i8 80, i8 111, i8 105, i8 110, i8 116, i8 32, i8 61, i8 32, i8 123, i8 120, i8 61, i8 37, i8 102, i8 44, i8 32, i8 121, i8 61, i8 37, i8 102, i8 125, i8 10, i8 0]
+@.str4 = private constant [13 x i8] [i8 97, i8 32, i8 61, i8 61, i8 32, i8 98, i8 32, i8 63, i8 32, i8 37, i8 100, i8 10, i8 0]
 ; -- endstrings --
 %Point = type {
 	%Fixed32,
@@ -218,6 +284,11 @@ declare void @perror(%ConstCharStr* %str)
 	%Fixed32 65536,
 	%Fixed32 131072
 }
+%Sample = type {
+	%Word8,
+	%Int32
+};
+
 define %Int @main() {
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([14 x i8]* @.str1 to [0 x i8]*))
 	%2 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([30 x i8]* @.str2 to [0 x i8]*), %Float32 1.0, %Float32 2.0)
@@ -230,6 +301,21 @@ define %Int @main() {
 	%9 = sitofp %Fixed32 %8 to %Float32
 	%10 = fdiv %Float32 %9, 65536.0
 	%11 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([30 x i8]* @.str3 to [0 x i8]*), %Float32 %6, %Float32 %10)
+	%12 = alloca %Sample, align 4
+	%13 = bitcast i8 1 to %Word8
+	%14 = insertvalue %Sample zeroinitializer, %Word8 %13, 0
+	%15 = insertvalue %Sample %14, %Int32 7, 1
+	store %Sample %15, %Sample* %12
+	%16 = alloca %Sample, align 4
+	%17 = bitcast i8 1 to %Word8
+	%18 = insertvalue %Sample zeroinitializer, %Word8 %17, 0
+	%19 = insertvalue %Sample %18, %Int32 7, 1
+	store %Sample %19, %Sample* %16
+	%20 = bitcast %Sample* %12 to i8*
+	%21 = bitcast %Sample* %16 to i8*
+	%22 = call i1 (i8*, i8*, i64) @memeq(i8* %20, i8* %21, %Int64 8)
+	%23 = icmp ne %Bool %22, 0
+	%24 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str4 to [0 x i8]*), %Bool %23)
 	ret %Int 0
 }
 

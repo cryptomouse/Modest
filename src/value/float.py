@@ -2,7 +2,7 @@
 from hlir import *
 from common import settings
 from error import info, warning, error
-from real import float_max, float_overflows, str_fractional
+from real import float_max, float_overflows, str_fractional, bits_to_float
 from .fixed import fixed_to_number
 
 
@@ -41,6 +41,13 @@ def value_float_cons(t, v, method, ti):
 		if v.type.is_fixed():
 			# снимаем масштаб: сырое хранилище -> точное значение
 			a = fixed_to_number(v.asset, v.type.fraction)
+
+		if v.type.is_word():
+			# unsafe(FloatX WordY): биты, а не число - младшие X бит
+			# и есть кодировка IEEE 754. Переполнению тут взяться неоткуда
+			nv.set_asset(bits_to_float(v.asset, t.width))
+			nv.stage = HLIR_VALUE_STAGE_COMPILETIME
+			return nv
 
 		# то же правило, что у целых (см. value_int_cons): за диапазон типа
 		# константа не выходит. В рантайме переполнение дает бесконечность,

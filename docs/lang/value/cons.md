@@ -56,9 +56,10 @@ Key behaviors:
   construction narrows: an initializer, an argument or a return never
   truncates on its own.
 - `FloatY ↔ WordX` reinterprets bits (like `memcpy`), never converts
-  numerically. **Not implemented**: both backends convert numerically
-  instead, and the LLVM one emits IR that does not assemble
-  (BUG#36).
+  numerically. The bits move between equal widths, and the width then
+  changes on the `WordX` side, as in `WordY → WordX`: `Word64` of a
+  `Float32` is its pattern zero-extended, `unsafe(Float32 w)` of a
+  `Word64` takes the low 32 bits.
 - `FloatY → IntX/NatX` truncates the fraction. **Partly implemented**:
   a float wider than the integer is refused as `integer overflow`, so only
   `Int64 ← Float64` and `Int32 ← Float32` work (BUG#37).

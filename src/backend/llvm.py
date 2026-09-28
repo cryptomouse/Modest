@@ -1786,11 +1786,34 @@ def do_eval_to_fixed(x):
 
 
 
+# FloatY <-> WordX: биты, а не число (docs/lang/value/cons.md). bitcast
+# ходит только между равными ширинами, поэтому ширину меняем на стороне
+# WordX - обычным WordY -> WordX (zext или trunc)
+def do_eval_float_bits(x):
+	if x.is_immediate():
+		return do_eval_literal(x)
+
+	v = do_reval(x.value)
+	if x.type.is_word():
+		bits = llvm_cast('bitcast', v, type_word_create(x.value.type.width))
+		if bits['type'].width == x.type.width:
+			return bits
+		return docast(bits, x.type)
+
+	if v['type'].width != x.type.width:
+		v = docast(v, type_word_create(x.type.width))
+	return llvm_cast('bitcast', v, x.type)
+
+
+
 def do_eval_cons(x):
 	#info("do_eval_cons", x.ti)
 	value = x.value
 	from_type = value.type
 	type = x.type
+
+	if (from_type.is_float() and type.is_word()) or (from_type.is_word() and type.is_float()):
+		return do_eval_float_bits(x)
 
 	# (!) WARNING (!)
 	# - in C  int32(-1) -> uint64 => 0xffffffffffffffff

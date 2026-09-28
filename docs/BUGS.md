@@ -423,48 +423,6 @@ if nan != nan { printf("NaN\n") }    // c11: prints    llvm: does not
 - Coverage: `tests/lang/type/float/nan.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#36: `FloatX` ↔ `WordX` converts numerically instead of reinterpreting bits
-
-```modest
-var f: Float32 = 1.0
-printf("0x%08x\n", Word32 f)        // c11: 0x00000001, expected 0x3F800000
-
-var w: Word32 = 0x3F800000
-var g: Float32 = unsafe(Float32 w)
-printf("%f\n", Float64 g)           // c11: 1065353216.0, expected 1.0
-```
-
-- `docs/lang/value/cons.md` states the rule twice: "`FloatY ↔ WordX`
-  reinterprets bits (like `memcpy`), never converts numerically", and the
-  construction table gives `WordX ← FloatY` as explicit, `FloatX ← WordY`
-  as unsafe. `docs/CHEATSHEET.md` repeats it. Nothing implements it.
-- The C backend prints an ordinary C cast — `(uint32_t)f` — so the value is
-  rounded rather than reinterpreted, and a negative float is worse than
-  wrong: `Word32 (-2.0)` is undefined behaviour in C and comes out `0`.
-- The LLVM backend does not get that far in the `Float → Word` direction:
-  it prints `%4 = cast %Float32 %3 to %Word32`, and `cast` has not been an
-  LLVM instruction since 2.9, so the module does not assemble. The
-  `Word → Float` direction assembles and is numeric, like C.
-- The compile-time fold is a third path and a third failure. `unsafe(Word32
-  one)` on a `const Float32` dies in `value_word_cons`
-  (`src/value/word.py:54`), which passes the folded float to `int_zext`:
-
-  ```
-  File "src/bits.py", line 50, in int_to_bitstring
-      return format(x & (2**width - 1), '0%db' % width)
-  TypeError: unsupported operand type(s) for &: 'float' and 'int'
-  ```
-
-- Expected: both directions move the bits — `memcpy` or a union in C, a
-  `bitcast` in LLVM IR — and the fold packs and unpacks the IEEE 754
-  encoding (`struct.pack`) rather than treating the asset as an integer.
-- This is the only way to reach the values IEEE 754 has and the language
-  has no literal for: infinity, NaN, a denormal. Nothing else in the
-  language names them.
-- Coverage: `tests/lang/type/float/bits.modest`, marked `EXPECTED-FAIL`.
-  It uses run-time values only — a compile-time one would crash the
-  compiler and hide the rest of the file.
-
 ## BUG#37: `IntX` from a wider `FloatY` is rejected as an integer overflow
 
 ```modest

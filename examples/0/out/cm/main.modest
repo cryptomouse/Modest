@@ -9,6 +9,12 @@ const genericPoint = {x = 1.0, y = 2.0}
 const constantPoint: Point = genericPoint
 var variablePoint: Point = genericPoint
 
+
+type Sample = {
+	tag: Word8  // 1 byte, then 3 bytes of padding
+	value: Int32
+}
+
 @nonstatic
 func main () -> Int {
 	printf("Hello World!\n")
@@ -17,6 +23,13 @@ func main () -> Int {
 
 	printf("constantPoint = {x=%f, y=%f}\n", Float32 constantPoint.x, Float32 constantPoint.y)
 	printf("variablePoint = {x=%f, y=%f}\n", Float32 variablePoint.x, Float32 variablePoint.y)
+
+
+	var a: Sample = {tag = 0x01, value = 7}
+	var b: Sample = {tag = 0x01, value = 7}
+
+
+	printf("a == b ? %d\n", a == b)
 
 	return 0
 }

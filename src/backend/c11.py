@@ -776,6 +776,9 @@ def do_cvalue_cons(x, ctx):
 		if x.is_immediate():
 			return do_cvalue_from_fixed_folded(t, x, ctx)
 
+	if (x.value.type.is_float() and t.is_word()) or (x.value.type.is_word() and t.is_float()):
+		return do_cvalue_float_bits(x, ctx)
+
 	cv = None
 	if t.is_int(): cv = do_cvalue_cons_int(x, ctx)
 	elif t.is_nat(): cv = do_cvalue_cons_nat(x, ctx)
@@ -796,6 +799,41 @@ def do_cvalue_cons(x, ctx):
 	#elif type.is_branded(): return do_cvalue_cast(x.type, x.value, ctx)
 	assert(cv != None)
 	return cv
+
+
+# FloatY <-> WordX: биты, а не число (docs/lang/value/cons.md). Приведение
+# в C числовое, поэтому биты переносит union - в C11 это законный type
+# punning, и он остается выражением: ((union {float f; uint32_t w;}){.f = x}).w
+# Union ходит только между равными ширинами, ширину меняем на стороне
+# WordX - приведением беззнакового, то есть zext или усечением
+def do_cvalue_float_bits(x, ctx):
+	t = x.type
+	from_type = x.value.type
+
+	if x.is_immediate():
+		if t.is_word():
+			return cvalue_literal_integer(x.asset, width=t.width, is_unsigned=True, as_hex=True, ctx=ctx)
+		cv = do_cvalue_literal_rational(x, ctx)
+		return cv if t.width == 64 else CValueCast(do_ctype(t), cv)
+
+	float_type = from_type if from_type.is_float() else t
+	word_ctype = do_ctype(type_word_create(float_type.width))
+	fields = [CField('f', do_ctype(float_type)), CField('w', word_ctype)]
+	union_ctype = CTypeStruct(fields, specifiers=[], tag='union')
+
+	cv = do_cvalue(x.value, ctx)
+	if t.is_word():
+		pun = CValueCast(union_ctype, CValueStruct([KV('f', cv, nl=0)]))
+		cv = CValueFieldAccess(CValueParen(pun), 'w')
+		if t.width != from_type.width:
+			cv = CValueCast(do_ctype(t), cv)
+		return cv
+
+	if t.width != from_type.width:
+		cv = CValueCast(word_ctype, cv)
+	pun = CValueCast(union_ctype, CValueStruct([KV('w', cv, nl=0)]))
+	return CValueFieldAccess(CValueParen(pun), 'f')
+
 
 
 def do_cvalue_cons_word(x, ctx):

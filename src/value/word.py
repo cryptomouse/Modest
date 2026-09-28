@@ -2,6 +2,7 @@
 from hlir import *
 from error import info, warning, error
 from bits import nbits_for_num, int_zext
+from real import float_to_bits
 
 
 
@@ -56,13 +57,17 @@ def value_word_cons(t, v, method, ti):
 				error("word overflow", ti)
 
 		nv.stage = HLIR_VALUE_STAGE_COMPILETIME
+		if v.type.is_float():
+			# биты, а не число: кодировка IEEE 754 во всю ширину FloatY,
+			# а дальше, как у WordY -> WordX, zext или усечение
+			nv.set_asset(float_to_bits(v.asset, v.type.width) & (2**t.width - 1))
+			return nv
 		nv.set_asset(v.asset)
 		if v.type.is_signed():
 			nv.set_asset(int_zext(v.asset, v.type.width, t.width))
 		return nv
 
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
-	nv.rawMode = v.type.is_float()
 	return nv
 
 

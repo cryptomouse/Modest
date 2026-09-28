@@ -5,7 +5,6 @@
 // EXPECT-OUT: passed: Float64 bits
 // EXPECT-OUT: passed: bits to float
 // EXPECT-OUT: passed: float bits
-// EXPECTED-FAIL: BUG#36 FloatX <-> WordX converts numerically
 //
 // The storage of a FloatX, which is the one place IEEE 754 is visible to
 // the last bit.
@@ -13,13 +12,12 @@
 // `docs/lang/value/cons.md` is explicit about how to get at it: "`FloatY <->
 // WordX` reinterprets bits (like `memcpy`), never converts numerically",
 // and the construction table gives `WordX <- FloatY` as explicit and
-// `FloatX <- WordY` as unsafe.  Neither backend does that.  The C backend
-// prints a numeric cast — `(uint32_t)f`, so `1.0` arrives as `1` instead of
-// `0x3F800000` — and the LLVM backend prints `cast %Float32 %3 to %Word32`,
-// which is not an instruction, so the module does not even assemble.  A
-// third path, the compile-time fold, takes the compiler down with a
-// traceback; that one has no reproducer here, because a crash would hide
-// everything below it.
+// `FloatX <- WordY` as unsafe.  A numeric cast is the easy mistake here —
+// `(uint32_t)f` in C turns `1.0` into `1` instead of `0x3F800000` — so the
+// C backend moves the bits through a union, and the LLVM one with a
+// `bitcast`.  The values below are run-time ones; constants the compiler
+// folds itself, and a word wider or narrower than the float, are in
+// bits_fold.modest.
 //
 // Every constant below is the IEEE 754 encoding of the value beside it:
 // sign in the top bit, then the exponent biased by 127 (Float32) or 1023
@@ -27,6 +25,8 @@
 //
 // `modest` is not in BACKENDS: it stops after code generation, so it would
 // pass this file without ever running it.
+//
+// Guards BUG#36 (fixed 2026-09-28).
 
 pragma unsafe
 

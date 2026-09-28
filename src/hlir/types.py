@@ -2205,7 +2205,6 @@ class ValueCons(Value):
 		self.value = value
 		self.oftype = oftype
 		self.method = method
-		self.rawMode = False
 		self.stage = value.stage
 
 

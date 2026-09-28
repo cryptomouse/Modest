@@ -107,6 +107,21 @@ def float_overflows(val, width):
 	return math.isinf(pack_float(val, width))
 
 
+# Кодировка IEEE 754 как беззнаковое целое той же ширины - то, что лежит
+# в памяти. Это не число, а биты: FloatY <-> WordX (docs/lang/value/cons.md)
+FLOAT_BITS_FMT = {16: ('<e', '<H'), 32: ('<f', '<I'), 64: ('<d', '<Q')}
+
+
+def float_to_bits(val, width):
+	ffmt, ifmt = FLOAT_BITS_FMT[width]
+	return struct.unpack(ifmt, struct.pack(ffmt, pack_float(val, width)))[0]
+
+
+def bits_to_float(bits, width):
+	ffmt, ifmt = FLOAT_BITS_FMT[width]
+	return struct.unpack(ffmt, struct.pack(ifmt, bits & (2**width - 1)))[0]
+
+
 #def unpak_float_to_hex(fval, width):
 #	if width == 32:
 #		return '0x%X' % (struct.unpack('<i', struct.pack('<f', fval))[0])
