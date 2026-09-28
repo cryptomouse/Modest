@@ -1448,6 +1448,16 @@ def ct_call(fn, args, ti):
 	csymtab = csymtab.parent_get()
 
 
+def do_rvalue_integral(x):
+	rv = do_rvalue(x)
+	if rv.is_bad():
+		return rv
+	if not rv.type.is_integral():
+		error("expected integral value", rv.ti)
+		return ValueBad(ti=rv.ti)
+	return rv
+
+
 def do_value_index(x):
 	left = do_value(x['left'])
 	ti=x['ti']
@@ -1465,13 +1475,9 @@ def do_value_index(x):
 	if via_pointer:
 		array_type = left_type.to
 
-	index = do_rvalue(x['index'])
+	index = do_rvalue_integral(x['index'])
 
 	if index.type.is_bad():
-		return ValueBad(ti=ti)
-
-	if not index.type.is_integral():
-		error("expected integral value", index.ti)
 		return ValueBad(ti=ti)
 
 	if index.is_immediate():
@@ -1554,28 +1560,23 @@ def do_value_slice(x):
 	if left.is_bad():
 		return ValueBad(ti=x['ti'])
 
+	stage = HLIR_VALUE_STAGE_RUNTIME
+
 	index_from = None
 	index_to = None
 
-	stage = HLIR_VALUE_STAGE_RUNTIME
-
 	if x['index_from'] != None:
-		index_from = do_rvalue(x['index_from'])
+		index_from = do_rvalue_integral(x['index_from'])
 		if index_from.is_bad():
-			return ValueBad(ti=ti)
-		if not index_from.type.is_integral():
-			error("expected integral value", index_from.ti)
 			return ValueBad(ti=ti)
 	else:
 		index_from = value_integer_create(0, ti=x['ti'])
 
 	if x['index_to'] != None:
-		index_to = do_rvalue(x['index_to'])
+		index_to = do_rvalue_integral(x['index_to'])
 		if index_to.is_bad():
 			return ValueBad(ti=ti)
-		if not index_to.type.is_integral():
-			error("expected integral value", index_to.ti)
-			return ValueBad(ti=ti)
+
 
 	via_pointer = left.type.is_pointer()
 	array_type = left.type
@@ -1601,19 +1602,19 @@ def do_value_slice(x):
 		else:
 			index_to = ValueUndefined(type_integer_create(ti=x['ti']))
 
+	if index_from.is_immediate() and index_to.is_immediate():
+		if index_from.asset == index_to.asset:
+			error("empty slice", x['ti'])
+			return ValueBad(ti=x['ti'])
+		if index_from.asset > index_to.asset:
+			error("wrong slice direction", x['ti'])
+			return ValueBad(ti=x['ti'])
 
 	# получаем размер слайса
 	# строим выражения для C бекенда в частности
 	# тк volume of array должен быть выражением
 	# а для слайса [a:b] это (b - a)
 	slice_volume = do_value_bin_op(HLIR_VALUE_OP_SUB, index_to, index_from, x['ti'])
-
-	if not slice_volume.is_undefined():
-		if slice_volume.is_immediate():
-			if slice_volume.asset < 0:
-				error("wrong slice direction", x['ti'])
-				return ValueBad(ti=x['ti'])
-
 	type = TypeArray(array_type.of, slice_volume, generic=False, ti=x['ti'])
 	nv = ValueSlice(type, left, index_from, index_to, x['ti'])
 	nv.is_initialized = left.is_initialized

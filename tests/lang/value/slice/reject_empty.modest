@@ -1,0 +1,43 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: empty slice
+// EXPECT-ERROR: empty slice
+// EXPECT-ERROR: empty slice
+// EXPECT-ERROR: empty slice
+// EXPECT-ERROR: empty slice
+// EXPECT-ERROR: empty slice
+// EXPECT-ERROR: empty slice
+// EXPECT-ERROR: empty slice
+// EXPECT-ERROR: empty slice
+//
+// A slice whose bounds are both known may not be empty, wherever it is
+// used: as an assignment target, as the source of a copy, stored in a
+// `let` or a `var`, behind `&`, through a pointer, or as a slice of a
+// slice.  An open right bound is the length of the array, so `a[8:]` on
+// an `[8]T` is empty too.  A zero-length array is not a Modest type
+// (`var x: [0]T` is refused), and the C backend used to print one —
+// `int32_t s[2 - 2]`, `sizeof(int32_t [2 - 2])` — which is only a GNU
+// extension.
+//
+// Guards BUG#6 (fixed 2026-09-28).
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	var a: [8]Int32
+	var b: [8]Int32
+	let p = &a
+
+	a[2:2] = []
+	a[8:] = []
+	a[:0] = []
+	a[0:4] = b[3:3]
+	let s = a[3:3]
+	var v = a[5:5]
+	let q = &a[4:4]
+	p[1:1] = []
+	a[1:5][2:2] = []
+
+	return 0
+}

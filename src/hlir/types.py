@@ -1212,15 +1212,10 @@ class Type(Entity):
 
 		return False
 
+
 	def is_forbidden_const(self):
-		if self.is_func():
-			return True
+		return self.is_forbidden_var()
 
-		if self.is_array():
-			if self.is_unsized_array():
-				return True
-
-		return False
 
 
 

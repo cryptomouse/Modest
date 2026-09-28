@@ -31,19 +31,6 @@ Affects everything under the `builtin.*` namespace in
 that same page (`true`, `false`, `nil`) are bound directly at module
 scope, not under `builtin.*`, and are unaffected.
 
-## BUG#6: Empty slice assignment target emits a C zero-length array
-
-```modest
-var a: [5]Int32 = [10, 20, 30, 40, 50]
-let s = a[2:2]
-```
-
-Generates `int32_t s[2 - 2];`, which clang only accepts as a GNU
-extension (`-Wzero-length-array` under `-pedantic`). Array size comes
-straight from the slice's `volume` expression with no zero-length case;
-see `do_ctype_array_volume` in `src/backend/c11.py:210`. No reproducer in the
-suite — the old `tests/slice` was not carried over into `tests/lang/`.
-
 ## BUG#12: LLVM backend does not apply C's default argument promotion to variadic calls
 
 ```modest

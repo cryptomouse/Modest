@@ -2,9 +2,6 @@
 
 Selects a contiguous sub-array `[from, to)`.
 
-> Slices are an experimental feature; see `docs/BUGS.md` for known
-> codegen issues with slice assignment.
-
 ## Form
 
 ```
@@ -23,6 +20,9 @@ Selects a contiguous sub-array `[from, to)`.
   a slice of a slice.
 - An unsized array of unsized arrays cannot be sliced
   (compiler message: `cannot slice array of an unsized array`).
+- Bounds known at run time are not checked: outside
+  `0 <= from <= to <= len` the behavior is undefined
+  (UB#1, [`UB.md`](../../UB.md)).
 
 ## Examples
 
