@@ -558,7 +558,7 @@ def do_type_array(x, anno):
 	if of.is_incompleted():
 		error("using of an incompleted type", of.ti)
 
-	volume = do_value(x['size'])
+	volume = do_rvalue_integral(x['size'])
 
 	if volume.is_bad():
 		return TypeArray(of, volume, ti=x['ti'])
@@ -1450,7 +1450,7 @@ def ct_call(fn, args, ti):
 
 def do_rvalue_integral(x):
 	rv = do_rvalue(x)
-	if rv.is_bad():
+	if rv.is_bad() or rv.is_undefined():
 		return rv
 	if not rv.type.is_integral():
 		error("expected integral value", rv.ti)

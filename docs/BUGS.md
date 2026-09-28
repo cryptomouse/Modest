@@ -119,34 +119,6 @@ error: for use 'unsafe' operator required -funsafe option
 - Docs updated to match the current behaviour: `docs/CHEATSHEET.md`
   (construction rules), `docs/lang/value/cons.md`, `docs/USAGE.md`.
 
-## BUG#22: An inline comment after a trailing operator breaks line continuation
-
-```modest
-let v = a |   // low bits
-	(a << 8)
-```
-
-```
-error: unexpected token1 ' low bits'
-```
-
-- A line ending in a binary operator continues on the next line (the operator is
-  the continuation mark); the parser does this by skipping newlines after the
-  operator — `self.skipn("\n")` in `expr_value_1` … `expr_value_8`
-  (`src/parser.py`). Comments are not skipped there, so the comment token lands
-  where the right operand is expected.
-- Without the comment the same code compiles, and a blank line after the
-  operator is tolerated:
-  ```modest
-  let v = a |
-
-  	(a << 8)      // fine
-  ```
-- Hits exactly where inline comments are most useful — annotating the terms of a
-  long multi-line expression — and the project's own style guide encourages
-  comments to the right of code (`docs/CHEATSHEET.md`, Code Style).
-- Fix belongs next to the newline skip: skip comment tokens the same way.
-
 ## BUG#23: Breaking the line-continuation rule gives a diagnostic that does not teach it
 
 ```modest

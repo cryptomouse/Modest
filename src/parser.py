@@ -104,6 +104,13 @@ class Parser:
 		while self.match(token):
 			pass
 
+	# Where an expression goes on past the end of the line (after a binary
+	# operator, `(` or `=`): skip the line breaks and any comments between
+	# it and the operand that follows.
+	def skip_continuation(self):
+		while self.match("\n") or self.skip_tokens_class(['comment-line', 'comment-block']):
+			pass
+
 
 	def ctok_class(self):
 		return self.tokens[self.ctoken][0]
@@ -653,7 +660,7 @@ class Parser:
 		while True:
 			ti = self.textInfo()
 			if self.match("or"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_2()
 				ti.start = v['ti']
 				ti.end = r['ti']
@@ -675,7 +682,7 @@ class Parser:
 		while True:
 			ti = self.textInfo()
 			if self.match("and"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_3()
 				ti.start = v['ti']
 				ti.end = r['ti']
@@ -703,7 +710,7 @@ class Parser:
 				v = ast_value_bad(ti)
 
 			if self.match("=="):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_4()
 				v = {
 					'isa': 'ast_value',
@@ -714,7 +721,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match("!="):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_4()
 				v = {
 					'isa': 'ast_value',
@@ -725,7 +732,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match("<"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_4()
 				v = {
 					'isa': 'ast_value',
@@ -736,7 +743,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match(">"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_4()
 				v = {
 					'isa': 'ast_value',
@@ -747,7 +754,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match("<="):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_4()
 				v = {
 					'isa': 'ast_value',
@@ -758,7 +765,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match(">="):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_4()
 				v = {
 					'isa': 'ast_value',
@@ -793,13 +800,13 @@ class Parser:
 					# the chain reports a second time, about types, over an
 					# expression the parser has already refused.
 					self.skip1()
-					self.skipn("\n")
+					self.skip_continuation()
 					self.expr_value_5()
 					v = ast_value_bad(ti)
 					continue
 
 			if self.match("+"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_5()
 				v = {
 					'isa': 'ast_value',
@@ -810,7 +817,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match("-"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_5()
 				v = {
 					'isa': 'ast_value',
@@ -821,7 +828,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match("&"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_5()
 				v = {
 					'isa': 'ast_value',
@@ -832,7 +839,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match("|"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_5()
 				v = {
 					'isa': 'ast_value',
@@ -843,7 +850,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match("^"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_5()
 				v = {
 					'isa': 'ast_value',
@@ -854,7 +861,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match("<<"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_5()
 				v = {
 					'isa': 'ast_value',
@@ -865,7 +872,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti_mid, end=r['ti'].end)
 				}
 			elif self.match(">>"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_5()
 				v = {
 					'isa': 'ast_value',
@@ -885,7 +892,7 @@ class Parser:
 		while True:
 			ti = self.textInfo()
 			if self.match("*"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_6()
 				v = {
 					'isa': 'ast_value',
@@ -896,7 +903,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti, end=r['ti'].end)
 				}
 			elif self.match("/"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_6()
 				v = {
 					'isa': 'ast_value',
@@ -907,7 +914,7 @@ class Parser:
 					'ti': TextInfo(start=v['ti'].start, mid=ti, end=r['ti'].end)
 				}
 			elif self.match("%"):
-				self.skipn("\n")
+				self.skip_continuation()
 				r = self.expr_value_6()
 				v = {
 					'isa': 'ast_value',
@@ -1415,9 +1422,9 @@ class Parser:
 		ti_start = self.textInfo()
 
 		if self.match("("):
-			self.skipn("\n")
+			self.skip_continuation()
 			v = self.expr_value()
-			self.skipn("\n")
+			self.skip_continuation()
 			ti_end = self.textInfo()
 			self.need(")")
 			return {
@@ -1855,7 +1862,7 @@ class Parser:
 		if self.is_assign_operator():
 			# stmt assign
 			self.skip1() # skip assign operator
-			self.skipn("\n")
+			self.skip_continuation()
 			r = self.expr_value()
 			return {
 				'isa': 'ast_stmt',
@@ -2174,7 +2181,7 @@ class Parser:
 		init_value = None
 		if self.is_assign_operator():
 			self.skip1() # skip assign operator
-			self.skipn("\n")
+			self.skip_continuation()
 			init_value = self.expr_value()
 			ti_end = init_value['ti'].end
 		else:

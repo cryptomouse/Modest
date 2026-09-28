@@ -1,0 +1,94 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: operators
+// EXPECT-OUT: passed: parens and assignment
+// EXPECT-OUT: passed: continuation
+//
+// A line that ends in a binary operator goes on on the next one — the
+// operator is the continuation mark.  What stands between the operator and
+// its right operand is not only line breaks: a comment to the right of a
+// term is exactly how the terms of a long expression get annotated, so a
+// line comment, a block comment, blank lines and any mix of them are all
+// skipped there.  The same holds after `(`, before `)` and after the `=` of
+// `let`, `var` and an assignment.
+//
+// Guards BUG#22 (fixed 2026-09-28).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func testOperators () -> Bool {
+	let a: Word32 = 0x12
+
+	let v = a |   // low bits
+		(a << 8)
+
+	if v != 0x1212 {
+		printf("a | // ... (a << 8) = 0x%x, expected 0x1212\n", v)
+		return false
+	}
+
+	// A blank line, several comments and a block comment, in one gap.
+	var s: Int32 = 1 +   // first
+
+		// second
+
+		2 *   /* block */ 3 -   /* one */   // two
+		4
+	if s != 3 {
+		printf("1 + // ... 2 * /**/ 3 - // ... 4 = %d, expected 3\n", s)
+		return false
+	}
+
+	// Logical and comparison operators continue the same way.
+	let t: Bool = s == // equal
+		3 and   // both
+		a != 0 or   // either
+		false
+	if not t {
+		printf("continued `== and != or` is false, expected true\n")
+		return false
+	}
+
+	printf("passed: operators\n")
+	return true
+}
+
+
+func testParensAndAssignment () -> Bool {
+	let x =   // after `let =`
+		(   // after `(`
+			2 + 3   // before `)`
+		)
+	if x != 5 {
+		printf("let x = ( 2 + 3 ) = %d, expected 5\n", x)
+		return false
+	}
+
+	var y: Int32 =   /* after `var =` */
+		7
+	y =   // after an assignment's `=`
+		y * 2
+	if y != 14 {
+		printf("y = y * 2 = %d, expected 14\n", y)
+		return false
+	}
+
+	printf("passed: parens and assignment\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testOperators() {
+		return exitFailure
+	}
+	if not testParensAndAssignment() {
+		return exitFailure
+	}
+	printf("passed: continuation\n")
+	return exitSuccess
+}

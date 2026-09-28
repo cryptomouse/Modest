@@ -235,8 +235,13 @@ printf("%d %d\n",
 > break, using what it has already read. Starting a line with `|` gives
 > `unexpected token1 '|'`.
 >
-> A blank line after the trailing operator is fine; an inline comment after it is
-> not — that is a known bug, see [BUG#22](BUGS.md).
+> Blank lines and comments after the trailing operator are fine — annotate the
+> terms of a long expression to their right:
+> ```modest
+> let v = a |      // low bits
+> 	(a << 8)     // next byte
+> ```
+> The same goes after `(`, before `)` and after the `=` of `let`/`var`/assignment.
 
 ### If/Else
 ```modest
