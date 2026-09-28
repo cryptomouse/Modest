@@ -20,8 +20,7 @@ Selects a contiguous sub-array `[from, to)`.
   copies elements into the range.
 - The result is itself an array value, so index, slice and field access
   continue on it: `a[1:4][0]` is the slice's first element, `a[1:5][1:3]`
-  a slice of a slice. Not yet usable under `-mbackend=c11` — see
-  BUG#7.
+  a slice of a slice.
 - An unsized array of unsized arrays cannot be sliced
   (compiler message: `cannot slice array of an unsized array`).
 

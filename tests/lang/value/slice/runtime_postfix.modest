@@ -1,6 +1,5 @@
 // TEST: run
 // BACKENDS: c11, llvm, modest
-// EXPECTED-FAIL(c11): BUG#7 postfix after a slice emits arr[from][i]
 // EXPECTED-FAIL(llvm): BUG#76 index into a slice with run-time bounds crashes the backend
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: index after a run-time slice

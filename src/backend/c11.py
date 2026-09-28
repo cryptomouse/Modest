@@ -1175,7 +1175,7 @@ def do_cvalue_index(x, ctx):
 def do_cvalue_slice(x, ctx):
 	y = ValueIndex(x.type, x.left, x.index_from, ti=None)
 	cv = do_cvalue_index(y, ctx=ctx)
-	return cv
+	return CValueReference(cv)
 
 
 def do_cvalue_access(x, ctx):
@@ -1238,6 +1238,9 @@ def do_cvalue_ref(x, ctx):
 			#return CValueReference(cv)
 			# просто печатаем массив чаров как есть тк он автоматом decay to pointer
 			return cv
+
+	if PTR_TO_ARR_AS_PTR_TO_ITEM and value.is_slice():
+		return cv  # slice is already &a[from]
 
 	cv = CValueReference(cv)
 
@@ -2608,6 +2611,8 @@ def do_cvalue_ptr_to_x(x, parr_relax=False):
 			return do_cvalue(root)	
 
 	cv = do_cvalue_mem(x)
+	if PTR_TO_ARR_AS_PTR_TO_ITEM and x.is_slice():
+		return cv  # slice is already &a[from]
 	cv = CValueReference(cv)
 
 	# Если взяли адрес у array item - нужно привести его к *[]
