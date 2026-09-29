@@ -1,0 +1,78 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: records sharing a field type
+// EXPECT-OUT: passed: function pointer sharing a parameter type
+// EXPECT-OUT: passed: structural shared field
+//
+// Two record types whose fields are the same, where one of the fields
+// names the very same type object on both sides, are one type.  That
+// field short-circuits the comparison (it is how `Type.eq_fields` avoids
+// recursing forever), and the rest must still be compared — and still
+// match.  `reject_shared_field.modest` is the other half: the same shape
+// with the fields after the shared one differing.
+//
+// Guards BUG#69 (fixed 2026-09-29).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {x: Int32, y: Int32}
+
+type A = {k: Int32, p: Point, n: Int32}
+type B = {k: Int32, p: Point, n: Int32}
+
+
+func sumA (v: A) -> Int32 {
+	return v.k + v.p.x + v.p.y + v.n
+}
+
+func sumParts (p: Point, n: Int32) -> Int32 {
+	return p.x + p.y + n
+}
+
+
+func testRecords () -> Bool {
+	var b: B = {k = 1, p = {x = 2, y = 3}, n = 4}
+	let s = sumA(b)
+	if s != 10 {
+		printf("sumA(b) = %d, expected 10\n", s)
+		return false
+	}
+
+	var a: A = b
+	if a.n != 4 {
+		printf("a.n = %d after a = b, expected 4\n", a.n)
+		return false
+	}
+
+	printf("passed: records sharing a field type\n")
+	return true
+}
+
+
+func testFuncPointer () -> Bool {
+	var f: *(p: Point, n: Int32) -> Int32 = &sumParts
+	let pt: Point = {x = 5, y = 6}
+	let r = f(pt, 7)
+	if r != 18 {
+		printf("f(pt, 7) = %d, expected 18\n", r)
+		return false
+	}
+
+	printf("passed: function pointer sharing a parameter type\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testRecords() or not testFuncPointer() {
+		printf("failed: structural shared field\n")
+		return exitFailure
+	}
+
+	printf("passed: structural shared field\n")
+	return exitSuccess
+}

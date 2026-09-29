@@ -1062,7 +1062,7 @@ class Type(Entity):
 
 			# (infinity recursion protection)
 			if id(ax.type) == id(bx.type):
-				return True
+				continue
 
 			if not Type.eq(ax.type, bx.type, opt):
 				return False

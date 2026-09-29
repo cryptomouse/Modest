@@ -1035,48 +1035,6 @@ modest -o zzz -mbackend=c11 xxh64.modest
   import path (`misc/crc32`), which is unique by construction.
 
 
-## BUG#69: A shared field type makes two different records compare equal
-
-```modest
-type Point = {x: Int32, y: Int32}
-
-type A = {p: Point, n: Int32}
-type B = {p: Point, n: Float64}
-
-func take (v: A) -> Int32 {
-	return v.n
-}
-
-func main () -> Int {
-	var b: B = {p = {x = 1, y = 2}, n = 3.5}
-	printf("%d\n", take(b))   // accepted; prints 0
-	return 0
-}
-```
-
-- `Type.eq_fields` (`src/hlir/types.py:1096`) protects itself from infinite
-  recursion by comparing field types by identity, but on a hit it returns
-  `True` for the whole field list instead of skipping that one field:
-
-  ```python
-  # (infinity recursion protection)
-  if id(ax.type) == id(bx.type):
-  	return True
-  ```
-
-  So as soon as one pair of fields shares a name and the same `Type` object,
-  every field after it goes unchecked. `A` and `B` agree on `p` — both name
-  the one `Point` type object — and that alone makes them equal types.
-- The check itself is right, only its verdict is too wide: `continue` is what
-  it means. Identical types are equal, which is why the recursion can stop
-  there; it says nothing about the fields that follow.
-- Nothing catches it downstream. The C backend emits
-  `take(RAWCAST(struct a, struct b, b))` and reinterprets a 16-byte `B` as a
-  12-byte `A`, so `v.n` reads the low half of the `Float64` and prints `0`.
-- The same function compares the parameter lists of two function types
-  (`Type.eq_func`), so the hole is not limited to records.
-
-
 ## BUG#70: C backend drops a same-width `WordX` → `IntX` construction inside another
 
 ```modest

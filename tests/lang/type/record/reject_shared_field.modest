@@ -1,0 +1,56 @@
+// TEST: reject
+// EXPECT-ERROR: cannot implicitly construct `A` from `B`
+// EXPECT-ERROR: cannot implicitly construct `C` from `D`
+// EXPECT-ERROR: type mismatch *(p: Point, n: Int32) -> Int32 & *(p: Point, n: Float64) -> Int32
+//
+// Two records that agree on a leading field and differ after it are two
+// types.  `Type.eq_fields` stops the recursion on a field whose type is
+// the very same object on both sides, and it used to treat that as the
+// verdict for the whole field list: once `p: Point` matched, nothing after
+// it was looked at, and `B` went into an `A` parameter as a raw
+// reinterpretation of its bytes.
+//
+// The same function compares parameter lists, so a function pointer is
+// held to it too.
+//
+// Guards BUG#69 (fixed 2026-09-29).
+
+include "libc/ctypes64"
+
+
+type Point = {x: Int32, y: Int32}
+
+// The shared field first, the difference right after it.
+type A = {p: Point, n: Int32}
+type B = {p: Point, n: Float64}
+
+// The shared field in the middle: the fields before it are checked
+// anyway, the one after it is what went missing.
+type C = {k: Int32, p: Point, n: Int32}
+type D = {k: Int32, p: Point, n: Float64}
+
+
+func takeA (v: A) -> Int32 {
+	return v.n
+}
+
+func takeC (v: C) -> Int32 {
+	return v.n
+}
+
+func withDouble (p: Point, n: Float64) -> Int32 {
+	return p.x
+}
+
+
+func main () -> Int {
+	var b: B = {p = {x = 1, y = 2}, n = 3.5}
+	takeA(b)
+
+	var d: D = {k = 1, p = {x = 1, y = 2}, n = 3.5}
+	takeC(d)
+
+	var f: *(p: Point, n: Int32) -> Int32 = &withDouble
+
+	return 0
+}
