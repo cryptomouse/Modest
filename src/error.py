@@ -150,7 +150,7 @@ def trace():
 
 
 def note(s, ti=None):
-	str_common_message('note: ', COLOR_NOTE, s, ti)
+	puterr(str_common_message('note: ', COLOR_NOTE, s, ti))
 
 
 def puterr(s):

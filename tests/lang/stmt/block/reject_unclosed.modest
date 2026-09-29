@@ -1,11 +1,13 @@
 // TEST: reject
 // EXPECT-ERROR: expected '}'
-// EXPECTED-FAIL: BUG#79 a block left open at the end of the file spins
+// EXPECT-ERROR: to match this '{'
 //
 // A block whose `}` never comes: the file ends inside it.  The mistake is
 // the one missing brace, so that is what the one diagnostic has to say.
 // The `if` block below takes the function's `}` as its own, which leaves
 // the function's block open at the end of the file.
+//
+// Guards BUG#79 (fixed 2026-09-29).
 
 include "libc/ctypes64"
 

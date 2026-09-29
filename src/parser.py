@@ -3,7 +3,7 @@
 import os
 
 from hlir import *
-from error import error, warning, info
+from error import error, warning, info, note
 from unicode import utf32cc_to_utf8_str
 
 top_level_stoppers = ['type', 'let', 'const', 'var', 'func']
@@ -1904,6 +1904,7 @@ class Parser:
 		comment = None
 		spaceline_cnt = 0
 		self.skip_nl_before_brace()
+		brace_ti = self.textInfo()
 		self.need("{")
 		stmts = []
 		while True:
@@ -1934,6 +1935,13 @@ class Parser:
 				if comment != None:
 					stmts.append(comment)
 					comment = None
+				break
+
+			# nothing past the end of the file can close the block: a statement
+			# parsed there would not move and be re-parsed forever (BUG#79)
+			if self.is_end():
+				error("expected '}' (unexpected end of file)", self.textInfo())
+				note("to match this '{'", brace_ti)
 				break
 
 

@@ -1250,32 +1250,6 @@ if lengthof(a[i:j]) != 5 { ... }       // i, j: Int32
 - Reproducer: `tests/lang/value/slice/lengthof.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#79: A block left open at the end of the file makes `stmt_block` spin
-
-```modest
-func main () -> Int {
-	if 1 == 1 {
-	return 0
-}
-```
-
-```
-error: unexpected token1 'end-of-file'      (ten times, then the run stops)
-```
-
-- The loop of `stmt_block` (`src/parser.py`) ends only on `}`; it never asks
-  `is_end()`.  At the end of the file the statement it tries to parse is an
-  expression that starts with end-of-file, and `skip1()` cannot step past
-  the last token, so the same statement is re-parsed until `MAX_ERRORS`
-  (`src/error.py`) cuts the run off.
-- None of the ten diagnostics says what is wrong — a `}` is missing — or
-  points at the `{` that was left open.  Wanted: one `expected '}'` at the
-  end of the file, ideally naming the line of the open brace.
-- Same family as the argument-list spin fixed with BUG#20: a list loop
-  without an end-of-input or no-progress guard.
-- Reproducer: `tests/lang/stmt/block/reject_unclosed.modest`, marked
-  `EXPECTED-FAIL`.
-
 ## BUG#80: A record literal with a bad field is reported again, and its type prints as a Python object
 
 ```modest

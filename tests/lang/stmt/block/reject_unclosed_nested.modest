@@ -1,0 +1,24 @@
+// TEST: reject
+// EXPECT-ERROR: expected '}'
+// EXPECT-ERROR: to match this '{'
+// EXPECT-ERROR: expected '}'
+// EXPECT-ERROR: to match this '{'
+// EXPECT-ERROR: expected '}'
+// EXPECT-ERROR: to match this '{'
+//
+// Blocks nested three deep, the file ending inside all of them, with a
+// comment and blank lines after the last statement.  Three braces are
+// missing, so each open block reports its own `}` once, innermost first,
+// pointing at its `{` — and none of them re-parses the end of the file.
+//
+// Guards BUG#79 (fixed 2026-09-29).
+
+include "libc/ctypes64"
+
+func main () -> Int {
+	var i: Int = 0
+	while i < 10 {
+		if i == 5 {
+			i = i + 2
+		// the closing braces never come
+
