@@ -959,9 +959,7 @@ The operand class of each unary operator was settled on 2026-09-07:
 | `~` | WordX — and nothing else |
 | `-`, `+` | IntX, FloatX, FixedX, Integer, Rational |
 
-`not` and `~` are two operators, not two spellings of one: neither crosses
-to the other's type. `docs/lang/value/unary.md` states the rule; the
-compiler enforces almost none of it.
+`not` and `~` are two operators, not two spellings of one: neither crosses to the other's type. `docs/lang/value/unary.md` states the rule; the compiler enforces almost none of it.
 
 ```modest
 var t: Bool = true

@@ -1458,6 +1458,17 @@ def do_rvalue_integral(x):
 	return rv
 
 
+def do_rvalue_bool(x):
+	rv = do_rvalue(x)
+	if rv.is_bad():
+		return rv
+	if not rv.type.is_bool():
+		error("expected value with Bool type", cond.ti)
+		return ValueBad(ti=rv.ti)
+	return rv
+
+
+
 def do_value_index(x):
 	left = do_value(x['left'])
 	ti=x['ti']
@@ -1960,7 +1971,7 @@ def do_rvalue(x):
 
 
 def do_value_subexpr(x):
-	v = do_value(x['value'])
+	v = do_rvalue(x['value'])
 	if v.is_bad():
 		return ValueBad(ti=x['ti'])
 	nv = ValueSubexpr(v, ti=x['ti'])
@@ -2082,13 +2093,8 @@ def do_stmt_var(x, annos):
 
 
 def do_stmt_if(x):
-	cond = do_rvalue(x['cond'])
-
+	cond = do_rvalue_bool(x['cond'])
 	if cond.is_bad():
-		return StmtBad(x['ti'])
-
-	if not cond.type.is_bool():
-		error("expected value with Bool type", cond.ti)
 		return StmtBad(x['ti'])
 
 	_then = do_stmt(x['then'])
@@ -2107,13 +2113,8 @@ def do_stmt_if(x):
 
 
 def do_stmt_while(x):
-	cond = do_rvalue(x['cond'])
-
+	cond = do_rvalue_bool(x['cond'])
 	if cond.is_bad():
-		return StmtBad(x['ti'])
-
-	if not cond.type.is_bool():
-		error("expected value with Bool type", cond.ti)
 		return StmtBad(x['ti'])
 
 	block = do_stmt(x['stmt'])
@@ -2129,24 +2130,13 @@ def do_stmt_return(x):
 	global cfunc
 
 	func_ret_type = cfunc.type.to
-	#ret_val_present = x['value'] != None
-
-	# если забыли вернуть значение
-	# или возвращаем его там, где оно не ожидется
-#	is_no_ret_func = func_ret_type.is_unit()
-#	if ret_val_present == is_no_ret_func:
-#		if ret_val_present:
-#			error("unexpected return value", x['value']['ti'])
-#		else:
-#			error("expected return value", x['ti'])
-#		return StmtBad(x['ti'])
 
 	# (!) in return statement retval can be None (!)
 	retval = None
 	if x['value'] != None:
 		rv = do_rvalue(x['value'])
 		retval = transmission(func_ret_type, rv, rv.ti)
-	elif not cfunc.type.to.is_unit():
+	elif not func_ret_type.is_unit():
 		error("expected return value", x['ti'])
 
 	return StmtReturn(retval, ti=x['ti'])
