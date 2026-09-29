@@ -1,0 +1,130 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: nested in a construction
+// EXPECT-OUT: passed: through a name
+// EXPECT-OUT: passed: in a return
+// EXPECT-OUT: passed: word to int nested
+//
+// `Int16 w` of a Word16 reinterprets the bits, so `Int16 0xffff` is -1, and
+// that must hold however the result is used next.  In C both types share a
+// width, and the C backend used to print no cast at all and leave the
+// conversion to the context — which a second, outer construction does not
+// provide: `Int32 Int16 w16` widened the uint16_t and gave 65535, while the
+// same value through a name gave -1.  The values are run-time ones: a
+// constant is folded by the front end and never reaches the code generator.
+// Guards BUG#70 (fixed 2026-09-29).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Regs = {
+	w: Word16
+}
+
+var gw8: Word8 = 0x80
+var gw32: Word32 = 0xfffffffc
+var regs: Regs
+
+
+func testNested () -> Bool {
+	var w16: Word16 = 0xffff
+
+	let a = Int32 Int16 w16
+	if a != -1 {
+		printf("Int32 Int16 0xffff = %d, expected -1\n", a)
+		return false
+	}
+
+	let b = Int32 (Int16 w16)
+	if b != -1 {
+		printf("Int32 (Int16 0xffff) = %d, expected -1\n", b)
+		return false
+	}
+
+	let c = Int16 Int8 gw8
+	if c != -128 {
+		printf("Int16 Int8 0x80 = %d, expected -128\n", Int32 c)
+		return false
+	}
+
+	let d = Int64 Int32 gw32
+	if d != -4 {
+		printf("Int64 Int32 0xfffffffc = %lld, expected -4\n", d)
+		return false
+	}
+
+	regs.w = 0x8000
+	let e = Int64 Int16 regs.w
+	if e != -32768 {
+		printf("Int64 Int16 regs.w = %lld, expected -32768\n", e)
+		return false
+	}
+
+	return true
+}
+
+
+// the same value through a name must agree with the nested form
+func testNamed () -> Bool {
+	var w16: Word16 = 0xfffe
+
+	let i16 = Int16 w16
+	let a = Int32 i16
+	let b = Int32 Int16 w16
+	if a != b or a != -2 {
+		printf("named %d, nested %d, expected -2\n", a, b)
+		return false
+	}
+
+	return true
+}
+
+
+func apart (w16: Word16) -> Int32 {
+	return Int32 Int16 w16
+}
+
+
+func testReturn () -> Bool {
+	let a = apart(0xfffb)
+	if a != -5 {
+		printf("apart(0xfffb) = %d, expected -5\n", a)
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	if testNested() {
+		printf("passed: nested in a construction\n")
+	} else {
+		ok = false
+	}
+
+	if testNamed() {
+		printf("passed: through a name\n")
+	} else {
+		ok = false
+	}
+
+	if testReturn() {
+		printf("passed: in a return\n")
+	} else {
+		ok = false
+	}
+
+	if not ok {
+		printf("failed: word to int nested\n")
+		return exitFailure
+	}
+
+	printf("passed: word to int nested\n")
+	return exitSuccess
+}

@@ -1035,56 +1035,6 @@ modest -o zzz -mbackend=c11 xxh64.modest
   import path (`misc/crc32`), which is unique by construction.
 
 
-## BUG#70: C backend drops a same-width `WordX` → `IntX` construction inside another
-
-```modest
-let w16: Word16 = 0xffff
-let a = Int32 Int16 w16       // -1 expected
-let b = Int32 (Int16 w16)     // parentheses change nothing
-
-let i16 = Int16 w16
-let c = Int32 i16             // the same thing through a name
-```
-
-```c
-const int32_t a = (int32_t)w16;   /* 65535 */
-const int32_t b = (int32_t)w16;   /* 65535 */
-const int16_t i16 = w16;
-const int32_t c = (int32_t)i16;   /* -1 */
-```
-
-- `do_cvalue_cons_int` (`src/backend/c11.py:826`) prints nothing at all for a
-  `WordX` → `IntX` construction of the same width: the two types share a C
-  representation, so it hands the operand over and lets the context convert
-  it.
-
-  ```python
-  if from_type.is_word() and type.width == from_type.width:
-  	cv = do_cvalue(value, ctx=ctx)
-  	return cv
-  ```
-
-  That holds only while there is a context to do it — a declaration of type
-  `int16_t`, an assignment, an argument. Nested inside a second construction
-  there is none: the outer `Int32` sees a `uint16_t` expression and widens it
-  as unsigned. The reinterpretation the inner construction was written for
-  never happens.
-- So the same expression means two different things depending on whether it
-  passes through a name, which is the part that hurts: `c` is `-1` and `a` is
-  `65535`.
-- The LLVM backend is right here — it prints `-1` for all three.
-- Found in `examples/0`, where `apart` is exactly this shape and answers
-  `65531` for `apart(Fixed32 -4.067)`:
-
-  ```modest
-  func apart (x: Fixed32) -> Int32 {
-  	let w16 = unsafe(Word16 (Word32 x >> 16))
-  	return Int32 Int16 w16
-  }
-  ```
-- `do_cvalue_cons_nat` (`src/backend/c11.py:846`) has the same shape and wants
-  the same look.
-
 ## BUG#71: `@alignment(N)` on a record type loses its N
 
 ```modest
