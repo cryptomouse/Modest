@@ -1,0 +1,43 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: pointer from a word literal
+// EXPECTED-FAIL(llvm): BUG#82 a pointer built from a WordX literal is a bitcast of a register
+//
+// `*T WordX n` builds a pointer to a fixed address — the memory-mapped
+// register idiom (`const port = unsafe(*GPIO Word16 0x23)`).  Nothing is
+// dereferenced here, so any address will do: the pointer goes through a
+// function, which turns it back into a word at run time, where no constant
+// folding can hide what the address came out as.
+
+pragma unsafe
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type GPIO = {
+	dir: Word8
+	out: Word8
+}
+
+const port = unsafe(*GPIO Word16 0x23)
+
+
+func addr (p: *GPIO) -> Word64 {
+	return unsafe(Word64 p)
+}
+
+
+func main () -> Int {
+	let a = addr(port)
+	if a != 0x23 {
+		printf("addr(port) = 0x%llx, expected 0x23\n", Nat64 a)
+		printf("failed: pointer from a word literal\n")
+		return exitFailure
+	}
+
+	printf("passed: pointer from a word literal\n")
+	return exitSuccess
+}

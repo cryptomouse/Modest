@@ -1669,13 +1669,7 @@ def do_value_access(x):
 	left = do_value(x['left'])
 	nv = acc(left, x['right'], ti=x['ti'])
 
-	if left.stage == HLIR_VALUE_STAGE_RUNTIME:
-		nv.stage = HLIR_VALUE_STAGE_RUNTIME
-	else:
-		nv.stage = HLIR_VALUE_STAGE_COMPILETIME
-
 	return nv
-
 
 
 def acc(left, field_id, ti):

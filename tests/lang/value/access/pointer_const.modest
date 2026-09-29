@@ -1,0 +1,69 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: store through a pointer constant
+// EXPECT-OUT: passed: load through a pointer constant
+// EXPECT-OUT: passed: construct from a field of a pointer constant
+// EXPECT-OUT: passed: access through a pointer constant
+//
+// A field reached through a `const` whose value is a pointer — the shape of
+// a memory-mapped register block (`const port = unsafe(*GPIO Word16 0x23)`).
+// The pointer is known at compile time, the memory behind it is not: the
+// access is a run-time place, whatever the stage of the constant.  Here the
+// pointer is the address of a global, so the program can run and look at
+// what it wrote.
+//
+// Guards BUG#67 (fixed 2026-09-29).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type GPIO = {
+	dir: Word8
+	out: Word8
+}
+
+var regs: GPIO
+
+const port = &regs
+
+
+func main () -> Int {
+	var ok = true
+
+	port.dir = 0xff
+	port.out = 0x5a
+	if regs.dir == 0xff and regs.out == 0x5a {
+		printf("passed: store through a pointer constant\n")
+	} else {
+		printf("regs = {%u, %u}, expected {255, 90}\n", Nat32 regs.dir, Nat32 regs.out)
+		ok = false
+	}
+
+	regs.out = 0x33
+	let o = port.out
+	if o == 0x33 {
+		printf("passed: load through a pointer constant\n")
+	} else {
+		printf("port.out = %u, expected 51\n", Nat32 o)
+		ok = false
+	}
+
+	let n = Nat32 port.dir
+	if n == 255 {
+		printf("passed: construct from a field of a pointer constant\n")
+	} else {
+		printf("Nat32 port.dir = %u, expected 255\n", n)
+		ok = false
+	}
+
+	if not ok {
+		printf("failed: access through a pointer constant\n")
+		return exitFailure
+	}
+
+	printf("passed: access through a pointer constant\n")
+	return exitSuccess
+}

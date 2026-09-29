@@ -1005,44 +1005,6 @@ func f (x: Int32 @inline) -> Int32 {   // modest never returns
 - No reproducer in the suite; a `reject_` test belongs next to the other
   parameter-parsing tests.
 
-## BUG#67: LLVM backend stores into `None` through a pointer constant
-
-```modest
-pragma unsafe
-
-type GPIO = @layout("packed") {
-	dir: Word8
-	out: Word8
-}
-
-const port = unsafe(* @volatile GPIO Word16 0x23)
-
-func main () -> Int16 {
-	port.dir = 0xff
-	return 0
-}
-```
-
-```llvm
-store %Word8 %1, %Word8 None
-```
-
-- Assigning to a field reached through a `const` that is a dereferenced
-  pointer built from a literal address — the memory-mapped register idiom —
-  emits the Python `None` where the destination operand belongs. `llc` stops
-  at `expected value token`.
-- The address itself is never computed: there is no `getelementptr` and no
-  `inttoptr` before the store, so the backend loses the destination rather
-  than mis-forming it.
-- Only the LLVM backend. The C backend handles the same source correctly
-  (`PORT->dir = 0xFF;`), and reading the field is fine in both.
-- Found through `examples/m328p_blink`, which is the idiom in real use
-  (`avr.portB.dir = 0xff`) and does not build because of this: `make` there
-  fails at `llc`, and the checked-in `out/llvm/*.ll` predate the breakage.
-- Not a precedence question: the sources involved contain no binary
-  operators at all.
-
-
 ## BUG#68: `-o` renames the generated files but not the module inside them
 
 ```sh
@@ -1450,3 +1412,84 @@ error: cannot implicitly construct `Int32` from `{x: <hlir.types.TypeBad object 
 - No reproducer: `EXPECT-ERROR` can require a diagnostic but not its
   absence, so the suite cannot state "reported once".  The leak itself can
   be checked by eye with the example above.
+
+
+## BUG#81: LLVM backend turns a pointer to a compile-time address into `null`
+
+```modest
+pragma unsafe
+
+const sfrOffset = Nat16 0x20
+const port = unsafe(*GPIO Word16 (sfrOffset + Nat16 0x03))
+```
+
+```llvm
+%1 = getelementptr %m328p_GPIO, %m328p_GPIO* null, %Int32 0, %Int32 1
+```
+
+- Every use of `port` gets `null` instead of `0x23`.  The IR is valid, so
+  `llc` and clang accept it and the program silently goes to the wrong
+  address: in `examples/m328p_blink`, `avr.portB.dir = 0xff` stores to
+  address 1 instead of 0x24.
+- `llvm_print_value_inline_cast` (`src/backend/llvm.py`) prints any `num`
+  value cast to a pointer as `null`, without looking at the number.  Only
+  zero may print as `null`; any other address needs `inttoptr`.
+- Only the LLVM backend.  C gives `((m328p_GPIO *)(M328P_SFR_OFFSET + 3))`.
+- `tests/lang/value/cons/pointer_address_expr.modest` reproduces it: it
+  passes the pointer through a function and reads it back as a word at run
+  time.
+
+
+## BUG#82: LLVM backend builds a pointer from a `WordX` literal as a `bitcast` of a register
+
+```modest
+pragma unsafe
+
+const port = unsafe(*GPIO Word16 0x23)
+```
+
+```llvm
+%1 = zext i8 35 to %Word16
+%2 = call %Word64 @addr(%GPIO* bitcast (%Word16 %1 to %GPIO*))
+```
+
+- clang stops at `invalid use of function-local name`.  It is the literal
+  form of the address from BUG#81, and it goes wrong differently, with two
+  faults stacked:
+- The inner `Word16 0x23` is immediate, but the `type.is_word()` branch at
+  the top of `do_eval_cons` sends it to `docast`, which emits a run-time
+  `zext` into a register.  The outer pointer cons sees an immediate operand
+  and prints an inline constant expression around that register, which a
+  constant expression cannot contain.
+- `select_cast_operator` answers `bitcast` for integer → pointer: its
+  `if b.is_pointer(): return 'bitcast'` comes before the `inttoptr` branch,
+  so that branch is dead.  Even with a proper constant operand the cast
+  would be rejected.
+- Only the LLVM backend.  C gives `((struct gpio *)(uint16_t)0x23)`.
+- `tests/lang/value/cons/pointer_address.modest` reproduces it.
+
+
+## BUG#83: LLVM backend drops `@volatile` from loads and stores
+
+```modest
+var delayCounter: @volatile Nat32 = 0     // examples/m328p_blink/src/avr/delay.modest
+const port = unsafe(* @volatile GPIO Word16 0x23)
+port.dir = 0xff
+```
+
+```llvm
+store %Nat32 0, %Nat32* %4
+%5 = load %Nat32, %Nat32* %4
+```
+
+- No `load volatile` / `store volatile` is ever emitted: `volatile` occurs
+  in `src/backend/llvm.py` only as the flag of the `memcpy`/`memset`
+  intrinsics, and that flag is always false.  This covers both volatile
+  variables and places reached through a pointer to a volatile type.
+- At `-O0` it goes unnoticed.  With optimization, the busy-wait loop in
+  `delay_ms` can be deleted and repeated register writes merged, which are
+  exactly the two things `@volatile` exists to prevent.
+- C keeps the qualifier (`volatile uint32_t delayCounter`,
+  `(volatile m328p_GPIO *)`).
+- No reproducer: a running test cannot tell a volatile access from a plain
+  one, and the suite does not check emitted IR.

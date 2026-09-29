@@ -1,0 +1,44 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: pointer from a word expression
+// EXPECTED-FAIL(llvm): BUG#81 a pointer built from a compile-time address comes out as null
+//
+// The same fixed-address pointer as in pointer_address.modest, with the
+// address computed from a base and an offset, the way a register map
+// writes it (`examples/m328p_blink`: `Word16 (sfrOffset + Nat16 0x03)`).
+// The address is still known at compile time, only it is no longer a
+// literal.
+
+pragma unsafe
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type GPIO = {
+	dir: Word8
+	out: Word8
+}
+
+const sfrOffset = Nat16 0x20
+const port = unsafe(*GPIO Word16 (sfrOffset + Nat16 0x03))
+
+
+func addr (p: *GPIO) -> Word64 {
+	return unsafe(Word64 p)
+}
+
+
+func main () -> Int {
+	let a = addr(port)
+	if a != 0x23 {
+		printf("addr(port) = 0x%llx, expected 0x23\n", Nat64 a)
+		printf("failed: pointer from a word expression\n")
+		return exitFailure
+	}
+
+	printf("passed: pointer from a word expression\n")
+	return exitSuccess
+}
