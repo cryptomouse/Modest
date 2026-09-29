@@ -1,0 +1,121 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: function pointer with Ptr parameter
+// EXPECT-OUT: passed: function pointer in a record field
+// EXPECT-OUT: passed: record with Ptr field
+// EXPECT-OUT: passed: Ptr to typed pointer
+// EXPECT-OUT: passed: free pointer eq
+//
+// `Ptr` is `*Unit`.  The builtin is marked generic (so that it converts
+// implicitly to any `*X`, like `void *`), but as a type it must still be
+// equal to a spelled-out `*Unit` — in function parameters, function
+// results and record fields.  examples/9.fsm tripped on this once
+// `Type.eq_fields` stopped skipping the fields after a shared one
+// (BUG#69): the parameter `payload: Ptr` vs `payload: *Unit` was compared
+// for the first time and rejected.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {x: Int32, y: Int32}
+
+type Handler = (p: Point, payload: *Unit) -> Int32
+
+type Desc = {
+	id: Int32
+	handler: *Handler
+}
+
+type WithPtr = {n: Int32, p: Ptr}
+type WithUnitPtr = {n: Int32, p: *Unit}
+
+
+var gv: Int32 = 40
+
+
+// Ptr in the parameter, *Unit in the expected type
+func handlerA (p: Point, payload: Ptr) -> Int32 {
+	let q = *Int32 payload
+	return p.x + p.y + *q
+}
+
+// *Unit in the parameter, Ptr in the expected type
+func handlerB (payload: *Unit, k: Int32) -> Ptr {
+	return payload
+}
+
+
+func testFuncPointer () -> Bool {
+	var f: *(p: Point, payload: *Unit) -> Int32 = &handlerA
+	let r = f({x = 1, y = 2}, &gv)
+	if r != 43 {
+		printf("f(...) = %d, expected 43\n", r)
+		return false
+	}
+
+	var g: *(payload: Ptr, k: Int32) -> *Unit = &handlerB
+	if g(&gv, 0) != Ptr &gv {
+		printf("g(&gv, 0) != &gv\n")
+		return false
+	}
+
+	printf("passed: function pointer with Ptr parameter\n")
+	return true
+}
+
+
+// the shape of examples/9.fsm
+var desc = Desc {id = 1, handler = &handlerA}
+
+func testRecordField () -> Bool {
+	let h = desc.handler
+	let r = h({x = 1, y = 1}, &gv)
+	if r != 42 {
+		printf("desc.handler(...) = %d, expected 42\n", r)
+		return false
+	}
+
+	printf("passed: function pointer in a record field\n")
+	return true
+}
+
+
+func testRecord () -> Bool {
+	var a: WithPtr = {n = 5, p = &gv}
+	var b: WithUnitPtr = a
+	if b.n != 5 or b.p != Ptr &gv {
+		printf("b = a lost a field\n")
+		return false
+	}
+
+	printf("passed: record with Ptr field\n")
+	return true
+}
+
+
+func testPtrToTyped () -> Bool {
+	// Ptr still converts implicitly to any *X
+	let p: Ptr = &gv
+	let q: *Int32 = p
+	if *q != 40 {
+		printf("*q = %d, expected 40\n", *q)
+		return false
+	}
+
+	printf("passed: Ptr to typed pointer\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testFuncPointer() or not testRecordField() or not testRecord() or not testPtrToTyped() {
+		printf("failed: free pointer eq\n")
+		return exitFailure
+	}
+
+	printf("passed: free pointer eq\n")
+	return exitSuccess
+}

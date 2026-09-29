@@ -1122,8 +1122,11 @@ class Type(Entity):
 		# дженерик и не дженерик типы не равны
 		# это важно для конструирования записей из джененрков
 		# (в противном случае конструирование будет скипнуто тк они типа уже равны)
+		# (кроме Ptr: он дженерик только ради неявного приведения к *X,
+		# а как тип это тот же *Unit)
 		if a.is_generic() != b.is_generic():
-			return False
+			if not (a.is_free_pointer() and b.is_free_pointer()):
+				return False
 
 		# usual checking
 		if a.is_simple_type(): return Type.eq_simple(a, b, opt)
