@@ -20,6 +20,11 @@ Selects a contiguous sub-array `[from, to)`.
   a slice of a slice.
 - An unsized array of unsized arrays cannot be sliced
   (compiler message: `cannot slice array of an unsized array`).
+- A bound known at compile time is checked: it may not be negative
+  (`slice index must be non-negative`) nor, when the array's length is
+  known, greater than it (`slice index out of bounds`).  `a[len:i]` — the
+  empty slice at the end — is allowed.  A pointer to an unsized array
+  (`*[]T`) has no length, so only the sign of its bounds is checked.
 - Bounds known at run time are not checked: outside
   `0 <= from <= to <= len` the behavior is undefined
   (UB#1, [`UB.md`](../../UB.md)).

@@ -1250,20 +1250,6 @@ if lengthof(a[i:j]) != 5 { ... }       // i, j: Int32
 - Reproducer: `tests/lang/value/slice/lengthof.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#78: A negative literal slice bound is accepted
-
-```modest
-var a: [8]Int32
-a[-1] = 0                        // error: array index must be non-negative
-a[-1:2] = []                     // accepted, writes before the array
-```
-
-- `do_value_index` (`src/semantic.py:1477`) checks an immediate index for
-  `< 0`; `do_value_slice` (`src/semantic.py:1550`) checks only that the
-  length `to - from` is not negative.
-- Reproducer: `tests/lang/value/slice/reject_negative.modest`, marked
-  `EXPECTED-FAIL`.
-
 ## BUG#79: A block left open at the end of the file makes `stmt_block` spin
 
 ```modest

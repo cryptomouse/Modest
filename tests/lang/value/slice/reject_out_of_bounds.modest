@@ -1,0 +1,39 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: slice index out of bounds
+// EXPECT-ERROR: slice index out of bounds
+// EXPECT-ERROR: slice index out of bounds
+// EXPECT-ERROR: slice index out of bounds
+// EXPECT-ERROR: slice index out of bounds
+// EXPECT-ERROR: slice index out of bounds
+// EXPECT-ERROR: slice index out of bounds
+//
+// When the length of the array is known, a literal bound may not run past
+// it: `to` may be at most the length, `from` too — `a[8:i]` on an `[8]T`
+// is the empty slice at the very end, `a[9:i]` starts outside.  The same
+// holds through a pointer to a sized array and on a slice of a slice,
+// whose length is `to - from` of the outer one.  A pointer to an unsized
+// array (`*[]T`) has no length to check against; nor has a slice with
+// run-time bounds — those are left alone (see edge_bounds.modest).
+//
+// Covers UB#1.
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	var a: [8]Int32
+	var b: [8]Int32
+	let p = &a
+	var i: Int32 = 3
+
+	a[2:9] = []
+	a[9:10] = []
+	a[i:9] = []
+	a[9:i] = []
+	a[0:3] = b[6:9]
+	p[2:9] = []
+	a[1:5][2:5] = []
+
+	return 0
+}

@@ -1541,7 +1541,15 @@ def do_value_index(x):
 	if array_type.is_generic() and index.is_runtime():
 		error("cannot index array with generic type in runtime", ti)
 
-	
+	# индекс не выходит за массив, если длина массива известна
+	# (у *[]T длины нет)
+	volume = array_type.volume
+	if index.is_immediate() and volume != None and volume.is_immediate():
+		if index.asset >= volume.asset:
+			error("array index out of bounds", index.ti)
+			return ValueBad(ti=ti)
+
+
 	item_type = array_type.of
 
 	nv = ValueIndex(item_type, left, index, ti=ti)
@@ -1554,10 +1562,6 @@ def do_value_index(x):
 
 		if left.is_immediate() and index.is_immediate():
 			index_imm = index.asset
-
-			if index_imm >= array_type.volume.asset:
-				error("array index out of bounds", ti)
-				return ValueBad(ti=ti)
 
 			if index_imm < len(left.asset):
 				item = left.asset[index_imm]
@@ -1620,12 +1624,28 @@ def do_value_slice(x):
 		else:
 			index_to = ValueUndefined(type_integer_create(ti=x['ti']))
 
+	for index in (index_from, index_to):
+		if index.is_immediate() and index.asset < 0:
+			error("slice index must be non-negative", index.ti)
+			return ValueBad(ti=x['ti'])
+
 	if index_from.is_immediate() and index_to.is_immediate():
 		if index_from.asset == index_to.asset:
 			error("empty slice", x['ti'])
 			return ValueBad(ti=x['ti'])
 		if index_from.asset > index_to.asset:
 			error("wrong slice direction", x['ti'])
+			return ValueBad(ti=x['ti'])
+
+	# границы не выходят за массив (если его длина известна);
+	# пустой слайс в самом конце (a[8:i] при i == 8) допустим
+	volume = array_type.volume
+	if volume != None and volume.is_immediate():
+		if index_to.is_immediate() and index_to.asset > volume.asset:
+			error("slice index out of bounds", index_to.ti)
+			return ValueBad(ti=x['ti'])
+		if index_from.is_immediate() and index_from.asset > volume.asset:
+			error("slice index out of bounds", index_from.ti)
 			return ValueBad(ti=x['ti'])
 
 	# получаем размер слайса

@@ -1,0 +1,102 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: whole array
+// EXPECT-OUT: passed: last element
+// EXPECT-OUT: passed: empty slice at the end
+// EXPECT-OUT: passed: unsized pointer
+// EXPECT-OUT: passed: slice at the edges
+//
+// The bounds a slice may still have after literal bounds are checked
+// against the array (reject_negative.modest, reject_out_of_bounds.modest):
+// `0` and the length itself are both in range, and `a[8:i]` on an `[8]T`
+// is the empty slice at the end when `i` is 8.  A pointer to an unsized
+// array has no length, so its literal bounds are not checked.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func opaque (n: Int32) -> Int32 {
+	return n
+}
+
+
+func testWhole () -> Bool {
+	var a: [4]Int32 = [1, 2, 3, 4]
+	var b: [4]Int32 = [5, 6, 7, 8]
+
+	a[0:4] = b[:]
+	if a[0] != 5 or a[3] != 8 {
+		printf("a[0:4] = b[:] gave [%d, %d, %d, %d]\n", a[0], a[1], a[2], a[3])
+		return false
+	}
+
+	printf("passed: whole array\n")
+	return true
+}
+
+
+func testLast () -> Bool {
+	var a: [4]Int32 = [1, 2, 3, 4]
+	let p = &a
+
+	a[3:4] = [1]Int32 [40]
+	p[2:4] = [2]Int32 [30, a[3] + 1]
+	if a[2] != 30 or a[3] != 41 {
+		printf("a[2:4] = [%d, %d], expected [30, 41]\n", a[2], a[3])
+		return false
+	}
+
+	printf("passed: last element\n")
+	return true
+}
+
+
+func testEmptyAtEnd () -> Bool {
+	var a: [4]Int32 = [1, 2, 3, 4]
+	var b: [4]Int32 = [5, 6, 7, 8]
+	let i = opaque(4)
+
+	a[4:i] = b[i:4]
+	if a[0] != 1 or a[1] != 2 or a[2] != 3 or a[3] != 4 {
+		printf("a[4:i] = b[i:4] changed a: [%d, %d, %d, %d]\n", a[0], a[1], a[2], a[3])
+		return false
+	}
+
+	printf("passed: empty slice at the end\n")
+	return true
+}
+
+
+func testUnsized () -> Bool {
+	var a: [4]Int32 = [1, 2, 3, 4]
+	let u = *[]Int32 &a
+
+	u[1:3] = [2]Int32 [20, 30]
+	if a[0] != 1 or a[1] != 20 or a[2] != 30 or a[3] != 4 {
+		printf("u[1:3] = [20, 30] gave [%d, %d, %d, %d]\n", a[0], a[1], a[2], a[3])
+		return false
+	}
+
+	printf("passed: unsized pointer\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testWhole() and result
+	result = testLast() and result
+	result = testEmptyAtEnd() and result
+	result = testUnsized() and result
+
+	if not result {
+		printf("failed: slice at the edges\n")
+		return exitFailure
+	}
+
+	printf("passed: slice at the edges\n")
+	return exitSuccess
+}

@@ -43,7 +43,11 @@ let o = a[2:j + 9]  // past the end
   which the language does not pay for implicitly.
 - When the bounds are constants the compiler does check them:
   `to < from` is `wrong slice direction`, `to == from` is `empty slice`
-  (a zero-length array is not a type, `var x: [0]T` is refused too).
+  (a zero-length array is not a type, `var x: [0]T` is refused too), a
+  negative bound is `slice index must be non-negative`, and a bound past
+  a known length is `slice index out of bounds`.  One constant bound is
+  checked on its own even when the other is known only at run time
+  (`a[-1:i]`, `a[9:i]` on an `[8]T`).
 - C11: the slice is materialized as a VLA, `int32_t r[j - i];`, then
   `memcpy`'d from `&a[i]`.
   - `to == from` — VLA of size 0: UB (C11 6.7.6.2p5, size must be > 0).
@@ -56,3 +60,38 @@ let o = a[2:j + 9]  // past the end
   copy (`&a[i:j]` emits `&a[i]` and allocates nothing).
 - Could be caught by: a run-time bounds check under an opt-in flag.
 - See: [`lang/value/slice.md`](lang/value/slice.md)
+
+## UB#2: An array index outside `0 <= i < len`, known only at run time
+
+```modest
+var a: [5]Int32 = [10, 20, 30, 40, 50]
+var i: Int32 = 5
+var n: Int32 = -1
+let x = a[i]        // one past the end
+a[n] = 0            // before the start
+let p = *[]Int32 &a
+p[7] = 0            // `*[]T` has no length to check against
+```
+
+- Why undefined: the same trade as UB#1 — a bounds check would put a
+  comparison and a trap path on every run-time index, and the language
+  does not pay for it implicitly.  An index is a place, so reading it,
+  writing it and `++` on it are all affected alike.
+- When the index is a constant the compiler does check it: a negative one
+  is `array index must be non-negative`, and one that reaches a known
+  length is `array index out of bounds` — for a variable, a field, an
+  element of a multi-dimensional array, a pointer to a sized array and a
+  slice with constant bounds.  A pointer to an unsized array (`*[]T`) has
+  no length, so there only the sign is checked.
+- C11: plain subscript, `a[i]`.  Outside the array it is UB (C11 6.5.6p8):
+  a read returns whatever lies there, a write corrupts a neighbour.  A
+  negative signed index is the same case; a `NatX` index holding a
+  "negative" value is a huge offset instead.
+- LLVM: `getelementptr [N x T], ptr, 0, i` (no `inbounds`, so computing
+  the address is defined), then `load`/`store` through it — an access
+  outside the object is UB, same outcome as in C.
+- Avoid: check the index before using it, or iterate with a counter that
+  is bounded by `lengthof(a)`.
+- Could be caught by: a run-time bounds check under an opt-in flag, the
+  same one as for UB#1.
+- See: [`lang/value/_index.md`](lang/value/_index.md)

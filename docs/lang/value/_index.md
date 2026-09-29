@@ -14,6 +14,12 @@ read, assignment target, or address-of (`&a[i]`).
 ## Semantics
 
 - Indices start at zero; the index is an integer expression.
+- An index known at compile time is checked: it may not be negative
+  (`array index must be non-negative`) nor, when the array's length is
+  known, reach it (`array index out of bounds`).  A pointer to an unsized
+  array (`*[]T`) has no length, so only the sign is checked there; an
+  index known only at run time is not checked at all (UB#2,
+  [`UB.md`](../../UB.md)).
 - Usable as an rvalue, as an lvalue (`a[i] = v`), and as the operand of
   `&` — `&a[i]` is a pointer to the element (the standard way to point
   into an array, see [pointer](../type/pointer.md)).

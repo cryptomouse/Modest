@@ -1,20 +1,43 @@
 // TEST: reject
 // BACKENDS: c11, llvm, modest
-// EXPECTED-FAIL: BUG#78 a negative literal slice bound is accepted
-// EXPECT-ERROR: must be non-negative
+// EXPECT-ERROR: slice index must be non-negative
+// EXPECT-ERROR: slice index must be non-negative
+// EXPECT-ERROR: slice index must be non-negative
+// EXPECT-ERROR: slice index must be non-negative
+// EXPECT-ERROR: slice index must be non-negative
+// EXPECT-ERROR: slice index must be non-negative
+// EXPECT-ERROR: slice index must be non-negative
+// EXPECT-ERROR: slice index must be non-negative
+// EXPECT-ERROR: slice index must be non-negative
 //
 // `a[-1]` is refused (`array index must be non-negative`); a slice bound
-// is an index into the same array and a negative literal is as wrong there.
+// is an index into the same array and a negative literal is as wrong there
+// — on either side, with the other side open or known only at run time,
+// through a pointer (sized or not), on a slice of a slice, and wherever
+// the slice is used: as a target, as a source, stored in a `let`.
+//
+// Guards BUG#78 (fixed 2026-09-29).
+// Covers UB#1.
 
 include "libc/ctypes64"
 
 
 func main () -> Int {
 	var a: [8]Int32
+	var b: [8]Int32
+	let p = &a
+	let u = *[]Int32 &a
+	var i: Int32 = 3
 
 	a[-1:2] = []
+	a[-3:-1] = []
+	a[-1:i] = []
+	a[0:3] = b[-1:2]
+	let s = a[-2:]
+	p[-1:2] = []
+	u[-1:2] = []
+	a[1:5][-1:2] = []
+	a[2:-1] = []
 
 	return 0
 }
-
-
