@@ -185,7 +185,7 @@ func testMasking () -> Bool {
 		return false
 	}
 
-	flags = flags & ~0x04
+	flags = flags & ~Word8 0x04
 	if flags != 0x00 {
 		printf("clearing the bit left 0x%02x\n", Word32 flags)
 		return false

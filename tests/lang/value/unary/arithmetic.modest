@@ -227,12 +227,8 @@ func testUnaryPlus () -> Bool {
 		return false
 	}
 
-	// Not on a NatX: `+` goes through the same signedness check as `-`,
-	// so `+n` is `expected value with signed type` even though a no-op on
-	// an unsigned number is exactly as meaningful as one on a signed one.
-	// docs/lang/value/unary.md says `+` takes any numeric operand — the
-	// compiler is narrower, and reject.modest states the behaviour as it
-	// is.  BUG#64 has the mismatch.
+	// Not on a NatX: `+` takes the same operands as `-`, so `+n` is
+	// `expected value with signed type` — see reject.modest.
 	//
 	// On a FloatX and a FixedX.
 	var f: Float64 = 1.5

@@ -1,0 +1,74 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: operand classes
+//
+// Each unary operator on the operands it *does* take, at run time and folded
+// into a constant.
+//
+// `not` and `~` used to be one compiler path that picked logical or bitwise
+// inversion by looking at the operand's type; they are now two, each
+// refusing the other's type, and `-` and `+` check the operand class before
+// anything else.  The reject_*_operand files state what is refused — this
+// one states that the split did not take anything legal with it, in
+// particular the compile-time folding each path does on its own.
+//
+// Run-time `~` is at Word32 and run-time `-` on an integer only: `~` on a
+// narrow Word under C (BUG#30) and `-` on a float under LLVM (BUG#34) have
+// their own files, and would only hide what this one checks.
+//
+// Guards BUG#64 (fixed 2026-09-29).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const notTrue = not true
+const notCmp = not (3 > 2)
+const inv8 = ~Word8 0x0F
+const inv32 = ~Word32 0x0000FFFF
+const negInt = -5
+const negRat = -1.5
+const posInt = +7
+const posRat = +2.5
+
+
+func main () -> Int {
+	// `not` on a Bool, folded and at run time.
+	var t = true
+	if notTrue or notCmp or not t {
+		printf("not: %d %d %d, expected 0 0 0\n", notTrue, notCmp, not t)
+		return exitFailure
+	}
+
+	// `~` on a WordX, folded at the type's width and at run time.
+	var b: Word8 = inv8
+	var w: Word32 = inv32
+	var v: Word32 = 0x0F
+	if b != 0xF0 or w != 0xFFFF0000 or ~v != 0xFFFFFFF0 {
+		printf("~: 0x%02x 0x%08x 0x%08x, expected 0xF0 0xFFFF0000 0xFFFFFFF0\n",
+			Word32 b, w, ~v)
+		return exitFailure
+	}
+
+	// `-` and `+` on literals, IntX and FloatX.
+	var i: Int32 = negInt
+	var f: Float64 = negRat
+	var p: Int32 = posInt
+	var q: Float64 = posRat
+	if i != -5 or f != -1.5 or p != 7 or q != 2.5 {
+		printf("-/+ folded: %d %f %d %f\n", i, f, p, q)
+		return exitFailure
+	}
+
+	var n: Int32 = 5
+	var g: Float64 = 0.5
+	if -n != -5 or +n != 5 or +g != 0.5 {
+		printf("-/+ runtime: %d %d %f\n", -n, +n, +g)
+		return exitFailure
+	}
+
+	printf("passed: operand classes\n")
+	return exitSuccess
+}

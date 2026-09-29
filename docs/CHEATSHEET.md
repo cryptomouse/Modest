@@ -354,6 +354,8 @@ w << n, w >> n                     // shifts: left WordX; right NatX or a non-ne
 > - `Word*` support bitwise ops and `==`/`!=`, but **no arithmetic and no ordering** (`<`, `>`, ...)
 >
 > To mix, convert explicitly via value construction: `Word32 i`, `Int32 w`.
+> A bare literal is not a `Word` either: `~0x0F`, `0x0F & 0xF0`, `1 << 4` are
+> errors — give it a type first: `~Word32 0x0F`, `Word32 1 << 4`.
 > There is no `xor` keyword — exclusive-or is `^` (`and`/`or` are Bool-only).
 > The shift count must be `NatX` or a non-negative integer literal — `WordX`,
 > `IntX` and negative literals are all rejected with

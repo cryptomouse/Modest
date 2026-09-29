@@ -80,12 +80,6 @@ func testComplement () -> Bool {
 		return false
 	}
 
-	// `not` is the same operation on a Word, and inherits the same fate.
-	if not b != 0x0F {
-		printf("not (Word8 0xF0) = 0x%x, expected 0x0F\n", Word32 not b)
-		return false
-	}
-
 	return true
 }
 

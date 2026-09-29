@@ -1,23 +1,23 @@
 // TEST: reject
-// EXPECTED-FAIL: BUG#64 `not` accepts operands other than Bool
+// EXPECT-ERROR: unsuitable value type 'Word32' for 'logical-not' operation
+// EXPECT-ERROR: unsuitable value type 'Int32' for 'logical-not' operation
+// EXPECT-ERROR: unsuitable value type 'Nat32' for 'logical-not' operation
+// EXPECT-ERROR: unsuitable value type 'Float64' for 'logical-not' operation
 //
 // `not` is the Bool operator and takes nothing else.
 //
 // Decided 2026-09-07 and written into docs/lang/value/unary.md: `not` and
 // `~` are two operators rather than two spellings of one, and neither
-// crosses to the other's type.  `not` on a WordX is the case that has to be
-// *removed* rather than merely refused — it works today and it is what the
-// documentation used to promise, so a file that states the new rule is the
-// thing that will notice when the removal happens.
+// crosses to the other's type.  `not` on a WordX is the case that was
+// *removed* rather than merely refused — it used to compile, and it is what
+// the documentation used to promise; `~w` is the spelling that survives.
 //
-// Every line below compiles today, so this test is expected to fail: the
-// runner reports XFAIL because modest accepted a file it had to refuse.  When
-// the check lands it flips to XPASS and fails the suite, which is the
-// prompt to delete the EXPECTED-FAIL line above and add an EXPECT-ERROR
-// for each site — the diagnostic does not exist yet, so there is nothing
-// honest to write there now.
+// Each site is refused by modest itself.  Before the check every line here
+// compiled: the integer ones with a meaning the language does not define
+// (`not 5` was a bitwise -6), the float one only to be rejected by clang or
+// llvm-as with a diagnostic about the generated code.
 //
-// The rules `not` already enforces are in reject.modest, which passes.
+// Guards BUG#64 (fixed 2026-09-29).
 
 include "libc/ctypes64"
 
@@ -35,9 +35,8 @@ func main () -> Int {
 	var n: Nat32 = 5
 	var onNat = not n
 
-	// A float has no bit-inversion to fall back on, so this one does not
-	// merely mean something undefined — it reaches the backend and comes
-	// back as a clang or llvm-as diagnostic about the generated code.
+	// A float has no bit-inversion to fall back on: this one used to reach
+	// the backend and come back as a clang or llvm-as diagnostic.
 	var f: Float64 = 1.5
 	var onFloat = not f
 

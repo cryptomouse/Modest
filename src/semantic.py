@@ -752,16 +752,11 @@ def do_value_shift(x):
 	left = do_rvalue(x['left'])
 	right = do_rvalue(x['right'])
 
-	# Слева может быть только word или integer !
-	if not (left.type.is_word() or left.type.is_integer()):
+	# Слева может быть только word (!)
+	# литерал сдвигать нельзя - у него нет ширины, сперва нужен тип: Word32 1 << n
+	if not left.type.is_word():
 		error("expected word value", x['left']['ti'])
 		return ValueBad(ti=x['ti'])
-
-	if left.type.is_generic():
-		if not right.type.is_generic():
-			error("expected non-generic value", x['left']['ti'])
-			return ValueBad(ti=x['ti'])
-
 
 	if not (right.type.is_nat() or (right.type.is_integer() and right.asset >= 0)):
 		error("expected natural or non-negative integer value", x['right']['ti'])
@@ -779,11 +774,6 @@ def do_value_shift(x):
 			if left.asset != None and right.asset != None:
 				asset = int(left.asset << right.asset)
 
-		if type.is_generic():
-			need_width = nbits_for_num(asset, signed=False)
-			type = type_word_create(width=need_width, ti=x['ti'])
-			type.generic = True
-
 		nv = ValueShl(type, left, right, ti=x['ti'])
 		nv.set_asset(asset)
 		nv.stage = stage
@@ -795,11 +785,6 @@ def do_value_shift(x):
 			stage = HLIR_VALUE_STAGE_COMPILETIME
 			if left.asset != None and right.asset != None:
 				asset = int(left.asset >> right.asset)
-
-		if type.is_generic():
-			need_width = nbits_for_num(asset, signed=False)
-			type = type_word_create(width=need_width, ti=x['ti'])
-			type.generic = True
 
 		nv = ValueShr(type, left, right, ti=x['ti'])
 
@@ -976,34 +961,50 @@ def do_bin_immediate(op, l, r, ti):
 
 
 
+def do_value_unary_check(v, op):
+	if not v.type.supports(op):
+		error("unsuitable value type '%s' for '%s' operation" % (v.type.to_str(), op), v.ti)
+		return False
+	return True
+
+
+# `not` - только Bool, `~` - только WordX: две разные операции (docs/lang/value/unary.md)
 def do_value_not(x):
 	v = do_rvalue(x['value'])
 
 	if v.is_bad() or v.is_undefined():
 		return v
 
-	vtype = v.type
+	if not do_value_unary_check(v, HLIR_VALUE_OP_LOGIC_NOT):
+		return ValueBad(ti=x['ti'])
 
-# TODO: раздели операцию на logic&bitwise
-#	if not vtype.supports(HLIR_VALUE_OP_NOT):
-#		error("unsuitable type", v.ti)
-#		return ValueBad(ti=x['ti'])
-
-	op = HLIR_VALUE_OP_BITWISE_NOT
-	if vtype.is_bool():
-		op = HLIR_VALUE_OP_LOGIC_NOT
-
-	nv = ValueNot(vtype, v, ti=x['ti'])
+	nv = ValueNot(v.type, v, ti=x['ti'])
 
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 	if v.is_immediate():
 		nv.stage = HLIR_VALUE_STAGE_COMPILETIME
 		if v.asset != None:  # for ValueUndefined
-			# because: ~(1) = -1 (not 0) !
-			if v.type.is_bool():
-				nv.set_asset(not v.asset)
-			else:
-				nv.set_asset(~v.asset)
+			nv.set_asset(not v.asset)
+
+	return nv
+
+
+def do_value_bitwise_not(x):
+	v = do_rvalue(x['value'])
+
+	if v.is_bad() or v.is_undefined():
+		return v
+
+	if not do_value_unary_check(v, HLIR_VALUE_OP_BITWISE_NOT):
+		return ValueBad(ti=x['ti'])
+
+	nv = ValueNot(v.type, v, ti=x['ti'])
+
+	nv.stage = HLIR_VALUE_STAGE_RUNTIME
+	if v.is_immediate():
+		nv.stage = HLIR_VALUE_STAGE_COMPILETIME
+		if v.asset != None:  # for ValueUndefined
+			nv.set_asset(~v.asset)
 
 	return nv
 
@@ -1016,6 +1017,9 @@ def do_value_neg(x):
 		return v
 
 	vtype = v.type
+
+	if not do_value_unary_check(v, HLIR_VALUE_OP_NEG):
+		return ValueBad(ti=x['ti'])
 
 	if not vtype.is_generic():
 		if vtype.is_unsigned():
@@ -1056,6 +1060,9 @@ def do_value_pos(x):
 		return v
 
 	vtype = v.type
+
+	if not do_value_unary_check(v, HLIR_VALUE_OP_POS):
+		return ValueBad(ti=x['ti'])
 
 	if vtype.is_unsigned():
 		error("expected value with signed type", v.ti)
@@ -1998,7 +2005,7 @@ def do_value(x):
 	elif k in bin_ops: v = do_value_bin(x)
 	elif k == HLIR_VALUE_OP_REF: v = do_value_ref(x)
 	elif k == HLIR_VALUE_OP_LOGIC_NOT: v = do_value_not(x)
-	elif k == HLIR_VALUE_OP_BITWISE_NOT: v = do_value_not(x)
+	elif k == HLIR_VALUE_OP_BITWISE_NOT: v = do_value_bitwise_not(x)
 	elif k == HLIR_VALUE_OP_DEREF: v = do_value_deref(x)
 	elif k == HLIR_VALUE_OP_INDEX: v = do_value_index(x)
 	elif k == HLIR_VALUE_OP_SLICE: v = do_value_slice(x)

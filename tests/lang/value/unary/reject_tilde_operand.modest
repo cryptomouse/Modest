@@ -1,18 +1,18 @@
 // TEST: reject
-// EXPECTED-FAIL: BUG#64 `~` accepts operands other than WordX
+// EXPECT-ERROR: unsuitable value type 'Bool' for 'bitwise-not' operation
+// EXPECT-ERROR: unsuitable value type 'Int32' for 'bitwise-not' operation
+// EXPECT-ERROR: unsuitable value type 'Nat32' for 'bitwise-not' operation
+// EXPECT-ERROR: unsuitable value type 'Float64' for 'bitwise-not' operation
 //
 // `~` is the Word operator and takes nothing else.
 //
 // The other half of the split decided on 2026-09-07: bit manipulation is
 // defined for `Word*` and for no other type, which is the same line
-// docs/CHEATSHEET.md already draws for the binary `&`, `|` and `^`.  The
-// binary side enforces it — `i & 1` on an Int32 is refused — and the unary
-// side does not.
+// docs/CHEATSHEET.md draws for the binary `&`, `|` and `^`, and with the
+// same diagnostic.  A bare literal is refused too — that one is in
+// literal/reject_bitwise.modest.
 //
-// Expected to fail today for the reason spelled out in
-// reject_not_operand.modest: modest accepts every line below, so the runner
-// reports XFAIL, and an XPASS later is the prompt to remove the marker and
-// write the real EXPECT-ERROR lines.
+// Guards BUG#64 (fixed 2026-09-29).
 
 include "libc/ctypes64"
 

@@ -22,15 +22,16 @@
   one thing, and neither crosses to the other's type. `-` and `+` take a
   number: `IntX`, `FloatX`, `FixedX`, or one of the compile-time literal
   types `Integer` and `Rational` — so `-5` and `-1.5` are negated before
-  they ever reach a concrete type.
+  they ever reach a concrete type. `~` gets no such allowance: a literal
+  has no width to invert at, so `~0x0F` is an error — write `~Word32 0x0F`.
 - So `-` requires a *signed* type: negating a `Nat` is an error
   (`expected value with signed type`). It is not defined on `WordX`
   either — a bit pattern is not a quantity, the same split
   [binary](./binary.md) draws for arithmetic and ordering.
-- Most of this is not enforced yet: `not` on an `IntX`, `~` and `+` on a
-  `Bool`, `-` on a `WordX` all compile today, and `~` on a `FloatX` is
-  refused by the C compiler rather than by modest. See BUG#64 — the
-  table above is the rule, not a description of the current compiler.
+- Any other operand is refused with `unsuitable value type '<T>' for
+  '<op>' operation` — the same diagnostic the binary operators give.
+  `+` goes through the signedness check too, so `+n` on a `NatX` is
+  `expected value with signed type`, like `-n`.
 - `&` applies to mutable values (variables, fields, elements) and
   functions. Immutable values — `let` bindings, parameters,
   constants — have no address (`expected mutable value or function`).
