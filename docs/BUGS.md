@@ -1493,3 +1493,54 @@ store %Nat32 0, %Nat32* %4
   `(volatile m328p_GPIO *)`).
 - No reproducer: a running test cannot tell a volatile access from a plain
   one, and the suite does not check emitted IR.
+
+
+## BUG#84: LLVM backend sign-extends a `WordX`/`NatX` widened to a signed type
+
+```modest
+var w: Word8 = 0xff
+var n: Nat16 = 65535
+let a = Int32 w      // -1, expected 255
+let b = Int32 n      // -1, expected 65535
+```
+
+```llvm
+%6 = sext %Word8 %5 to %Int32
+```
+
+- Any run-time widening of an unsigned source (`WordX`, `NatX`) to a wider
+  signed type (`IntY`) sign-extends, so every value with the top bit set
+  comes out negative.  Locals, globals and fields all behave the same way.
+- `select_cast_operator` (`src/backend/llvm.py`) chooses between `sext`
+  and `zext` by the *target* (`signed = b.is_signed()`).  Whether the
+  extension is signed depends on the *source*: only a signed source
+  extends its sign.
+- Constants are not affected: `Int32 Word8 0xff` and `Int32 k` for a
+  `const k = Word8 0xff` are folded by the front end and give 255, which is
+  why the existing tests, which convert mostly constants, never saw it.
+- Only the LLVM backend.  C gives 255 / 65535.
+- `tests/lang/value/cons/widen_unsigned.modest` reproduces it.
+
+
+## BUG#85: LLVM backend converts `IntX` to `NatX` without `abs()`
+
+```modest
+var a: Int8 = -5
+var b: Int32 = -5
+let x = Nat32 a      // 251, expected 5
+let y = Nat32 b      // 4294967291, expected 5
+```
+
+- `IntY → NatX` applies `abs()` (`docs/CHEATSHEET.md`, conversion table),
+  and the C backend follows that: `(uint32_t)abs(i8)`, `llabs` for 64 bits.
+  The LLVM backend emits nothing but the plain cast from
+  `select_cast_operator` (`zext`, `trunc` or `bitcast`), so a negative value
+  comes out as its two's complement bits.  Same width and widening are
+  both affected.
+- Constants are not affected: `Nat32 k` for a `const k = Int8 -5` is
+  folded by the front end and gives 5.
+- Not the same fault as BUG#84, though the code is next to it: fixing the
+  choice of `sext`/`zext` there turns this case into `sext` and gives
+  4294967291 for `Nat32 Int8 -5`.  The magnitude needs its own step before
+  the cast (`llvm.abs.*` or `select` on `icmp slt`).
+- `tests/lang/value/cons/int_to_nat.modest` reproduces it.

@@ -1667,9 +1667,7 @@ def do_value_access(x):
 		return nv
 
 	left = do_value(x['left'])
-	nv = acc(left, x['right'], ti=x['ti'])
-
-	return nv
+	return acc(left, x['right'], ti=x['ti'])
 
 
 def acc(left, field_id, ti):

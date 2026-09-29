@@ -22,6 +22,9 @@ int main(void) {
 	struct sample a = (struct sample){.tag = 0x01, .value = 7};
 	struct sample b = (struct sample){.tag = 0x01, .value = 7};
 	printf("a == b ? %d\n", __builtin_memcmp(&a, &b, sizeof(struct sample)) == 0);
+	uint8_t u = 0xFF;
+	int32_t k = (int32_t)u;
+	printf("k = %d\n", k);
 	return 0;
 }
 

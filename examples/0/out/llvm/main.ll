@@ -274,6 +274,7 @@ declare void @perror(%ConstCharStr* %str)
 @.str2 = private constant [30 x i8] [i8 99, i8 111, i8 110, i8 115, i8 116, i8 97, i8 110, i8 116, i8 80, i8 111, i8 105, i8 110, i8 116, i8 32, i8 61, i8 32, i8 123, i8 120, i8 61, i8 37, i8 102, i8 44, i8 32, i8 121, i8 61, i8 37, i8 102, i8 125, i8 10, i8 0]
 @.str3 = private constant [30 x i8] [i8 118, i8 97, i8 114, i8 105, i8 97, i8 98, i8 108, i8 101, i8 80, i8 111, i8 105, i8 110, i8 116, i8 32, i8 61, i8 32, i8 123, i8 120, i8 61, i8 37, i8 102, i8 44, i8 32, i8 121, i8 61, i8 37, i8 102, i8 125, i8 10, i8 0]
 @.str4 = private constant [13 x i8] [i8 97, i8 32, i8 61, i8 61, i8 32, i8 98, i8 32, i8 63, i8 32, i8 37, i8 100, i8 10, i8 0]
+@.str5 = private constant [8 x i8] [i8 107, i8 32, i8 61, i8 32, i8 37, i8 100, i8 10, i8 0]
 ; -- endstrings --
 %Point = type {
 	%Fixed32,
@@ -316,6 +317,15 @@ define %Int @main() {
 	%22 = call i1 (i8*, i8*, i64) @memeq(i8* %20, i8* %21, %Int64 8)
 	%23 = icmp ne %Bool %22, 0
 	%24 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str4 to [0 x i8]*), %Bool %23)
+	%25 = alloca %Word8, align 1
+	%26 = bitcast i8 255 to %Word8
+	store %Word8 %26, %Word8* %25
+	%27 = alloca %Int32, align 4
+	%28 = load %Word8, %Word8* %25
+	%29 = sext %Word8 %28 to %Int32
+	store %Int32 %29, %Int32* %27
+	%30 = load %Int32, %Int32* %27
+	%31 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str5 to [0 x i8]*), %Int32 %30)
 	ret %Int 0
 }
 

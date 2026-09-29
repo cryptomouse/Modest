@@ -1,0 +1,137 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: widen a local
+// EXPECT-OUT: passed: widen a global
+// EXPECT-OUT: passed: widen a field
+// EXPECT-OUT: passed: widen a signed value
+// EXPECT-OUT: passed: widen unsigned
+// EXPECTED-FAIL(llvm): BUG#84 widening WordX/NatX to a signed type sign-extends
+//
+// Widening keeps the value, and the value is set by the source type: a
+// WordX or NatX is never negative, so `Int32 w` of a `Word8 0xff` is 255,
+// and only a signed source extends its sign.  The values are run-time ones
+// on purpose: a constant is folded by the front end, which gets it right,
+// and never reaches the code generator.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Regs = {
+	w: Word8
+	n: Nat16
+}
+
+var gw: Word16 = 0xffff
+var gn: Nat8 = 255
+var regs: Regs
+
+
+func testLocal () -> Bool {
+	var w: Word8 = 0xff
+	var n: Nat16 = 65535
+
+	let a = Int32 w
+	if a != 255 {
+		printf("Int32 Word8 0xff = %d, expected 255\n", a)
+		return false
+	}
+
+	let b = Int32 n
+	if b != 65535 {
+		printf("Int32 Nat16 65535 = %d, expected 65535\n", b)
+		return false
+	}
+
+	return true
+}
+
+
+func testGlobal () -> Bool {
+	let a = Int64 gw
+	if a != 65535 {
+		printf("Int64 Word16 0xffff = %lld, expected 65535\n", a)
+		return false
+	}
+
+	let b = Int16 gn
+	if b != 255 {
+		printf("Int16 Nat8 255 = %d, expected 255\n", Int32 b)
+		return false
+	}
+
+	return true
+}
+
+
+func testField () -> Bool {
+	regs.w = 0x80
+	regs.n = 0x8000
+
+	let a = Int32 regs.w
+	if a != 128 {
+		printf("Int32 regs.w = %d, expected 128\n", a)
+		return false
+	}
+
+	let b = Int64 regs.n
+	if b != 32768 {
+		printf("Int64 regs.n = %lld, expected 32768\n", b)
+		return false
+	}
+
+	return true
+}
+
+
+// the other side: a signed source does extend its sign
+func testSigned () -> Bool {
+	var i: Int8 = -1
+
+	let a = Int32 i
+	if a != -1 {
+		printf("Int32 Int8 -1 = %d, expected -1\n", a)
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	if testLocal() {
+		printf("passed: widen a local\n")
+	} else {
+		ok = false
+	}
+
+	if testGlobal() {
+		printf("passed: widen a global\n")
+	} else {
+		ok = false
+	}
+
+	if testField() {
+		printf("passed: widen a field\n")
+	} else {
+		ok = false
+	}
+
+	if testSigned() {
+		printf("passed: widen a signed value\n")
+	} else {
+		ok = false
+	}
+
+	if not ok {
+		printf("failed: widen unsigned\n")
+		return exitFailure
+	}
+
+	printf("passed: widen unsigned\n")
+	return exitSuccess
+}

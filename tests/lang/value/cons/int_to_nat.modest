@@ -1,0 +1,117 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: same width
+// EXPECT-OUT: passed: widening
+// EXPECT-OUT: passed: positive values
+// EXPECT-OUT: passed: int to nat
+// EXPECTED-FAIL(llvm): BUG#85 IntX to NatX reinterprets the bits instead of taking abs()
+//
+// `NatX i` of a signed value is its magnitude: the conversion applies
+// `abs()` (docs/CHEATSHEET.md, conversion table), so `Nat32 Int8 -5` is 5,
+// not the two's complement bits of -5.  The values are run-time ones on
+// purpose: a constant is folded by the front end, which gets it right, and
+// never reaches the code generator.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func testSameWidth () -> Bool {
+	var a: Int8 = -5
+	var b: Int32 = -5
+	var c: Int64 = -5000000000
+
+	let x = Nat8 a
+	if x != 5 {
+		printf("Nat8 Int8 -5 = %u, expected 5\n", Nat32 x)
+		return false
+	}
+
+	let y = Nat32 b
+	if y != 5 {
+		printf("Nat32 Int32 -5 = %u, expected 5\n", y)
+		return false
+	}
+
+	let z = Nat64 c
+	if z != 5000000000 {
+		printf("Nat64 Int64 -5000000000 = %llu, expected 5000000000\n", z)
+		return false
+	}
+
+	return true
+}
+
+
+func testWidening () -> Bool {
+	var a: Int8 = -5
+	var b: Int32 = -5
+
+	let x = Nat32 a
+	if x != 5 {
+		printf("Nat32 Int8 -5 = %u, expected 5\n", x)
+		return false
+	}
+
+	let y = Nat64 b
+	if y != 5 {
+		printf("Nat64 Int32 -5 = %llu, expected 5\n", y)
+		return false
+	}
+
+	return true
+}
+
+
+// a non-negative value is the same either way
+func testPositive () -> Bool {
+	var a: Int8 = 7
+	var b: Int32 = 100000
+
+	let x = Nat32 a
+	if x != 7 {
+		printf("Nat32 Int8 7 = %u, expected 7\n", x)
+		return false
+	}
+
+	let y = Nat32 b
+	if y != 100000 {
+		printf("Nat32 Int32 100000 = %u, expected 100000\n", y)
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	if testSameWidth() {
+		printf("passed: same width\n")
+	} else {
+		ok = false
+	}
+
+	if testWidening() {
+		printf("passed: widening\n")
+	} else {
+		ok = false
+	}
+
+	if testPositive() {
+		printf("passed: positive values\n")
+	} else {
+		ok = false
+	}
+
+	if not ok {
+		printf("failed: int to nat\n")
+		return exitFailure
+	}
+
+	printf("passed: int to nat\n")
+	return exitSuccess
+}

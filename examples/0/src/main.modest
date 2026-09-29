@@ -31,9 +31,12 @@ func main () -> Int
 
 	var a: Sample = {tag = 0x01, value = 7}
 	var b: Sample = {tag = 0x01, value = 7}
-
-
 	printf("a == b ? %d\n", a == b)
+
+	// BUG#85 (in LLVM k = -1)
+	var u: Word8 = 0xff
+	var k = Int32 u
+	printf("k = %d\n", k)
 
 	return 0
 }
