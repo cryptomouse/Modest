@@ -190,6 +190,16 @@ func testConstruction () -> Bool {
 		return false
 	}
 
+	// FixedX -> NatX: the same truncation, then abs() like a signed IntY.
+	const natThree: Nat32 = Nat32 three
+	const natNeg: Nat32 = Nat32 (Fixed32 -2.75)
+	const natWide: Nat64 = Nat64 (Fixed32 -7.5)
+	if natThree != 3 or natNeg != 2 or natWide != 7 {
+		printf("Nat of 3.0/-2.75/-7.5 = %u/%u/%llu, expected 3/2/7\n",
+			natThree, natNeg, natWide)
+		return false
+	}
+
 	// FixedX -> FloatX gives the value back.
 	const asFloat: Float64 = Float64 half
 	if asFloat != 0.5 {

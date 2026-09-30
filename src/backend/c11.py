@@ -506,6 +506,11 @@ def do_cvalue_literal_pointer(v, ctx):
 
 def cvalue_literal_integer(asset, width=0, is_unsigned=False, as_hex=False, nsigns=0, ctx=None):
 
+	# у -2^63 модуль в long long не влезает: `-9223372036854775808LL`
+	# это минус над литералом, который C читает уже как беззнаковый
+	if asset == -(1 << 63):
+		return CValueIdentifier("INT64_MIN")
+
 	#width = max(width, nbits_for_num(asset, signed=not is_unsigned))
 	width = nbits_for_num(asset, signed=not is_unsigned)
 
@@ -514,14 +519,21 @@ def cvalue_literal_integer(asset, width=0, is_unsigned=False, as_hex=False, nsig
 		if is_unsigned and width >= 32:
 			suffix += "U"    # unsigned
 
-		if width == 64:   #csettings['long_long_width']:
+		# (!) по ширине значения, а не типа: иначе каждый 0 в Int64
+		# обрастет суффиксом. Шире 32 бит - всегда LL: long бывает
+		# 32-битным. Неправильным L не было бы и там (C11 6.4.4.1 сам
+		# расширяет литерал до long long), но LL говорит это явно
+		if width > 32:
 			suffix += "LL"   # long long int
-		elif width >= 32: #csettings['long_width']:
-			suffix += "L"   # long long int
 		else:
-			suffix += "XL"   # extra long int (not defined in C)
+			suffix += "L"    # long int, не меньше 32 бит везде
 
-	return CValueInteger(asset, as_hex=as_hex, nsigns=nsigns, suffix=suffix)
+	cv = CValueInteger(asset, as_hex=as_hex, nsigns=nsigns, suffix=suffix)
+	if asset < 0:
+		# лексически это унарный минус, а не атом: без этого
+		# `-(-5)` напечатается как `--5`
+		cv.precedence = CValueUnaryMinus(cv).precedence
+	return cv
 
 
 
@@ -581,6 +593,19 @@ def do_cvalue_from_fixed(t, x, ctx):
 		cv = CValueCast(do_ctype(t), cv)
 
 	return cv
+
+
+
+# FixedX -> NatX: снимаем масштаб в int ширины источника, дальше abs(),
+# как у знакового IntY -> NatX (do_cvalue_cons_nat). Только рантайм:
+# abs() не константное выражение, известное заранее сворачивается
+def do_cvalue_from_fixed_nat(t, x, ctx):
+	from_type = x.value.type
+	fn = "__fixed%d_to_int%d" % (from_type.width, from_type.width)
+	cv = CValueCall(CValueIdentifier(fn),
+		[do_cvalue(x.value, ctx=ctx), CValueInteger(from_type.fraction)])
+	absfn = "abs" if from_type.width <= 32 else "llabs"
+	return CValueCast(do_ctype(t), CValueCall(CValueIdentifier(absfn), [cv]))
 
 
 
@@ -775,6 +800,9 @@ def do_cvalue_cons(x, ctx):
 
 		if x.is_immediate():
 			return do_cvalue_from_fixed_folded(t, x, ctx)
+
+		if t.is_nat():
+			return do_cvalue_from_fixed_nat(t, x, ctx)
 
 	if (x.value.type.is_float() and t.is_word()) or (x.value.type.is_word() and t.is_float()):
 		return do_cvalue_float_bits(x, ctx)
@@ -1310,6 +1338,13 @@ def do_cvalue_not(x, ctx):
 
 
 def do_cvalue_neg(x, ctx):
+	# (!) отрицательное Integer печатаем сразу числом со знаком. Иначе
+	# это минус над положительным литералом, а тот у Integer беззнаковый
+	# (6442450944ULL) - и сравнение/деление с IntX рядом уходит в
+	# беззнаковую арифметику: `a > -6442450944` при a = 0 дает false
+	if x.type.is_integer() and x.is_immediate() and int(x.asset) < 0:
+		return cvalue_literal_integer(int(x.asset), ctx=ctx)
+
 	v = do_cvalue(x.value)
 	return CValueUnaryMinus(v)
 

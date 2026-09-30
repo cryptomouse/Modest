@@ -26,8 +26,8 @@ Per-target rules (`X`, `Y` — widths; verified against the compiler):
 
 | Target | Implicit | Explicit | Unsafe only |
 | :-- | :-- | :-- | :-- |
-| `IntX` | `Integer`, `IntY` Y≤X | + `NatY`, `WordY` Y≤X; `FloatY`; `Rational` | wider sources; `*T` |
-| `NatX` | `Integer`, `NatY` Y≤X | + `IntY`, `WordY` Y≤X; `FloatY` (`IntY` applies `abs`) | wider sources; `*T` |
+| `IntX` | `Integer`, `IntY` Y≤X | + `NatY`, `WordY`, `FixedY` Y≤X; `FloatY`; `Rational` | wider sources; `*T` |
+| `NatX` | `Integer`, `NatY` Y≤X | + `IntY`, `WordY`, `FixedY` Y≤X; `FloatY` (`IntY` applies `abs`; `FixedY` truncates, then `abs`) | wider sources; `*T` |
 | `WordX` | `Integer`, `WordY` Y≤X | + `WordY` any Y (truncates); `IntY`, `NatY`, `CharY`, `FloatY` Y≤X; `Bool` | wider `IntY`/`NatY`/`FloatY`; `*T` |
 | `FloatX` | `Rational`, `Integer`, `FloatY` | + `IntY`, `NatY`, `Fixed` | `WordY` (bit reinterpret) |
 | `CharX` | length-1 `String`; generic char | + `Integer`, `WordY` Y≤X | any numeric |

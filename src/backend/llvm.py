@@ -1710,6 +1710,18 @@ def do_eval_from_fixed(x):
 	# (!) делим в ширине ИСТОЧНИКА: сузить раньше деления - потерять
 	# целую часть. sdiv, как и '/' в C, отбрасывает дробь к нулю
 	scale = llvm_value_num(from_type, 1 << from_type.fraction)
+	if type.is_nat():
+		# NatX: abs() от целой части, как у знакового IntY -> NatX.
+		# Считаем в ширине источника; после abs() значение неотрицательно
+		# (кроме MIN, но и его модуль верен как беззнаковое), и zext
+		# при расширении дает то, что нужно
+		q = llvm_eval_binary('sdiv', v, scale)
+		zero = llvm_value_num(from_type, 0)
+		neg = llvm_eval_binary('icmp slt', q, zero, ValueUndefined(typeBool))
+		nq = llvm_eval_binary('sub', zero, q)
+		a = llvm_select(neg, nq, q, from_type)
+		return docast(a, type)
+
 	if type.width == from_type.width:
 		return llvm_eval_binary('sdiv', v, scale, x)
 
@@ -1840,7 +1852,7 @@ def do_eval_cons(x):
 		if x.is_immediate():
 			return do_eval_literal(x)
 
-		if type.is_float() or type.is_int():
+		if type.is_float() or type.is_int() or type.is_nat():
 			return do_eval_from_fixed(x)
 
 	if type.is_scalar():

@@ -2,6 +2,7 @@
 from hlir import *
 from error import info, warning, error
 from bits import nbits_for_num
+from .int import fixed_to_int
 
 
 
@@ -24,8 +25,9 @@ def value_nat_can(to, from_type, method, ti):
 	c3 = from_type.is_int()
 	c4 = from_type.is_float()
 	c5 = from_type.is_rational()
+	c6 = from_type.is_fixed()
 
-	if c0 or c1 or c2 or c3 or c4 or c5:
+	if c0 or c1 or c2 or c3 or c4 or c5 or c6:
 		if method == 'unsafe':
 			return True
 		return True
@@ -63,7 +65,9 @@ def value_nat_cons(t, v, method, ti):
 	nv = ValueCons(t, t, v, method, ti=ti)
 
 	if v.is_immediate():
-		a = abs(int(v.asset))
+		# FixedX: сперва снимаем масштаб (дробь - к нулю), потом abs(),
+		# как у знакового IntY -> NatX
+		a = abs(fixed_to_int(v) if v.type.is_fixed() else int(v.asset))
 		nv.set_asset(a)
 		nv.stage = HLIR_VALUE_STAGE_COMPILETIME
 		return nv

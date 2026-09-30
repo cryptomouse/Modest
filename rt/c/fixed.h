@@ -16,8 +16,11 @@ typedef int64_t __fixed64;
 #define FIXED32(x, f) ((__fixed32)((double)(x) * (double)((int64_t)1 << (f)) + ((x) < 0 ? -0.5 : 0.5)))
 #define FIXED64(x, f) ((__fixed64)((double)(x) * (double)((int64_t)1 << (f)) + ((x) < 0 ? -0.5 : 0.5)))
 
+/* (!) масштаб строим в ширине результата: `1 << 32` на int - UB,
+   а у Fixed64 fraction по умолчанию как раз 32. И целую часть
+   умножаем, а не сдвигаем: сдвиг отрицательного влево - тоже UB */
 static inline __fixed64 __fixed64_create(int64_t i, uint64_t m, uint64_t n, uint8_t fraction) {
-	return (i << fraction) | (m * (1 << fraction) / n);
+	return (i * ((int64_t)1 << fraction)) | (__fixed64)(m * ((uint64_t)1 << fraction) / n);
 }
 
 /* у целого источника дробной части нет, поэтому масштаб - ровно

@@ -194,24 +194,10 @@ What is left:
   `#ifdef __SIZEOF_INT128__`, so a module that uses `Fixed64 *` or `/` on a
   32-bit target fails to compile. The LLVM backend does not share the problem:
   `i128` is a native IR type there.
-- `__fixed64_create` is dead code — nothing in codegen calls it — and it scales
-  with `(1 << fraction)` in plain `int`, which is undefined behavior for a
-  `Fixed64` fraction of 32. Everything else in the helper block builds the
-  scale at `int64_t`.
-- `NatX` is the one numeric target that does not accept a `FixedX` source
-  (`value_nat_can`, `src/value/nat.py`), even though `IntX` accepts one and
-  `NatX` accepts a `FloatY`. Looks like an omission rather than a rule; the
-  construction table in `docs/CHEATSHEET.md` records the behaviour as it is.
 - The `modest` backend drops the attribute's argument: `@fraction(12)
   Fixed32` comes back out as `@fraction Fixed32`. It only has to survive
   codegen, so the tests pass there — but the emitted source silently loses
   the binary point. Same class as the backend's other round-trip gaps.
-- Integer literals wider than 32 bits get an `L` suffix rather than `LL`
-  (`cvalue_literal_integer` sizes the suffix from the value, not the type),
-  so a `Fixed64` constant emits e.g. `6442450944L`. Correct on LP64, wrong
-  where `long` is 32-bit. Not `FixedX`-specific — a plain `Word64` constant
-  does the same — but `Fixed64` values are large by construction, so it
-  shows up there constantly.
 
 Coverage: `tests/lang/type/fixed/runtime.modest` (run-time) and
 `tests/lang/type/fixed/comptime.modest` (compile-time); both pass under c11 and

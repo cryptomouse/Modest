@@ -193,6 +193,20 @@ func testConstruction () -> Bool {
 		return false
 	}
 
+	// FixedX -> NatX: the whole part, then abs() like a signed IntY -> NatX.
+	var negFrac: Fixed32 = -2.75
+	if Nat32 frac != 2 or Nat32 negFrac != 2 {
+		printf("Nat32 of 2.75/-2.75 = %u/%u, expected 2/2\n", Nat32 frac, Nat32 negFrac)
+		return false
+	}
+
+	// Into a wider NatX, and from Fixed64 with its 32-bit fraction.
+	var neg64: Fixed64 = -5.25
+	if Nat64 negFrac != 2 or Nat64 neg64 != 5 {
+		printf("Nat64 of -2.75/-5.25 = %llu/%llu, expected 2/5\n", Nat64 negFrac, Nat64 neg64)
+		return false
+	}
+
 	// NatX is a source too.
 	var n: Nat32 = 5
 	if Float64 Fixed32 n != 5.0 {

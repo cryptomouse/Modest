@@ -1,0 +1,90 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: negative literal
+//
+// A negative literal wider than 32 bits, used next to a signed variable.
+//
+// `-6442450944` is a minus over the literal `6442450944`, whose type is the
+// compile-time `Integer`.  The C backend used to print it exactly that way:
+// a minus over the positive literal, and a positive `Integer` goes out
+// unsigned — `-6442450944ULL`.  Stored straight into an `Int64`, the cast
+// happened to bring the value back; used in an expression, it dragged the
+// signed operand next to it into unsigned arithmetic, so `a > -6442450944`
+// with `a = 0` was false.  The same held at the 32-bit edge, `-2147483648UL`.
+// The LLVM backend was never affected.
+//
+// Now the folded negative number is printed as it is, `-6442450944LL`, and
+// `-2^63` — whose magnitude fits no signed C type — as `INT64_MIN`.
+// `-(-5)` is kept at the end: once a negative literal prints as a single
+// number, it must still get its parentheses, or it comes out as `--5`.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const low: Int64 = -6442450944
+const min64: Int64 = -9223372036854775808
+
+
+func main () -> Int {
+	var a: Int64 = 0
+
+	// Comparison: the case that was plainly wrong.
+	if not (a > -6442450944) {
+		printf("0 > -6442450944 is false\n")
+		return exitFailure
+	}
+
+	if a < -4294967295 {
+		printf("0 < -4294967295 is true\n")
+		return exitFailure
+	}
+
+	// At the 32-bit edge, against an Int32.
+	var c: Int32 = 0
+	if not (c > -2147483648) {
+		printf("Int32 0 > -2147483648 is false\n")
+		return exitFailure
+	}
+
+	// Division and remainder give the wrong answer in unsigned, too.
+	var big: Int64 = 12884901888    // 3 * 2^32
+	if big / -4294967296 != -3 {
+		printf("12884901888 / -4294967296 = %lld, expected -3\n", big / -4294967296)
+		return exitFailure
+	}
+
+	var odd: Int64 = -12884901889
+	if odd % -4294967296 != -1 {
+		printf("-12884901889 %% -4294967296 = %lld, expected -1\n", odd % -4294967296)
+		return exitFailure
+	}
+
+	// Through constants, including the one with no positive counterpart.
+	if not (a > low) or low != -6442450944 {
+		printf("low = %lld, expected -6442450944\n", low)
+		return exitFailure
+	}
+
+	if not (min64 < low) or min64 + 9223372036854775807 != -1 {
+		printf("min64 = %lld, expected -9223372036854775808\n", min64)
+		return exitFailure
+	}
+
+	// A negative literal inside parentheses keeps them.
+	var h: Int64 = 1
+	if h - -(-5) != -4 {
+		printf("1 - -(-5) = %lld, expected -4\n", h - -(-5))
+		return exitFailure
+	}
+
+	if h - -(-6442450944) != -6442450943 {
+		printf("1 - -(-6442450944) = %lld, expected -6442450943\n", h - -(-6442450944))
+		return exitFailure
+	}
+
+	printf("passed: negative literal\n")
+	return exitSuccess
+}
