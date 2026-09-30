@@ -2,23 +2,26 @@
 // EXPECT-ERROR: expected non-negative integer value
 // EXPECT-ERROR: expected word value
 // EXPECT-ERROR: expected word value
-// EXPECT-ERROR: expected word value
+// EXPECT-ERROR: a literal can only be shifted by a compile-time count
+// EXPECT-ERROR: give the literal a type first
 //
-// The shifts do not apply to a bare literal: the literal has to be given a
-// type first — `Word32 1 << n`.  A shifted bit pattern depends on the width
-// it is shifted in, and a literal has none of its own.
+// Which bitwise operators a bare literal is refused by.
 //
-// `~` does apply to a bare literal and inverts it at the literal's own
-// minimal width, so `~0xA5` is `0x5A` (unary/literal_tilde.modest).  A negative
-// literal has no such width and is refused.  Folding at the literal's width
-// is also how the LLVM backend used to treat the *typed* `~Word32 0x0F`
-// (BUG#63) — that is literal_width.modest.
+// A decimal literal cannot be shifted: its width is only what its value
+// needs, and a shift moves bits out of it or into bits it does not have.
+// It has to be given a type first — `Word32 1 << n`.  A hex literal can:
+// its width is the one it is written with, and it is shifted there
+// (binary/literal_shift.modest) — but only by a count known now, because a
+// literal has no type to do a run-time shift in.
+//
+// `~` does apply to a bare literal and inverts it at the literal's own width
+// (unary/literal_tilde.modest).  A negative literal has no such width and is
+// refused.  Folding at the literal's width is also how the LLVM backend used
+// to treat the *typed* `~Word32 0x0F` (BUG#63) — that is literal_width.modest.
 //
 // A literal that *meets* a WordX is not affected: `w & 0x0F` takes w's type
 // before the operator sees it, and bitwise.modest is full of that.  Nor is
-// a pair of literals under `&`, `|` or `^`: each bit of their result depends
-// only on the same bit of the operands, so the width does not matter and the
-// pair folds into a literal (binary/literal_pair.modest).
+// a pair of literals under `&`, `|` or `^` (binary/literal_pair.modest).
 //
 // Guards BUG#63 (fixed 2026-09-29).
 
@@ -28,12 +31,15 @@ func main () -> Int {
 	// `~` on a negative literal: there is no width to invert it at.
 	var a: Word32 = ~-1
 
-	// Shifts: the left operand is the bit pattern and has to be a WordX.
+	// A decimal literal has no written width to shift in.
 	var f: Word32 = 1 << 3
-	var g: Word32 = 0x80 >> 1
 
 	// A constant is no exception — this is where `1 << n` is usually written.
 	const bit = 1 << 4
+
+	// A hex literal shifted by a run-time count.
+	var n: Nat32 = 3
+	var g: Word32 = 0x01 << n
 
 	return 0
 }

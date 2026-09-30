@@ -306,7 +306,9 @@ return                             // for Unit functions
 > the other operand (`a + 5`, `w | 0xFF`).
 >
 > **Shifts are the exception**: `w << n` pairs a `WordX` left operand with a
-> `NatX` count of any width, or a non-negative integer literal.
+> `NatX` count of any width, or a non-negative integer literal. A hex literal
+> may be the left operand too, shifted in its written width by a compile-time
+> count: `0x01 << 4` is `0x10`, `0x01 << 8` is `0`.
 
 ### Arithmetic
 ```modest
@@ -346,7 +348,7 @@ not a
 ```modest
 w & m, w | m, w ^ m                // and, or, xor — both operands WordX
 ~w                                 // bitwise not
-w << n, w >> n                     // shifts: left WordX; right NatX or a non-negative literal
+w << n, w >> n                     // shifts: left WordX (or a hex literal); right NatX or a non-negative literal
 ```
 
 > Bit manipulation is only defined for `Word*` types — this is a deliberate split:
@@ -354,12 +356,15 @@ w << n, w >> n                     // shifts: left WordX; right NatX or a non-ne
 > - `Word*` support bitwise ops and `==`/`!=`, but **no arithmetic and no ordering** (`<`, `>`, ...)
 >
 > To mix, convert explicitly via value construction: `Word32 i`, `Int32 w`.
-> A bare literal is not a `Word` either: `1 << 4` is an error — give it a type
-> first: `Word32 1 << 4`. A literal pair under `&` `|` `^` is fine and folds to a
-> literal: `const mask: Word8 = 0x0F | 0x30`. `~` on a literal inverts it at the
-> literal's own *minimal* width (the fewest bits that hold it, at least one) and
-> never wider: `~0xA5` is `0x5A` even as a `Word32`, `~0` is `1`, and `~0x0F`,
-> `~0xFF` are `0` — for a full-width mask write `~Word32 0xFF`.
+> **A hex literal is as wide as it is written**, leading zeros included:
+> `0xF` is 4 bits, `0x0F` 8, `0x000F` 16 (a decimal literal: as wide as its
+> value, at least 1 bit). It goes implicitly only into a type at least that
+> wide — `var w: Word8 = 0x000F` is an error; write `0x0F` or `Word8 0x000F`.
+> `&` `|` `^` on two literals fold to a literal as wide as the wider operand:
+> `const mask: Word8 = 0x0F | 0x30`. `~` inverts a literal in its width and
+> never wider: `~0x0F` is `0xF0` even as a `Word32`, `~0x0000000F` is
+> `0xFFFFFFF0`, `~0` is `1`. A decimal literal cannot be shifted (`1 << 4` is an
+> error — `Word32 1 << 4` or `0x01 << 4`).
 > There is no `xor` keyword — exclusive-or is `^` (`and`/`or` are Bool-only).
 > The shift count must be `NatX` or a non-negative integer literal — `WordX`,
 > `IntX` and negative literals are all rejected with

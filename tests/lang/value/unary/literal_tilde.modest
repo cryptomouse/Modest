@@ -1,26 +1,26 @@
 // TEST: run
 // BACKENDS: c11, llvm, modest
 // EXPECT-EXIT: 0
-// EXPECT-OUT: passed: own width
+// EXPECT-OUT: passed: hex
+// EXPECT-OUT: passed: decimal
 // EXPECT-OUT: passed: not wider
-// EXPECT-OUT: passed: narrower
 // EXPECT-OUT: passed: any spelling
 // EXPECT-OUT: passed: literal tilde
 //
 // `~` applied to a *bare* literal.
 //
-// A literal has no type, but it has a width: the fewest bits that hold its
-// value, and never fewer than one — `0xA5` is 8 bits, `0x0F` is 4, `0x1FF`
-// is 9, `0` is 1.  `~` inverts it there, and the result is a literal again:
-// `~0xA5` is `0x5A`, `~0` is `1`.
+// A literal has a width, and `~` inverts it there; the result is a literal
+// again.  A hex literal is as wide as it is written (literal/hex_width.modest):
+// `~0x0F` is `0xF0`, `~0x0000000F` is `0xFFFFFFF0`, `~0xF` is `0`, `~0x0` is
+// `0xF`.  The result keeps that width, so `~~` gives the literal back.
 //
-// Its top bit is always set, so `~` always clears it: `~0x0F` and `~0xFF`
-// are `0`.  That is not C's `~0xFF` — a full-width mask is written with its
-// type, `~Word32 0xFF` (literal_width.modest).
+// A decimal literal is as wide as its value, never less than one bit: `~0` is
+// `1`.  Its top bit is always set, so `~` always clears it, and the result
+// may be narrower — `~~165` is `~90`, 7 bits, which is `37`.
 //
-// The result never grows past that width: constructed into a wider Word,
-// `~0xA5` is `0x0000005A`.  It may shrink, and then the next `~` works at
-// the narrower width — `~~0xA5` is `~0x5A`, 7 bits, which is `0x25`.
+// The result never grows past the width: constructed into a wider Word,
+// `~0x0F` is `0x000000F0`.  A full-width mask is written to the width, or
+// with its type — `~Word32 0x0F` (literal_width.modest).
 //
 // A negative literal has no such width and is refused
 // (literal/reject_bitwise.modest).
@@ -30,79 +30,108 @@ include "libc/stdio"
 include "libc/stdlib"
 
 
-const inverted = ~0xA5
+const inverted = ~0x0F
 
 
-func testOwnWidth () -> Bool {
-	var a: Word8 = ~0xA5
-	var b: Word8 = ~0xF0
-	if a != 0x5A or b != 0x0F {
-		printf("~0xA5 / ~0xF0 = 0x%02x / 0x%02x, expected 0x5A / 0x0F\n", Word32 a, Word32 b)
+func testHex () -> Bool {
+	var a: Word8 = ~0x0F
+	var b: Word8 = ~0xA5
+	if a != 0xF0 or b != 0x5A {
+		printf("~0x0F / ~0xA5 = 0x%02x / 0x%02x, expected 0xF0 / 0x5A\n", Word32 a, Word32 b)
 		return false
 	}
 
-	// Four bits, all set: nothing is left.
-	var c: Word8 = ~0x0F
-	var d: Word16 = ~0x1FF
-	if c != 0x00 or d != 0x0000 {
-		printf("~0x0F / ~0x1FF = 0x%02x / 0x%04x, expected 0\n", Word32 c, Word32 d)
+	// Written to the full width of the type, the mask is the full one.
+	var c: Word32 = ~0x0000000F
+	var d: Word16 = ~0x00FF
+	if c != 0xFFFFFFF0 or d != 0xFF00 {
+		printf("~0x0000000F / ~0x00FF = 0x%08x / 0x%04x\n", c, Word32 d)
 		return false
 	}
 
-	// 0x10 is five bits, 0x100 is nine.
-	var e: Word8 = ~0x10
-	var f: Word16 = ~0x100
-	if e != 0x0F or f != 0x00FF {
-		printf("~0x10 / ~0x100 = 0x%02x / 0x%04x, expected 0x0F / 0x00FF\n", Word32 e, Word32 f)
+	// Without leading zeros the written width is the value's: all set.
+	var e: Word8 = ~0xF
+	var f: Word8 = ~0x7
+	var g: Word16 = ~0x1FF
+	if e != 0x0 or f != 0x0 or g != 0x0 {
+		printf("~0xF / ~0x7 / ~0x1FF = 0x%x / 0x%x / 0x%x, expected 0\n", Word32 e, Word32 f, Word32 g)
 		return false
 	}
 
-	// Zero is written with one bit, so its inversion is one.
-	var z: Word8 = ~0
-	var o: Word8 = ~1
-	if z != 0x01 or o != 0x00 {
-		printf("~0 / ~1 = 0x%02x / 0x%02x, expected 0x01 / 0x00\n", Word32 z, Word32 o)
+	// 0x0 is one digit, four bits.
+	var z: Word8 = ~0x0
+	if z != 0x0F {
+		printf("~0x0 = 0x%02x, expected 0x0F\n", Word32 z)
+		return false
+	}
+
+	// Twice is the identity: the width is kept.
+	var t: Word8 = ~~0xA5
+	var u: Word8 = ~~0x0F
+	if t != 0xA5 or u != 0x0F {
+		printf("~~0xA5 / ~~0x0F = 0x%02x / 0x%02x\n", Word32 t, Word32 u)
 		return false
 	}
 
 	// 64 bits: the fold does not lose the upper half.
-	var g: Word64 = ~0x8000000000000000
-	if g != 0x7FFFFFFFFFFFFFFF {
-		printf("~0x8000000000000000 = 0x%016llx, expected 0x7FFFFFFFFFFFFFFF\n", Nat64 g)
+	var w: Word64 = ~0x0000FFFF0000FFFF
+	if w != 0xFFFF0000FFFF0000 {
+		printf("~0x0000FFFF0000FFFF = 0x%016llx\n", Nat64 w)
 		return false
 	}
 
-	printf("passed: own width\n")
+	printf("passed: hex\n")
+	return true
+}
+
+
+func testDecimal () -> Bool {
+	var a: Word8 = ~0
+	var b: Word8 = ~1
+	var c: Word8 = ~165
+	if a != 1 or b != 0 or c != 90 {
+		printf("~0 / ~1 / ~165 = %u / %u / %u, expected 1 / 0 / 90\n", Nat32 a, Nat32 b, Nat32 c)
+		return false
+	}
+
+	// The result is as wide as its own value: 90 is 7 bits.
+	var d: Word8 = ~~165
+	if d != 37 {
+		printf("~~165 = %u, expected 37\n", Nat32 d)
+		return false
+	}
+
+	printf("passed: decimal\n")
 	return true
 }
 
 
 func testNotWider () -> Bool {
 	// In a Word32 the upper bits stay zero: the literal was 8 bits wide.
-	var a: Word32 = ~0xA5
-	if a != 0x0000005A {
-		printf("~0xA5 as Word32 = 0x%08x, expected 0x0000005A\n", a)
+	var a: Word32 = ~0x0F
+	if a != 0x000000F0 {
+		printf("~0x0F as Word32 = 0x%08x, expected 0x000000F0\n", a)
 		return false
 	}
 
 	// The same through a constant, which stays a literal.
 	var b: Word16 = inverted
 	var c: Word64 = inverted
-	if b != 0x005A or c != 0x000000000000005A {
-		printf("const ~0xA5 = 0x%04x / 0x%llx, expected 0x5A\n", Word32 b, Nat64 c)
+	if b != 0x00F0 or c != 0x00000000000000F0 {
+		printf("const ~0x0F = 0x%04x / 0x%llx, expected 0xF0\n", Word32 b, Nat64 c)
 		return false
 	}
 
 	// Meeting a wider Word: the literal is inverted before it meets `m`.
 	var m: Word32 = 0xFFFFFFFF
-	if m & ~0xF0 != 0x0000000F {
-		printf("0xFFFFFFFF & ~0xF0 = 0x%08x, expected 0x0000000F\n", m & ~0xF0)
+	if m & ~0x0F != 0x000000F0 {
+		printf("0xFFFFFFFF & ~0x0F = 0x%08x, expected 0x000000F0\n", m & ~0x0F)
 		return false
 	}
 
-	// The typed form is how the full-width mask is written.
-	if m & ~Word32 0xF0 != 0xFFFFFF0F {
-		printf("0xFFFFFFFF & ~Word32 0xF0 = 0x%08x, expected 0xFFFFFF0F\n", m & ~Word32 0xF0)
+	// Written to the width, or typed, it is the full-width mask.
+	if m & ~0x0000000F != 0xFFFFFFF0 or m & ~Word32 0x0F != 0xFFFFFFF0 {
+		printf("0xFFFFFFFF & ~0x0000000F / ~Word32 0x0F is not 0xFFFFFFF0\n")
 		return false
 	}
 
@@ -111,36 +140,14 @@ func testNotWider () -> Bool {
 }
 
 
-func testNarrower () -> Bool {
-	// A 16-bit literal whose inversion fits a byte.
-	var a: Word8 = ~0xFF0F
-	if a != 0xF0 {
-		printf("~0xFF0F as Word8 = 0x%02x, expected 0xF0\n", Word32 a)
-		return false
-	}
-
-	// The second `~` works at the width the first one left: 0x5A is 7 bits.
-	var b: Word8 = ~~0xA5
-	var c: Word8 = ~~0x0F
-	if b != 0x25 or c != 0x01 {
-		printf("~~0xA5 / ~~0x0F = 0x%02x / 0x%02x, expected 0x25 / 0x01\n", Word32 b, Word32 c)
-		return false
-	}
-
-	printf("passed: narrower\n")
-	return true
-}
-
-
 func testAnySpelling () -> Bool {
-	// A folded expression is a literal of the same width as the value
-	// written out: 0x0F + 0 is four bits like 0x0F, and 0x80 | 0x01 is
-	// eight bits like 0x81.
-	var a: Word8 = ~(0x0F + 0)
+	// `|` keeps the hex width, so the folded pair inverts like the literal
+	// written out; arithmetic gives the width of the value.
+	var a: Word8 = ~(0x0F | 0x00)
 	var b: Word8 = ~(0x80 | 0x01)
-	var c: Word8 = ~(0x0F & 0xF0)
-	if a != 0x00 or b != 0x7E or c != 0x01 {
-		printf("~(0x0F + 0) / ~(0x80 | 0x01) / ~(0x0F & 0xF0) = 0x%02x / 0x%02x / 0x%02x, expected 0x00 / 0x7E / 0x01\n",
+	var c: Word8 = ~(0x0F + 0)
+	if a != 0xF0 or b != 0x7E or c != 0x00 {
+		printf("~(0x0F | 0x00) / ~(0x80 | 0x01) / ~(0x0F + 0) = 0x%02x / 0x%02x / 0x%02x, expected 0xF0 / 0x7E / 0x00\n",
 			Word32 a, Word32 b, Word32 c)
 		return false
 	}
@@ -151,9 +158,9 @@ func testAnySpelling () -> Bool {
 
 
 func main () -> Int {
-	var ok = testOwnWidth()
+	var ok = testHex()
+	ok = testDecimal() and ok
 	ok = testNotWider() and ok
-	ok = testNarrower() and ok
 	ok = testAnySpelling() and ok
 	if not ok {
 		return exitFailure

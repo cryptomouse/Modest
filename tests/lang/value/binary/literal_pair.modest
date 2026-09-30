@@ -14,9 +14,9 @@
 // first and giving it a width later gives the same bits as widening both
 // operands first.  The folded pair is a literal again and takes the type of
 // whatever it meets, exactly like a single literal.  `~` and the shifts are
-// different — their answer depends on the width: a bare literal is refused
-// by the shifts (literal/reject_bitwise.modest), and `~` inverts it at the
-// literal's own width (unary/literal_tilde.modest).
+// different — their answer depends on the width, and they work in the
+// literal's own width: its written one for hex (literal/hex_width.modest,
+// unary/literal_tilde.modest, literal_shift.modest).
 //
 // The checks compare against the value spelled out, and the patterns are
 // chosen so that `&`, `|` and `^` each give a different answer — a fold into

@@ -17,11 +17,20 @@ implicitly construct a value of the required concrete type.
 
 ## Semantics
 
-- A generic value tracks its minimal width — the fewest bits that hold
-  its value, and never fewer than one: `Integer(6)` for `42`,
-  `Integer(1)` for `0`. It is not rounded up to 8/16/32 bits. The
-  implicit conversion succeeds if the target is wide enough; overflow is
-  a compile-time error.
+- A generic integer tracks a width. For a decimal literal and for
+  arithmetic it is the fewest bits that hold the value, and never fewer
+  than one: `Integer(6)` for `42`, `Integer(1)` for `0`. A hex literal
+  is as wide as it is *written*: every digit after the first significant
+  one is 4 bits, the first one as many as it needs, and a leading zero
+  is a digit too — `0x7` is `Integer(3)`, `0xF` `Integer(4)`, `0x0F`
+  `Integer(8)`, `0x000F` `Integer(16)`, `0x0` `Integer(4)`. `&`, `|`,
+  `^`, `~` and the shifts keep it (see [binary](../value/binary.md) and
+  [unary](../value/unary.md)). No width is rounded up to 8/16/32 bits.
+- The implicit conversion succeeds if the target is at least as wide as
+  that width: `var w: Word8 = 0x000F` is an error, even though 15 fits.
+  Write the literal to fit (`0x0F`) or construct explicitly
+  (`Word8 0x000F`) — the explicit form checks only the value. Overflow
+  is a compile-time error either way.
 - Expressions over generic values are evaluated at compile time and stay
   generic: `const two = 1 + 1` is still `Integer`.
 - `Rational` is backed by an exact arbitrary-precision fraction (unlike

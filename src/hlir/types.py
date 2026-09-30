@@ -1516,6 +1516,11 @@ class TypeInteger(TypeSimple):
 		self.signed = False
 		self.unsigned = unsigned
 
+		# Ширину задала запись hex-литерала (0x0F - 8 бит), а не его значение:
+		# такой литерал - битовый шаблон, и `~` и сдвиги работают в этой
+		# ширине.  Десятичный литерал и арифметика дают ширину по значению
+		self.spelled = False
+
 
 class TypeRational(TypeSimple):
 	def __init__(self, ti=None):

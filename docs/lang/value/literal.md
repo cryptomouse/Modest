@@ -20,6 +20,11 @@ type at the use site.
 
 - Integer: decimal or hexadecimal (`0x...`); `_` may separate digit
   groups; a leading `0` is still decimal — there are no octal literals.
+- A hex literal is as wide as it is written, leading zeros included:
+  `0x0F` is 8 bits, `0x000F` 16, `0xF` 4. It is a bit pattern of that
+  width — it goes implicitly only into a type at least that wide, and
+  `~` and the shifts work in it. A decimal literal is as wide as its
+  value. See [generic types](../type/generic.md).
 - Rational: requires digits on both sides of the dot (`0.5`, not `.5`).
 - String: double or single quotes are equivalent; `\` escapes the next
   character. The value is a `[N]CharX` array containing exactly the

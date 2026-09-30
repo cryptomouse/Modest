@@ -209,9 +209,9 @@ def type_select_nat(sz):
 
 
 
-# Ширина литерала - минимально необходимая для его значения (0x0F - 4 бита,
-# 0x1FF - 9), без округления до 8/16/32: так же ее считает и свертка
-# бинарных операций (do_value_bin_op), и `~` инвертирует литерал именно в ней
+# Ширина по значению - минимально необходимая (15 - 4 бита, 511 - 9), без
+# округления до 8/16/32: так же ее считает и свертка арифметики. У hex-литерала
+# ширина своя - по записи (hex_literal_width в semantic.py)
 def type_integer_for(num, unsigned=False, ti=None):
 	required_width = nbits_for_num(num)
 	return type_integer_create(width=required_width, unsigned=unsigned, ti=ti)

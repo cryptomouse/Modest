@@ -1,0 +1,142 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: written width
+// EXPECT-OUT: passed: explicit
+// EXPECT-OUT: passed: bitwise keeps width
+// EXPECT-OUT: passed: decimal
+// EXPECT-OUT: passed: hex width
+//
+// A hex literal is as wide as it is written: every digit after the first
+// significant one is 4 bits, the first one is as many bits as it needs, and
+// a leading zero is a digit too.  `0x7` is 3 bits, `0xF` 4, `0x0F` 8,
+// `0x1FF` 9, `0x01FF` 16, `0x0` 4.  Without leading zeros that is the same
+// as the width of the value.
+//
+// A literal goes implicitly into a type at least as wide — so `0x0F` goes
+// into a Word8 and `0x000F` does not (reject_hex_width.modest) — and
+// explicitly into any type its value fits.  `&`, `|` and `^` keep the width
+// of the wider operand; arithmetic and decimal literals have the width of
+// the value.
+//
+// Each check puts a literal into the narrowest type its width allows, so a
+// width that came out wider than written stops the file compiling.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const mask16 = 0x00FF
+
+
+func testWrittenWidth () -> Bool {
+	// Written to the width of the type.
+	var a: Word8 = 0x0F
+	var b: Word16 = 0x000F
+	var c: Word32 = 0x0000000F
+	if a != 0x0F or b != 0x000F or c != 0x0000000F {
+		printf("0x0F / 0x000F / 0x0000000F did not keep their value\n")
+		return false
+	}
+
+	// Narrower than the type is fine in any case.
+	var d: Word16 = 0x0F
+	var e: Word64 = 0x7
+	if d != 0x000F or e != 0x7 {
+		printf("a narrow literal changed its value in a wider type\n")
+		return false
+	}
+
+	// An untyped constant keeps the width it was written with.
+	var f: Word16 = mask16
+	var g: Nat16 = mask16
+	var h: Int16 = mask16
+	if f != 0x00FF or g != 255 or h != 255 {
+		printf("const 0x00FF = 0x%x / %u / %d, expected 255\n", Word32 f, Nat32 g, Int32 h)
+		return false
+	}
+
+	printf("passed: written width\n")
+	return true
+}
+
+
+func testExplicit () -> Bool {
+	// Explicit construction looks at the value, not at the spelling.
+	var a = Word8 0x000F
+	var b = Nat8 0x00FF
+	var c = Int8 0x007F
+	if a != 0x0F or b != 255 or c != 127 {
+		printf("explicit 0x000F / 0x00FF / 0x007F = 0x%x / %u / %d\n", Word32 a, Nat32 b, Int32 c)
+		return false
+	}
+
+	printf("passed: explicit\n")
+	return true
+}
+
+
+func testBitwiseKeepsWidth () -> Bool {
+	// The wider operand decides: 0x0F | 0x0 is 8 bits, not 4.
+	var a: Word8 = 0x0F | 0x0
+	var b: Word16 = 0x0F | 0x0100
+	if a != 0x0F or b != 0x010F {
+		printf("0x0F | 0x0 / 0x0F | 0x0100 = 0x%x / 0x%x\n", Word32 a, Word32 b)
+		return false
+	}
+
+	// A result of 0 is still as wide as its operands: `~` sees it.
+	var c: Word8 = ~(0x0F & 0xF0)
+	if c != 0xFF {
+		printf("~(0x0F & 0xF0) = 0x%02x, expected 0xFF\n", Word32 c)
+		return false
+	}
+
+	// A decimal operand brings only its value width, and does not take
+	// the hex one away: 0xF & 15 is a 4-bit pattern either way round.
+	var d: Word8 = ~(0xF & 15)
+	var e: Word8 = ~(15 & 0xF)
+	if d != 0x00 or e != 0x00 {
+		printf("~(0xF & 15) / ~(15 & 0xF) = 0x%x / 0x%x, expected 0\n", Word32 d, Word32 e)
+		return false
+	}
+
+	printf("passed: bitwise keeps width\n")
+	return true
+}
+
+
+func testDecimal () -> Bool {
+	// Decimal and arithmetic results are as wide as their value.
+	var a: Word8 = 255
+	var b: Word8 = 0x00FF - 0x0F00 + 0x0F00
+	if a != 0xFF or b != 0xFF {
+		printf("255 / folded 0xFF = 0x%x / 0x%x\n", Word32 a, Word32 b)
+		return false
+	}
+
+	// Arithmetic forgets the written width, and `~` then works at the
+	// value's: 0x0F + 0 is 4 bits.
+	var c: Word8 = ~(0x0F + 0)
+	if c != 0x00 {
+		printf("~(0x0F + 0) = 0x%02x, expected 0x00\n", Word32 c)
+		return false
+	}
+
+	printf("passed: decimal\n")
+	return true
+}
+
+
+func main () -> Int {
+	var ok = testWrittenWidth()
+	ok = testExplicit() and ok
+	ok = testBitwiseKeepsWidth() and ok
+	ok = testDecimal() and ok
+	if not ok {
+		return exitFailure
+	}
+	printf("passed: hex width\n")
+	return exitSuccess
+}

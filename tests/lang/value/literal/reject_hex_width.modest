@@ -1,0 +1,42 @@
+// TEST: reject
+// EXPECT-ERROR: type mismatch Word8 & Integer(16)
+// EXPECT-ERROR: integer overflow
+// EXPECT-ERROR: attempt to construct `Nat8` from `Integer(16)`
+// EXPECT-ERROR: type mismatch Int8 & Integer(16)
+// EXPECT-ERROR: type mismatch Word8 & Integer(16)
+// EXPECT-ERROR: type mismatch Word8 & Integer(16)
+// EXPECT-ERROR: type mismatch Word8 & Integer(16)
+// EXPECT-ERROR: cannot implicitly cons to common type 'Word8' & 'Integer(16)'
+// EXPECT-ERROR: word overflow
+//
+// A hex literal is as wide as it is written — `0x000F` is 16 bits, however
+// small its value — and it does not go implicitly into a narrower type.
+// Either the literal is written to fit (`0x0F`, `0xF`) or the construction
+// is made explicit (`Word8 0x000F`), and then the value is what has to fit.
+//
+// The width survives `&`, `|`, `^`, `~` and the shifts, so the same holds
+// for what they give; the passing side of every line here is in
+// hex_width.modest.
+
+include "libc/ctypes64"
+
+func main () -> Int {
+	// Into each integer class.
+	var w: Word8 = 0x000F
+	var n: Nat8 = 0x000F
+	var i: Int8 = 0x000F
+
+	// Through the operators that keep the width.
+	var a: Word8 = 0x0F | 0x0100
+	var b: Word8 = ~0x000F
+	var c: Word8 = 0x0001 << 1
+
+	// Meeting a narrower Word in an operation.
+	var m: Word8 = 0xFF
+	var d = m & 0x00FF
+
+	// Explicit construction checks the value, and this one does not fit.
+	var e = Word8 0x01FF
+
+	return 0
+}

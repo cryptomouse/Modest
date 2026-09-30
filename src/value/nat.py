@@ -53,6 +53,10 @@ def value_nat_cons(t, v, method, ti):
 	if v.is_immediate() and v.type.is_float():
 		from_width = nbits_for_num(int(v.value))
 
+	# ширина записи hex-литерала держит только неявную конструкцию
+	if method == 'explicit' and v.is_immediate() and v.type.is_integer():
+		from_width = nbits_for_num(v.asset)
+
 	if method != 'unsafe':
 		if from_width > to_width:
 			error("integer overflow", ti)

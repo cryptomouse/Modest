@@ -15,8 +15,11 @@ def value_word_create(num, ti=None):
 
 
 def value_word_can(to, from_type, method, ti):
+	# Неявно литерал входит в WordX, только если его ширина - у hex-литерала
+	# ширина записи - не больше: 0x000F в Word8 не входит. Явная конструкция
+	# `Word8 0x000F` смотрит на само значение (value_word_cons)
 	if from_type.is_integer():
-		return from_type.width <= to.width
+		return method != 'implicit' or from_type.width <= to.width
 
 	if from_type.is_generic_word():
 		return from_type.width <= to.width
@@ -54,6 +57,9 @@ def value_word_cons(t, v, method, ti):
 	if v.is_immediate():
 		if method == 'implicit':
 			if v.type.width > t.width:
+				error("word overflow", ti)
+		elif method == 'explicit' and v.type.is_integer():
+			if nbits_for_num(v.asset) > t.width:
 				error("word overflow", ti)
 
 		nv.stage = HLIR_VALUE_STAGE_COMPILETIME

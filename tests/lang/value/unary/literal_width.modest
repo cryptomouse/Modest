@@ -5,8 +5,8 @@
 //
 // `~` applied to a *typed literal*.
 //
-// A bare literal is inverted at its own minimal width — `~0x0F` is `0`,
-// four bits all cleared, wherever it goes; see literal_tilde.modest.  Written
+// A bare literal is inverted at its own width — `~0x0F` is `0xF0`, eight
+// bits as written, wherever it goes; see literal_tilde.modest.  Written
 // with its type, `~Word32 0x0F` is the complement of a 32-bit `0x0000000F`
 // and has to be `0xFFFFFFF0`, however few bits the literal itself needs.
 //

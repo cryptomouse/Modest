@@ -13,8 +13,10 @@ def fixed_to_int(v):
 
 
 def value_int_can(to, from_type, method, ti):
+	# ширина записи hex-литерала держит только неявную конструкцию,
+	# явная смотрит на значение (value_int_cons)
 	if from_type.is_integer():
-		return from_type.width <= to.width
+		return method != 'implicit' or from_type.width <= to.width
 
 	if method == 'implicit':
 		return False
@@ -56,6 +58,9 @@ def value_int_cons(t, v, method, ti):
 
 	if v.is_immediate() and v.type.is_float():
 		from_width = nbits_for_num(int(v.value))
+
+	if method == 'explicit' and v.is_immediate() and v.type.is_integer():
+		from_width = nbits_for_num(v.asset)
 
 	if method != 'unsafe':
 		if from_width > to_width:

@@ -1,0 +1,115 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: shift left
+// EXPECT-OUT: passed: shift right
+// EXPECT-OUT: passed: keeps width
+// EXPECT-OUT: passed: literal shift
+//
+// `<<` and `>>` on a bare *hex* literal.
+//
+// A hex literal is as wide as it is written (literal/hex_width.modest), and
+// it is shifted in that width: `0x01 << 4` is `0x10`, and `0x01 << 8` is
+// `0` — the bit left the eight the literal has.  The result is a literal of
+// the same width.  A decimal literal has no written width and cannot be
+// shifted, and a hex one cannot be shifted by a run-time count
+// (literal/reject_bitwise.modest).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const bit4 = 0x01 << 4
+
+
+func testShiftLeft () -> Bool {
+	var a: Word8 = 0x01 << 4
+	var b: Word8 = 0x01 << 7
+	if a != 0x10 or b != 0x80 {
+		printf("0x01 << 4 / << 7 = 0x%02x / 0x%02x, expected 0x10 / 0x80\n", Word32 a, Word32 b)
+		return false
+	}
+
+	// Out of the written width, the bit is gone.
+	var c: Word8 = 0x01 << 8
+	var d: Word8 = 0xF0 << 4
+	if c != 0x00 or d != 0x00 {
+		printf("0x01 << 8 / 0xF0 << 4 = 0x%02x / 0x%02x, expected 0\n", Word32 c, Word32 d)
+		return false
+	}
+
+	// The written width, not the type it goes into, is where it happens.
+	var e: Word32 = 0x01 << 8
+	var f: Word32 = 0x0001 << 8
+	if e != 0x00000000 or f != 0x00000100 {
+		printf("0x01 << 8 / 0x0001 << 8 as Word32 = 0x%08x / 0x%08x\n", e, f)
+		return false
+	}
+
+	// Through a constant, the usual place for it.
+	var g: Word16 = bit4
+	if g != 0x0010 {
+		printf("const 0x01 << 4 = 0x%04x, expected 0x0010\n", Word32 g)
+		return false
+	}
+
+	// A count that is a typed constant is known now too.
+	let k: Nat8 = 3
+	var h: Word8 = 0x01 << k
+	if h != 0x08 {
+		printf("0x01 << Nat8 3 = 0x%02x, expected 0x08\n", Word32 h)
+		return false
+	}
+
+	printf("passed: shift left\n")
+	return true
+}
+
+
+func testShiftRight () -> Bool {
+	var a: Word8 = 0x80 >> 7
+	var b: Word8 = 0xF0 >> 4
+	var c: Word8 = 0x80 >> 8
+	if a != 0x01 or b != 0x0F or c != 0x00 {
+		printf("0x80 >> 7 / 0xF0 >> 4 / 0x80 >> 8 = 0x%x / 0x%x / 0x%x\n", Word32 a, Word32 b, Word32 c)
+		return false
+	}
+
+	printf("passed: shift right\n")
+	return true
+}
+
+
+func testKeepsWidth () -> Bool {
+	// The result has the operand's width, so `~` after the shift inverts
+	// all eight bits.
+	var a: Word8 = ~(0x01 << 4)
+	var b: Word8 = ~(0xF0 >> 4)
+	if a != 0xEF or b != 0xF0 {
+		printf("~(0x01 << 4) / ~(0xF0 >> 4) = 0x%02x / 0x%02x, expected 0xEF / 0xF0\n", Word32 a, Word32 b)
+		return false
+	}
+
+	// Shifts combine with `|` into a mask, all folded.
+	var m: Word8 = (0x01 << 7) | (0x01 << 0)
+	if m != 0x81 {
+		printf("(0x01 << 7) | (0x01 << 0) = 0x%02x, expected 0x81\n", Word32 m)
+		return false
+	}
+
+	printf("passed: keeps width\n")
+	return true
+}
+
+
+func main () -> Int {
+	var ok = testShiftLeft()
+	ok = testShiftRight() and ok
+	ok = testKeepsWidth() and ok
+	if not ok {
+		return exitFailure
+	}
+	printf("passed: literal shift\n")
+	return exitSuccess
+}

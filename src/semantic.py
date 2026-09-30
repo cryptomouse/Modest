@@ -752,15 +752,33 @@ def do_value_shift(x):
 	left = do_rvalue(x['left'])
 	right = do_rvalue(x['right'])
 
-	# Слева может быть только word (!)
-	# литерал сдвигать нельзя - у него нет ширины, сперва нужен тип: Word32 1 << n
-	if not left.type.is_word():
+	# Слева может быть только word (!) - или hex-литерал: у него есть
+	# ширина записи, и в ней он и сдвигается (0x01 << 4 это 0x10, а
+	# 0x01 << 8 - уже 0). Десятичный литерал такой ширины не имеет,
+	# ему сперва нужен тип: Word32 1 << n
+	if not (left.type.is_word() or is_spelled(left.type)):
 		error("expected word value", x['left']['ti'])
 		return ValueBad(ti=x['ti'])
 
 	if not (right.type.is_nat() or (right.type.is_integer() and right.asset >= 0)):
 		error("expected natural or non-negative integer value", x['right']['ti'])
 		return ValueBad(ti=x['ti'])
+
+	if left.type.is_integer():
+		# у литерала нет типа времени исполнения, так что и сдвиг
+		# свертывается сразу - на сколько, надо знать уже сейчас
+		if not right.is_immediate():
+			error("a literal can only be shifted by a compile-time count", x['right']['ti'])
+			info("give the literal a type first, e.g. `Word32 0x01 << n`", x['left']['ti'])
+			return ValueBad(ti=x['ti'])
+		if left.asset == None or right.asset == None:  # ValueUndefined
+			return ValueBad(type=left.type, ti=x['ti'])
+		mask = (1 << left.type.width) - 1
+		if op == HLIR_VALUE_OP_SHL:
+			num = (left.asset << right.asset) & mask
+		else:
+			num = left.asset >> right.asset
+		return value_integer_bits(num, left, ti=x['ti'])
 
 	nv = None
 	asset = None
@@ -797,6 +815,13 @@ def do_value_shift(x):
 
 
 
+BINARY_BITWISE_OPS = (HLIR_VALUE_OP_BITWISE_AND, HLIR_VALUE_OP_BITWISE_OR, HLIR_VALUE_OP_BITWISE_XOR)
+
+
+def is_spelled(t):
+	return t.is_integer() and t.spelled
+
+
 def do_value_bin(x):
 	op = x['kind']
 	l = do_rvalue(x['left'])
@@ -820,6 +845,10 @@ def do_value_bin_op(op, l, r, ti):
 
 	# Now and further types must be equal (!)
 
+	# ширина и происхождение литералов - до того, как их сконструируют
+	# в общий тип и оба станут одинаковыми
+	spelled = is_spelled(l.type) or is_spelled(r.type)
+	operand_width = max(l.type.width, r.type.width)
 
 	t = Type.select_common_type(l.type, r.type, ti)
 	if t == None:
@@ -874,7 +903,13 @@ def do_value_bin_op(op, l, r, ti):
 			need_width = nbits_for_num(asset, signed=t.is_signed())
 
 			if t.is_integer():
-				t = type_integer_create(width=need_width, ti=ti)
+				if op in BINARY_BITWISE_OPS:
+					# `&`, `|`, `^` не меняют ширину битового шаблона: результат
+					# так же широк, как самый широкий операнд (0x0F | 0x00 - 8 бит)
+					t = type_integer_create(width=max(operand_width, need_width), ti=ti)
+					t.spelled = spelled
+				else:
+					t = type_integer_create(width=need_width, ti=ti)
 			elif t.is_rational():
 				pass  # Rational is arbitrary precision (Fraction), no fixed width to overflow
 			elif t.is_float():
@@ -998,17 +1033,18 @@ def do_value_bitwise_not(x):
 	if not do_value_unary_check(v, HLIR_VALUE_OP_BITWISE_NOT):
 		return ValueBad(ti=x['ti'])
 
-	# `~` на литерале инвертирует его в его же - минимально необходимой -
-	# ширине: ~0xA5 это 0x5A, ~0x0F это 0 (0x0F занимает 4 бита), ~0 это 1.
-	# Результат - снова литерал, и шире исходного он не становится
-	# (Word32 ~0xA5 это 0x0000005A). У отрицательного литерала такой
-	# ширины нет - его сперва надо сконструировать в WordX
+	# `~` на литерале инвертирует его в его же ширине: у hex-литерала это
+	# ширина записи (~0x0F это 0xF0, ~0xF это 0), у десятичного - по
+	# значению (~0 это 1). Результат - снова литерал, и шире исходного он
+	# не становится (Word32 ~0x0F это 0x000000F0). Hex-литерал ширину
+	# сохраняет, десятичный может сузиться. У отрицательного литерала
+	# такой ширины нет - его сперва надо сконструировать в WordX
 	if v.type.is_integer():
 		if v.asset < 0:
 			error("expected non-negative integer value", v.ti)
 			return ValueBad(ti=x['ti'])
 		mask = (1 << v.type.width) - 1
-		return value_integer_create(~v.asset & mask, ti=x['ti'])
+		return value_integer_bits(~v.asset & mask, v, ti=x['ti'])
 
 	nv = ValueNot(v.type, v, ti=x['ti'])
 
@@ -1020,6 +1056,17 @@ def do_value_bitwise_not(x):
 
 	return nv
 
+
+
+# Литерал - результат `~` или сдвига над литералом `v`: hex-литерал
+# сохраняет свою ширину и запись, десятичный получает ширину по значению
+def value_integer_bits(num, v, ti):
+	nv = value_integer_create(num, ti=ti)
+	if is_spelled(v.type):
+		nv.change_type(type_integer_spelled(v.type.width, ti=ti))
+		nv.addAttribute('hexadecimal', {})
+		nv.nsigns = (v.type.width + 3) // 4
+	return nv
 
 
 def do_value_neg(x):
@@ -1894,8 +1941,25 @@ def do_value_integer(x):
 
 	if base == 16:
 		v.addAttribute('hexadecimal', {})
+		v.change_type(type_integer_spelled(hex_literal_width(s[2:], num), ti=x['ti']))
 
 	return v
+
+
+# Ширина hex-литерала - по его записи: каждая цифра после первой значащей
+# дает 4 бита, а сама первая - столько, сколько ей нужно; ведущий ноль
+# это тоже цифра.  0x7 - 3 бита, 0xF - 4, 0x0F - 8, 0x0 - 4.
+# Без ведущих нулей это то же, что ширина по значению
+def hex_literal_width(digits, num):
+	if digits[0] == '0':
+		return 4 * len(digits)
+	return nbits_for_num(num)
+
+
+def type_integer_spelled(width, ti=None):
+	t = type_integer_create(width=width, ti=ti)
+	t.spelled = True
+	return t
 
 
 

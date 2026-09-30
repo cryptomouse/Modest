@@ -21,15 +21,22 @@
   promotions: `Int32 + Int64` is an error (`different types ... in
   operation`). Construct to a common type explicitly. Generic literals
   adapt to the other operand: `i + 1` works for any integer `i`.
-- Shifts do not apply to a bare literal: its width is only what its
-  value needs, and a shift moves bits out of it or into bits it does not
-  have. `1 << 4` is an error — give the
-  literal a type first: `Word32 1 << 4`. A literal next to a `WordX` is
-  fine (`w & 0x0F`), it takes `w`'s type.
+- A hex literal can be shifted: it is as wide as it is written
+  ([generic](../type/generic.md)), and it is shifted in that width —
+  `0x01 << 4` is `0x10`, `0x01 << 8` is `0`, `0x0001 << 8` is `0x0100`.
+  The result is a literal of the same width. The count has to be known at
+  compile time (`a literal can only be shifted by a compile-time count`):
+  a literal has no type to shift in at run time.
+- A decimal literal cannot be shifted: its width is only what its value
+  needs. `1 << 4` is an error (`expected word value`) — give the literal
+  a type first, `Word32 1 << 4`, or write it in hex. A literal next to a
+  `WordX` is fine (`w & 0x0F`), it takes `w`'s type.
 - A pair of literals under `&`, `|` or `^` is fine: each bit of the result
-  depends only on the same bit of the operands, so no width is needed.
-  `0x0F | 0x30` folds into the literal `0x3F`, which then adapts to what
-  it meets like any other literal — `const mask: Word8 = 0x0F | 0x30`.
+  depends only on the same bit of the operands. `0x0F | 0x30` folds into
+  the literal `0x3F`, which then adapts to what it meets like any other
+  literal — `const mask: Word8 = 0x0F | 0x30`. The result is as wide as
+  the wider operand: `0x0F | 0x0` is 8 bits, and `0x0F | 0x0100` is 16
+  and does not go into a `Word8`.
 - The only exception is shift: the right operand's type may differ from
   the left's. It is a count, not a bit pattern — a `WordX` or `IntX`
   operand, and a negative literal, are all rejected with `expected
