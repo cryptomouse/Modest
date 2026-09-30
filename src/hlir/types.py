@@ -598,7 +598,11 @@ PTR_OPS = CONS_OP + EQ_OPS + (HLIR_VALUE_OP_DEREF,)
 ARR_OPS = CONS_OP + EQ_OPS + (HLIR_VALUE_OP_ADD, HLIR_VALUE_OP_INDEX)
 REC_OPS = CONS_OP + EQ_OPS + (HLIR_VALUE_OP_ACCESS,)
 STRING_OPS = CONS_OP + EQ_OPS + (HLIR_VALUE_OP_ADD,)
-NUMBER_OPS = CONS_OP + EQ_OPS + RELATIONAL_OPS + ARITHMETICAL_OPS + REM_OP
+# Пара литералов в `&`, `|`, `^` сворачивается в Integer, который потом
+# принимает тип того, с чем встретится - как и одиночный литерал (BUG#28).
+# `~` инвертирует литерал в его собственной ширине (do_value_bitwise_not)
+NUMBER_BITWISE_OPS = BITWISE_OPS
+NUMBER_OPS = CONS_OP + EQ_OPS + RELATIONAL_OPS + ARITHMETICAL_OPS + REM_OP + NUMBER_BITWISE_OPS
 RATIONAL_OPS = CONS_OP + EQ_OPS + RELATIONAL_OPS + ARITHMETICAL_OPS
 
 pointer_width = 32
@@ -680,7 +684,6 @@ class Type(Entity):
 
 	def get_align(self):
 		return self.align
-
 
 	# Получить список типов от которых данный тип зависит напрямую
 	def get_dir_deps(self, deps):

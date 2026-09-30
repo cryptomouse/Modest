@@ -209,8 +209,11 @@ def type_select_nat(sz):
 
 
 
+# Ширина литерала - минимально необходимая для его значения (0x0F - 4 бита,
+# 0x1FF - 9), без округления до 8/16/32: так же ее считает и свертка
+# бинарных операций (do_value_bin_op), и `~` инвертирует литерал именно в ней
 def type_integer_for(num, unsigned=False, ti=None):
-	required_width = align_bits_up(nbits_for_num(num))
+	required_width = nbits_for_num(num)
 	return type_integer_create(width=required_width, unsigned=unsigned, ti=ti)
 
 

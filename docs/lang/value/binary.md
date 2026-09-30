@@ -21,10 +21,15 @@
   promotions: `Int32 + Int64` is an error (`different types ... in
   operation`). Construct to a common type explicitly. Generic literals
   adapt to the other operand: `i + 1` works for any integer `i`.
-- Bitwise operators and shifts do not apply to bare literals: a literal
-  has no width, and a bit pattern depends on one. `0x0F & 0xF0` and
-  `1 << 4` are errors — give the literal a type first: `Word32 1 << 4`.
-  A literal next to a `WordX` is fine (`w & 0x0F`), it takes `w`'s type.
+- Shifts do not apply to a bare literal: its width is only what its
+  value needs, and a shift moves bits out of it or into bits it does not
+  have. `1 << 4` is an error — give the
+  literal a type first: `Word32 1 << 4`. A literal next to a `WordX` is
+  fine (`w & 0x0F`), it takes `w`'s type.
+- A pair of literals under `&`, `|` or `^` is fine: each bit of the result
+  depends only on the same bit of the operands, so no width is needed.
+  `0x0F | 0x30` folds into the literal `0x3F`, which then adapts to what
+  it meets like any other literal — `const mask: Word8 = 0x0F | 0x30`.
 - The only exception is shift: the right operand's type may differ from
   the left's. It is a count, not a bit pattern — a `WordX` or `IntX`
   operand, and a negative literal, are all rejected with `expected

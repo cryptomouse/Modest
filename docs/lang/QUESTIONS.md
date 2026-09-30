@@ -491,4 +491,3 @@ mixed chain still asks for parentheses.
 
 - [`value/binary.md`](./value/binary.md) — which types each group takes,
   which is why arithmetic and bitwise can share a level at all
-- BUG#28 — why the bitwise operators have to be left-associative

@@ -1,40 +1,32 @@
 // TEST: reject
-// EXPECT-ERROR: unsuitable value type 'Integer(8)' for 'bitwise-not' operation
-// EXPECT-ERROR: unsuitable value type 'Integer(8)' for 'bitwise-not' operation
-// EXPECT-ERROR: unsuitable value type 'Integer(8)' for 'bitwise-and' operation
-// EXPECT-ERROR: unsuitable value type 'Integer(8)' for 'bitwise-or' operation
-// EXPECT-ERROR: unsuitable value type 'Integer(8)' for 'bitwise-xor' operation
+// EXPECT-ERROR: expected non-negative integer value
 // EXPECT-ERROR: expected word value
 // EXPECT-ERROR: expected word value
 // EXPECT-ERROR: expected word value
 //
-// A bitwise operator does not apply to a bare literal: the literal has to
-// be given a type first — `~Word32 0x0F`, `Word32 1 << n`.
+// The shifts do not apply to a bare literal: the literal has to be given a
+// type first — `Word32 1 << n`.  A shifted bit pattern depends on the width
+// it is shifted in, and a literal has none of its own.
 //
-// An integer literal has no width of its own, and a bitwise result depends
-// on the width: `~0x0F` is `0xF0` at Word8 and `0xFFFFFFF0` at Word32.
-// Folding it before the width is known is exactly how the LLVM backend used
-// to invert `~0x0F` at the literal's own eight bits and zero-extend the
-// rest (BUG#63).  Refusing the form removes the question instead of
-// answering it one way or the other.
+// `~` does apply to a bare literal and inverts it at the literal's own
+// minimal width, so `~0xA5` is `0x5A` (unary/literal_tilde.modest).  A negative
+// literal has no such width and is refused.  Folding at the literal's width
+// is also how the LLVM backend used to treat the *typed* `~Word32 0x0F`
+// (BUG#63) — that is literal_width.modest.
 //
 // A literal that *meets* a WordX is not affected: `w & 0x0F` takes w's type
-// before the operator sees it, and bitwise.modest is full of that.
+// before the operator sees it, and bitwise.modest is full of that.  Nor is
+// a pair of literals under `&`, `|` or `^`: each bit of their result depends
+// only on the same bit of the operands, so the width does not matter and the
+// pair folds into a literal (binary/literal_pair.modest).
 //
 // Guards BUG#63 (fixed 2026-09-29).
 
 include "libc/ctypes64"
 
 func main () -> Int {
-	// `~` on a literal, alone and as an operand of a typed expression.
-	var a: Word32 = ~0x0F
-	var mask: Word32 = 0xFFFFFFFF
-	var b = mask & ~0x0F
-
-	// Both operands literals: there is no WordX in sight to take a type from.
-	var c: Word32 = 0x0F & 0xF0
-	var d: Word32 = 0x0F | 0xF0
-	var e: Word32 = 0x0F ^ 0xF0
+	// `~` on a negative literal: there is no width to invert it at.
+	var a: Word32 = ~-1
 
 	// Shifts: the left operand is the bit pattern and has to be a WordX.
 	var f: Word32 = 1 << 3

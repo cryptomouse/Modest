@@ -242,34 +242,6 @@ a == b        // llvm: false      c11: true
   `EXPECTED-FAIL(llvm)`. It passes under c11 on purpose — if that backend
   ever stops emitting a compound literal, the test reports it.
 
-## BUG#28: Bitwise operators reject a pair of literal operands
-
-```modest
-const flags: Word8 = 0x0F | 0x30      // error: unsuitable value type
-                                      // 'Integer(8)' for 'bitwise-or' operation
-```
-
-- A literal has no type of its own and takes the other operand's, so
-  `s | 0x0F` is fine. When *both* operands are literals there is nothing to
-  take a type from, and the generic `Integer` that results is rejected by
-  `&`, `|` and `^` — which accept `WordX` only.
-- Combining two flag constants is the ordinary way to write a mask, and it
-  does not compile at all: neither `const both: Word8 = 0x0F | 0x30` nor
-  the untyped `const both = 0x0F | 0x30`.
-- A chain over a variable used to hit the same error from a different
-  direction: `&`, `^`, `|` grouped to the right, so `s ^ 0x0F ^ 0x30` was
-  `s ^ (0x0F ^ 0x30)` — a literal pair. Those three operators are
-  left-associative now, so the chain reaches only one literal at a time and
-  compiles. That hid a symptom, not the defect: a literal pair written on
-  its own still does not.
-- Arithmetic does not have the problem: `1 + 2 + 3` folds, because `+`
-  accepts a generic `Integer`.
-- Fix: let `&`, `|` and `^` accept two `Integer` operands and fold them
-  into an `Integer`, the way `+` already does — the result then adapts to
-  whatever it meets, exactly like a single literal.
-- Coverage: `tests/lang/value/binary/bitwise.modest` works around it by
-  keeping one operand a variable.
-
 ## BUG#30: C backend does narrow `Word` operations at `int` width
 
 ```modest
@@ -1398,3 +1370,63 @@ let y = Nat32 b      // 4294967291, expected 5
   4294967291 for `Nat32 Int8 -5`.  The magnitude needs its own step before
   the cast (`llvm.abs.*` or `select` on `icmp slt`).
 - `tests/lang/value/cons/int_to_nat.modest` reproduces it.
+
+
+## BUG#86: LLVM backend zero-extends a negative literal constructed into `WordX`
+
+```modest
+var a: Word64 = -1          // llvm: 0xff      c11: 0xffffffffffffffff
+var b: Word32 = -300        // llvm: 0xfed4    c11: 0xfffffed4
+var c: Word64 = Word64 -1   // llvm: 0xff
+var d: Word64 = -1 | 0x0F   // llvm: 0xff      (literal pair, see BUG#28)
+var g: Word32 = -1          // at module level: the backend crashes
+```
+
+- A literal has no width of its own, so a negative one is the same value at
+  any width, and as a `WordX` it has every bit above its magnitude set.
+  The front end folds it that way — `const k: Word64 = -1` gives
+  `0xffffffffffffffff` on both backends — and so does C.
+- `do_eval_cons` (`src/backend/llvm.py`) sends `Integer → WordX` down the
+  same path as `IntX → WordX`: `do_reval` of the literal, then `docast`.
+  `do_reval` computes the negation at the literal's own width
+  (`sub i8 0, 1`), and `select_cast_operator` picks the extension by the
+  *target*, which is unsigned, so it is `zext`: the upper bits come back 0.
+  The comment there (`int32(-1) -> uint64 => 0x00000000ffffffff`) is right
+  for an `IntX` source, which has a width, and wrong for a literal.
+- The same run-time `sub` is what crashes a module-level `var g: Word32 =
+  -1`: `reg_get` asserts it is not in the global context.  A module-level
+  `var h: Int32 = -1` is fine.
+- The same fault as BUG#63 (a literal sized to its own value, then
+  zero-extended), on the construction path instead of `~`.  An immediate
+  operand should be emitted from its folded `asset` at the target's width.
+- Only the LLVM backend.  No test covers it: `tests/lang/value/binary/
+  literal_pair.modest` keeps its literal pairs non-negative because of it.
+
+
+## BUG#87: C backend overflows `int` on a folded literal expression
+
+```modest
+const b = 0x7FFFFFFF + 1       // c11: -2147483648    llvm: 2147483648
+var x: Int64 = 0x7FFFFFFF + 1  // c11: -2147483648
+var w: Int64 = 0x40000000 * 2  // c11: -2147483648
+```
+
+- The front end folds `0x7FFFFFFF + 1` exactly, to 2147483648
+  (`Integer(32)`), and the LLVM backend emits that value.  The C backend
+  emits the expression as written instead: `#define B (0x7FFFFFFF + 1)`.
+- Each operand gets its C suffix from its own value
+  (`cvalue_literal_integer`, `src/backend/c11.py`): both fit an `int`, so
+  neither gets one, and C adds them as `int` — signed overflow, undefined
+  behaviour, and clang says so (`overflow in expression; result is
+  -2'147'483'648 with type 'int'`).  Where it lands afterwards does not
+  matter: `Int64` gets the wrapped value.
+- `0xFFFFFFFF + 1` is correct only by luck: `0xFFFFFFFF` alone is wide
+  enough to get the `UL` suffix, and the sum is done in `long`.
+- Until 2026-09-30 `do_cvalue_bin_expr` cast the operands to the C type of
+  the result when the result was wider.  That did not help here either:
+  `Integer(32)` maps to the signed `int32_t`, which does not hold 2³¹.
+- Fix: emit an immediate `Integer` expression from its folded `asset`, the
+  way `do_cvalue_bin` already does for `Rational`/`FloatX` (keeping the
+  source expression next to it as a comment), or give the operands the
+  suffix the *result's* width needs.
+- Only the C backend.  No test covers it.

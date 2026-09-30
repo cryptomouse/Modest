@@ -23,9 +23,7 @@
 // `|`, `^` and the shifts share one level with no order among them, so a
 // chain that mixes two of them is refused rather than grouped — those cases
 // live in reject_bitwise_mix.modest, and what is checked here is that a
-// chain of one of them still works.  Every level is left-associative, so a
-// chain meets one literal at a time — a literal pair on its own would not
-// compile today (BUG#28).
+// chain of one of them still works.  Every level is left-associative.
 //
 // Precedence decides how an unparenthesised expression groups; what happens
 // when the parentheses are written down is parens.modest.
@@ -111,9 +109,9 @@ func testBitwiseLevels () -> Bool {
 	var c: Word8 = 0x02
 	var s: Word8 = 0x33
 
-	// Left to right, and the reason it matters: right-associative, the two
-	// literals would meet each other first and a literal pair does not
-	// compile (BUG#28).  (0x33 ^ 0x0F) ^ 0x30 = 0x3C ^ 0x30 = 0x0C.
+	// Left to right: (0x33 ^ 0x0F) ^ 0x30 = 0x3C ^ 0x30 = 0x0C.  `^` gives
+	// the same answer under either grouping, so this checks that the chain
+	// is accepted, not the order.
 	if s ^ 0x0F ^ 0x30 != 0x0C {
 		printf("0x33 ^ 0x0F ^ 0x30 = 0x%02x, expected 0x0C\n",
 			Word32(s ^ 0x0F ^ 0x30))

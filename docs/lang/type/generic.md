@@ -17,7 +17,9 @@ implicitly construct a value of the required concrete type.
 
 ## Semantics
 
-- A generic value tracks its minimal width: `Integer(8)` for `42`. The
+- A generic value tracks its minimal width — the fewest bits that hold
+  its value, and never fewer than one: `Integer(6)` for `42`,
+  `Integer(1)` for `0`. It is not rounded up to 8/16/32 bits. The
   implicit conversion succeeds if the target is wide enough; overflow is
   a compile-time error.
 - Expressions over generic values are evaluated at compile time and stay

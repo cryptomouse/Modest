@@ -26,6 +26,10 @@ def nbits_for_num(x, signed=False):
 	while x != 0:
 		x = x // 2
 		i = i + 1
+
+	# ноль тоже надо чем-то записать - хотя бы одним битом
+	i = max(i, 1)
+
 	if signed:
 		i += 1
 	return i
@@ -43,7 +47,6 @@ def align_bits_up(x):
 # 7 -> 1, 9 -> 2, 17 -> 4, etc.
 def nbytes_for_bits(x):
 	return align_bits_up(x) // 8
-
 
 
 def int_to_bitstring(x, width):

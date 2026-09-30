@@ -1649,13 +1649,6 @@ def do_cvalue_bin_expr(x, ctx):
 	left = do_cvalue(x.left)
 	right = do_cvalue(x.right)
 
-	if not x.type.is_string():
-		if x.left.type.width < x.type.width:
-			left = CValueCast(do_ctype(x.type), left)
-
-		if x.right.type.width < x.type.width:
-			right = CValueCast(do_ctype(x.type), right)
-
 	if x.op == HLIR_VALUE_OP_ADD: return CValueAdd(left, right)
 	if x.op == HLIR_VALUE_OP_SUB: return CValueSub(left, right)
 	if x.op == HLIR_VALUE_OP_MUL: return CValueMul(left, right)

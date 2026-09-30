@@ -9,8 +9,8 @@
 // The other half of the split decided on 2026-09-07: bit manipulation is
 // defined for `Word*` and for no other type, which is the same line
 // docs/CHEATSHEET.md draws for the binary `&`, `|` and `^`, and with the
-// same diagnostic.  A bare literal is refused too — that one is in
-// literal/reject_bitwise.modest.
+// same diagnostic.  A literal is accepted and inverted at its own width
+// (literal_tilde.modest), except a negative one — literal/reject_bitwise.modest.
 //
 // Guards BUG#64 (fixed 2026-09-29).
 

@@ -998,6 +998,18 @@ def do_value_bitwise_not(x):
 	if not do_value_unary_check(v, HLIR_VALUE_OP_BITWISE_NOT):
 		return ValueBad(ti=x['ti'])
 
+	# `~` на литерале инвертирует его в его же - минимально необходимой -
+	# ширине: ~0xA5 это 0x5A, ~0x0F это 0 (0x0F занимает 4 бита), ~0 это 1.
+	# Результат - снова литерал, и шире исходного он не становится
+	# (Word32 ~0xA5 это 0x0000005A). У отрицательного литерала такой
+	# ширины нет - его сперва надо сконструировать в WordX
+	if v.type.is_integer():
+		if v.asset < 0:
+			error("expected non-negative integer value", v.ti)
+			return ValueBad(ti=x['ti'])
+		mask = (1 << v.type.width) - 1
+		return value_integer_create(~v.asset & mask, ti=x['ti'])
+
 	nv = ValueNot(v.type, v, ti=x['ti'])
 
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME

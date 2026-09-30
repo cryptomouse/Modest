@@ -1,0 +1,130 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: const
+// EXPECT-OUT: passed: var
+// EXPECT-OUT: passed: meets a word
+// EXPECT-OUT: passed: literal pair
+//
+// `&`, `|` and `^` with *both* operands literals — the ordinary way to
+// combine two flag constants into a mask.
+//
+// A literal has no width, but these three do not need one: every bit of the
+// result depends only on the same bit of the operands, so folding the pair
+// first and giving it a width later gives the same bits as widening both
+// operands first.  The folded pair is a literal again and takes the type of
+// whatever it meets, exactly like a single literal.  `~` and the shifts are
+// different — their answer depends on the width: a bare literal is refused
+// by the shifts (literal/reject_bitwise.modest), and `~` inverts it at the
+// literal's own width (unary/literal_tilde.modest).
+//
+// The checks compare against the value spelled out, and the patterns are
+// chosen so that `&`, `|` and `^` each give a different answer — a fold into
+// the wrong operation cannot pass.
+//
+// Guards BUG#28 (fixed 2026-09-30).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const flagA: Word8 = 0x0F | 0x30
+const untyped = 0x0F | 0x30
+const wide: Word64 = 0xFFFF0000 | 0x100000000
+
+
+func testConst () -> Bool {
+	if flagA != 0x3F {
+		printf("0x0F | 0x30 as Word8 = 0x%02x, expected 0x3F\n", Word32 flagA)
+		return false
+	}
+
+	// An untyped constant stays a literal and takes the width where it is
+	// used, so the same name works as a Word8 and a Word32.
+	var b8: Word8 = untyped
+	var b32: Word32 = untyped
+	if b8 != 0x3F or b32 != 0x0000003F {
+		printf("untyped 0x0F | 0x30 = 0x%02x / 0x%08x, expected 0x3F\n", Word32 b8, b32)
+		return false
+	}
+
+	// Wider than 32 bits: the fold does not lose the upper half.
+	if wide != 0x1FFFF0000 {
+		printf("0xFFFF0000 | 0x100000000 = 0x%llx, expected 0x1FFFF0000\n", Nat64 wide)
+		return false
+	}
+
+	printf("passed: const\n")
+	return true
+}
+
+
+func testVar () -> Bool {
+	var a: Word8 = 0x3C & 0x0F
+	var o: Word8 = 0x3C | 0x0F
+	var x: Word8 = 0x3C ^ 0x0F
+	if a != 0x0C or o != 0x3F or x != 0x33 {
+		printf("0x3C &|^ 0x0F = 0x%02x 0x%02x 0x%02x, expected 0x0C 0x3F 0x33\n",
+			Word32 a, Word32 o, Word32 x)
+		return false
+	}
+
+	// A literal with the high bit of its own width set, placed into a wider
+	// Word: the pair is a value, not an eight-bit pattern to be extended.
+	var h: Word32 = 0x80 | 0x01
+	if h != 0x00000081 {
+		printf("0x80 | 0x01 as Word32 = 0x%08x, expected 0x00000081\n", h)
+		return false
+	}
+
+	// A chain of literals only, left to right.
+	var c: Word16 = 0x0100 | 0x0010 | 0x0001
+	if c != 0x0111 {
+		printf("0x0100 | 0x0010 | 0x0001 = 0x%04x, expected 0x0111\n", Word32 c)
+		return false
+	}
+
+	printf("passed: var\n")
+	return true
+}
+
+
+func testMeetsWord () -> Bool {
+	// The pair in parentheses folds first and then takes s's type.
+	var s: Word16 = 0x0100
+	s = s | (0x01 | 0x02)
+	if s != 0x0103 {
+		printf("0x0100 | (0x01 | 0x02) = 0x%04x, expected 0x0103\n", Word32 s)
+		return false
+	}
+
+	// And on the other side of the operator.
+	var t: Word8 = 0xFF
+	if (0xF0 ^ 0x3C) & t != 0xCC {
+		printf("(0xF0 ^ 0x3C) & 0xFF = 0x%02x, expected 0xCC\n", Word32((0xF0 ^ 0x3C) & t))
+		return false
+	}
+
+	// Compared with a Word directly.
+	var m: Word8 = 0x3F
+	if m != 0x0F | 0x30 {
+		printf("0x3F != 0x0F | 0x30\n")
+		return false
+	}
+
+	printf("passed: meets a word\n")
+	return true
+}
+
+
+func main () -> Int {
+	var ok = testConst()
+	ok = testVar() and ok
+	ok = testMeetsWord() and ok
+	if not ok {
+		return exitFailure
+	}
+	printf("passed: literal pair\n")
+	return exitSuccess
+}

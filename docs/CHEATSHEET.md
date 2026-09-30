@@ -354,8 +354,12 @@ w << n, w >> n                     // shifts: left WordX; right NatX or a non-ne
 > - `Word*` support bitwise ops and `==`/`!=`, but **no arithmetic and no ordering** (`<`, `>`, ...)
 >
 > To mix, convert explicitly via value construction: `Word32 i`, `Int32 w`.
-> A bare literal is not a `Word` either: `~0x0F`, `0x0F & 0xF0`, `1 << 4` are
-> errors — give it a type first: `~Word32 0x0F`, `Word32 1 << 4`.
+> A bare literal is not a `Word` either: `1 << 4` is an error — give it a type
+> first: `Word32 1 << 4`. A literal pair under `&` `|` `^` is fine and folds to a
+> literal: `const mask: Word8 = 0x0F | 0x30`. `~` on a literal inverts it at the
+> literal's own *minimal* width (the fewest bits that hold it, at least one) and
+> never wider: `~0xA5` is `0x5A` even as a `Word32`, `~0` is `1`, and `~0x0F`,
+> `~0xFF` are `0` — for a full-width mask write `~Word32 0xFF`.
 > There is no `xor` keyword — exclusive-or is `^` (`and`/`or` are Bool-only).
 > The shift count must be `NatX` or a non-negative integer literal — `WordX`,
 > `IntX` and negative literals are all rejected with

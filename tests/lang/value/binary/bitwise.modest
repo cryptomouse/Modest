@@ -200,8 +200,7 @@ func testMasking () -> Bool {
 		return false
 	}
 
-	// `^` is left-associative, so the chain meets one literal at a time; a
-	// literal pair on its own would not compile today — BUG#28.
+	// `^` is left-associative, so the chain meets one literal at a time.
 	if state ^ 0x0F ^ 0x0F != state {
 		printf("toggling four bits twice did not restore the value\n")
 		return false
