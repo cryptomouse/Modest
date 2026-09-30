@@ -4,20 +4,18 @@
 // EXPECT-OUT: passed: float unary minus
 // EXPECT-OUT: passed: signed zero
 // EXPECT-OUT: passed: float negation
-// EXPECTED-FAIL(llvm): BUG#34 float negation emits an integer `sub`
 //
 // Unary `-` on a float, and the negative zero it produces.
 //
 // `docs/lang/type/base.md` gives `FloatX` the `math` class, which includes
-// unary `-`, and IEEE 754 gives zero a sign that survives it.  Neither
-// works under the LLVM backend: negating a run-time float emits
-// `sub %Float64 0.0, %x` where the instruction has to be `fsub`, and the
-// literal `-0.0` takes the compiler down with a traceback.  The C backend
-// is right about both.
+// unary `-`, and IEEE 754 gives zero a sign that survives it.  The LLVM
+// backend used to get both wrong: negating a run-time float emitted
+// `sub %Float64 0.0, %x` (an integer instruction), and the literal `-0.0`
+// took the compiler down with a traceback.  Negation is `fneg` now — not
+// `fsub 0.0, %x`, which would turn -(+0.0) into +0.0 and fail
+// testSignedZero below.
 //
-// This is its own file so that one backend bug does not mark the whole type
-// broken — runtime.modest negates by subtracting from zero instead, and
-// says so where it does.
+// Guards BUG#34 (fixed 2026-09-30).
 
 include "libc/ctypes64"
 include "libc/stdio"

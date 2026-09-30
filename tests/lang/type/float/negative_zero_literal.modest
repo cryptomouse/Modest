@@ -1,0 +1,136 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: float zero literals
+// EXPECT-OUT: passed: integer zero literals
+// EXPECT-OUT: passed: zero literals
+//
+// A negated zero literal, folded at compile time.
+//
+// negation.modest checks unary `-` on run-time floats; this file checks
+// the constant side of it.  A folded constant is exact, and an exact zero
+// has no sign, so `-0.0` folds to the same value as `0.0` — yet as a
+// FloatX it has to come out as the negative zero, the way C prints it.
+// The same fold used to be taken for "no folded value" at all (a zero is
+// falsy), which crashed the compiler on `-0.0` and emitted bad IR for an
+// integer `-0`.  Both are checked here at every width, in a local and in a
+// global, and with the sign flipped back by a second negation.
+//
+// The sign of a zero is only visible by dividing by it: equality says the
+// two zeros are the same.
+//
+// Guards BUG#34 (fixed 2026-09-30).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var globalNegZero: Float64 = -0.0
+var globalIntZero: Int32 = -0
+
+
+func isNegative64 (z: Float64) -> Bool {
+	var one: Float64 = 1.0
+	return one / z < 0.0
+}
+
+
+func isNegative32 (z: Float32) -> Bool {
+	var one: Float32 = 1.0
+	return one / z < 0.0
+}
+
+
+func testFloatZero () -> Bool {
+	var n64: Float64 = -0.0
+	if not isNegative64(n64) {
+		printf("Float64 -0.0 lost its sign\n")
+		return false
+	}
+
+	var n32: Float32 = -0.0
+	if not isNegative32(n32) {
+		printf("Float32 -0.0 lost its sign\n")
+		return false
+	}
+
+	// A plain zero stays positive: the sign comes from the `-`, not from
+	// the fold.
+	var p64: Float64 = 0.0
+	if isNegative64(p64) {
+		printf("Float64 0.0 came out negative\n")
+		return false
+	}
+
+	// Parentheses do not change anything.
+	var paren: Float64 = -(0.0)
+	if not isNegative64(paren) {
+		printf("-(0.0) lost its sign\n")
+		return false
+	}
+
+	// Two negations give the positive zero back.
+	var twice: Float64 = -(-0.0)
+	if isNegative64(twice) {
+		printf("-(-0.0) came out negative\n")
+		return false
+	}
+
+	if not isNegative64(globalNegZero) {
+		printf("global -0.0 lost its sign\n")
+		return false
+	}
+
+	// Passed straight as an argument, without a variable in between.
+	if not isNegative64(-0.0) {
+		printf("-0.0 as an argument lost its sign\n")
+		return false
+	}
+
+	printf("passed: float zero literals\n")
+	return true
+}
+
+
+// Integers have one zero; `-0` is just 0, at every width.
+func testIntegerZero () -> Bool {
+	var i32: Int32 = -0
+	var i8: Int8 = -0
+	var i64: Int64 = -0
+	var n32: Nat32 = 0
+
+	if i32 != 0 or i8 != 0 or i64 != 0 or n32 != 0 {
+		printf("a zero literal is not zero\n")
+		return false
+	}
+
+	if globalIntZero != 0 {
+		printf("global -0 is %d, expected 0\n", globalIntZero)
+		return false
+	}
+
+	// The zero is a real value in arithmetic, not a placeholder.
+	if i32 + 5 != 5 or i64 - 7 != -7 {
+		printf("arithmetic on a zero literal is wrong\n")
+		return false
+	}
+
+	printf("passed: integer zero literals\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testFloatZero() and result
+	result = testIntegerZero() and result
+
+	if not result {
+		printf("failed: zero literals\n")
+		return exitFailure
+	}
+
+	printf("passed: zero literals\n")
+	return exitSuccess
+}

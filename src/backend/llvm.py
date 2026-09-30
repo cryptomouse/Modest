@@ -1818,6 +1818,20 @@ def do_eval_float_bits(x):
 
 
 
+# Свертка идет в Fraction, а у него нуль без знака: -0.0 сворачивается
+# в тот же 0, что и 0.0. C11 печатает само выражение и знак не теряет,
+# а здесь печатается asset - поэтому знак нуля восстанавливаем по дереву:
+# нечетное число отрицаний над нулем дает -0.0
+def is_negated_zero(v):
+	neg = False
+	while True:
+		if v.is_neg():
+			neg = not neg
+		elif not (v.is_pos() or v.is_subexpr() or isinstance(v, ValueCons)):
+			return neg
+		v = v.value
+
+
 def do_eval_cons(x):
 	#info("do_eval_cons", x.ti)
 	value = x.value
@@ -1920,10 +1934,13 @@ def do_eval_cons(x):
 
 
 	if value.is_immediate():
-		if x.asset:
+		# (!) не 'if x.asset:' - свернутый ноль (0, -0.0) в Python ложен
+		if x.asset != None:
 			# В случае Nat32 &x у нас занчение immediate
 			# но нет asset тк это поздний imm
 			if not type.is_pointer():
+				if type.is_float() and x.asset == 0 and is_negated_zero(value):
+					return llvm_value_num(type, -0.0)
 				return do_eval_literal(x)
 
 	v = do_reval(value)
@@ -2154,6 +2171,16 @@ def do_eval_not(x):
 def do_eval_neg(v):
 	#%10 = sub i32 0, %9
 	ve = do_reval(v.value)
+
+	# FloatX: fneg, а не fsub 0.0, x - вычитание из +0.0 теряет знак
+	# нуля (0.0 - 0.0 = +0.0), а -(+0.0) обязан быть -0.0
+	if v.type.is_float():
+		rv = ll_reg_operation('fneg', v.type)
+		print_type(ve['type'])
+		out(" ")
+		llvm_print_value(ve)
+		return rv
+
 	zero = llvm_value_num(v.type, 0)
 	return llvm_eval_binary('sub', zero, ve, v)
 

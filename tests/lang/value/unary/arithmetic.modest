@@ -21,11 +21,10 @@
 // `-` in a written expression, not because it does anything.
 //
 // Two operand types are deliberately absent.  FloatX negation is in
-// tests/lang/type/float/negation.modest, on its own because the LLVM
-// backend emits an integer `sub` for it (BUG#34) and one backend bug
-// should not mark every other operand type broken.  `- -x` written with the
-// two signs adjacent is in double_sign.modest, for the same reason on the
-// other backend (BUG#62).
+// tests/lang/type/float/negation.modest, together with the signed zero it
+// has to get right.  `- -x` written with the two signs adjacent is in
+// double_sign.modest, on its own because one backend bug (BUG#62) should
+// not mark every other operand type broken.
 
 include "libc/ctypes64"
 include "libc/stdio"

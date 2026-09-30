@@ -310,54 +310,6 @@ AssertionError
 - Expected: stop at the error that was already reported, the way every
   other bad definition does.
 
-## BUG#34: LLVM backend negates a float with the integer `sub`
-
-```modest
-var a: Float64 = 1.5
-printf("%f\n", -a)          // c11: -1.500000    llvm: does not assemble
-```
-
-```
-%3 = sub %Float64 0.0, %2   // error: invalid operand type for instruction
-```
-
-- `docs/lang/type/base.md` gives `FloatX` the `math` class, which includes
-  unary `-`. The C backend prints `-a` and is right; the LLVM backend is
-  not.
-- Cause: `do_eval_neg` (`src/backend/llvm.py:2088`) builds the negation as
-  `0 - x` and hands `llvm_eval_binary` the opcode `'sub'` as a literal
-  string, with no float case. The binary path next to it does have one —
-  `select_bin_opcode_f(opp, 'f' + opp, t)` in `select_bin_opcode`
-  (`src/backend/llvm.py:3212`) — so `a - b` on floats correctly emits
-  `fsub` and only the unary form is wrong. Affects `Float32` and `Float64`
-  alike.
-- The same function has a second failure mode, on the literal `-0.0`:
-
-  ```modest
-  var z: Float64 = -0.0       // llvm: TypeError, compiler traceback
-  ```
-
-  ```
-  File "src/backend/llvm.py", line 208, in get_id_str
-      return x.id.prefix + x.id.llvm
-  TypeError: can only concatenate str (not "NoneType") to str
-  ```
-
-  Cause: `do_eval_cons` (`src/backend/llvm.py:1857`) decides whether a
-  constant was folded with `if x.asset:` — a *truthiness* test. A folded
-  `-0.0` is falsy in Python, so the emitter misses the literal path it
-  takes for every other constant (`-2.25` is emitted as `store %Float64
-  -2.25`), falls through to `do_reval` of the negation, and reaches
-  `do_eval_neg` with a still-generic `Rational` zero, whose type has no
-  LLVM id. `var z: Int32 = -0` goes the same way and emits `sext`
-  constexprs that clang no longer accepts. The test should be
-  `if x.asset != None:`, as `do_value_neg` (`src/semantic.py:936`)
-  already writes it.
-- Expected: `fsub` for a float operand, and a folded zero emitted as the
-  literal it is.
-- Coverage: `tests/lang/type/float/negation.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#35: Backends disagree about `!=` on a NaN
 
 ```modest
