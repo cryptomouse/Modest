@@ -1782,7 +1782,7 @@ class Parser:
 		self.skip("return")
 
 		v = None
-		if not (self.look_nl() or self.look(";") or self.look("}")):
+		if not (self.look_nl() or self.look(";") or self.look("}") or self.is_comment()):
 			v = self.expr_value()
 			ti_end = v['ti'].end
 
@@ -1961,8 +1961,6 @@ class Parser:
 #				comment['nl'] = spaceline_cnt
 #				spaceline_cnt = 0
 #				continue
-			elif self.token_class_is('comment-line'):
-				print("<><><><><<><><>><><><><><><><>><><><><>")
 				s = self.parse_comment_line()
 #				comment = self.parse_comment_line()
 #				comment['nl'] = spaceline_cnt

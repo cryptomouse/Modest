@@ -27,3 +27,6 @@ func main () -> Int
 	return 0
 }
 
+func f () -> Unit {
+	return // 
+}

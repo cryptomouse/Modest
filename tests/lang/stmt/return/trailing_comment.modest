@@ -1,0 +1,74 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: return trailing comment
+//
+// A comment after `return` ends the statement just as the line break
+// would: a bare `return` followed by `//` or `/* */` has no value, and
+// the comment is not taken for one.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var sideEffects: Int32
+
+
+func lineComment (enabled: Bool) -> Unit {
+	if not enabled {
+		return // early exit
+	}
+	sideEffects = sideEffects + 1
+}
+
+
+func emptyLineComment () -> Unit {
+	sideEffects = sideEffects + 10
+	return //
+}
+
+
+func blockComment (enabled: Bool) -> Unit {
+	if not enabled {
+		return /* early exit */
+	}
+	sideEffects = sideEffects + 100
+}
+
+
+// The value form already worked; kept here so both stay covered.
+func valueThenComment () -> Int32 {
+	return 42 // the answer
+}
+
+
+func main () -> Int {
+	sideEffects = 0
+
+	lineComment(false)
+	blockComment(false)
+	if sideEffects != 0 {
+		printf("sideEffects = %d, expected 0 after early returns\n", sideEffects)
+		printf("failed: return trailing comment\n")
+		return exitFailure
+	}
+
+	lineComment(true)
+	emptyLineComment()
+	blockComment(true)
+	if sideEffects != 111 {
+		printf("sideEffects = %d, expected 111\n", sideEffects)
+		printf("failed: return trailing comment\n")
+		return exitFailure
+	}
+
+	if valueThenComment() != 42 {
+		printf("valueThenComment() = %d, expected 42\n", valueThenComment())
+		printf("failed: return trailing comment\n")
+		return exitFailure
+	}
+
+	printf("passed: return trailing comment\n")
+	return exitSuccess
+}
