@@ -19,6 +19,10 @@ type Sample = {
 	value: Int32
 }
 
+type Celsius = Fixed32
+
+const freezingPoint = Celsius 0.0
+
 func main () -> Int
 {
 	printf("Hello World!\n")
@@ -27,13 +31,13 @@ func main () -> Int
 
 	printf("constantPoint = {x=%f, y=%f}\n", Float32 constantPoint.x, Float32 constantPoint.y)
 	printf("variablePoint = {x=%f, y=%f}\n", Float32 variablePoint.x, Float32 variablePoint.y)
-
+	printf("freezingPoint = %f\n", Float32 freezingPoint)
 
 	var a: Sample = {tag = 0x01, value = 7}
 	var b: Sample = {tag = 0x01, value = 7}
 	printf("a == b ? %d\n", a == b)
 
-	// BUG#85 (in LLVM k = -1)
+	// BUG#85 (in LLVM) k = -1
 	var u: Word8 = 0xff
 	var k = Int32 u
 	printf("k = %d\n", k)

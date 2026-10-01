@@ -1,0 +1,12 @@
+include "libc/ctypes64"
+include "libc/stdio"
+include "./lib"
+
+@nonstatic
+func main () -> Int {
+	printf("freezingPoint = %f\n", Float32 freezingPoint)
+	printf("normalPoint = %f\n", Float32 normalPoint)
+
+	return 0
+}
+

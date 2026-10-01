@@ -91,8 +91,7 @@ def fixed_cons_immediate(t, v, ti):
 		a = fixed_from_number(v.asset, t.fraction)
 
 	if nbits_for_num(a, signed=True) > t.width:
-		error("fixed point overflow", ti)
-		info("value does not fit into '%s' with %d fraction bits" % (t.to_str(), t.fraction), ti)
+		error("fixed point (%d.%d) overflow" % (t.width - t.fraction, t.fraction), ti)
 
 	return a
 

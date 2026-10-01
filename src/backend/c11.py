@@ -785,6 +785,13 @@ def fixed_cons_via_macro(value, x):
 	while value.is_access_module():
 		value = value.value
 
+	# унарный знак и скобки над литералом - это все еще то, что человек
+	# написал в исходнике: 'Fixed32 +25.0' и 'Fixed32 (25.0)' печатались
+	# свернутым хранилищем (1638400), а 'Fixed32 25.0' - макросом.
+	# Под макрос уходит исходное выражение целиком, со знаком и скобками
+	while value.is_pos() or value.is_neg() or value.is_subexpr():
+		value = value.value
+
 	return value.is_literal() or value.is_const()
 
 

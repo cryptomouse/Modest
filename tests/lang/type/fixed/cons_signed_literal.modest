@@ -1,0 +1,75 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: fixed cons from signed literal
+//
+// Constructing FixedX from a literal under a unary sign or parentheses.
+//
+// `Fixed32 25.0` comes out of the C backend as FIXED32(25.0, 16), but
+// `Fixed32 +25.0` used to come out as the bare storage 1638400: the sign
+// wraps the literal in a ValuePos (ValueNeg, ValueSubexpr for the others),
+// and fixed_cons_via_macro (src/backend/c11.py) only let a literal or a const
+// through by its class.  It now looks under the sign and the parentheses, so
+// the whole expression, as written, goes into the macro — which therefore has
+// to agree bit for bit with the fold, negative values and their rounding
+// included.
+//
+// Every value below is folded before the program starts, and each `var` is a
+// static initializer, where the macro has to stay a constant expression.
+
+pragma unsafe
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const k = 1.5
+
+
+// 16.16: one whole unit is 0x10000
+var plusFloat: Fixed32 = Fixed32 +25.0
+var minusFloat: Fixed32 = Fixed32 -25.0
+var parenFloat: Fixed32 = Fixed32 (25.0)
+var parenMinus: Fixed32 = Fixed32 (-0.5)
+var minusPlus: Fixed32 = Fixed32 -(+2.5)
+var plusInt: Fixed32 = Fixed32 +3
+var minusInt: Fixed32 = Fixed32 -3
+var minusConst: Fixed32 = Fixed32 -k
+
+// below the last bit: rounds away from zero on both sides
+var plusTiny: Fixed32 = Fixed32 +0.0000120
+var minusTiny: Fixed32 = Fixed32 -0.0000120
+
+
+func check (name: *ConstCharStr, got: Word32, expected: Word32) -> Bool {
+	if got == expected {
+		return true
+	}
+	printf("%s = 0x%08x, expected 0x%08x\n", name, got, expected)
+	return false
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	ok = check("plusFloat", unsafe(Word32 plusFloat), 0x00190000) and ok
+	ok = check("minusFloat", unsafe(Word32 minusFloat), 0xffe70000) and ok
+	ok = check("parenFloat", unsafe(Word32 parenFloat), 0x00190000) and ok
+	ok = check("parenMinus", unsafe(Word32 parenMinus), 0xffff8000) and ok
+	ok = check("minusPlus", unsafe(Word32 minusPlus), 0xfffd8000) and ok
+	ok = check("plusInt", unsafe(Word32 plusInt), 0x00030000) and ok
+	ok = check("minusInt", unsafe(Word32 minusInt), 0xfffd0000) and ok
+	ok = check("minusConst", unsafe(Word32 minusConst), 0xfffe8000) and ok
+	ok = check("plusTiny", unsafe(Word32 plusTiny), 0x00000001) and ok
+	ok = check("minusTiny", unsafe(Word32 minusTiny), 0xffffffff) and ok
+
+	if not ok {
+		printf("failed: fixed cons from signed literal\n")
+		return exitFailure
+	}
+
+	printf("passed: fixed cons from signed literal\n")
+	return exitSuccess
+}
