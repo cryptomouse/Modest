@@ -170,6 +170,9 @@ def init():
 	builtinSymtab.type_add('Unit', typeUnit)
 	builtinSymtab.type_add('Bool', typeBool)
 
+	typeUnit.definition = builtin_type_definition(typeUnit)
+	typeBool.definition = builtin_type_definition(typeBool)
+
 	builtinSymtab.type_add('Integer', typeInteger)
 	builtinSymtab.type_add('Rational', typeRational)
 
@@ -211,13 +214,20 @@ def init():
 	builtinSymtab.type_add('Char16', typeChar16)
 	builtinSymtab.type_add('Char32', typeChar32)
 
+	
 	builtinSymtab.type_add('Str8', typeStr8)
 	builtinSymtab.type_add('Str16', typeStr16)
 	builtinSymtab.type_add('Str32', typeStr32)
 
+	typeStr8.definition = builtin_type_definition(typeStr8)
+	typeStr16.definition = builtin_type_definition(typeStr16)
+	typeStr32.definition = builtin_type_definition(typeStr32)
+
 	builtinSymtab.type_add('Ptr', typeFreePointer)
+	typeFreePointer.definition = builtin_type_definition(typeFreePointer, Id('Ptr'))
 
 	builtinSymtab.type_add('__VA_List', type__VA_List)
+	type__VA_List.definition = builtin_type_definition(type__VA_List, Id('__VA_List'))
 
 
 	global valueTrue, valueFalse, valueNil
@@ -415,9 +425,9 @@ def create_builtin_module():
 # (only with -funsafe key)
 # pos - position no
 # offset - real offset (address inside container struct)
-def do_field(x):
+def do_field(x, ctx=[]):
 	id = do_id(x['id'])
-	field_type, init_value = process_field_common(x)
+	field_type, init_value = process_field_common(x, ctx=ctx)
 	if field_type.is_forbidden_field():
 		error("unsuitable type", x['ti'])
 
@@ -455,7 +465,7 @@ def do_field(x):
 #	return mod
 
 
-def do_type_named(x, anno):
+def do_type_named(x, anno, ctx=[]):
 	global cmodule, csymtab
 	id = x['id']
 	id_str = id['str']
@@ -503,6 +513,16 @@ def do_type_named(x, anno):
 
 		t = csymtab.type_get(id_str)
 
+		#if t.definition == None:
+		#	error("undefined type3", x['ti'])
+		#	return TypeBad(x['ti'])
+
+		if t != None and t.definition != None and t.definition.access_level == HLIR_ACCESS_LEVEL_PRIVATE:
+			#info("access to private type", x['ti'])
+			if 'public_context' in ctx:
+				error("using a private type in a public context", x['ti'])
+				return TypeBad(x['ti'])
+
 	if t == None:
 		error("undefined type", x['ti'])
 		return TypeBad(x['ti'])
@@ -547,13 +567,13 @@ def change_type_layout(t, layout, ti):
 	return t
 
 
-def do_type_pointer(x, anno):
-	to = do_type(x['to'])
+def do_type_pointer(x, anno, ctx=[]):
+	to = do_type(x['to'], ctx=ctx)
 	return TypePointer(to, ti=x['ti'])
 
 
-def do_type_array(x, anno):
-	of = do_type(x['of'])
+def do_type_array(x, anno, ctx=[]):
+	of = do_type(x['of'], ctx=ctx)
 
 	if of.is_incompleted():
 		error("using of an incompleted type", of.ti)
@@ -584,7 +604,7 @@ def do_type_array(x, anno):
 rec_uid = 0
 var_uid = 0
 
-def do_type_record(x, anno):
+def do_type_record(x, anno, ctx=[]):
 	global rec_uid
 	fields = []
 
@@ -592,7 +612,7 @@ def do_type_record(x, anno):
 	rec_uid += 1
 
 	for ast_field in x['fields']:
-		field = do_field(ast_field)
+		field = do_field(ast_field, ctx=ctx)
 
 		# redefinition?
 		field_id_str = field.id.str
@@ -624,28 +644,28 @@ def pop_anno(alist, anno):
 			return a
 
 
-def do_type_variant(x, anno):
+def do_type_variant(x, anno, ctx=[]):
 	#info("variant type", x['ti'])
 	global var_uid
 	uid = var_uid
 	var_uid += 1
-	variants = [do_type(v) for v in x['variants']]
+	variants = [do_type(v, ctx=ctx) for v in x['variants']]
 	t = TypeVariant(variants=variants, ti=x['ti'])
 	t.uid = uid
 	return t
 
 
 
-def do_type_func(x, anno, func_id="_"):
+def do_type_func(x, anno, func_id="_", ctx=[]):
 	params = []
 	for _param in x['params']:
-		param = do_field(_param)
+		param = do_field(_param, ctx=ctx)
 		if param.type.is_forbidden_param():
 			error("forbidden param type", param.ti)
 		if param != None:
 			params.append(param)
 
-	to = do_type(x['to'])
+	to = do_type(x['to'], ctx=ctx)
 
 	if to.is_incompleted():
 		error("using of an incompleted type", to.ti)
@@ -675,18 +695,18 @@ def anno_to_attribute(x, annos, anno):
 		x.addAttribute(anno, {})
 
 
-def do_type(x):
+def do_type(x, ctx=[]):
 	t = None
 
 	annos = copy.copy(x['anno'])
 
 	k = x['kind']
-	if k == 'named': t = do_type_named(x, annos)
-	elif k == 'func': t = do_type_func(x, annos)
-	elif k == 'pointer': t = do_type_pointer(x, annos)
-	elif k == 'array': t = do_type_array(x, annos)
-	elif k == 'record': t = do_type_record(x, annos)
-	elif k == 'variant': t = do_type_variant(x, annos)
+	if k == 'named': t = do_type_named(x, annos, ctx=ctx)
+	elif k == 'func': t = do_type_func(x, annos, ctx=ctx)
+	elif k == 'pointer': t = do_type_pointer(x, annos, ctx=ctx)
+	elif k == 'array': t = do_type_array(x, annos, ctx=ctx)
+	elif k == 'record': t = do_type_record(x, annos, ctx=ctx)
+	elif k == 'variant': t = do_type_variant(x, annos, ctx=ctx)
 	else: t = TypeBad(x['ti'])
 	t.ti = x['ti']
 
@@ -2242,7 +2262,7 @@ def do_stmt_type(x):
 
 	nt = Type(x['ti'])
 	df = def_type_common(x, nt)
-	if df == None:
+	if df == None or df.is_stmt_bad():
 		return StmtBad(x['ti'])
 	df.id.llvm = cfunc.id.str + '.' + df.id.str
 	csymtab.type_add(df.id.str, nt, is_public=False)
@@ -2491,6 +2511,8 @@ def def_type_common(x, nt):
 	global cmodule
 	global cdef
 
+	ctx = []
+
 	if x['type'] == None:
 		error("expected type expr", x['ti'])
 		return None
@@ -2502,10 +2524,15 @@ def def_type_common(x, nt):
 	definition.access_level = get_access_level(x)
 	definition.nl = x['nl']
 
+	nt.definition = definition
+
+	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
+		ctx.append('public_context')
+
 	prev_cdef = cdef
 	cdef = definition
 
-	ty = do_type(x['type'])
+	ty = do_type(x['type'], ctx=ctx)
 
 	is_open_record = False
 	if ty.is_record():
@@ -2524,7 +2551,7 @@ def def_type_common(x, nt):
 
 	if ty.is_bad():
 		cdef = prev_cdef
-		return None
+		return StmtBad(x['ti'])
 
 	definition.original_type = ty
 
@@ -2581,17 +2608,15 @@ def def_type_global(x, annos):
 		error("type redefinition", x['ti'])
 		return None
 	df = def_type_common(x, nt)
-	if df == None:
-		return None
 	return df
 
 
-def process_field_common(x, allow_cons_default=False):
+def process_field_common(x, allow_cons_default=False, ctx=[]):
 	global csymtab
 
 	var_type = None
 	if x['type'] != None:
-		var_type = do_type(x['type'])
+		var_type = do_type(x['type'], ctx=ctx)
 
 	init_value = do_rvalue(x['init_value'])
 
@@ -2804,7 +2829,7 @@ def def_func(x, annos):
 
 	if is_local_context():
 		# this is a nested function
-		deccl_func(x)
+		decl_func(x)
 
 	# значение функции уже существует, (возможно - undefined)
 	# тк мы ранее сделали проход
@@ -3272,7 +3297,9 @@ def get_access_level(x):
 
 
 
-def deccl_func(x):
+def decl_func(x):
+	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
+
 	if id_already_used(x['id']['str'], shallow=True):
 		exist = csymtab.value_get(x['id']['str'])
 		error("redefinition of '%s'" % x['id']['str'], x['id']['ti'])
@@ -3290,11 +3317,21 @@ def deccl_func(x):
 	definition.nl = x['nl']
 	v.definition = definition
 
-	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
 	csymtab.value_add(x['id']['str'], v, is_public=is_public)
 	v.storage_class = HLIR_VALUE_STORAGE_CLASS_GLOBAL
 
 	return definition
+
+
+def decl_type(x):
+	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
+
+	t = Type(x['ti'])  # Incomplete type (!)
+	t.parent = cmodule
+
+	csymtab.type_add(x['id']['str'], t, is_public=is_public)
+
+	t.is_global_type = True
 
 
 
@@ -3308,21 +3345,11 @@ def def_phase1(ast):
 		kind = x['kind']
 
 		if isa == 'ast_definition':
-			is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
-			id = x['id']
-			ti = id['ti']
-
 			if kind == 'type':
-				t = Type(x['ti'])  # Incomplete type (!)
-				t.parent = cmodule
-
-				csymtab.type_add(id['str'], t, is_public=is_public)
-
-				t.is_global_type = True
+				decl_type(x)
 
 			elif kind == 'func':
-				deccl_func(x)
-
+				decl_func(x)
 
 		if isa == 'ast_directive':
 			if x['kind'] == 'module':
@@ -3356,6 +3383,7 @@ def def_phase2(ast):
 			elif kind == 'func': df = def_func(x, annos)
 			elif kind == 'var': df = def_var_global(x, annos)
 
+			#print(kind, x['id']['str'], "->", df.__class__.__name__)
 			assert(df != None)
 			if df.is_stmt_bad():
 				continue
@@ -3493,7 +3521,6 @@ def def_add_annotation_extern(x, a):
 		x.id.c_alias = alias
 
 
-#mass
 def add_att(x, att):
 	# Add Properties
 	lr = att.split(":")

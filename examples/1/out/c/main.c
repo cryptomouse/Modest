@@ -21,3 +21,7 @@ int main(void) {
 	return 0;
 }
 
+static void f(void) {
+	return;
+}
+

@@ -4,6 +4,19 @@ from bits import align_bits_up, nbits_for_num
 
 
 
+
+_xti = TokenInfo(
+	source = '<builtin>',
+	fpos = 0,
+	line = 0,
+	lpos = 0,
+	spaces = 0,
+	tabs = 0,
+	length = 0
+)
+builtin_ti = TextInfo(start=_xti, mid=_xti, end=_xti)
+
+
 def type_integer_create(width=0, unsigned=False, ti=None):
 	return TypeInteger(width, unsigned=unsigned, ti=ti)
 
@@ -18,6 +31,21 @@ def type_string_create(char_width, length, ti=None):
 	return TypeString(char_width, length, ti=ti)
 
 
+def builtin_type_definition(nt, id=None):
+	if id is None:
+		id = nt.id
+	# Создание определения типа для встроенного типа. Встроенные типы не имеют
+	# собственного имени в исходном коде, поэтому их определение создается
+	# автоматически при построении HLIR.
+	df = StmtDefType(id, nt, ti=builtin_ti, proto_type=nt)
+	df.is_builtin = True
+	df.is_public = True
+	df.is_exported = True
+	df.is_imported = False
+	df.access_level = HLIR_ACCESS_LEVEL_PUBLIC
+	return df
+
+
 def type_word_create(width, ti=None):
 	width = align_bits_up(width)
 	id = Id('Word%d' % width)
@@ -26,7 +54,10 @@ def type_word_create(width, ti=None):
 	else:
 		id.c = 'unsigned __int%d' % width
 	id.llvm = 'Word%d' % width
-	return TypeSimple(width, HLIR_TYPE_KIND_WORD, id, WORD_OPS, ti)
+	nt = TypeSimple(width, HLIR_TYPE_KIND_WORD, id, WORD_OPS, ti)
+	nt.definition = builtin_type_definition(nt)
+	#nt.access_level = HLIR_ACCESS_LEVEL_PUBLIC
+	return nt
 
 
 def type_int_create(width, ti=None):
@@ -37,7 +68,10 @@ def type_int_create(width, ti=None):
 	else:
 		id.c = '__int%d' % width
 	id.llvm = 'Int%d' % width
-	return TypeSimple(width, HLIR_TYPE_KIND_INT, id, INT_OPS, ti)
+	nt = TypeSimple(width, HLIR_TYPE_KIND_INT, id, INT_OPS, ti)
+	nt.definition = builtin_type_definition(nt)
+	#nt.access_level = HLIR_ACCESS_LEVEL_PUBLIC
+	return nt
 
 
 def type_nat_create(width, ti=None):
@@ -48,7 +82,10 @@ def type_nat_create(width, ti=None):
 	else:
 		id.c = 'unsigned __int%d' % width
 	id.llvm = 'Nat%d' % width
-	return TypeSimple(width, HLIR_TYPE_KIND_NAT, id, NAT_OPS, ti)
+	nt = TypeSimple(width, HLIR_TYPE_KIND_NAT, id, NAT_OPS, ti)
+	nt.definition = builtin_type_definition(nt)
+	#nt.access_level = HLIR_ACCESS_LEVEL_PUBLIC
+	return nt
 
 
 def type_char_create(width, ti=None):
@@ -59,7 +96,10 @@ def type_char_create(width, ti=None):
 	else:
 		id.c = 'char%d_t' % width
 	id.llvm = 'Char%d' % width
-	return TypeSimple(width, HLIR_TYPE_KIND_CHAR, id, CHAR_OPS, ti)
+	nt = TypeSimple(width, HLIR_TYPE_KIND_CHAR, id, CHAR_OPS, ti)
+	nt.definition = builtin_type_definition(nt)
+	#nt.access_level = HLIR_ACCESS_LEVEL_PUBLIC
+	return nt
 
 
 def type_float_create(width, ti=None):
@@ -75,7 +115,10 @@ def type_float_create(width, ti=None):
 	else:
 		id.c = 'double'
 	id.llvm = 'Float%d' % width
-	return TypeSimple(width, HLIR_TYPE_KIND_FLOAT, id, FLOAT_OPS, ti)
+	nt = TypeSimple(width, HLIR_TYPE_KIND_FLOAT, id, FLOAT_OPS, ti)
+	nt.definition = builtin_type_definition(nt)
+	#nt.access_level = HLIR_ACCESS_LEVEL_PUBLIC
+	return nt
 
 
 def type_fixed_create(width, ti=None):
@@ -88,6 +131,8 @@ def type_fixed_create(width, ti=None):
 	id.llvm = 'Fixed%d' % width
 	nt = TypeSimple(width, HLIR_TYPE_KIND_FIXED, id, FLOAT_OPS, ti)
 	nt.fraction = width // 2
+	nt.definition = builtin_type_definition(nt)
+	#nt.access_level = HLIR_ACCESS_LEVEL_PUBLIC
 	return nt
 
 
@@ -223,19 +268,5 @@ def type_integer_for(num, unsigned=False, ti=None):
 # конструируется в любой Nat*, который её вмещает
 def type_size_for(num, ti=None):
 	return type_integer_for(num, unsigned=True, ti=ti)
-
-
-
-
-_xti = TokenInfo(
-	source = '<builtin>',
-	fpos = 0,
-	line = 0,
-	lpos = 0,
-	spaces = 0,
-	tabs = 0,
-	length = 0
-)
-builtin_ti = TextInfo(start=_xti, mid=_xti, end=_xti)
 
 

@@ -1,0 +1,18 @@
+// TEST: reject
+// EXPECT-ERROR: undefined type
+// EXPECT-ERROR: undefined value 'afterTheType'
+//
+// A local type whose definition is bad must be reported and leave the
+// rest of the function to be checked.  It used to end the run instead:
+// `def_type_common` returns `StmtBad` for a bad type, and `do_stmt_type`
+// only checked for `None`, so it went on to take `.id` of the `StmtBad`.
+//
+// Hence the second error, on the line after the type: it is what tells a
+// clean rejection apart from a crash, since a crash also exits non-zero.
+
+include "libc/ctypes64"
+
+func main () -> Int {
+	type L = Undefined
+	return afterTheType
+}

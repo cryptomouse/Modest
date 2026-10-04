@@ -418,9 +418,6 @@ def str_value_literal_bool(v, ctx):
 
 def str_value(x, ctx=[]):
 	cv = do_cvalue(x, ctx)
-	if not cv:
-		print(x.type)
-		1/0
 	return str_cvalue(cv)
 
 
