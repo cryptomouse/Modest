@@ -8,7 +8,7 @@ public const normalPoint = Celsius +25.0
 public type Int = Int32
 public type Y = Int
 public type X = {
-    a: Int
-    b: Int
+    private a: Int
+    private b: Int
 }
 

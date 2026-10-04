@@ -3338,7 +3338,6 @@ def def_phase1(ast):
 		if isa == 'ast_definition':
 			if kind == 'type':
 				decl_type(x)
-
 			elif kind == 'func':
 				decl_func(x)
 
