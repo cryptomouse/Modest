@@ -2261,6 +2261,7 @@ def do_stmt_type(x):
 	global csymtab
 
 	nt = Type(x['ti'])
+	new_def_type(x, nt)
 	df = def_type_common(x, nt)
 	if df == None or df.is_stmt_bad():
 		return StmtBad(x['ti'])
@@ -2517,14 +2518,9 @@ def def_type_common(x, nt):
 		error("expected type expr", x['ti'])
 		return None
 
-	id = do_id(x['id'])
-	definition = StmtDefType(id, nt, None, x['ti'])
-	definition.module = cmodule
-	definition.parent = cmodule
-	definition.access_level = get_access_level(x)
-	definition.nl = x['nl']
-
-	nt.definition = definition
+	# StmtDefType уже создан при декларации типа (decl_type)
+	definition = nt.definition
+	id = definition.id
 
 	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
 		ctx.append('public_context')
@@ -3323,15 +3319,23 @@ def decl_func(x):
 	return definition
 
 
+def new_def_type(x, nt):
+	definition = StmtDefType(do_id(x['id']), nt, None, x['ti'])
+	definition.module = cmodule
+	definition.parent = cmodule
+	definition.access_level = get_access_level(x)
+	definition.nl = x['nl']
+	nt.definition = definition
+	return definition
+
+
 def decl_type(x):
 	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
-
 	t = Type(x['ti'])  # Incomplete type (!)
 	t.parent = cmodule
-
+	definition = new_def_type(x, t)
 	csymtab.type_add(x['id']['str'], t, is_public=is_public)
-
-	t.is_global_type = True
+	return definition
 
 
 
