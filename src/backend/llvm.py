@@ -3059,9 +3059,6 @@ def een(defs, decl_only=False):
 
 			printed.append(uid)
 
-#		if isa_prev != isa:
-#			out("\n")
-#			isa_prev = isa
 
 		if x.is_stmt_def_var():
 			print_def_var(x, as_extern=decl_only)
