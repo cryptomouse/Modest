@@ -2168,7 +2168,6 @@ def do_stmt_let(x, annos):
 	#if df.init_value.is_undefined():
 	#	error("undefined constant initializer value", x['ti'])
 
-	df.parent = cfunc
 	df.value.storage_class = HLIR_VALUE_STORAGE_CLASS_LOCAL
 
 	anno_to_attribute(df.value, annos, 'cbyvalue')
@@ -2193,7 +2192,6 @@ def do_stmt_var(x, annos):
 		return df
 
 	df.value.storage_class = HLIR_VALUE_STORAGE_CLASS_LOCAL
-	df.parent = cfunc
 
 	anno_to_attribute(df, annos, 'static')
 
@@ -2483,19 +2481,17 @@ def do_stmt(x):
 
 
 
-def do_stmt_block(x, parent=None):
+def do_stmt_block(x):
 	global csymtab
 
 	csymtab = Symtab(parent=csymtab)
 
 	block = StmtBlock([], ti=x['ti'])
-	block.parent = parent
 
 	stmts = []
 	for stmt in x['stmts']:
 		s = do_stmt(stmt)
 		if not s.is_stmt_bad():
-			s.parent = block
 			block.stmts.append(s)
 
 	csymtab = csymtab.parent_get()
@@ -2567,7 +2563,6 @@ def def_type_common(x, nt):
 	#info("?%d?" % hasattr(ty, 'id'), x['ti'])
 
 	nt.definition = definition
-	nt.parent = cmodule  # добавляем заново тк очистили его выше!
 	nt.module = cmodule
 	nt.ti_def = id.ti
 	nt.is_open_record = is_open_record
@@ -2653,7 +2648,6 @@ def def_const_common(x, annos):
 	id = do_id(x['id'])
 	definition = StmtDefConst(id, const_value=None, init_value=None, ti=x['ti'])
 	definition.module = cmodule
-	#definition.parent = cmodule
 	definition.access_level = get_access_level(x)
 	definition.nl = x['nl']
 
@@ -2774,7 +2768,6 @@ def def_const_global(x, annos):
 	if df.is_stmt_bad():
 		return df
 
-	df.parent = cmodule
 	df.value.storage_class = HLIR_VALUE_STORAGE_CLASS_GLOBAL
 
 	iv = df.init_value
@@ -2798,7 +2791,6 @@ def def_var_global(x, annos):
 	if df.is_stmt_bad():
 		return df
 
-	df.parent = cmodule
 	df.value.storage_class = HLIR_VALUE_STORAGE_CLASS_GLOBAL
 	df.value.is_initialized = True
 	return df
@@ -2912,7 +2904,7 @@ def def_func(x, annos):
 	stmt = None
 
 	if x['stmt'] != None:
-		stmt = do_stmt_block(x['stmt'], parent=fn)
+		stmt = do_stmt_block(x['stmt'])
 		check_block(stmt)
 
 		# check if return present
@@ -3208,7 +3200,6 @@ def process_module(idStr, sourcename, ast):
 			#y = do_directive(x)
 			if y != None:
 				cmodule.defs.append(y)
-				y.parent = cmodule
 		elif isa == 'ast_comment':
 			#y = do_stmt_comment(x)
 			pass
@@ -3217,7 +3208,6 @@ def process_module(idStr, sourcename, ast):
 
 		#if y != None:
 		#	cmodule.defs.append(y)
-		#	y.parent = cmodule
 
 		i += 1
 
@@ -3307,7 +3297,6 @@ def decl_func(x):
 
 	definition = StmtDefFunc(v.id, v, None, x['ti'])
 	definition.id = v.id
-	definition.parent = cmodule
 	definition.module = cmodule
 	definition.access_level = get_access_level(x)
 	definition.nl = x['nl']
@@ -3322,7 +3311,6 @@ def decl_func(x):
 def new_def_type(x, nt):
 	definition = StmtDefType(do_id(x['id']), nt, None, x['ti'])
 	definition.module = cmodule
-	definition.parent = cmodule
 	definition.access_level = get_access_level(x)
 	definition.nl = x['nl']
 	nt.definition = definition
@@ -3332,7 +3320,6 @@ def new_def_type(x, nt):
 def decl_type(x):
 	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
 	t = Type(x['ti'])  # Incomplete type (!)
-	t.parent = cmodule
 	definition = new_def_type(x, t)
 	csymtab.type_add(x['id']['str'], t, is_public=is_public)
 	return definition
@@ -3422,8 +3409,6 @@ def def_phase2(ast):
 
 			if 'comment' in x and x['comment'] != None:
 				df.comment = do_stmt_comment(x['comment'])
-
-			df.parent = cmodule
 
 			cmodule.defs.append(df)
 

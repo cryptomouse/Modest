@@ -3052,8 +3052,7 @@ def een(defs, decl_only=False):
 		if hasattr(x, 'id'):
 			# Тупейшая Защита от повторного определения
 			# (А они происходят тк импорты и инклуюды сложно сплетены и повтор.)
-			uid = x.parent.id + '.' + x.id.str
-			#uid = x.module.id + '.' + x.module.id
+			uid = x.module.id + '.' + x.id.str
 
 			if uid in printed:
 				continue
