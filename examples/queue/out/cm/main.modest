@@ -8,7 +8,6 @@ import "./ringWord8" as br
 var bq0: QueueWord8
 var br0: RingWord8
 
-
 var ii: Int32
 
 

@@ -10,16 +10,13 @@ const myZero = MyInt32 0
 @extern
 const myOne = MyInt32 1
 
-
 // These refined MyInt32 types are compatible with MyInt32
 // but not compatible with anything else (e.g. between them)
 type MyInt32_2 = MyInt32
 type MyInt32_3 = MyInt32
 
-
 const cvb = @volatile Int32 0
 var vvb = @volatile Int32 1
-
 
 type ProtocolHeader = @layout("packed") {
 	start: Word16
@@ -49,7 +46,6 @@ var ext_arr: []Int32
 var x: Word32
 
 
-
 @nonstatic
 var s: Nat16
 
@@ -61,13 +57,10 @@ var u: Word64
 @unused
 var u2: Word64
 
-
 public const const0: Int32 = 0
-
 
 var rp: @restrict *Word32
 var vb: @volatile [32]Bool
-
 
 
 
@@ -97,13 +90,10 @@ type Point2D = {
 }
 
 
-
 // переопределение f не вызвало ошибку!
 func hello () -> Unit {
 	printf("hi!\n")
 }
-
-
 
 
 @nonstatic

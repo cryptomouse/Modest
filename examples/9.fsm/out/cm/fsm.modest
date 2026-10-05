@@ -12,13 +12,11 @@ public type ComplexState = @public {
 
 public type StateServiceRoutine = (state: ComplexState, payload: Ptr) -> ComplexState
 
-
 public type StateDesc = {
 	id: *Str8
 	nstages: Nat16
 	handler: *StateServiceRoutine
 }
-
 
 public type FSM = {
 	id: *Str8
@@ -39,8 +37,6 @@ public func init (self: *FSM, id: *Str8, initState: *StateDesc, payload: Ptr) ->
 	self.timer = 0
 	self.timer_expired = false
 }
-
-
 
 
 public func task (self: *FSM) -> Unit {
@@ -69,8 +65,6 @@ public func tick (self: *FSM) -> Unit {
 		}
 	}
 }
-
-
 
 
 public func cmdSwitchState (self: *FSM, state: *StateDesc) -> ComplexState {
@@ -108,8 +102,6 @@ public func cmdNextStageLimited (self: *FSM, t: Nat32) -> ComplexState {
 	newState.stage = StageId nextStageIndex
 	return newState
 }
-
-
 
 
 public func getComplexState (fsm: FSM) -> ComplexState {
