@@ -43,7 +43,6 @@ type Mixed = {
 	p: *Int32
 }
 
-
 // Module-level records: one with a value, one left to zero-init.
 const origin: Point = {x = 0, y = 0}
 var cursor: Point

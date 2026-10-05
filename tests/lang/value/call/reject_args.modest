@@ -50,6 +50,7 @@ func noSeparator () -> Int32 {
 // the `)` inside the array literal is not the call's
 func insideArray () -> Int32 {
 	let x = take([1, )], 2)
+
 	return 0
 }
 

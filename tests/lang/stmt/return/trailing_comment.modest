@@ -17,7 +17,7 @@ var sideEffects: Int32
 
 func lineComment (enabled: Bool) -> Unit {
 	if not enabled {
-		return // early exit
+		return  // early exit
 	}
 	sideEffects = sideEffects + 1
 }
@@ -25,7 +25,7 @@ func lineComment (enabled: Bool) -> Unit {
 
 func emptyLineComment () -> Unit {
 	sideEffects = sideEffects + 10
-	return //
+	return  //
 }
 
 
@@ -39,7 +39,7 @@ func blockComment (enabled: Bool) -> Unit {
 
 // The value form already worked; kept here so both stay covered.
 func valueThenComment () -> Int32 {
-	return 42 // the answer
+	return 42  // the answer
 }
 
 

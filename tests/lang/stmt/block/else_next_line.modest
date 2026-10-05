@@ -9,6 +9,8 @@
 // gated by the same ALLOW_BRACE_ON_NEXT_LINE in src/parser.py as the
 // next-line '{' (brace_next_line.modest); may be dropped, keep it separate
 // from the rest.
+//
+// stylecheck: off brace, else — the next-line forms are what is under test
 
 include "libc/ctypes64"
 include "libc/stdio"

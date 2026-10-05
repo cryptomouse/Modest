@@ -34,21 +34,17 @@ type Point = {
 	y: Int32
 }
 
-
 type Packed = @layout("packed") {
 	flag: Bool
 	value: Int32
 }
-
 
 type Overlay = @layout("union") {
 	word: Word32
 	low: Word8
 }
 
-
 type Op = *(a: Int32, b: Int32) -> Int32
-
 
 var sharedPoint: Point
 var sharedTable: [3]Int32
@@ -319,7 +315,6 @@ type Boxed = {
 	tag: Int32
 	data: [3]Int32
 }
-
 
 var globalBox: Boxed
 

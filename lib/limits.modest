@@ -31,7 +31,6 @@ public const int128MinValue: Int128 = -170141183460469231731687303715884105728
 @cbyvalue
 public const int128MaxValue: Int128 = 170141183460469231731687303715884105727
 
-
 @cbyvalue
 public const nat8MinValue: Nat8  = 0
 @extern("C", "UINT8_MAX")

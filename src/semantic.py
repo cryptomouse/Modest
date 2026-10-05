@@ -3429,8 +3429,6 @@ def def_phase1(ast):
 				do_directive_pragma(x)
 
 
-
-
 def def_phase2(ast):
 	global global_prefix
 	# Идем по всем элементам с самого начала и определяем их.

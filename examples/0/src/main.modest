@@ -13,7 +13,6 @@ const genericPoint = {x = 1.0, y = 2.0}
 const constantPoint: Point = genericPoint
 var variablePoint: Point = genericPoint
 
-
 type Sample = {
 	tag: Word8       // 1 byte, then 3 bytes of padding
 	value: Int32
@@ -24,8 +23,7 @@ type Celsius = Fixed32
 const freezingPoint = Celsius 0.0
 
 
-func main () -> Int
-{
+func main () -> Int {
 	printf("Hello World!\n")
 
 	let x = Word8 (Word32 5 & 0xff)

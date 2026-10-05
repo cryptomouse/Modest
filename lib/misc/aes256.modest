@@ -30,16 +30,14 @@ public type Result = @branded Word8
 public const resultSuccess = Result 0
 public const resultError = Result 1
 
-
 public type Key = @branded [32]Byte
 public type Block = @branded [16]Byte
 
 public type Context = @public {
 	key: Key
-    enckey: Key
-    deckey: Key
+	enckey: Key
+	deckey: Key
 }
-
 
 
 //@pure
@@ -50,7 +48,6 @@ func rj_xtime (x: Word8) -> Word8 {
 	}
 	return y
 }
-
 
 
 const sbox: [256]Byte = [

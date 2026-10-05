@@ -18,8 +18,7 @@ var globalQ2_30: Q2_30 = Q2_30 1.0
 var globalQ2_30_2: Q2_30 = Q2_30 -2.0
 
 
-func main () -> Int
-{
+func main () -> Int {
 	printf("freezingPoint = %f\n", Float32 freezingPoint)
 	printf("normalPoint = %f\n", Float32 normalPoint)
 

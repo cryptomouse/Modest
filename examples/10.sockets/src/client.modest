@@ -50,8 +50,8 @@ func main () -> Int {
 	let sockaddr = *SockAddr Ptr &server_addr
 	var e = connect(sockFd, sockaddr, unsafe(SocklenT sizeof(SockAddrIn)))
 	if e < 0 {
-		 perror("[-] Error in Connecting")
-		 exit(1)
+		perror("[-] Error in Connecting")
+		exit(1)
 	}
 
 	printf("[+] Connected to server\n")

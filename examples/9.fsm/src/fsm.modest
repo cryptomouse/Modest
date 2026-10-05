@@ -13,16 +13,14 @@ public type ComplexState = @public {
 
 public type StateServiceRoutine = (state: ComplexState, payload: *Unit) -> ComplexState
 
-
 public type StateDesc = {
-    id: *Str8
-    nstages: Nat16
-    handler: *StateServiceRoutine
+	id: *Str8
+	nstages: Nat16
+	handler: *StateServiceRoutine
 }
 
-
 public type FSM = {
-    id: *Str8
+	id: *Str8
 	state: ComplexState
 	next_state: ComplexState
 	payload: *Unit
@@ -33,15 +31,13 @@ public type FSM = {
 
 
 public func init (self: *FSM, id: *Str8, initState: *StateDesc, payload: *Unit) -> Unit {
-    self.id = id
+	self.id = id
 	self.state = {state=initState, stage=StageId 0}
 	self.next_state = {state=initState, stage=StageId 0}
-    self.payload = payload
+	self.payload = payload
 	self.timer = 0
 	self.timer_expired = false
 }
-
-
 
 
 public func task (self: *FSM) -> Unit {
@@ -63,7 +59,7 @@ public func task (self: *FSM) -> Unit {
 	}
 
 	// Usual routine
-    let handler = self.state.state.handler
+	let handler = self.state.state.handler
 	self.next_state = handler(self.state, self.payload)
 }
 
@@ -78,12 +74,10 @@ public func tick (self: *FSM) -> Unit {
 }
 
 
-
-
 public func cmdSwitchState (self: *FSM, state: *StateDesc) -> ComplexState {
 	self.timer = 0
 	self.timer_expired = false
-    return ComplexState {state=state, stage=StageId 0}
+	return ComplexState {state=state, stage=StageId 0}
 }
 
 
@@ -117,8 +111,6 @@ public func cmdNextStageLimited (self: *FSM, t: Nat32) -> ComplexState {
 	newState.stage = StageId nextStageIndex
 	return newState
 }
-
-
 
 
 public func getComplexState (fsm: FSM) -> ComplexState {

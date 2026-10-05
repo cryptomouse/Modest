@@ -19,6 +19,8 @@
 //   src/backend/llvm.py.
 // - modest: str_stmt_func() used to return None for a bodyless func,
 //   crashing str_top_level_stmt2()'s ''.join() — src/backend/modest.py.
+//
+// stylecheck: off brace — the next-line forms are what is under test
 
 include "libc/ctypes64"
 include "libc/stdio"

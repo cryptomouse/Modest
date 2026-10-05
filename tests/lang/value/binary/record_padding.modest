@@ -34,7 +34,6 @@ type Sample = {
 	value: Int32
 }
 
-
 // Padding at the end rather than in the middle: 4 + 1, rounded up to 8.
 type Tail = {
 	value: Int32

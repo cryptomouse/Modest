@@ -26,7 +26,6 @@ include "libc/stdlib"
 
 const k = 1.5
 
-
 // 16.16: one whole unit is 0x10000
 var plusFloat: Fixed32 = Fixed32 +25.0
 var minusFloat: Fixed32 = Fixed32 -25.0

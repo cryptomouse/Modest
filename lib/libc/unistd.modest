@@ -5,7 +5,6 @@ pragma do_not_include
 pragma prefix ""
 pragma c_include "unistd.h"
 
-
 include "libc/ctypes64"
 
 
@@ -26,7 +25,6 @@ public const c_STDOUT_FILENO: Int = 1
 @extern("C", "STDERR_FILENO")
 public const c_STDERR_FILENO: Int = 2
 
-
 // lockf function - record locking on files
 @extern("C", "F_ULOCK")
 public const c_F_ULOCK: Int = 0  // unlock locked sections
@@ -45,8 +43,6 @@ public const c_R_OK: Int = 4  // Test for read permission
 public const c_W_OK: Int = 2  // Test for write permission
 @extern("C", "X_OK")
 public const c_X_OK: Int = 1  // Test for execute (search) permission
-
-
 
 /*
 	 *  sysconf values per IEEE Std 1003.1, 2008 Edition
@@ -298,7 +294,6 @@ public const _unistd_CS_LFS_LDFLAGS: Int = 22
 public const _unistd_CS_LFS_LIBS: Int = 23
 public const _unistd_CS_LFS_LINTFLAGS: Int = 24
 //$endif
-
 
 
 // access - determine accessibility of a file

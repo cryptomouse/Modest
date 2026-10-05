@@ -27,7 +27,6 @@ type Point = {
 	y: Int32
 }
 
-
 type Key = {
 	rounds: Nat32
 	key: [8]Nat32

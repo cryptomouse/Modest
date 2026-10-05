@@ -130,7 +130,6 @@ struct stat {
 @extern("C", "S_IEXEC") public const sIexec: ModeT = sIxusr
 @extern("C", "S_IFMT") public const sIfmt: ModeT = 0xF000      // (0170000) type of file mask
 
-
 /* is directory */
 @extern("C", "S_ISDIR") public func sIsdir (m: ModeT) -> Bool { return m & sIfmt == sIfdir }
 

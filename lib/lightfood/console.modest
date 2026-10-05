@@ -26,7 +26,6 @@ public func putchar32 (c: Char32) -> Unit {
 }
 
 
-
 public func putchar_utf8 (c: Char8) -> Unit {
 	putchar(Int32 Word32 c)
 }
@@ -108,14 +107,12 @@ public func puts32 (s: *Str32) -> Unit {
 }
 
 
-
 public func print (form: *Str8, ...) -> Unit {
 	var va: __VA_List
 	__va_start(va, form)
 	vfprint(c_STDOUT_FILENO, form, va)
 	__va_end(va)
 }
-
 
 
 public func vfprint (fd: Int32, form: *Str8, va: __VA_List) -> @unused Int32 {

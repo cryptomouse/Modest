@@ -26,7 +26,6 @@ public const stdout: *File = nil
 @extern("C", "stderr")
 public const stderr: *File = nil
 
-
 @extern("C", "EOF")
 public const eof: Int32 = -1
 

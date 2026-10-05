@@ -16,7 +16,6 @@ var tableData0: [][]*Str8 = [
 	["2",  "Earth",  "Fight"]
 ]
 
-
 var table_header1: []*Str8 = [
 	"#", "Header0", "Header1", "Header2"
 ]
@@ -27,7 +26,6 @@ var tableData1: [][]*Str8 = [
 	["2",  "Ink",    "Julia",  "Keyword"]
 	["3",  "Ultra",  "Video",  "Word"]
 ]
-
 
 var table00 = table.Table {
 	header = nil

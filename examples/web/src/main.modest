@@ -22,7 +22,6 @@ const httpHeader = *Str8 (
 	"\r\n"
 )
 
-
 var pageCounter: Nat32
 
 
@@ -35,15 +34,15 @@ var pageCounter: Nat32
 
 func handleRequest (clientSocket: Int32) -> Unit {
 	var buffer: [receiveBufferSize]Word8
-    let bytesReceived = read(clientSocket, &buffer, lengthof(buffer) - 1)
-    if bytesReceived < 0 {
-        perror("cannot read socket")
-        close(clientSocket)
-        return
-    }
-    buffer[bytesReceived] = 0
+	let bytesReceived = read(clientSocket, &buffer, lengthof(buffer) - 1)
+	if bytesReceived < 0 {
+		perror("cannot read socket")
+		close(clientSocket)
+		return
+	}
+	buffer[bytesReceived] = 0
 
-    printf("Received request:\n%s\n", unsafe(*Str8 &buffer))
+	printf("Received request:\n%s\n", unsafe(*Str8 &buffer))
 
 	var response: [sendBufferSize]Char8
 	sprintf(
@@ -52,60 +51,60 @@ func handleRequest (clientSocket: Int32) -> Unit {
 		httpHeader, pageCounter
 	)
 
-    write(clientSocket, &response, strlen(&response))
-    close(clientSocket)
+	write(clientSocket, &response, strlen(&response))
+	close(clientSocket)
 }
 
 
 func main () -> Int32 {
-    let serverSocket = socket(afInet, sockStream, 0)
-    if serverSocket < 0 {
-        perror("cannot create socket")
-        exit(1)
-    }
+	let serverSocket = socket(afInet, sockStream, 0)
+	if serverSocket < 0 {
+		perror("cannot create socket")
+		exit(1)
+	}
 
 	var serverAddr = SockAddrIn {
 		sin_family = afInet
-    	sin_addr = {
+		sin_addr = {
 			s_addr = inAddrAny
 		}
-    	sin_port = UnsignedShort htons(port)
+		sin_port = UnsignedShort htons(port)
 	}
 
-    // Bind socket to address
+	// Bind socket to address
 	let socadr = unsafe(*SockAddr &serverAddr)
 	var rc = bind(serverSocket, socadr, unsafe(SocklenT sizeof(serverAddr)))
-    if rc < 0 {
-        perror("cannot bind socket")
-        close(serverSocket)
-        exit(1)
-    }
+	if rc < 0 {
+		perror("cannot bind socket")
+		close(serverSocket)
+		exit(1)
+	}
 
-    // Starting listen to connection
+	// Starting listen to connection
 	rc = listen(socket=serverSocket, backlog=5)
-    if rc < 0 {
-        perror("cannot listen socket")
-        close(serverSocket)
-        exit(1)
-    }
+	if rc < 0 {
+		perror("cannot listen socket")
+		close(serverSocket)
+		exit(1)
+	}
 
-    printf("Server listening on port %d...\n", Nat32 port)
+	printf("Server listening on port %d...\n", Nat32 port)
 
-    // Handle input connections
-    while true {
+	// Handle input connections
+	while true {
 		var clientAddr: SockAddrIn
 		let socadr = unsafe(*SockAddr &clientAddr)
 		var clientAdrLen = unsafe(SocklenT sizeof(clientAddr))
-        let clientSocket = accept(serverSocket, socadr, &clientAdrLen)
-        if clientSocket < 0 {
-            perror("cannot accept connection")
-            again
-        }
-        handleRequest(clientSocket)
+		let clientSocket = accept(serverSocket, socadr, &clientAdrLen)
+		if clientSocket < 0 {
+			perror("cannot accept connection")
+			again
+		}
+		handleRequest(clientSocket)
 		++pageCounter
-    }
+	}
 
-    close(serverSocket)
-    return 0
+	close(serverSocket)
+	return 0
 }
 

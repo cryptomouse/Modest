@@ -12,6 +12,8 @@
 // (docs/lang/stmt/block.md, parser.py ALLOW_BRACE_ON_NEXT_LINE). 'else'
 // stays on the '}' line here; next-line 'else' is experimental and lives
 // in else_next_line.modest.
+//
+// stylecheck: off brace — the next-line forms are what is under test
 
 include "libc/ctypes64"
 include "libc/stdio"

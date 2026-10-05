@@ -25,7 +25,6 @@ type Test = {
 	hash: Word32
 }
 
-
 var tests: []Test = [
 	{
 		data = [dataBufferLength]Byte "123456789"
@@ -73,7 +72,7 @@ func main () -> Int {
 	printf("test ")
 	if not success {
 		printf("failed\n")
-    	return exitFailure
+		return exitFailure
 	}
 
 	printf("passed\n")

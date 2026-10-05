@@ -10,7 +10,6 @@ public const hashSize: Nat32 = 32
 
 public type Hash = [hashSize]Word8
 
-
 type Context = {
 	data: [64]Word8
 	datalen: Nat32
@@ -64,7 +63,6 @@ func sig0 (x: Word32) -> Word32 {
 func sig1 (x: Word32) -> Word32 {
 	return rotright(x, 17) ^ rotright(x, 19) ^ (x >> 10)
 }
-
 
 
 const initalState = [

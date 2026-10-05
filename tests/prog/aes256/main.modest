@@ -38,7 +38,6 @@ type TestCase = {
 	ciphertext: aes.Block
 }
 
-
 var tests: []TestCase = [
 	TestCase {
 		key = aes.Key [
@@ -107,7 +106,6 @@ var tests: []TestCase = [
 ]
 
 
-
 func runTest (test: *TestCase) -> Bool {
 	var ctx: aes.Context
 	aes.init(&ctx, &test.key)
@@ -152,7 +150,7 @@ func main () -> Int32 {
 	printf("AES-256 test ")
 	if not success {
 		printf("failed\n")
-    	return exitFailure
+		return exitFailure
 	}
 
 	printf("passed\n")

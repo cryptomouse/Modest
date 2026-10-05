@@ -26,7 +26,6 @@ public type PThreadT = Ptr
 @extern("C", "pthread_mutex_t")
 public type PThreadMutexT = Ptr
 
-
 @extern("C", "struct pthread_attr")
 public type PThreadAttr = Ptr
 @extern("C", "pthread_attr_t")
@@ -51,8 +50,6 @@ public type PThreadBarrierT = Ptr
 public type PThreadBarrierAttrT = Ptr
 @extern("C", "pthread_spinlock_t")
 public type PThreadSpinlockT = Ptr
-
-
 
 @extern("C", "PTHREAD_MUTEX_INITIALIZER")
 public const mutexInitializer: *Unit = nil

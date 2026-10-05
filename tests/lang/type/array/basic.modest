@@ -32,7 +32,6 @@ type Point = {
 	y: Int32
 }
 
-
 // Module-level arrays: one with a value, one left to zero-init.
 const primes: [4]Int32 = [2, 3, 5, 7]
 var counters: [3]Int32

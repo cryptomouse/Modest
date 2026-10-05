@@ -13,7 +13,6 @@ import "./ringWord8" as br
 var bq0: bq.QueueWord8
 var br0: br.RingWord8
 
-
 var ii: Int32
 
 
@@ -55,7 +54,7 @@ var qbuf: [qsize]Word8
 
 
 func main () -> Int {
-	
+
 	if not bq.init(&bq0, &qbuf, qsize) {
 		printf("bq.init failed\n")
 		return 1

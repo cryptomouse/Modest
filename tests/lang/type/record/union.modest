@@ -37,7 +37,6 @@ type Pixel = {
 	color: Color
 }
 
-
 // A union whose second field carries a default.  The default must never be
 // written out beside the field a literal names: C initialises exactly one
 // member of a union, and a second designated initializer for the same
@@ -46,7 +45,6 @@ type Slot = @layout("union") {
 	word: Word32
 	bytes: [4]Word8 = [0xAA, 0xBB, 0xCC, 0xDD]
 }
-
 
 var globalSlot: Slot = {word = 0x11223344}
 

@@ -18,7 +18,6 @@ public type Time = @public {
 	second: Nat8
 }
 
-
 public type DateTime = @public {
 	date: Date
 	time: Time
@@ -29,7 +28,7 @@ func localTimeNow () -> StructTM {
 	var t: TimeT
 	time(&t)
 	var tm: StructTM
-    let tm2 = localtime_r(&t, &tm)
+	let tm2 = localtime_r(&t, &tm)
 	return tm
 }
 
@@ -87,8 +86,6 @@ public func dayOfWeek () -> Nat8 {
 	}
 	return 7
 }
-
-
 
 
 public func sprintDate (s: *[]Char8) -> Int32 {

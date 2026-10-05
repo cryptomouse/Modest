@@ -23,7 +23,6 @@ type Point = {
 	y: Int32
 }
 
-
 // No initializer needed: a variable starts at the default of its type.
 var globalCounter: Int32
 var globalArray: [3]Int32

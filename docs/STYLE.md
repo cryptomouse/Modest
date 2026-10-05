@@ -100,10 +100,20 @@ func main () -> Int {
 ## Comments
 
 - An inline comment (to the right of a line of code) is separated from
-  the code by **two spaces**: `return 0  // done`.
+  the code by **at least two spaces**: `return 0  // done`.  More spaces
+  are fine when they align the comments of neighbouring lines into a
+  column; the gap is made of spaces only, never tabs.
+
+```modest
+const eperm: Errno = 1   // Operation not permitted
+const enoent: Errno = 2  // No such file or directory
+const esrch: Errno = 3   // No such process
+```
 
 
 ## See also
 
 - [Cheat sheet](./CHEATSHEET.md) — the language itself
 - [Tests](../tests/README.md) — tests follow this guide too
+- `misc/stylecheck.py` — checks sources against this guide; `--fix`
+  repairs the layout rules in place

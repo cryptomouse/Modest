@@ -32,7 +32,6 @@ include "libc/stdlib"
 
 const baseWidth: Int32 = 20
 
-
 type Plain = {
 	n: Int32
 	f: Float64

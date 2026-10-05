@@ -11,7 +11,6 @@ public type GPIO = @public @layout("packed") {
 	out: IO8
 }
 
-
 // должен быть public изза того что константы ниже зависят от него но зависимости не подтягиваются
 // TODO: fixit!
 public const sfrOffset = Nat16 0x20

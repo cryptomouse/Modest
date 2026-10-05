@@ -20,19 +20,16 @@ public type InPortT = Nat16
 @extern("C", "socklen_t")
 public type SocklenT = Nat32
 
-
 @extern("C", "struct sockaddr")
 public type SockAddr = @public {
 	sa_family: UnsignedShort  // address family
 	sa_data: [14]Char8        // up to 14 bytes of direct address
 }
 
-
 @extern("C", "struct in_addr")
 public type Struct_in_addr = @public {
 	s_addr: InAddrT
 }
-
 
 @extern("C", "struct sockaddr_in")
 public type SockAddrIn = @public {
@@ -47,11 +44,8 @@ public type SockAddrIn = @public {
 	sin_zero: [8]Nat8
 }
 
-
-
 @extern("C", "SOL_SOCKET")
 public const solSocket: Int = 1   // for setsockopt
-
 
 @extern("C", "SO_REUSEADDR")
 public const soReuseaddr: Int = 2
@@ -66,8 +60,6 @@ public func setsockopt (
 ) -> @unused Int
 
 
-
-
 @extern("C", "SOCK_STREAM") public const sockStream: Int = 1  // stream socket
 @extern("C", "SOCK_DGRAM") public const sockDgram: Int = 2   // datagram socket
 @extern("C", "SOCK_RAW") public const sockRaw: Int = 3     // raw-protocol interface
@@ -76,7 +68,6 @@ public func setsockopt (
 //#ifdef _KERNEL
 //const SOCK_TYPE_MASK = 0x000F	// mask that covers the above
 //#endif
-
 
 /*
  * Address families.

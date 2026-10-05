@@ -8,7 +8,6 @@ import "fsm"
 
 var fsm0: fsm.FSM
 
-
 var state0 = fsm.StateDesc {id="state0", nstages=4, handler=&routine0}
 var state1 = fsm.StateDesc {id="state1", nstages=4, handler=&routine1}
 var state2 = fsm.StateDesc {id="state2", nstages=4, handler=&routine2}

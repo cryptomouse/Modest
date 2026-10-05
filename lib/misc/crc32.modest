@@ -37,7 +37,7 @@ public func init () -> Unit {
 		}
 		table[i] = crc
 		++i
-    }
+	}
 }
 
 

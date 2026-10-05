@@ -2,6 +2,7 @@
 
 pragma prefix ""
 
+
 @extern("C", "DIR")
 public type Dir = {}
 
@@ -12,7 +13,6 @@ type InoT = Nat32
 @extern("C", "off_t")
 type OffT = Nat32
 
-
 @extern("C", "struct dirent")
 public type Dirent = @public {
 	d_ino: InoT         /* inode number */
@@ -21,7 +21,6 @@ public type Dirent = @public {
 	d_type: Nat8        /* type of file; (!) not supported by all file system types */
 	d_name: [256]Char8  /* filename */
 }
-
 
 /* File types for `d_type'.  */
 @extern("C", "DT_UNKNOWN")

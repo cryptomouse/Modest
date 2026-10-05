@@ -44,7 +44,7 @@ func testOperators () -> Bool {
 	}
 
 	// Logical and comparison operators continue the same way.
-	let t: Bool = s == // equal
+	let t: Bool = s ==  // equal
 		3 and   // both
 		a != 0 or   // either
 		false

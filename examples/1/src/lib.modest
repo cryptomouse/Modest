@@ -5,7 +5,6 @@ type Celsius = Fixed32
 public const freezingPoint = Celsius 0.0
 public const normalPoint = Celsius +25.0
 
-
 type LocalInt = Int32
 
 public var x: LocalInt
@@ -14,8 +13,8 @@ public type Int = LocalInt
 
 public type Y = Int
 public type X = {
-    a: LocalInt
-    b: LocalInt
+	a: LocalInt
+	b: LocalInt
 }
 
 

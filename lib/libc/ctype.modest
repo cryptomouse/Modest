@@ -23,17 +23,29 @@ include "ctypes64"
 
 
 public func isascii (x: Int) -> Bool { return __isascii(x) != 0 }
+
 public func iscntrl (x: Int) -> Bool { return __iscntrl(x) != 0 }
+
 public func isblank (x: Int) -> Bool { return __isblank(x) != 0 }
+
 public func isdigit (x: Int) -> Bool { return __isdigit(x) != 0 }
+
 public func isxdigit (x: Int) -> Bool { return __isxdigit(x) != 0 }
+
 public func isalpha (x: Int) -> Bool { return __isalpha(x) != 0 }
+
 public func isalnum (x: Int) -> Bool { return __isalnum(x) != 0 }
+
 public func isgraph (x: Int) -> Bool { return __isgraph(x) != 0 }
+
 public func isprint (x: Int) -> Bool { return __isprint(x) != 0 }
+
 public func ispunct (x: Int) -> Bool { return __ispunct(x) != 0 }
+
 public func isspace (x: Int) -> Bool { return __isspace(x) != 0 }
+
 public func isupper (x: Int) -> Bool { return __isupper(x) != 0 }
+
 public func islower (x: Int) -> Bool { return __islower(x) != 0 }
 
 public func toascii (x: Int) -> Int

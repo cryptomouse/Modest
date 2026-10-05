@@ -48,7 +48,6 @@ type Point = {
 	y: Int32
 }
 
-
 type Segment = {
 	from: Point
 	to: Point

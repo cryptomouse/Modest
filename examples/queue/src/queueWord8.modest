@@ -71,7 +71,6 @@ public func get (q: *QueueWord8, b: *Word8) -> @unused Bool {
 }
 
 
-
 public func read (q: *QueueWord8, data: *[]Word8, len: Nat32) -> Nat32 {
 	var n: Nat32 = 0
 	while n < len {

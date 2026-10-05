@@ -12,7 +12,6 @@ public type Node = @branded {
 	data: Ptr
 }
 
-
 public type List = @branded {
 	head: *Node
 	tail: *Node
@@ -72,7 +71,6 @@ public func node_first (list: *List, new_node: *Node) -> *Node {
 
 	return new_node
 }
-
 
 
 public func node_create () -> *Node {
@@ -200,7 +198,6 @@ public func node_insert (list: *List, pos: Int32, new_node: *Node) -> *Node {
 
 	return new_node
 }
-
 
 
 public func node_append (list: *List, new_node: *Node) -> *Node {
