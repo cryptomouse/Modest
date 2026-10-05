@@ -23,6 +23,7 @@ type Celsius = Fixed32
 
 const freezingPoint = Celsius 0.0
 
+
 func main () -> Int
 {
 	printf("Hello World!\n")

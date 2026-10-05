@@ -5,6 +5,7 @@ pragma prefix ""
 include "libc/ctypes"
 include "libc/stat"
 
+
 // open-only flags
 @extern("C", "O_RDONLY") public const oRdonly = Word32 0x00000000    // open for reading only
 @extern("C", "O_WRONLY") public const oWronly = Word32 0x00000001    // open for writing only

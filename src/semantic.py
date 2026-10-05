@@ -2307,7 +2307,7 @@ def do_stmt_func(x):
 	global csymtab
 	symtab_before = csymtab
 	csymtab = cmodule.symtab
-	df = def_func(x, annos=[])
+	df = def_func2(x, annos=[])
 	csymtab = symtab_before
 	cfunc.funcs.append(df)
 	return df
@@ -2536,6 +2536,15 @@ def do_id(x):
 	return Id(x['str'], ti=x['ti'])
 
 
+
+def def_type1(x):
+	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
+	t = Type(x['ti'])  # Incomplete type (!)
+	definition = new_def_type(x, t)
+	csymtab.type_add(x['id']['str'], t, is_public=is_public)
+	return definition
+
+
 def def_type_common(x, nt):
 	global cmodule
 	global cdef
@@ -2546,7 +2555,7 @@ def def_type_common(x, nt):
 		error("expected type expr", x['ti'])
 		return None
 
-	# StmtDefType уже создан при декларации типа (decl_type)
+	# StmtDefType уже создан при декларации типа (def_type1)
 	definition = nt.definition
 	id = definition.id
 
@@ -2903,12 +2912,40 @@ def create_params(fn):
 		i += 1
 
 
-def def_func(x, annos):
+
+
+
+def def_func1(x):
+	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
+
+	if id_already_used(x['id']['str'], shallow=True):
+		exist = csymtab.value_get(x['id']['str'])
+		error("redefinition of '%s'" % x['id']['str'], x['id']['ti'])
+		info("previous definition was here", exist.ti)
+
+	# Create function value with incomplete type
+	t = Type(x['ti'])  # Incomplete type (!)
+	v = ValueFunc(t, do_id(x['id']), x['ti'])
+
+	definition = StmtDefFunc(v.id, v, None, x['ti'])
+	definition.id = v.id
+	definition.module = cmodule
+	definition.access_level = get_access_level(x)
+	definition.nl = x['nl']
+	v.definition = definition
+
+	csymtab.value_add(x['id']['str'], v, is_public=is_public)
+	v.storage_class = HLIR_VALUE_STORAGE_CLASS_GLOBAL
+
+	return definition
+
+
+def def_func2(x, annos):
 	global cmodule, cdef, cfunc, csymtab
 
 	if is_local_context():
 		# this is a nested function
-		decl_func(x)
+		def_func1(x)
 
 	# значение функции уже существует, (возможно - undefined)
 	# тк мы ранее сделали проход
@@ -3360,46 +3397,12 @@ def get_access_level(x, default=HLIR_ACCESS_LEVEL_PRIVATE):
 
 
 
-
-def decl_func(x):
-	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
-
-	if id_already_used(x['id']['str'], shallow=True):
-		exist = csymtab.value_get(x['id']['str'])
-		error("redefinition of '%s'" % x['id']['str'], x['id']['ti'])
-		info("previous definition was here", exist.ti)
-
-	# Create function value with incomplete type
-	t = Type(x['ti'])  # Incomplete type (!)
-	v = ValueFunc(t, do_id(x['id']), x['ti'])
-
-	definition = StmtDefFunc(v.id, v, None, x['ti'])
-	definition.id = v.id
-	definition.module = cmodule
-	definition.access_level = get_access_level(x)
-	definition.nl = x['nl']
-	v.definition = definition
-
-	csymtab.value_add(x['id']['str'], v, is_public=is_public)
-	v.storage_class = HLIR_VALUE_STORAGE_CLASS_GLOBAL
-
-	return definition
-
-
 def new_def_type(x, nt):
 	definition = StmtDefType(do_id(x['id']), nt, None, x['ti'])
 	definition.module = cmodule
 	definition.access_level = get_access_level(x)
 	definition.nl = x['nl']
 	nt.definition = definition
-	return definition
-
-
-def decl_type(x):
-	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
-	t = Type(x['ti'])  # Incomplete type (!)
-	definition = new_def_type(x, t)
-	csymtab.type_add(x['id']['str'], t, is_public=is_public)
 	return definition
 
 
@@ -3415,9 +3418,9 @@ def def_phase1(ast):
 
 		if isa == 'ast_definition':
 			if kind == 'type':
-				decl_type(x)
+				def_type1(x)
 			elif kind == 'func':
-				decl_func(x)
+				def_func1(x)
 
 		if isa == 'ast_directive':
 			if x['kind'] == 'module':
@@ -3448,7 +3451,7 @@ def def_phase2(ast):
 			df = None
 			if kind == 'type': df = def_type_global(x, annos)
 			elif kind == 'const': df = def_const_global(x, annos)
-			elif kind == 'func': df = def_func(x, annos)
+			elif kind == 'func': df = def_func2(x, annos)
 			elif kind == 'var': df = def_var_global(x, annos)
 
 			#print(kind, x['id']['str'], "->", df.__class__.__name__)

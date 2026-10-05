@@ -23,6 +23,7 @@
 
 include "libc/ctypes64"
 
+
 func Foo () -> Int32 {
 	return 1
 }

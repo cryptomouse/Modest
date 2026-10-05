@@ -18,6 +18,7 @@ public type X = {
     b: LocalInt
 }
 
+
 public func f (p: {x: LocalInt}) -> Unit {
 
 }

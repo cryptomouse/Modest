@@ -15,6 +15,7 @@
 
 type Hidden = Int32
 
+
 public func param (a: Hidden) -> Unit {
 }
 

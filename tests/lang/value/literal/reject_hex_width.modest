@@ -20,6 +20,7 @@
 
 include "libc/ctypes64"
 
+
 func main () -> Int {
 	// Into each integer class.
 	var w: Word8 = 0x000F

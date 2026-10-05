@@ -25,6 +25,7 @@
 
 include "libc/ctypes64"
 
+
 func main () -> Int {
 	var a: Word32 = 0x01
 	var b: Word32 = 0x06

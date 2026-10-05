@@ -26,6 +26,7 @@ include "libc/ctypes64"
 
 const K: Int32 = 5
 
+
 func take (a: Int32, b: Int32 = 0) -> Int32 {
 	return a + b
 }

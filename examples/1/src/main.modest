@@ -6,6 +6,7 @@ include "libc/stdio"
 
 include "./lib"
 
+
 type Q1_31 = @fraction(31) Fixed32
 
 var globalQ1_31: Q1_31 = 0.999999999
@@ -15,6 +16,7 @@ type Q2_30 = @fraction(30) Fixed32
 
 var globalQ2_30: Q2_30 = Q2_30 1.0
 var globalQ2_30_2: Q2_30 = Q2_30 -2.0
+
 
 func main () -> Int
 {

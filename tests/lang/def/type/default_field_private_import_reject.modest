@@ -10,6 +10,7 @@
 
 import "./_fixture/rec"
 
+
 func f (r: rec.R) -> Int32 {
 	return r.x
 }

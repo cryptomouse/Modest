@@ -1,6 +1,7 @@
 include "libc/ctypes64"
 include "libc/stdio"
 
+
 @nonstatic
 func main () -> Int {
 	printf("Hello World!\n")

@@ -36,6 +36,7 @@ public type StructTM = @public {
 //$endif
 }
 
+
 // Clock program
 public func clock () -> ClockT
 

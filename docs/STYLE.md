@@ -10,9 +10,14 @@ it says so.
 
 ## File layout
 
-- Between semantically distinct top-level blocks (includes, imports, type
-  definitions, constants, variables) — **one empty line**.
-- Between function definitions — **two empty lines**.
+- Between semantically distinct top-level blocks (type definitions,
+  constants, variables) — **one empty line**.
+- After the `include`/`import` section — **two empty lines**, separating
+  it from whatever definitions follow.
+- Between function definitions — **one or two empty lines**.
+- Before the function-definitions section (after the includes, types,
+  constants and variables) — **two empty lines**, so the functions are
+  clearly set apart from the preamble.
 - A function definition **with a body** is separated from the previous
   definition, of any kind, by **at least one empty line** — never written
   right under it.  Bodiless declarations (e.g. `@extern` prototypes) may
@@ -26,6 +31,7 @@ it says so.
 ```modest
 include "libc/ctypes64"
 include "libc/stdio"
+
 
 type Point = {x: Float64, y: Float64}
 

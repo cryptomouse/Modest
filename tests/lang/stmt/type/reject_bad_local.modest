@@ -12,6 +12,7 @@
 
 include "libc/ctypes64"
 
+
 func main () -> Int {
 	type L = Undefined
 	return afterTheType

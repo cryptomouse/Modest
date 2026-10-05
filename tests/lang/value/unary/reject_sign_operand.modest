@@ -18,6 +18,7 @@
 
 include "libc/ctypes64"
 
+
 func main () -> Int {
 	var w: Word32 = 5
 	var negWord = -w

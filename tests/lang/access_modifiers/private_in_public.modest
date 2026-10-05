@@ -15,6 +15,7 @@ include "libc/ctypes64"
 include "libc/stdio"
 include "libc/stdlib"
 
+
 type Hidden = Int32
 
 public type Num = Int32
@@ -29,6 +30,7 @@ public type Point = @public record {
 	x: Num
 	private tag: Hidden                    // `private` overrides @public
 }
+
 
 public func opaque_new (v: Num) -> Opaque {
 	var h: Hidden = v                      // private type in the body

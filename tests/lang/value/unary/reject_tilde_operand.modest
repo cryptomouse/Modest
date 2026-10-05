@@ -16,6 +16,7 @@
 
 include "libc/ctypes64"
 
+
 func main () -> Int {
 	// Bool has `not` and nothing else.  This gives false today, by
 	// inverting the single bit.
