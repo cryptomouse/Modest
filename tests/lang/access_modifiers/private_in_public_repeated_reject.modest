@@ -1,0 +1,32 @@
+// TEST: reject
+// EXPECT-ERROR: public type `Anon` exposes private type `Hidden`
+// EXPECT-ERROR: public a: Hidden  // first
+// EXPECT-ERROR: public type `Rec` exposes private type `Hidden`
+// EXPECT-ERROR: public c: *Hidden  // first
+// EXPECT-ERROR: public func `fn` exposes private type `Hidden`
+// EXPECT-ERROR: p: Hidden,
+//
+// Guards: when one private type is mentioned several times in a public
+// definition, the error points at the first offending field/parameter,
+// not at the last mention. (A named type is one shared object whose
+// `ti` is its definition, so the position must come from the
+// field/parameter, not from the type.)
+
+type Hidden = Int32
+
+public type Anon = {
+	public a: Hidden  // first
+	b: Hidden
+}
+
+public type Rec = record {
+	public c: *Hidden  // first
+	public d: Hidden
+}
+
+public func fn (
+	p: Hidden,
+	q: Hidden
+) -> Hidden {
+	return 0
+}

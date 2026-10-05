@@ -1,0 +1,19 @@
+// TEST: reject
+// EXPECT-ERROR: public constant `c` exposes private type `Hidden`
+// EXPECT-ERROR: public const c: Hidden =  // c
+// EXPECT-ERROR: public variable `v` exposes private type `Hidden`
+// EXPECT-ERROR: public var v: Hidden =  // v
+//
+// Guards: the error points at the type as written in the public
+// definition, not at a later mention of the private type - here the
+// initializer, which is analyzed after the type but before the check.
+// (Every mention of a named type returns the same shared object, so
+// its `ti` cannot be the mention's position.)
+
+type Hidden = Int32
+
+public const c: Hidden =  // c
+	Hidden 0
+
+public var v: Hidden =  // v
+	Hidden 1

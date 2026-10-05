@@ -470,7 +470,7 @@ def do_field(x, ctx, default_access_level=HLIR_ACCESS_LEVEL_PRIVATE):
 		error("unsuitable type", x['ti'])
 
 	if field_type.is_incompleted():
-		error("using of an incompleted type", field_type.ti)
+		error("using of an incompleted type", x['type']['ti'] if x['type'] != None else x['ti'])
 
 	# get_access_level тут не подходит: в локальном контексте он вернет
 	# LOCAL, затерев явный модификатор поля
@@ -609,7 +609,7 @@ def do_type_array(x, anno, ctx):
 	of = do_type(x['of'], ctx=ctx)
 
 	if of.is_incompleted():
-		error("using of an incompleted type", of.ti)
+		error("using of an incompleted type", x['of']['ti'])
 
 	volume = do_rvalue_integral(x['size'], ctx=ctx)
 
@@ -701,10 +701,10 @@ def do_type_func(x, anno, func_id="_", *, ctx):
 	to = do_type(x['to'], ctx=ctx)
 
 	if to.is_incompleted():
-		error("using of an incompleted type", to.ti)
+		error("using of an incompleted type", x['to']['ti'])
 
 	if to.is_forbidden_retval():
-		error("forbidden retval type", to.ti)
+		error("forbidden retval type", x['to']['ti'])
 
 	return TypeFunc(params, to, x['arghack'], ti=x['ti'])
 
@@ -741,11 +741,10 @@ def do_type(x, ctx):
 	elif k == 'record': t = do_type_record(x, annos, ctx=ctx)
 	elif k == 'variant': t = do_type_variant(x, annos, ctx=ctx)
 	else: t = TypeBad(x['ti'])
-	t.ti = x['ti']
 
 	t = append_common_type_annos(t, annos)
 
-	t.ast_annotations = x['anno']
+	t.ast_annotations = x['anno']  # FIXME: портим глобальный обьект типа локальными аннотациями
 
 	if k == 'record' and not t.is_unit():
 		# кароч прикол такой:
@@ -2023,7 +2022,7 @@ def do_value_rational(x, ctx):
 def do_value_sizeof_type(x, ctx):
 	t = do_type(x['type'], ctx=ctx)
 	if t.is_func():
-		error("sizeof(<#type_function#>) are forbidden", t.ti)
+		error("sizeof(<#type_function#>) are forbidden", x['type']['ti'])
 	return ValueSizeofType(t, ti=x['ti'])
 
 
@@ -2583,7 +2582,7 @@ def def_type_common(x, nt):
 		return StmtBad(x['ti'])
 
 	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
-		pi = check_public_interface(ty)
+		pi = check_public_interface(ty, x['type']['ti'])
 		if pi != None:
 			error_private_in_public("type", definition.id.str, pi)
 
@@ -2618,7 +2617,7 @@ def def_type_common(x, nt):
 	xdeps = nt.get_dir_deps([])
 
 	if nt in xdeps:
-		error("rec dep!", nt.ti)
+		error("rec dep!", x['type']['ti'])
 
 	for dep in xdeps:
 		if dep.is_incompleted():
@@ -2680,50 +2679,57 @@ def process_field_common(x, allow_cons_default=False, *, ctx):
 	return var_type, init_value
 
 
-# Ошибка ставится на сам private тип (поле/параметр-виновник), а
-# текст называет публичное определение, которое его раскрывает.
+# Ошибка ставится на упоминание private типа (поле/параметр-виновник),
+# а текст называет публичное определение, которое его раскрывает.
 def error_private_in_public(kind, name, pi):
-	error("public %s `%s` exposes private type `%s`" % (kind, name, pi.to_str()), pi.ti)
+	pt, ti = pi
+	error("public %s `%s` exposes private type `%s`" % (kind, name, pt.to_str()), ti)
 
 
 # Ищет private тип в интерфейсе типа t (тип public сущности).
-# Возвращает первый найденный private тип или None.
+# Возвращает (первый найденный private тип, позиция его упоминания)
+# или None.
 # На именованном типе спуск останавливается: его собственное
 # определение проверяется отдельно, при его объявлении
 # (это же защищает от зацикливания на рекурсивных типах).
 # Private поля записи в интерфейс не входят.
-def check_public_interface(t):
+#
+# Позиция: именованный тип - общий объект из таблицы символов, и его
+# ti - позиция определения, а не упоминания. Поэтому позицию берем
+# у ближайшего поля/параметра, а выше них - ti из AST, который
+# передает вызывающий (ti).
+def check_public_interface(t, ti):
 	if t.definition != None:
 		if t.definition.access_level == HLIR_ACCESS_LEVEL_PRIVATE:
-			return t
+			return (t, ti)
 		return None
 
 	if t.is_pointer():
-		return check_public_interface(t.to)
+		return check_public_interface(t.to, ti)
 
 	if t.is_array():
-		return check_public_interface(t.of)
+		return check_public_interface(t.of, ti)
 
 	if t.is_record():
 		for f in t.fields:
 			if f.access_level != HLIR_ACCESS_LEVEL_PRIVATE:
-				pt = check_public_interface(f.type)
-				if pt != None:
-					return pt
+				pi = check_public_interface(f.type, f.ti)
+				if pi != None:
+					return pi
 		return None
 
 	if t.is_func():
 		for p in t.params:
-			pt = check_public_interface(p.type)
-			if pt != None:
-				return pt
-		return check_public_interface(t.to)
+			pi = check_public_interface(p.type, p.ti)
+			if pi != None:
+				return pi
+		return check_public_interface(t.to, ti)
 
 	if t.is_variant():
 		for v in t.variants:
-			pt = check_public_interface(v)
-			if pt != None:
-				return pt
+			pi = check_public_interface(v, ti)
+			if pi != None:
+				return pi
 		return None
 
 	return None
@@ -2756,7 +2762,7 @@ def def_const_common(x, annos):
 	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
 		if const_type.is_generic():
 			error("public constant must have a non-generic type", x['ti'])
-		pi = check_public_interface(const_type)
+		pi = check_public_interface(const_type, x['type']['ti'] if x['type'] != None else x['ti'])
 		if pi != None:
 			error_private_in_public("constant", id.str, pi)
 
@@ -2806,7 +2812,7 @@ def def_var_common(x, annos):
 		if settings['public_vars_forbidden']:
 			error("public variables are forbidden", x['ti'])
 		else:
-			pi = check_public_interface(var_type)
+			pi = check_public_interface(var_type, x['type']['ti'] if x['type'] != None else x['ti'])
 			if pi != None:
 				error_private_in_public("variable", id.str, pi)
 
@@ -2972,7 +2978,9 @@ def def_func2(x, annos):
 			return None
 
 	if cdef.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
-		pi = check_public_interface(fn.type)
+		# позиция для возвращаемого типа (параметры несут свою)
+		xt = x['type']
+		pi = check_public_interface(fn.type, xt['to']['ti'] if xt['kind'] == 'func' else xt['ti'])
 		if pi != None:
 			error_private_in_public("func", df.id.str, pi)
 

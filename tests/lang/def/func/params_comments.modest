@@ -1,0 +1,69 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: line comments in parameters
+// EXPECT-OUT: passed: block comments in parameters
+// EXPECT-OUT: passed: comments in a function type
+//
+// A comment may stand anywhere in a parameter list: after a parameter
+// (before or after its ','), on a line of its own, or inline as a block
+// comment — in a func definition and in a function type alike. The
+// parameter list loop used to make no progress on such a token and spun
+// forever (the same loop as for an annotation after the type: see
+// reject_params_junk.modest).
+//
+// Guards BUG#66 (fixed 2026-10-05).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func lineComments (
+	// the first one
+	a: Int32,  // after the comma
+	b: Int32  // the last one, no comma
+) -> Int32 {
+	return a - b
+}
+
+func blockComments (a: Int32 /* before the comma */, /* before b */ b: Int32) -> Int32 {
+	return a - b
+}
+
+type BinOp = (
+	a: Int32,  // left
+	b: Int32  /* right */
+) -> Int32
+
+
+func main () -> Int {
+	var result = true
+
+	if lineComments(10, 3) != 7 {
+		printf("lineComments(10, 3) = %d, expected 7\n", lineComments(10, 3))
+		result = false
+	} else {
+		printf("passed: line comments in parameters\n")
+	}
+
+	if blockComments(10, 3) != 7 {
+		printf("blockComments(10, 3) = %d, expected 7\n", blockComments(10, 3))
+		result = false
+	} else {
+		printf("passed: block comments in parameters\n")
+	}
+
+	let op: *BinOp = &lineComments
+	if op(10, 3) != 7 {
+		printf("op(10, 3) = %d, expected 7\n", op(10, 3))
+		result = false
+	} else {
+		printf("passed: comments in a function type\n")
+	}
+
+	if not result {
+		return exitFailure
+	}
+	return exitSuccess
+}

@@ -1,0 +1,25 @@
+// TEST: reject
+// EXPECT-ERROR: unexpected annotation in parameter list
+// EXPECT-ERROR: func afterType (x: Int32 @inline) -> Int32 {
+// EXPECT-ERROR: unexpected annotation in parameter list
+// EXPECT-ERROR: func withArgs (x: Fixed32 @fraction(16)) -> Unit {
+// EXPECT-ERROR: unexpected token '5' in parameter list
+//
+// A parameter list that meets a token it cannot place must report it and
+// move on — it used to make no progress and hang the compiler. An
+// annotation belongs before the type (`x: @fraction(16) Fixed32`); after
+// the type it is an error, consumed whole with its arguments, so the
+// `)` inside `@fraction(16)` does not close the list. Comments in the
+// same place are fine: params_comments.modest.
+//
+// Guards BUG#66 (fixed 2026-10-05).
+
+func afterType (x: Int32 @inline) -> Int32 {
+	return 0
+}
+
+func withArgs (x: Fixed32 @fraction(16)) -> Unit {
+}
+
+func number (p: Int32, 5) -> Unit {
+}

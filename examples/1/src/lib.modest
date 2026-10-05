@@ -14,7 +14,8 @@ public type Int = LocalInt
 public type Y = Int
 public type X = {
 	a: LocalInt
-	b: LocalInt
+	public b: LocalInt
+    c: LocalInt
 }
 
 

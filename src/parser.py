@@ -410,7 +410,7 @@ class Parser:
 				return rc
 
 			elif token == '(':
-				self.skip_tokens_class(['nl'])
+				self.skip_tokens_class(['nl', 'comment-line', 'comment-block'])
 				#print("ok")
 				# is ` ( <#type_expr#> ) ` ?
 				if self.is_type_expr():
@@ -480,7 +480,12 @@ class Parser:
 		self.skip_tokens_class(['nl'])
 		arghack = False
 		fields = []
-		while not self.match(")"):
+		# каждая итерация обязана съесть хотя бы один токен или выйти,
+		# иначе неожиданный токен в списке параметров вешает парсер
+		while True:
+			self.skip_tokens_class(['nl', 'comment-line', 'comment-block'])
+			if self.match(")"):
+				break
 			if self.is_end():
 				error("expected ')' (unexpected end of file)", self.textInfo())
 				break
@@ -492,8 +497,14 @@ class Parser:
 					fields.append(f)
 			elif self.match("..."):
 				arghack = True
+			elif self.token_class_is('annotation'):
+				x = self.parse_annotation()
+				error("unexpected annotation in parameter list (an annotation goes before the type: `x: @%s T`)" % x['kind'], x['ti'])
+			elif not self.look(","):
+				error("unexpected token '%s' in parameter list" % self.ctok(), self.textInfo())
+				self.skip1()
+			self.skip_tokens_class(['nl', 'comment-line', 'comment-block'])
 			self.match(",")
-			self.skip_tokens_class(['nl'])
 
 		if self.match("->"):
 			t = self.expr_type()
