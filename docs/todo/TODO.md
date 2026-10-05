@@ -215,3 +215,29 @@ thing not visible in it — that nobody wrote it — and the two places that
 care read it through `is_default()`: a global then gets no initializer
 (C and LLVM zero it anyway) and the `modest` backend prints the
 declaration back as it was written.
+
+## Brace style: K&R or Allman, one per file
+
+Design intent (Alex, 2026-10-05): allow Allman (`{` on its own line) as
+an official style next to K&R (`{` on the header line), but a file must
+use **one** of them throughout — never mixed.
+
+Today: `docs/STYLE.md` prescribes K&R only.  The parser already accepts
+both forms (`docs/lang/stmt/block.md`, `ALLOW_BRACE_ON_NEXT_LINE` in
+`src/parser.py`), and the `modest` backend can emit either
+(`backend.modest.brace_style` / `else_style`).  `examples/0` and
+`examples/1` are written in Allman.
+
+Open points:
+
+- The rule is about **blocks** only (`func`, `if`, `else`, `while`).
+  Record types and literals (`type Sample = {`) are not blocks and keep
+  `{` on the same line in either style — otherwise every Allman file with
+  a record type would count as mixed.
+- Enforcement: the first block of a file fixes its style, every later
+  block in the other style is diagnosed (warning or error — to decide).
+- Next-line `else` is still experimental; decide whether Allman implies it.
+- When adopted: update `docs/STYLE.md`, and pick the style for the
+  `modest` backend's output from the source file rather than only from
+  the settings.
+

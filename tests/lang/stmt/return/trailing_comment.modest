@@ -72,3 +72,4 @@ func main () -> Int {
 	printf("passed: return trailing comment\n")
 	return exitSuccess
 }
+

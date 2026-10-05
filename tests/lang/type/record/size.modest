@@ -116,3 +116,4 @@ func main () -> Int {
 	printf("passed: record size\n")
 	return exitSuccess
 }
+

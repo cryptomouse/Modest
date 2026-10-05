@@ -1,0 +1,37 @@
+// TEST: reject
+// EXPECT-ERROR: public func `param` exposes private type `Hidden`
+// EXPECT-ERROR: public func `ret` exposes private type `Hidden`
+// EXPECT-ERROR: public func `anon` exposes private type `Hidden`
+// EXPECT-ERROR: public func `cb` exposes private type `Hidden`
+// EXPECT-ERROR: public func `arr` exposes private type `Hidden`
+//
+// The signature of a public func may not mention a private type — not in
+// a parameter, not in the return type, not nested inside an anonymous
+// record, a function pointer or an array. One error per function, at the
+// private type. (The body is not part of the interface: see
+// private_in_public.modest.)
+//
+// The rule as a whole: docs/lang/access_modifiers.md.
+
+type Hidden = Int32
+
+public func param (a: Hidden) -> Unit {
+}
+
+
+public func ret () -> Hidden {
+	return 0
+}
+
+
+public func anon (p: {q: Hidden}) -> Unit {
+}
+
+
+public func cb (f: *(h: Hidden) -> Unit) -> Unit {
+}
+
+
+public func arr (a: *[4]Hidden) -> Unit {
+}
+

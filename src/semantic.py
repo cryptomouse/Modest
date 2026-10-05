@@ -50,6 +50,44 @@ def is_local_context():
 	return cfunc != None
 
 
+
+# Контекст обхода (ctx) — dict ключ -> значение, None == пустой контекст.
+# Хелперы НЕ мутируют переданный ctx, а возвращают новый:
+# ctx разделяется между соседними узлами (напр. полями одной записи),
+# и изменение в одной ветке не должно протекать в другие.
+
+def ctxAppend(ctx, key, value):
+	assert(not (ctx != None and key in ctx))
+	new_ctx = dict(ctx) if ctx != None else {}
+	new_ctx[key] = value
+	return new_ctx
+
+
+def ctxGet(ctx, key, default=None):
+	if ctx == None:
+		return default
+	return ctx.get(key, default)
+
+
+def ctxRemove(ctx, key):
+	if ctx == None or key not in ctx:
+		return ctx
+	new_ctx = dict(ctx)
+	del new_ctx[key]
+	return new_ctx if len(new_ctx) > 0 else None
+
+
+def ctxModify(ctx, key, value):
+	assert(ctx != None and key in ctx)
+	new_ctx = dict(ctx)
+	new_ctx[key] = value
+	return new_ctx
+
+
+def ctxCheck(ctx, key, value):
+	return ctx != None and key in ctx and ctx[key] == value
+
+
 from value.cons import value_cons_implicit, value_cons_implicit_check, value_cons_explicit, value_cons_default
 
 
@@ -425,7 +463,7 @@ def create_builtin_module():
 # (only with -funsafe key)
 # pos - position no
 # offset - real offset (address inside container struct)
-def do_field(x, ctx=[]):
+def do_field(x, ctx, default_access_level=HLIR_ACCESS_LEVEL_PRIVATE):
 	id = do_id(x['id'])
 	field_type, init_value = process_field_common(x, ctx=ctx)
 	if field_type.is_forbidden_field():
@@ -434,7 +472,12 @@ def do_field(x, ctx=[]):
 	if field_type.is_incompleted():
 		error("using of an incompleted type", field_type.ti)
 
-	f = Field(id, field_type, init_value=init_value, access_level = x['access_modifier'], ti=x['ti'])
+	# get_access_level тут не подходит: в локальном контексте он вернет
+	# LOCAL, затерев явный модификатор поля
+	access_level = x['access_modifier']
+	if access_level == HLIR_ACCESS_LEVEL_UNDEFINED:
+		access_level = default_access_level
+	f = Field(id, field_type, init_value=init_value, access_level = access_level, ti=x['ti'])
 	f.add_atts(x['anno'])
 	f.nl = x['nl']
 	return f
@@ -465,7 +508,7 @@ def do_field(x, ctx=[]):
 #	return mod
 
 
-def do_type_named(x, anno, ctx=[]):
+def do_type_named(x, anno, ctx):
 	global cmodule, csymtab
 	id = x['id']
 	id_str = id['str']
@@ -513,16 +556,6 @@ def do_type_named(x, anno, ctx=[]):
 
 		t = csymtab.type_get(id_str)
 
-		#if t.definition == None:
-		#	error("undefined type3", x['ti'])
-		#	return TypeBad(x['ti'])
-
-		if t != None and t.definition != None and t.definition.access_level == HLIR_ACCESS_LEVEL_PRIVATE:
-			#info("access to private type", x['ti'])
-			if 'public_context' in ctx:
-				error("using a private type in a public context", x['ti'])
-				return TypeBad(x['ti'])
-
 	if t == None:
 		error("undefined type", x['ti'])
 		return TypeBad(x['ti'])
@@ -567,18 +600,18 @@ def change_type_layout(t, layout, ti):
 	return t
 
 
-def do_type_pointer(x, anno, ctx=[]):
+def do_type_pointer(x, anno, ctx):
 	to = do_type(x['to'], ctx=ctx)
 	return TypePointer(to, ti=x['ti'])
 
 
-def do_type_array(x, anno, ctx=[]):
+def do_type_array(x, anno, ctx):
 	of = do_type(x['of'], ctx=ctx)
 
 	if of.is_incompleted():
 		error("using of an incompleted type", of.ti)
 
-	volume = do_rvalue_integral(x['size'])
+	volume = do_rvalue_integral(x['size'], ctx=ctx)
 
 	if volume.is_bad():
 		return TypeArray(of, volume, ti=x['ti'])
@@ -604,7 +637,7 @@ def do_type_array(x, anno, ctx=[]):
 rec_uid = 0
 var_uid = 0
 
-def do_type_record(x, anno, ctx=[]):
+def do_type_record(x, anno, ctx):
 	global rec_uid
 	fields = []
 
@@ -612,7 +645,7 @@ def do_type_record(x, anno, ctx=[]):
 	rec_uid += 1
 
 	for ast_field in x['fields']:
-		field = do_field(ast_field, ctx=ctx)
+		field = do_field(ast_field, ctx=ctx, default_access_level=HLIR_ACCESS_LEVEL_UNDEFINED)
 
 		# redefinition?
 		field_id_str = field.id.str
@@ -644,7 +677,7 @@ def pop_anno(alist, anno):
 			return a
 
 
-def do_type_variant(x, anno, ctx=[]):
+def do_type_variant(x, anno, ctx):
 	#info("variant type", x['ti'])
 	global var_uid
 	uid = var_uid
@@ -656,7 +689,7 @@ def do_type_variant(x, anno, ctx=[]):
 
 
 
-def do_type_func(x, anno, func_id="_", ctx=[]):
+def do_type_func(x, anno, func_id="_", *, ctx):
 	params = []
 	for _param in x['params']:
 		param = do_field(_param, ctx=ctx)
@@ -695,7 +728,7 @@ def anno_to_attribute(x, annos, anno):
 		x.addAttribute(anno, {})
 
 
-def do_type(x, ctx=[]):
+def do_type(x, ctx):
 	t = None
 
 	annos = copy.copy(x['anno'])
@@ -767,10 +800,10 @@ def append_common_type_annos(t, annos):
 
 
 
-def do_value_shift(x):
+def do_value_shift(x, ctx):
 	op = x['kind']  # HLIR_VALUE_OP_SHL | HLIR_VALUE_OP_SHR
-	left = do_rvalue(x['left'])
-	right = do_rvalue(x['right'])
+	left = do_rvalue(x['left'], ctx=ctx)
+	right = do_rvalue(x['right'], ctx=ctx)
 
 	# Слева может быть только word (!) - или hex-литерал: у него есть
 	# ширина записи, и в ней он и сдвигается (0x01 << 4 это 0x10, а
@@ -842,14 +875,14 @@ def is_spelled(t):
 	return t.is_integer() and t.spelled
 
 
-def do_value_bin(x):
+def do_value_bin(x, ctx):
 	op = x['kind']
-	l = do_rvalue(x['left'])
-	r = do_rvalue(x['right'])
-	return do_value_bin_op(op, l, r, x['ti'])
+	l = do_rvalue(x['left'], ctx=ctx)
+	r = do_rvalue(x['right'], ctx=ctx)
+	return do_value_bin_op(op, l, r, x['ti'], ctx=ctx)
 
 
-def do_value_bin_op(op, l, r, ti):
+def do_value_bin_op(op, l, r, ti, ctx):
 	if l.is_bad() or r.is_bad():
 		t = Type.select_common_type(l.type, r.type, ti)
 		return ValueBad(type=t, ti=ti)
@@ -1016,7 +1049,7 @@ def do_bin_immediate(op, l, r, ti):
 
 
 
-def do_value_unary_check(v, op):
+def do_value_unary_check(v, op, ctx):
 	if not v.type.supports(op):
 		error("unsuitable value type '%s' for '%s' operation" % (v.type.to_str(), op), v.ti)
 		return False
@@ -1024,13 +1057,13 @@ def do_value_unary_check(v, op):
 
 
 # `not` - только Bool, `~` - только WordX: две разные операции (docs/lang/value/unary.md)
-def do_value_not(x):
-	v = do_rvalue(x['value'])
+def do_value_not(x, ctx):
+	v = do_rvalue(x['value'], ctx=ctx)
 
 	if v.is_bad() or v.is_undefined():
 		return v
 
-	if not do_value_unary_check(v, HLIR_VALUE_OP_LOGIC_NOT):
+	if not do_value_unary_check(v, HLIR_VALUE_OP_LOGIC_NOT, ctx=ctx):
 		return ValueBad(ti=x['ti'])
 
 	nv = ValueNot(v.type, v, ti=x['ti'])
@@ -1044,13 +1077,13 @@ def do_value_not(x):
 	return nv
 
 
-def do_value_bitwise_not(x):
-	v = do_rvalue(x['value'])
+def do_value_bitwise_not(x, ctx):
+	v = do_rvalue(x['value'], ctx=ctx)
 
 	if v.is_bad() or v.is_undefined():
 		return v
 
-	if not do_value_unary_check(v, HLIR_VALUE_OP_BITWISE_NOT):
+	if not do_value_unary_check(v, HLIR_VALUE_OP_BITWISE_NOT, ctx=ctx):
 		return ValueBad(ti=x['ti'])
 
 	# `~` на литерале инвертирует его в его же ширине: у hex-литерала это
@@ -1089,15 +1122,15 @@ def value_integer_bits(num, v, ti):
 	return nv
 
 
-def do_value_neg(x):
-	v = do_rvalue(x['value'])
+def do_value_neg(x, ctx):
+	v = do_rvalue(x['value'], ctx=ctx)
 
 	if v.is_bad() or v.is_undefined():
 		return v
 
 	vtype = v.type
 
-	if not do_value_unary_check(v, HLIR_VALUE_OP_NEG):
+	if not do_value_unary_check(v, HLIR_VALUE_OP_NEG, ctx=ctx):
 		return ValueBad(ti=x['ti'])
 
 	if not vtype.is_generic():
@@ -1132,15 +1165,15 @@ def do_value_neg(x):
 	return nv
 
 
-def do_value_pos(x):
-	v = do_rvalue(x['value'])
+def do_value_pos(x, ctx):
+	v = do_rvalue(x['value'], ctx=ctx)
 
 	if v.is_bad() or v.is_undefined():
 		return v
 
 	vtype = v.type
 
-	if not do_value_unary_check(v, HLIR_VALUE_OP_POS):
+	if not do_value_unary_check(v, HLIR_VALUE_OP_POS, ctx=ctx):
 		return ValueBad(ti=x['ti'])
 
 	if vtype.is_unsigned():
@@ -1174,8 +1207,8 @@ def is_good_value_for_ref(v):
 	return False
 
 
-def do_value_ref(x):
-	v = do_value(x['value'])
+def do_value_ref(x, ctx):
+	v = do_value(x['value'], ctx=ctx)
 
 	# FIXIT: Сейчас сам факт того что взяли указатель на переменную считается тем что она инициализирована,
 	# что конечно неверно, но пока так. Однажды нужно придумать как проверить судьбу этого указателя.
@@ -1202,8 +1235,8 @@ def do_value_ref(x):
 	return nv
 
 
-def do_value_new(x):
-	v = do_value(x['value'])
+def do_value_new(x, ctx):
+	v = do_value(x['value'], ctx=ctx)
 
 	if v.is_bad() or v.is_undefined():
 		return ValueBad(ti=x['ti'])
@@ -1220,8 +1253,8 @@ def do_value_new(x):
 	return nv
 
 
-def do_value_deref(x):
-	v = do_rvalue(x['value'])
+def do_value_deref(x, ctx):
+	v = do_rvalue(x['value'], ctx=ctx)
 
 	if v.is_bad() or v.is_undefined():
 		return v
@@ -1251,9 +1284,9 @@ def do_value_deref(x):
 
 
 
-def do_value_lengthof_value(x):
+def do_value_lengthof_value(x, ctx):
 	ti = x['ti']
-	arg = do_value(x['value'])
+	arg = do_value(x['value'], ctx=ctx)
 
 	if arg.is_bad() or arg.is_undefined():
 		return arg
@@ -1268,9 +1301,9 @@ def do_value_lengthof_value(x):
 	return ValueLengthofValue(arg, ti)
 
 
-def do_value_lengthof_type(x):
+def do_value_lengthof_type(x, ctx):
 	ti = x['ti']
-	t = do_type(x['type'])
+	t = do_type(x['type'], ctx=ctx)
 
 	if t.is_bad(): #or arg.is_undefined():
 		return ValueBad(ti=ti)
@@ -1285,47 +1318,47 @@ def do_value_lengthof_type(x):
 	return ValueLengthofType(t, ti)
 
 
-def do_value_va_start(x):
+def do_value_va_start(x, ctx):
 	args = x['values']
-	va_list = do_value(args[0])
+	va_list = do_value(args[0], ctx=ctx)
 	va_list.is_initialized = True
-	last_param = do_rvalue(args[1])
+	last_param = do_rvalue(args[1], ctx=ctx)
 	nv = ValueVaStart(typeUnit, va_list, last_param, x['ti'])
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 	return nv
 
 
-def do_value_va_arg(x):
-	va_list = do_value(x['va_list'])
-	type = do_type(x['type'])
+def do_value_va_arg(x, ctx):
+	va_list = do_value(x['va_list'], ctx=ctx)
+	type = do_type(x['type'], ctx=ctx)
 	nv = ValueVaArg(type, va_list, x['ti'])
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 	return nv
 
 
-def do_value_va_end(x):
-	va_list = do_value(x['value'])
+def do_value_va_end(x, ctx):
+	va_list = do_value(x['value'], ctx=ctx)
 	nv = ValueVaEnd(typeUnit, va_list, x['ti'])
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 	return nv
 
 
-def do_value_va_copy(x):
+def do_value_va_copy(x, ctx):
 	args = x['values']
-	va_list0 = do_value(args[0])
-	va_list1 = do_value(args[1])
+	va_list0 = do_value(args[0], ctx=ctx)
+	va_list1 = do_value(args[1], ctx=ctx)
 	va_list0.is_initialized = True
 	nv = ValueVaCopy(typeUnit, va_list0, va_list1, x['ti'])
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 	return nv
 
 
-def do_value_defined_type(x):
+def do_value_defined_type(x, ctx):
 	t = csymtab.type_get(x['type']['id'].str)
 	return t != None
 
 
-def do_value_defined_value(x):
+def do_value_defined_value(x, ctx):
 	global csymtab
 	v = csymtab.value_get(x['value']['id'].str)
 	return v != None
@@ -1339,8 +1372,8 @@ def transmission(to_type, value, ti):
 	return value_cons_implicit_check(to_type, value)
 
 
-def do_value_call(x):
-	fn = do_rvalue(x['left'])
+def do_value_call(x, ctx):
+	fn = do_rvalue(x['left'], ctx=ctx)
 
 	if fn.is_bad() or fn.is_undefined():
 		return fn
@@ -1391,7 +1424,7 @@ def do_value_call(x):
 		a = x['args'][i]
 		if a['key'] != None:
 			break
-		av = do_rvalue(a['value'])
+		av = do_rvalue(a['value'], ctx=ctx)
 		arg = do_arg(param, av)
 		sorted_args.append(arg)
 		i += 1
@@ -1437,7 +1470,7 @@ def do_value_call(x):
 
 		vx = param.init_value
 		if found:
-			vx = do_rvalue(a['value'])
+			vx = do_rvalue(a['value'], ctx=ctx)
 			if vx.stage != HLIR_VALUE_STAGE_COMPILETIME:
 				args_is_ct = False
 		else:
@@ -1462,7 +1495,7 @@ def do_value_call(x):
 	while i < nargs:
 		yy = x['args'][i]
 		a = yy['value']
-		arg = do_rvalue(a)
+		arg = do_rvalue(a, ctx=ctx)
 
 		if arg.stage != HLIR_VALUE_STAGE_COMPILETIME:
 			args_is_ct = False
@@ -1534,8 +1567,8 @@ def ct_call(fn, args, ti):
 	csymtab = csymtab.parent_get()
 
 
-def do_rvalue_integral(x):
-	rv = do_rvalue(x)
+def do_rvalue_integral(x, ctx):
+	rv = do_rvalue(x, ctx=ctx)
 	if rv.is_bad() or rv.is_undefined():
 		return rv
 	if not rv.type.is_integral():
@@ -1544,8 +1577,8 @@ def do_rvalue_integral(x):
 	return rv
 
 
-def do_rvalue_bool(x):
-	rv = do_rvalue(x)
+def do_rvalue_bool(x, ctx):
+	rv = do_rvalue(x, ctx=ctx)
 	if rv.is_bad():
 		return rv
 	if not rv.type.is_bool():
@@ -1555,8 +1588,8 @@ def do_rvalue_bool(x):
 
 
 
-def do_value_index(x):
-	left = do_value(x['left'])
+def do_value_index(x, ctx):
+	left = do_value(x['left'], ctx=ctx)
 	ti=x['ti']
 
 	if left.is_bad():
@@ -1572,7 +1605,7 @@ def do_value_index(x):
 	if via_pointer:
 		array_type = left_type.to
 
-	index = do_rvalue_integral(x['index'])
+	index = do_rvalue_integral(x['index'], ctx=ctx)
 
 	if index.type.is_bad():
 		return ValueBad(ti=ti)
@@ -1654,10 +1687,10 @@ def do_value_index(x):
 	return nv
 
 
-def do_value_slice(x):
+def do_value_slice(x, ctx):
 	ti = x['ti']
 
-	left = do_value(x['left'])
+	left = do_value(x['left'], ctx=ctx)
 	if left.is_bad():
 		return ValueBad(ti=x['ti'])
 
@@ -1667,14 +1700,14 @@ def do_value_slice(x):
 	index_to = None
 
 	if x['index_from'] != None:
-		index_from = do_rvalue_integral(x['index_from'])
+		index_from = do_rvalue_integral(x['index_from'], ctx=ctx)
 		if index_from.is_bad():
 			return ValueBad(ti=ti)
 	else:
 		index_from = value_integer_create(0, ti=x['ti'])
 
 	if x['index_to'] != None:
-		index_to = do_rvalue_integral(x['index_to'])
+		index_to = do_rvalue_integral(x['index_to'], ctx=ctx)
 		if index_to.is_bad():
 			return ValueBad(ti=ti)
 
@@ -1731,7 +1764,7 @@ def do_value_slice(x):
 	# строим выражения для C бекенда в частности
 	# тк volume of array должен быть выражением
 	# а для слайса [a:b] это (b - a)
-	slice_volume = do_value_bin_op(HLIR_VALUE_OP_SUB, index_to, index_from, x['ti'])
+	slice_volume = do_value_bin_op(HLIR_VALUE_OP_SUB, index_to, index_from, x['ti'], ctx=ctx)
 	type = TypeArray(array_type.of, slice_volume, generic=False, ti=x['ti'])
 	nv = ValueSlice(type, left, index_from, index_to, x['ti'])
 	nv.is_initialized = left.is_initialized
@@ -1746,7 +1779,7 @@ def is_import_name(module, id_str):
 	return id_str in module.imports
 
 
-def do_value_access(x):
+def do_value_access(x, ctx):
 	global cmodule
 	global csymtab
 
@@ -1765,7 +1798,7 @@ def do_value_access(x):
 		nv = ValueAccessModule(xv.type, imp, do_id(x['right']), xv, ti=x['ti'])
 		return nv
 
-	left = do_value(x['left'])
+	left = do_value(x['left'], ctx=ctx)
 	return acc(left, x['right'], ti=x['ti'])
 
 
@@ -1815,12 +1848,12 @@ def acc(left, field_id, ti):
 	return nv
 
 
-def do_value_cons(x):
-	v = do_rvalue(x['value'])
+def do_value_cons(x, ctx):
+	v = do_rvalue(x['value'], ctx=ctx)
 	if v.is_bad():
 		return ValueBad(ti=x['ti'])
 
-	t = do_type(x['type'])
+	t = do_type(x['type'], ctx=ctx)
 	if t.is_bad():
 		return ValueBad(ti=x['ti'])
 
@@ -1828,7 +1861,7 @@ def do_value_cons(x):
 
 
 
-def do_value_named(x):
+def do_value_named(x, ctx):
 	global csymtab
 
 	id_str = x['str']
@@ -1880,7 +1913,7 @@ def do_value_named(x):
 
 
 
-def do_value_string(x):
+def do_value_string(x, ctx):
 	return value_string_create(x['str'], ti=x['ti'])
 
 
@@ -1891,7 +1924,7 @@ def do_value_string(x):
 # всплывут ошибки типизации если они есть.
 # Сейчас не знаю правильно ли, но вроде так хоть работает
 
-def do_value_array(x):
+def do_value_array(x, ctx):
 	#info("do_value_array", x['ti'])
 	items = []
 	for item in x['items']:
@@ -1899,7 +1932,7 @@ def do_value_array(x):
 		#if item['isa'] == 'ast_comment':
 		#	continue
 		if item['isa'] == 'ast_kv':
-			item_value = do_rvalue(item['value'])
+			item_value = do_rvalue(item['value'], ctx=ctx)
 			item_value.nl = item['nl']
 			items.append(item_value)
 	v = value_array_create(t=None, items=items, ti=x['ti'])
@@ -1908,7 +1941,7 @@ def do_value_array(x):
 
 # Создает value с типом GenericRecord
 # которое далее уже можно привести к конкретной записи
-def do_value_record(x):
+def do_value_record(x, ctx):
 	#info("do_value_record", x['ti'])
 	initializers = []
 	for item in x['items']:
@@ -1917,7 +1950,7 @@ def do_value_record(x):
 			continue
 
 		if item['isa'] == 'ast_kv':
-			item_value = do_rvalue(item['value'])
+			item_value = do_rvalue(item['value'], ctx=ctx)
 			p = Initializer(
 				do_id(item['key']),
 				item_value,
@@ -1931,15 +1964,15 @@ def do_value_record(x):
 
 
 
-def do_value_number(x):
+def do_value_number(x, ctx):
 	if '.' in x['str']:
-		return do_value_rational(x)
+		return do_value_rational(x, ctx=ctx)
 
-	return do_value_integer(x)
+	return do_value_integer(x, ctx=ctx)
 
 
 
-def do_value_integer(x):
+def do_value_integer(x, ctx):
 	base = 10
 	s = x['str']
 	num_string_len = len(s)
@@ -1983,37 +2016,37 @@ def type_integer_spelled(width, ti=None):
 
 
 
-def do_value_rational(x):
+def do_value_rational(x, ctx):
 	return value_rational_create(x['str'], ti=x['ti'])
 
 
-def do_value_sizeof_type(x):
-	t = do_type(x['type'])
+def do_value_sizeof_type(x, ctx):
+	t = do_type(x['type'], ctx=ctx)
 	if t.is_func():
 		error("sizeof(<#type_function#>) are forbidden", t.ti)
 	return ValueSizeofType(t, ti=x['ti'])
 
 
-def do_value_sizeof_value(x):
-	v = do_value(x['value'])
+def do_value_sizeof_value(x, ctx):
+	v = do_value(x['value'], ctx=ctx)
 	if v.type.is_func():
 		error("sizeof(<#value_function#>) are forbidden", v.ti)
 	return ValueSizeofValue(v, ti=x['ti'])
 
 
 
-def do_value_alignof_type(x):
-	of = do_type(x['type'])
+def do_value_alignof_type(x, ctx):
+	of = do_type(x['type'], ctx=ctx)
 	return ValueAlignofType(of, ti=x['ti'])
 
 
-def do_value_alignof_value(x):
-	of = do_value(x['value'])
+def do_value_alignof_value(x, ctx):
+	of = do_value(x['value'], ctx=ctx)
 	return ValueAlignofValue(of, ti=x['ti'])
 
 
-def do_value_offsetof(x):
-	of = do_type(x['type'])
+def do_value_offsetof(x, ctx):
+	of = do_type(x['type'], ctx=ctx)
 	field_id = do_id(x['field'])
 	return ValueOffsetof(of, field_id, ti=x['ti'])
 
@@ -2027,8 +2060,8 @@ bin_ops = [
 ]
 
 
-def do_value_immediate(x, allow_ptr_to_str=False):
-	v = do_value(x)
+def do_value_immediate(x, allow_ptr_to_str=False, *, ctx):
+	v = do_value(x, ctx=ctx)
 
 	if v.is_bad():
 		return v
@@ -2043,8 +2076,8 @@ def do_value_immediate(x, allow_ptr_to_str=False):
 	return v
 
 
-def do_value_immediate_string(x):
-	v = do_value_immediate(x)
+def do_value_immediate_string(x, ctx):
+	v = do_value_immediate(x, ctx=ctx)
 
 	if v.is_bad():
 		return v
@@ -2056,37 +2089,37 @@ def do_value_immediate_string(x):
 
 
 
-def do_value_unsafe(x):
+def do_value_unsafe(x, ctx):
 	#if not cmodule.hasAttribute('unsafe'):
 	#	error("for use 'unsafe' operator required -funsafe option", x['ti'])
 
 	global unsafe_mode
 	prev_unsafe_mode = unsafe_mode
 	unsafe_mode = True
-	rv = do_rvalue(x['value'])
+	rv = do_rvalue(x['value'], ctx=ctx)
 	unsafe_mode = prev_unsafe_mode
 	return rv
 
 
-def do_value_bad(x):
+def do_value_bad(x, ctx):
 	return ValueBad(ti=x['ti'])
 
 
-def do_value_undefined(x):
+def do_value_undefined(x, ctx):
 	#t = TypeBad(x['ti'])
 	t = TypeUndefined(x['ti'])
 	return ValueUndefined(t, x['ti'])
 
 
-def do_rvalue(x):
-	v = do_value(x)
+def do_rvalue(x, ctx):
+	v = do_value(x, ctx=ctx)
 	if not v.is_initialized:
 		error("attempt to use an uninitialized value", x['ti'])
 	return v
 
 
-def do_value_subexpr(x):
-	v = do_rvalue(x['value'])
+def do_value_subexpr(x, ctx):
+	v = do_rvalue(x['value'], ctx=ctx)
 	if v.is_bad():
 		return ValueBad(ti=x['ti'])
 	nv = ValueSubexpr(v, ti=x['ti'])
@@ -2098,48 +2131,48 @@ def do_value_subexpr(x):
 
 
 
-def do_value(x):
+def do_value(x, ctx):
 	assert(x['isa'] == 'ast_value')
 	v = None
 
 	k = x['kind']
-	if k == 'id': v = do_value_named(x)
-	elif k == 'number': v = do_value_number(x)
-	elif k == 'string': v = do_value_string(x)
-	elif k == 'record': v = do_value_record(x)
-	elif k == 'array': v = do_value_array(x)
-	elif k == HLIR_VALUE_OP_CONS: v = do_value_cons(x)
-	elif k == HLIR_VALUE_OP_CALL: v = do_value_call(x)
-	elif k in bin_ops: v = do_value_bin(x)
-	elif k == HLIR_VALUE_OP_REF: v = do_value_ref(x)
-	elif k == HLIR_VALUE_OP_LOGIC_NOT: v = do_value_not(x)
-	elif k == HLIR_VALUE_OP_BITWISE_NOT: v = do_value_bitwise_not(x)
-	elif k == HLIR_VALUE_OP_DEREF: v = do_value_deref(x)
-	elif k == HLIR_VALUE_OP_INDEX: v = do_value_index(x)
-	elif k == HLIR_VALUE_OP_SLICE: v = do_value_slice(x)
-	elif k == HLIR_VALUE_OP_ACCESS: v = do_value_access(x)
-	elif k == HLIR_VALUE_OP_NEG: v = do_value_neg(x)
-	elif k == HLIR_VALUE_OP_POS: v = do_value_pos(x)
-	elif k == HLIR_VALUE_OP_SHL: v = do_value_shift(x)
-	elif k == HLIR_VALUE_OP_SHR: v = do_value_shift(x)
-	elif k == HLIR_VALUE_OP_NEW: v = do_value_new(x)  # just experimental
-	elif k == HLIR_VALUE_OP_UNSAFE: v = do_value_unsafe(x)
-	elif k == HLIR_VALUE_OP_SUBEXPR: v = do_value_subexpr(x)
-	elif k == HLIR_VALUE_OP_SIZEOF_TYPE: v = do_value_sizeof_type(x)
-	elif k == HLIR_VALUE_OP_SIZEOF_VALUE: v = do_value_sizeof_value(x)
-	elif k == HLIR_VALUE_OP_ALIGNOF_TYPE: v = do_value_alignof_type(x)
-	elif k == HLIR_VALUE_OP_ALIGNOF_VALUE: v = do_value_alignof_value(x)
-	elif k == HLIR_VALUE_OP_OFFSETOF: v = do_value_offsetof(x)
-	elif k == HLIR_VALUE_OP_LENGTHOF_VALUE: v = do_value_lengthof_value(x)
-	elif k == HLIR_VALUE_OP_LENGTHOF_TYPE: v = do_value_lengthof_type(x)
-	elif k == HLIR_VALUE_OP_VA_ARG: v = do_value_va_arg(x)
-	elif k == HLIR_VALUE_OP_VA_START: v = do_value_va_start(x)
-	elif k == HLIR_VALUE_OP_VA_END: v = do_value_va_end(x)
-	elif k == HLIR_VALUE_OP_VA_COPY: v = do_value_va_copy(x)
-	elif k == HLIR_VALUE_OP_DEFINED_TYPE: v = do_value_defined_type(x)
-	elif k == HLIR_VALUE_OP_DEFINED_VALUE: v = do_value_defined_value(x)
-	elif k == 'undefined': v = do_value_undefined(x)
-	elif k == 'bad': v = do_value_bad(x)
+	if k == 'id': v = do_value_named(x, ctx=ctx)
+	elif k == 'number': v = do_value_number(x, ctx=ctx)
+	elif k == 'string': v = do_value_string(x, ctx=ctx)
+	elif k == 'record': v = do_value_record(x, ctx=ctx)
+	elif k == 'array': v = do_value_array(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_CONS: v = do_value_cons(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_CALL: v = do_value_call(x, ctx=ctx)
+	elif k in bin_ops: v = do_value_bin(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_REF: v = do_value_ref(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_LOGIC_NOT: v = do_value_not(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_BITWISE_NOT: v = do_value_bitwise_not(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_DEREF: v = do_value_deref(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_INDEX: v = do_value_index(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_SLICE: v = do_value_slice(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_ACCESS: v = do_value_access(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_NEG: v = do_value_neg(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_POS: v = do_value_pos(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_SHL: v = do_value_shift(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_SHR: v = do_value_shift(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_NEW: v = do_value_new(x, ctx=ctx)  # just experimental
+	elif k == HLIR_VALUE_OP_UNSAFE: v = do_value_unsafe(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_SUBEXPR: v = do_value_subexpr(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_SIZEOF_TYPE: v = do_value_sizeof_type(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_SIZEOF_VALUE: v = do_value_sizeof_value(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_ALIGNOF_TYPE: v = do_value_alignof_type(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_ALIGNOF_VALUE: v = do_value_alignof_value(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_OFFSETOF: v = do_value_offsetof(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_LENGTHOF_VALUE: v = do_value_lengthof_value(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_LENGTHOF_TYPE: v = do_value_lengthof_type(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_VA_ARG: v = do_value_va_arg(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_VA_START: v = do_value_va_start(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_VA_END: v = do_value_va_end(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_VA_COPY: v = do_value_va_copy(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_DEFINED_TYPE: v = do_value_defined_type(x, ctx=ctx)
+	elif k == HLIR_VALUE_OP_DEFINED_VALUE: v = do_value_defined_value(x, ctx=ctx)
+	elif k == 'undefined': v = do_value_undefined(x, ctx=ctx)
+	elif k == 'bad': v = do_value_bad(x, ctx=ctx)
 
 	if v == None:
 		error("unknown value kind '%s'" % k, x['ti'])
@@ -2206,7 +2239,7 @@ def do_stmt_var(x, annos):
 
 
 def do_stmt_if(x):
-	cond = do_rvalue_bool(x['cond'])
+	cond = do_rvalue_bool(x['cond'], ctx=None)
 	if cond.is_bad():
 		return StmtBad(x['ti'])
 
@@ -2226,7 +2259,7 @@ def do_stmt_if(x):
 
 
 def do_stmt_while(x):
-	cond = do_rvalue_bool(x['cond'])
+	cond = do_rvalue_bool(x['cond'], ctx=None)
 	if cond.is_bad():
 		return StmtBad(x['ti'])
 
@@ -2247,7 +2280,7 @@ def do_stmt_return(x):
 	# (!) in return statement retval can be None (!)
 	retval = None
 	if x['value'] != None:
-		rv = do_rvalue(x['value'])
+		rv = do_rvalue(x['value'], ctx=None)
 		retval = transmission(func_ret_type, rv, rv.ti)
 	elif not func_ret_type.is_unit():
 		error("expected return value", x['ti'])
@@ -2288,10 +2321,9 @@ def do_stmt_break(x):
 	return StmtBreak(x['ti'])
 
 
-
 def do_stmt_assign(x):
-	l = do_value(x['left'])
-	r = do_rvalue(x['right'])
+	l = do_value(x['left'], ctx=None)
+	r = do_rvalue(x['right'], ctx=None)
 
 	if l.is_bad() or r.is_bad():
 		return StmtBad(x['ti'])
@@ -2333,7 +2365,7 @@ def do_stmt_assign(x):
 
 
 def do_stmt_incdec(x, op):
-	v = do_value(x['value'])
+	v = do_value(x['value'], ctx=None)
 
 	if v.is_bad():
 		return StmtBad(x['ti'])
@@ -2359,7 +2391,7 @@ def do_stmt_incdec(x, op):
 
 
 def do_stmt_value(x):
-	v = do_rvalue(x['value'])
+	v = do_rvalue(x['value'], ctx=None)
 
 	if v.is_bad():
 		return StmtBad(x['ti'])
@@ -2405,7 +2437,7 @@ def do_stmt_asm(x):
 	xargs = x['args']
 	ti = x['ti']
 
-	asm_text = do_rvalue(xargs[0]['value'])
+	asm_text = do_rvalue(xargs[0]['value'], ctx=None)
 
 	outputs = []
 	inputs = []
@@ -2414,8 +2446,8 @@ def do_stmt_asm(x):
 	if len(xargs) > 1:
 		for c in xargs[1]['value']['items']:
 			items = c['value']['items']
-			spec = do_rvalue(items[0]['value'])
-			val = do_value(items[1]['value'])
+			spec = do_rvalue(items[0]['value'], ctx=None)
+			val = do_value(items[1]['value'], ctx=None)
 			value_lvalue_root(val).is_initialized = True
 			pair = (spec, val)
 			outputs.append(pair)
@@ -2423,14 +2455,14 @@ def do_stmt_asm(x):
 	if len(xargs) > 2:
 		for c in xargs[2]['value']['items']:
 			items = c['value']['items']
-			spec = do_rvalue(items[0]['value'])
-			val = do_rvalue(items[1]['value'])
+			spec = do_rvalue(items[0]['value'], ctx=None)
+			val = do_rvalue(items[1]['value'], ctx=None)
 			pair = (spec, val)
 			inputs.append(pair)
 
 	if len(xargs) > 3:
 		for c in xargs[3]['value']['items']:
-			spec = do_rvalue(c['value'])
+			spec = do_rvalue(c['value'], ctx=None)
 			clobbers.append(spec)
 
 	return StmtAsm(asm_text, outputs, inputs, clobbers, ti)
@@ -2508,7 +2540,7 @@ def def_type_common(x, nt):
 	global cmodule
 	global cdef
 
-	ctx = []
+	ctx = None
 
 	if x['type'] == None:
 		error("expected type expr", x['ti'])
@@ -2517,9 +2549,6 @@ def def_type_common(x, nt):
 	# StmtDefType уже создан при декларации типа (decl_type)
 	definition = nt.definition
 	id = definition.id
-
-	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
-		ctx.append('public_context')
 
 	prev_cdef = cdef
 	cdef = definition
@@ -2540,10 +2569,14 @@ def def_type_common(x, nt):
 				else:
 					f.access_level = HLIR_ACCESS_LEVEL_PRIVATE
 
-
 	if ty.is_bad():
 		cdef = prev_cdef
 		return StmtBad(x['ti'])
+
+	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
+		pi = check_public_interface(ty)
+		if pi != None:
+			error_private_in_public("type", definition.id.str, pi)
 
 	definition.original_type = ty
 
@@ -2602,14 +2635,14 @@ def def_type_global(x, annos):
 	return df
 
 
-def process_field_common(x, allow_cons_default=False, ctx=[]):
+def process_field_common(x, allow_cons_default=False, *, ctx):
 	global csymtab
 
 	var_type = None
 	if x['type'] != None:
 		var_type = do_type(x['type'], ctx=ctx)
 
-	init_value = do_rvalue(x['init_value'])
+	init_value = do_rvalue(x['init_value'], ctx=ctx)
 
 	if var_type != None:
 		init_value = value_cons_implicit(var_type, init_value)
@@ -2638,12 +2671,61 @@ def process_field_common(x, allow_cons_default=False, ctx=[]):
 	return var_type, init_value
 
 
+# Ошибка ставится на сам private тип (поле/параметр-виновник), а
+# текст называет публичное определение, которое его раскрывает.
+def error_private_in_public(kind, name, pi):
+	error("public %s `%s` exposes private type `%s`" % (kind, name, pi.to_str()), pi.ti)
+
+
+# Ищет private тип в интерфейсе типа t (тип public сущности).
+# Возвращает первый найденный private тип или None.
+# На именованном типе спуск останавливается: его собственное
+# определение проверяется отдельно, при его объявлении
+# (это же защищает от зацикливания на рекурсивных типах).
+# Private поля записи в интерфейс не входят.
+def check_public_interface(t):
+	if t.definition != None:
+		if t.definition.access_level == HLIR_ACCESS_LEVEL_PRIVATE:
+			return t
+		return None
+
+	if t.is_pointer():
+		return check_public_interface(t.to)
+
+	if t.is_array():
+		return check_public_interface(t.of)
+
+	if t.is_record():
+		for f in t.fields:
+			if f.access_level != HLIR_ACCESS_LEVEL_PRIVATE:
+				pt = check_public_interface(f.type)
+				if pt != None:
+					return pt
+		return None
+
+	if t.is_func():
+		for p in t.params:
+			pt = check_public_interface(p.type)
+			if pt != None:
+				return pt
+		return check_public_interface(t.to)
+
+	if t.is_variant():
+		for v in t.variants:
+			pt = check_public_interface(v)
+			if pt != None:
+				return pt
+		return None
+
+	return None
 
 # common method for global & local consts
 def def_const_common(x, annos):
 	global cmodule
 	global cdef
 	global csymtab
+
+	ctx = None
 
 	id = do_id(x['id'])
 	definition = StmtDefConst(id, const_value=None, init_value=None, ti=x['ti'])
@@ -2654,8 +2736,7 @@ def def_const_common(x, annos):
 	prev_cdef = cdef
 	cdef = definition
 
-	const_type, init_value = process_field_common(x)
-
+	const_type, init_value = process_field_common(x, ctx=ctx)
 	if init_value.is_bad():
 		# осознанно пропускаем ошибку, чтобы не плодить кучу ошибок дальше; это ок
 		pass
@@ -2663,8 +2744,14 @@ def def_const_common(x, annos):
 	if const_type.is_forbidden_const():
 		error("unsuitable type", x['ti'])
 
-	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC and const_type.is_generic():
-		error("public constant must have a non-generic type", x['ti'])
+	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
+		if const_type.is_generic():
+			error("public constant must have a non-generic type", x['ti'])
+		pi = check_public_interface(const_type)
+		if pi != None:
+			error_private_in_public("constant", id.str, pi)
+
+	
 
 	const_type = const_type.copy()
 	const_type.addAttribute('const', {})
@@ -2697,18 +2784,22 @@ def def_var_common(x, annos):
 	definition.access_level = get_access_level(x)
 	definition.nl = x['nl']
 
-	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
-		if settings['public_vars_forbidden']:
-			error("public variables are forbidden", x['ti'])
-
 	prev_cdef = cdef
 	cdef = definition
 
-	var_type, init_value = process_field_common(x, allow_cons_default=True)
+	var_type, init_value = process_field_common(x, allow_cons_default=True, ctx=None)
 
 	if init_value.is_bad():
 		# осознанно пропускаем ошибку, чтобы не плодить кучу ошибок дальше; это ок
 		pass
+
+	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
+		if settings['public_vars_forbidden']:
+			error("public variables are forbidden", x['ti'])
+		else:
+			pi = check_public_interface(var_type)
+			if pi != None:
+				error_private_in_public("variable", id.str, pi)
 
 	if var_type.is_forbidden_var():
 		error("unsuitable type", x['ti'])
@@ -2736,11 +2827,11 @@ def def_var_common(x, annos):
 
 	alignment_anno = pop_anno(annos, 'alignment')
 	if alignment_anno != None:
-		definition.addAttribute("alignment", do_value(alignment_anno['args'][0]['value']))
+		definition.addAttribute("alignment", do_value(alignment_anno['args'][0]['value'], ctx=None))
 
 	section_anno = pop_anno(annos, 'section')
 	if section_anno != None:
-		definition.addAttribute("section", do_value(section_anno['args'][0]['value']))
+		definition.addAttribute("section", do_value(section_anno['args'][0]['value'], ctx=None))
 
 	anno_to_attribute(definition, annos, 'nonstatic')
 
@@ -2830,11 +2921,11 @@ def def_func(x, annos):
 	if fn.type.is_incompleted():
 		xt = x['type']
 		if xt['kind'] == 'func':
-			ft = do_type_func(xt, anno=[])
+			ft = do_type_func(xt, anno=[], ctx=None)
 		else:
 			# experimental: `func name: FuncType { ... }` — signature borrowed
 			# from a named function type instead of spelled out inline
-			ft = do_type(xt)
+			ft = do_type(xt, ctx=None)
 			if not ft.is_bad() and not ft.is_func():
 				error("expected a function type", xt['ti'])
 				ft = TypeBad(xt['ti'])
@@ -2843,30 +2934,23 @@ def def_func(x, annos):
 			cdef = prev_cdef
 			return None
 
+	if cdef.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
+		pi = check_public_interface(fn.type)
+		if pi != None:
+			error_private_in_public("func", df.id.str, pi)
 
 	anno_to_attribute(df, annos, 'noinline')
 	anno_to_attribute(df, annos, 'inlinehint')
 	anno_to_attribute(df, annos, 'inline')
 	
-	# noinline_anno = pop_anno(annos, 'noinline')
-	# if noinline_anno != None:
-	# 	df.addAttribute('noinline')
-	
-	# inlinehint_anno = pop_anno(annos, 'inlinehint')
-	# if inlinehint_anno != None:
-	# 	df.addAttribute('inlinehint')
-
-	# inline_anno = pop_anno(annos, 'inline')
-	# if inline_anno != None:
-	# 	df.addAttribute('inline')
 	
 	alignment_anno = pop_anno(annos, 'alignment')
 	if alignment_anno != None:
-		df.addAttribute("alignment", do_value(alignment_anno['args'][0]['value']))
+		df.addAttribute("alignment", do_value(alignment_anno['args'][0]['value'], ctx=None))
 
 	section_anno = pop_anno(annos, 'section')
 	if section_anno != None:
-		df.addAttribute("section", do_value(section_anno['args'][0]['value']))
+		df.addAttribute("section", do_value(section_anno['args'][0]['value'], ctx=None))
 
 
 	if fn.type.is_bad():
@@ -2978,7 +3062,7 @@ def do_import(x):
 	global modules
 	global cmodule
 
-	import_expr = do_value_immediate_string(x['expr'])
+	import_expr = do_value_immediate_string(x['expr'], ctx=None)
 
 	if import_expr.is_bad():
 		return None
@@ -3115,8 +3199,6 @@ def do_directive_pragma(x) -> StmtDirective | None:
 		cmodule.addAttribute(args[0])
 	elif id == 'unsafe':
 		cmodule.addAttribute('unsafe')
-	elif id == 'public_module':
-		cmodule.addAttribute('public_module')
 	elif id == 'insert':
 		y = StmtDirectiveInsert(args[0], x['ti'])
 	elif id == 'prefix':
@@ -3242,7 +3324,7 @@ def type_update_incompleted(module, t, idStr):
 
 		#v = csymtab.value_get(idStr)
 		print("- UPDATED!")
-		tx = do_type(x['type'])
+		tx = do_type(x['type'], ctx=None)
 		t.update(tx)
 
 		return tx
@@ -3261,23 +3343,19 @@ def value_update_incompleted_type(module, v, idStr):
 			continue
 
 		#v = csymtab.value_get(idStr)
-		t = do_type(x['type'])
+		t = do_type(x['type'], ctx=None)
 		v.type.update(t)
 
 		return v
 
 
 
-def get_access_level(x):
-	global cmodule
+def get_access_level(x, default=HLIR_ACCESS_LEVEL_PRIVATE):
 	if is_local_context():
 		return HLIR_ACCESS_LEVEL_LOCAL
 
 	if x['access_modifier'] == HLIR_ACCESS_LEVEL_UNDEFINED:
-		if cmodule.hasAttribute('public_module'):
-			return HLIR_ACCESS_LEVEL_PUBLIC
-		else:
-			return HLIR_ACCESS_LEVEL_PRIVATE
+		return default
 	return x['access_modifier']
 
 

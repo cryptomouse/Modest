@@ -16,3 +16,4 @@ func main () -> Int {
 	type L = Undefined
 	return afterTheType
 }
+

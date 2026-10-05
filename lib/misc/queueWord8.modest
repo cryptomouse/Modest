@@ -93,4 +93,3 @@ public func clear (q: *QueueWord8) -> Unit {
 	*pdata = []
 }
 
-

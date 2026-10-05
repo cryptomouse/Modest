@@ -1,0 +1,16 @@
+// TEST: reject
+// EXPECT-ERROR: access to private field of record
+// EXPECT-ERROR: return r.x
+// LINK: ./_fixture/rec.modest
+//
+// Guards: a field of a named record without an access modifier is private
+// by default, so another module cannot read it. do_field used to resolve
+// the default to `public` for every record, before def_type_common could
+// tell a named record from an anonymous one.
+
+import "./_fixture/rec"
+
+func f (r: rec.R) -> Int32 {
+	return r.x
+}
+

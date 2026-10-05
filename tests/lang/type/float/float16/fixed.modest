@@ -106,3 +106,4 @@ func main () -> Int {
 	printf("passed: Float16 and fixed\n")
 	return exitSuccess
 }
+

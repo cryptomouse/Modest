@@ -206,3 +206,4 @@ func main () -> Int {
 	printf("passed: mixed record size\n")
 	return exitSuccess
 }
+

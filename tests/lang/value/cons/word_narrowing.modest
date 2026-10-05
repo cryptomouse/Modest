@@ -99,3 +99,4 @@ func main () -> Int {
 	printf("passed: word narrowing\n")
 	return exitSuccess
 }
+

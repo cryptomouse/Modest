@@ -64,4 +64,3 @@ func next (capacity: Nat32, x: Nat32) -> Nat32 {
 	return 0
 }
 
-

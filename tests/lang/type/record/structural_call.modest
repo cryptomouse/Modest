@@ -68,3 +68,4 @@ func main () -> Int {
 	printf("passed: structural call result\n")
 	return exitSuccess
 }
+

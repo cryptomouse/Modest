@@ -178,3 +178,4 @@ func main () -> Int {
 	printf("passed: assign\n")
 	return exitSuccess
 }
+

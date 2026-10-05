@@ -76,3 +76,4 @@ func main () -> Int {
 	printf("passed: structural shared field\n")
 	return exitSuccess
 }
+

@@ -91,4 +91,3 @@ public func puts (str: *ConstCharStr) -> @unused Int
 public func ungetc (char: Int, f: *File) -> Int
 public func perror (str: *ConstCharStr) -> Unit
 
-

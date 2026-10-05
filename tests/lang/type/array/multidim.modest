@@ -250,3 +250,4 @@ func main () -> Int {
 	printf("passed: multi-dimensional arrays\n")
 	return exitSuccess
 }
+

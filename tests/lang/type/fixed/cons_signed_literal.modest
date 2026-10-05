@@ -73,3 +73,4 @@ func main () -> Int {
 	printf("passed: fixed cons from signed literal\n")
 	return exitSuccess
 }
+

@@ -73,3 +73,4 @@ func main () -> Int {
 	printf("passed: structural literal\n")
 	return exitSuccess
 }
+

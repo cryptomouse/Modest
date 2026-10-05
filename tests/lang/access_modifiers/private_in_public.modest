@@ -1,0 +1,66 @@
+// TEST: run
+// EXPECTED-FAIL(c11): BUG#88 header uses a private type it does not declare
+// EXPECT-OUT: passed: private_in_public
+//
+// The counterpart of private_in_public_*_reject.modest: a private type may
+// still be used by a public definition wherever it stays out of the
+// interface —
+//   - in a private field of a public record (by default or explicitly,
+//     also inside an `@public` record), so the record is opaque;
+//   - in the body of a public func;
+//   - anywhere in a private definition;
+// and a public type built from other public types is fine.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+type Hidden = Int32
+
+public type Num = Int32
+public type Num2 = Num                     // public on public
+
+public type Opaque = record {
+	h: Hidden                              // private by default
+	private k: *Hidden
+}
+
+public type Point = @public record {
+	x: Num
+	private tag: Hidden                    // `private` overrides @public
+}
+
+public func opaque_new (v: Num) -> Opaque {
+	var h: Hidden = v                      // private type in the body
+	return {h = h, k = nil}
+}
+
+public func opaque_get (o: *Opaque) -> Num2 {
+	return o.h
+}
+
+func helper (h: Hidden) -> Hidden {        // private: no restriction
+	return h + 1
+}
+
+public func point_tag (p: Point) -> Num {
+	return helper(p.tag)
+}
+
+func main () -> Int {
+	var o = opaque_new(7)
+	if opaque_get(&o) != 7 {
+		printf("opaque_get = %d, expected 7\n", opaque_get(&o))
+		return exitFailure
+	}
+
+	var p: Point = {x = 1, tag = 41}
+	if point_tag(p) != 42 {
+		printf("point_tag = %d, expected 42\n", point_tag(p))
+		return exitFailure
+	}
+
+	printf("passed: private_in_public\n")
+	return exitSuccess
+}
+

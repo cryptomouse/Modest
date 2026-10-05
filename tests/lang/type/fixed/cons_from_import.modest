@@ -67,3 +67,4 @@ func main () -> Int {
 	printf("passed: fixed cons from imported const\n")
 	return exitSuccess
 }
+

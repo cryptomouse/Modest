@@ -386,3 +386,4 @@ func main () -> Int {
 	printf("passed: pointer unary\n")
 	return exitSuccess
 }
+

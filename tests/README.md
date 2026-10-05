@@ -77,6 +77,10 @@ func main () -> Int {
 }
 ```
 
+A test follows the official Modest code style
+([docs/STYLE.md](../docs/STYLE.md)) like any other
+source — including the two empty lines at the end of the file.
+
 The program checks itself and reports through its exit code —
 `exitSuccess` / `exitFailure` from `libc/stdlib`.  `EXPECT-OUT` is for
 confirming that the checks it claims to run really ran: a program that

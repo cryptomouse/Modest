@@ -355,3 +355,4 @@ func main () -> Int {
 	printf("passed: fixed comptime\n")
 	return exitSuccess
 }
+

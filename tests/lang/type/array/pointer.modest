@@ -248,3 +248,4 @@ func main () -> Int {
 	printf("passed: pointer to array\n")
 	return exitSuccess
 }
+

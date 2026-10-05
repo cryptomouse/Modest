@@ -28,4 +28,3 @@ public func assert (cond: Bool, msg: *Str8) -> Unit {
 	}
 }
 
-

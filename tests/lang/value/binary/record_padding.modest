@@ -109,3 +109,4 @@ func main () -> Int {
 	printf("passed: record padding\n")
 	return exitSuccess
 }
+

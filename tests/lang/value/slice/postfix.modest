@@ -128,3 +128,4 @@ func main () -> Int {
 	printf("passed: postfix after slice\n")
 	return exitSuccess
 }
+

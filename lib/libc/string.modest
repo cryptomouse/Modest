@@ -22,6 +22,3 @@ public func strerror (error: Int) -> *[]Char
 
 public func strcspn (str1: *Str8, str2: *Str8) -> SizeT
 
-
-
-

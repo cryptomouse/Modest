@@ -242,3 +242,4 @@ func main () -> Int {
 	printf("passed: bitwise\n")
 	return exitSuccess
 }
+

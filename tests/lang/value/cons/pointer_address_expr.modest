@@ -42,3 +42,4 @@ func main () -> Int {
 	printf("passed: pointer from a word expression\n")
 	return exitSuccess
 }
+

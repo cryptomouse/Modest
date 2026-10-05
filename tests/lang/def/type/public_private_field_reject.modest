@@ -1,0 +1,19 @@
+// TEST: reject
+// EXPECT-ERROR: public type `R` exposes private type `Hidden`
+// EXPECT-ERROR: public c: Hidden
+//
+// Guards: a public field of a private type is rejected in a public record
+// even when it follows private fields (`private a` and `b`, private by
+// default — they are skipped, not a stop). The error is reported once,
+// at the offending field, and names the record.
+
+type Hidden = record {
+	x: Int32
+}
+
+public type R = record {
+	private a: Hidden
+	b: Hidden
+	public c: Hidden
+}
+

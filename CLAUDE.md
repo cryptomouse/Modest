@@ -20,6 +20,7 @@ read docs/CHEATSHEET.md before writing Modest code
 - `docs/agents/claude/hlir-internals.md` — HLIR Type/Value/Stmt classes with fields
 - `docs/lang/` — per-feature language documentation
 - `docs/EBNF.txt` — grammar
+- `docs/STYLE.md` — official code style; follow it in every `.modest` file
 
 ## Build & test
 

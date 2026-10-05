@@ -15,7 +15,6 @@ pragma <#name#> [<#arguments#>]
 | Pragma | Effect |
 | :-- | :-- |
 | `pragma unsafe` | allow `unsafe` constructions in this module |
-| `pragma public_module` | default access of definitions becomes `public` |
 | `pragma prefix "p"` | output-symbol prefix for this module (empty string disables) |
 | `pragma c_include "h.h"` | emit `#include "h.h"` in C output |
 | `pragma do_not_include` | importers do not `#include` this module's header |

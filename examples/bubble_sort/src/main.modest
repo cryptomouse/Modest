@@ -60,4 +60,3 @@ func print_array (array: *[]Int32, len: Nat32) -> Unit {
 	}
 }
 
-

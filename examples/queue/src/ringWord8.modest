@@ -79,5 +79,3 @@ public func get (q: *RingWord8, b: *Word8) -> @unused Bool {
 	return true
 }
 
-
-

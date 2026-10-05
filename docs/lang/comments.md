@@ -35,4 +35,4 @@ func main () -> Int {
 
 ## See also
 
-- [Code style](../CHEATSHEET.md#code-style)
+- [Style guide](../STYLE.md)

@@ -61,3 +61,4 @@ func unclosed () -> Int32 {
 func main () -> Int {
 	return reached
 }
+

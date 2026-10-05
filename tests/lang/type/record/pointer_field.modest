@@ -84,3 +84,4 @@ func main () -> Int {
 	printf("passed: pointer field in an array literal\n")
 	return exitSuccess
 }
+

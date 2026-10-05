@@ -22,4 +22,3 @@ public func sec (s: Nat64) -> Unit {
 	us(s * 1000000)
 }
 
-

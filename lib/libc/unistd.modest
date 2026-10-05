@@ -547,4 +547,3 @@ public func vfork () -> PIDT
 // write, writev, pwrite - write on a file
 public func write (fildes: Int, buf: Ptr, nbyte: SizeT) -> @unused SSizeT
 
-

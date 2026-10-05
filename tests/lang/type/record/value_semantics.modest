@@ -269,3 +269,4 @@ func main () -> Int {
 	printf("passed: record value semantics\n")
 	return exitSuccess
 }
+

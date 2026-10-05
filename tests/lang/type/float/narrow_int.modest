@@ -81,3 +81,4 @@ func main () -> Int {
 	printf("passed: narrow int from float\n")
 	return exitSuccess
 }
+

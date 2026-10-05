@@ -3,19 +3,19 @@ OUTDIR=./out
 INDIR=./src
 
 # output dir prefix
-CMPREFIX=$(OUTDIR)/cm
+MODESTPREFIX=$(OUTDIR)/cm
 CPREFIX=$(OUTDIR)/c
 LLVMPREFIX = $(OUTDIR)/llvm
 C_OPTIONS = -std=c11 -Wall -Wextra -pedantic -Wno-unused-variable -Wno-unused-parameter
 
 LIBPREFIX = ./lib
 
-test: CM LLVM C
+test: Modest LLVM C
 
 
-CM:
-	modest -o $(CMPREFIX)/fsm -mbackend=modest $(INDIR)/fsm.modest
-	modest -o $(CMPREFIX)/main -mbackend=modest $(INDIR)/main.modest
+Modest:
+	modest -o $(MODESTPREFIX)/fsm -mbackend=modest $(INDIR)/fsm.modest
+	modest -o $(MODESTPREFIX)/main -mbackend=modest $(INDIR)/main.modest
 
 
 LLVM:

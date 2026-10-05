@@ -323,3 +323,4 @@ func main () -> Int {
 	printf("passed: field access\n")
 	return exitSuccess
 }
+

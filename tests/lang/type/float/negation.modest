@@ -112,3 +112,4 @@ func main () -> Int {
 	printf("passed: float negation\n")
 	return exitSuccess
 }
+

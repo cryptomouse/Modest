@@ -72,3 +72,4 @@ func main () -> Int {
 	printf("passed: operand classes\n")
 	return exitSuccess
 }
+

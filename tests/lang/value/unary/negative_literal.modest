@@ -88,3 +88,4 @@ func main () -> Int {
 	printf("passed: negative literal\n")
 	return exitSuccess
 }
+

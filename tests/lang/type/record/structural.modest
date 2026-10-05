@@ -189,3 +189,4 @@ func main () -> Int {
 	printf("passed: structural typing\n")
 	return exitSuccess
 }
+

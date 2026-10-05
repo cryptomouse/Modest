@@ -57,4 +57,3 @@ public func run (buf: *[]Word8, len: Nat32) -> Word32 {
 	return crc ^ 0xFFFFFFFF
 }
 
-

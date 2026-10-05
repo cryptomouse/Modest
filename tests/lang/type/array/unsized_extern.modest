@@ -25,3 +25,4 @@ var externTable: []Int32
 func main () -> Int {
 	return 0
 }
+

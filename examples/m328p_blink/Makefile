@@ -36,7 +36,7 @@ C:
 	avr-objcopy -j .text -j .data -O ihex $(BIN)/main.elf $(BIN)/main.hex
 
 
-CM:
+Modest:
 	modest -o out/cm/main -funsafe -mbackend=modest src/main.modest
 	modest -o out/cm/avr -funsafe -mbackend=modest src/avr/avr.modest
 	modest -o out/cm/m328p -funsafe -mbackend=modest src/avr/m328p.modest

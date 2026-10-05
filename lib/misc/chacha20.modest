@@ -128,4 +128,3 @@ public func makeState (key: *Key, counter: Word32, nonce: *[3]Word32) -> State {
 	]
 }
 
-

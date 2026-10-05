@@ -248,3 +248,4 @@ func main () -> Int {
 	printf("passed: sizeof/alignof/lengthof/offsetof\n")
 	return exitSuccess
 }
+

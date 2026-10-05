@@ -1,0 +1,25 @@
+// TEST: reject
+// EXPECT-ERROR: public constant `c1` exposes private type `Hidden`
+// EXPECT-ERROR: public constant `c2` exposes private type `Hidden`
+// EXPECT-ERROR: public variable `v1` exposes private type `Hidden`
+// EXPECT-ERROR: public variable `v2` exposes private type `Hidden`
+// EXPECT-ERROR: public variable `v3` exposes private type `Hidden`
+//
+// A public const or var may not have a private type: an importer sees the
+// value but could not name its type. The private type is found through
+// pointers, arrays and the (public by default) fields of an anonymous
+// record. One error per definition, at the private type.
+//
+// The rule as a whole: docs/lang/access_modifiers.md; the other kinds of
+// definition: private_in_public_{type,func}_reject.modest; what is still
+// allowed: private_in_public.modest.
+
+type Hidden = Int32
+
+public const c1 = Hidden 0
+public const c2: Hidden = 0
+
+public var v1: Hidden
+public var v2: *Hidden
+public var v3: [2]{f: Hidden}
+

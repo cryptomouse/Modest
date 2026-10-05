@@ -67,3 +67,4 @@ func main () -> Int {
 	printf("passed: access through a pointer constant\n")
 	return exitSuccess
 }
+

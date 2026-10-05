@@ -67,4 +67,3 @@ public func strftime (ptr: *Char, maxsize: SizeT, format: *ConstChar, timeptr: *
 public func localtime_s (timer: *TimeT, tmptr: *StructTM) -> *StructTM  // (since C11)
 public func localtime_r (timer: *TimeT, tmptr: *StructTM) -> *StructTM  // (since C23)
 
-

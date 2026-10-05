@@ -13,7 +13,7 @@ include "libc/ctypes64"
 include "libc/stdio"
 include "libc/stdlib"
 
-type Branded = @branded Int32
+public type Branded = @branded Int32
 
 public const answer: Int32 = 42       // public + explicit type: concrete
 public const branded = Branded 7      // public + construction: concrete
@@ -33,3 +33,4 @@ func main () -> Int {
 	printf("passed: public_generic\n")
 	return exitSuccess
 }
+

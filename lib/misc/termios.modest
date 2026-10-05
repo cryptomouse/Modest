@@ -150,4 +150,3 @@ public func tcflush (fd: Int, queue_selector: Int) -> Int
 public func tcsendbreak (fd: Int, duration: Int) -> Int
 //public func tcgetsid (fd: Int) -> PidT
 
-

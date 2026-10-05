@@ -103,4 +103,3 @@ public func max_float64 (a: Float64, b: Float64) -> Float64 {
 	return b
 }
 
-

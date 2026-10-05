@@ -57,4 +57,3 @@ public const nat128MinValue: Nat128 = 0
 @cbyvalue
 public const nat128MaxValue: Nat128 = 340282366920938463463374607431768211455
 
-

@@ -100,11 +100,13 @@ type Name = @branded Type          // branded type (newtype pattern)
 
 > **Access modifiers:** `public` and `private` can be applied to any definition.
 > If omitted, the entity gets the internal **default** access, which resolves by context:
-> - module-level definitions: default → `private` (or `public` if the module has `pragma public_module`)
+> - module-level definitions: default → `private`
 > - named record fields: default → `private`; with the `@public` attribute on the record, default → `public`
 > - anonymous record fields: default → `public`
 >
 > Privacy is enforced only across modules — inside the defining module, `private` fields are freely accessible.
+>
+> **A public definition may not expose a private type** in its interface — the type of a `public const`/`var`, the right-hand side of a `public type`, the params/return of a `public func` — at any depth (pointer, array, func type, variant, non-private record field, anonymous record field). Private fields of a public record and function bodies are not part of the interface.
 
 ### Functions
 ```modest
@@ -596,32 +598,13 @@ type Color = @layout("union") {
 
 ## Code Style
 
-- Between semantically distinct top-level blocks (includes, type definitions, constants) — **one empty line**
-- Between function definitions — **two empty lines**
-- At the end of a file — **two empty lines** as well (the file ends with `}\n\n\n`)
-- Inline comments (to the right of a line of code) are separated from the code by **two spaces**
+The full rules are in the [Style Guide](./STYLE.md); in short:
 
-```modest
-include "libc/ctypes64"
-include "libc/stdio"
-
-type Point = {x: Float64, y: Float64}
-
-const maxSize = 100
-
-
-func init (p: *Point) -> Unit {
-    p.x = 0.0  // set x to origin
-    p.y = 0.0  // set y to origin
-}
-
-
-func distance (a: Point, b: Point) -> Float64 {
-    let dx = a.x - b.x  // x delta
-    let dy = a.y - b.y  // y delta
-    return sqrt(dx*dx + dy*dy)
-}
-```
+- Tabs for indentation; `{` on the same line as its header; `} else {`
+- `func name (params)` in a definition, `name(args)` in a call
+- One empty line between top-level blocks, **two** between function definitions; a function with a body is never written right under the previous definition
+- The file ends with two empty lines (`}\n\n`)
+- Two spaces before an inline `//` comment
 
 
 ## Examples

@@ -151,4 +151,3 @@ public func recv (socket: Int, buf: Ptr, len: SizeT, flags: Int) -> @unused SSiz
 // вообще syscall, разберись
 public func accept (socket: Int, addr: *SockAddr, addrlen: *SocklenT) -> Int
 
-

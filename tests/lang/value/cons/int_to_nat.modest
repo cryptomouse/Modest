@@ -115,3 +115,4 @@ func main () -> Int {
 	printf("passed: int to nat\n")
 	return exitSuccess
 }
+

@@ -1,0 +1,48 @@
+// TEST: reject
+// EXPECT-ERROR: public type `Alias` exposes private type `Hidden`
+// EXPECT-ERROR: public type `Ptr` exposes private type `Hidden`
+// EXPECT-ERROR: public type `Nested` exposes private type `Hidden`
+// EXPECT-ERROR: public type `RecExplicit` exposes private type `Hidden`
+// EXPECT-ERROR: public x: Hidden
+// EXPECT-ERROR: public type `RecAnno` exposes private type `Hidden`
+// EXPECT-ERROR: y: Hidden  // @public
+// EXPECT-ERROR: public type `RecAnon` exposes private type `Hidden`
+// EXPECT-ERROR: z: Hidden  // anonymous
+// EXPECT-ERROR: public type `FnArg` exposes private type `Hidden`
+// EXPECT-ERROR: public type `FnRet` exposes private type `Hidden`
+// EXPECT-ERROR: public type `Var` exposes private type `Hidden`
+//
+// The right-hand side of a public type may not refer to a private type,
+// directly or through any nesting: pointer, array, function type, variant,
+// and every non-private field of a record — explicitly `public`, public by
+// `@public`, or a field of an anonymous record (public by default).
+// One error per definition, pointing at the private type (in a record —
+// at the offending field); the message names the definition.
+//
+// The rule as a whole: docs/lang/access_modifiers.md; what is still
+// allowed: private_in_public.modest.
+//
+// Kept under 10 cases: modest stops after its 10th error.
+
+type Hidden = Int32
+
+public type Alias = Hidden
+public type Ptr = *Hidden
+public type Nested = *[2]*Hidden
+
+public type RecExplicit = record {
+	public x: Hidden
+}
+public type RecAnno = @public record {
+	y: Hidden  // @public
+}
+public type RecAnon = record {
+	public r: {
+		z: Hidden  // anonymous
+	}
+}
+
+public type FnArg = (a: Hidden) -> Unit
+public type FnRet = () -> Hidden
+public type Var = Int32 or Hidden
+

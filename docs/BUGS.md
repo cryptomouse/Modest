@@ -1382,3 +1382,41 @@ var w: Int64 = 0x40000000 * 2  // c11: -2147483648
   source expression next to it as a comment), or give the operands the
   suffix the *result's* width needs.
 - Only the C backend.  No test covers it.
+
+## BUG#88: C backend's header uses a private type it does not declare
+
+```modest
+type Hidden = Int32
+
+public type Opaque = record {
+	h: Hidden            // private field: allowed in a public record
+}
+// c11: prog.h: unknown type name 'Hidden'
+```
+
+- A public record may keep a private type in a private field — the field
+  is not part of the interface (`docs/lang/access_modifiers.md`), and the
+  front end accepts it.  But C needs the complete struct wherever the
+  type is used, so `do_header` (`src/backend/c11.py`) emits it into the
+  header — while `Hidden`, being private (`is_private`), stays in the
+  `.c`, and the header no longer compiles.
+- Fix: emit into the header the private types the struct's private
+  fields need (they stay private in Modest: an importer cannot name them,
+  C does not care), or emit them in dependency order ahead of it.
+- Only the C backend; LLVM has no headers.  Reproducer:
+  `tests/lang/access_modifiers/private_in_public.modest`.
+
+## BUG#89: Explicit construction from the same type crashes on a debug `print`
+
+```modest
+type Hidden = Int32
+func f (v: Int32) -> Hidden {
+	return Hidden v      // AttributeError: 'TypeSimple' object has no attribute 'layout'
+}
+```
+
+- `value_cons_explicit` (`src/value/cons.py`) has a leftover
+  `print("t.layout: ...")` in the "explicit cons from the same type" branch;
+  only records have `layout`, so any non-record type reaching it crashes
+  the compiler instead of getting the `info`.
+- Fix: delete the `print`.  No test covers it.

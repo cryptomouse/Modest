@@ -38,3 +38,4 @@ func main () -> Int {
 	printf("passed: emit next-line\n")
 	return exitSuccess
 }
+

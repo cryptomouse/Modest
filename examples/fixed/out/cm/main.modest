@@ -1,7 +1,3 @@
-import "builtin"
-include "ctypes64"
-include "stdio"
-
 include "libc/ctypes64"
 include "libc/stdio"
 
@@ -44,6 +40,44 @@ func main () -> Int {
 
 	v1 = (v1 + 1) / 2
 
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
+	printf("v1 = %lf\n", Float64 v1)
+	v1 = v1 / 2
 	printf("v1 = %lf\n", Float64 v1)
 
 	return 0

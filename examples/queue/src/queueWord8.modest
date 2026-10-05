@@ -105,4 +105,3 @@ public func clear (q: *QueueWord8) -> Unit {
 	queue.clear(&q.queue)
 }
 
-

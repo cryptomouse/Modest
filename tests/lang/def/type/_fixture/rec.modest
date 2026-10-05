@@ -1,0 +1,8 @@
+// Fixture for default_field_private_import_reject.modest — not a test of its own.
+//
+// A public named record whose field has no access modifier.
+
+public type R = record {
+	x: Int32
+}
+

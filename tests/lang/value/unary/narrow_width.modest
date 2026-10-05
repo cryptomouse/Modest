@@ -156,3 +156,4 @@ func main () -> Int {
 	printf("passed: narrow width\n")
 	return exitSuccess
 }
+
