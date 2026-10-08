@@ -1,0 +1,27 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: c_include via import
+//
+// A C binding (`pragma do_not_include` + `pragma c_include`) has no header
+// of its own, so whoever uses it must emit its `c_include` directly.
+// `include` always did; `import` used to drop it, and the C backend then
+// called `strlen` with no prototype in scope.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+import "libc/string"
+
+
+func main () -> Int {
+	let n = string.strlen("modest")
+	if n != 6 {
+		printf("strlen(\"modest\") = %lu, expected 6\n", UnsignedLong n)
+		printf("failed: c_include via import\n")
+		return exitFailure
+	}
+
+	printf("passed: c_include via import\n")
+	return exitSuccess
+}

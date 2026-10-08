@@ -4,7 +4,7 @@ public const freezingPoint = Celsius 0.0
 public const normalPoint = Celsius +25.0
 
 
-type LocalInt = Int32
+public type LocalInt = Int32
 public type Int = Int32
 public type Y = Int
 public type X = {

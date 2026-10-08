@@ -70,7 +70,7 @@ def value_fixed_can(to, from_type, method, ti):
 	c2 = from_type.is_int()
 	c3 = from_type.is_nat()
 	c4 = from_type.is_fixed()
-	c5 = from_type.is_word() and (method == 'unsafe')
+	c5 = from_type.is_word()
 	c6 = from_type.is_float()
 	return c0 or c1 or c2 or c3 or c4 or c5 or c6
 

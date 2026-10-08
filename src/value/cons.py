@@ -152,7 +152,6 @@ def value_cons_implicit_check(t, v):
 	return nv
 
 
-
 def value_cons_explicit(t, v, ti):
 	assert(isinstance(t, Type))
 	assert(isinstance(v, Value))
@@ -169,7 +168,7 @@ def value_cons_explicit(t, v, ti):
 	if Type.eq(t, from_type):
 		if not t.is_generic():
 			if t.attributes == from_type.attributes:
-				print("t.layout: %s, from_type.layout: %s" % (t.layout, from_type.layout))
+				#print("t.layout: %s, from_type.layout: %s" % (t.layout, from_type.layout))
 				info("explicit cons from the same type", ti)
 				return v
 
@@ -178,8 +177,6 @@ def value_cons_explicit(t, v, ti):
 		return ValueBad(ti=v.ti)
 
 	return value_cons(t, v, 'explicit', ti)
-
-
 
 
 def value_cons_default(v):

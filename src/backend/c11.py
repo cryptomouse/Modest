@@ -2174,6 +2174,34 @@ def include(path, local=True):
 	return (dv,)
 
 
+# C includes needed to use module m (imported or included):
+# its own header, or - for a 'do_not_include' module that has no header -
+# its c_include directives and the includes of the modules it uses
+def include_module(m, hname):
+	if not m.hasAttribute('do_not_include'):
+		if hname == "":
+			return ()
+		return include(hname, local=True)
+
+	xs = []
+	for d in m.defs:
+		if isinstance(d, StmtDirectiveCInclude):
+			xs.extend(include(d.c_name, local=d.is_local))
+	xs.extend(include_imports(m))
+	return xs
+
+
+def include_imports(module):
+	xs = []
+	for inc in module.included_modules:
+		xs.extend(include_module(inc, inc.id + '.h'))
+	for x in module.defs:
+		if x.is_stmt_import() and x.module != None:
+			hname = getattr(x, 'cinclude', os.path.basename(x.impline + '.h'))
+			xs.extend(include_module(x.module, hname))
+	return xs
+
+
 
 def print_directive(x):
 	if isinstance(x, StmtDirectiveInsert):
@@ -2356,21 +2384,8 @@ def do_header(module):
 			if x.is_stmt_directive() and isinstance(x, StmtDirectiveCInclude):
 				xdefs.extend(include(x.c_name, local=x.is_local))
 
-	# add C include directive for included modules
-	for inc in module.included_modules:
-		if not inc.hasAttribute('do_not_include'):
-			xdefs.extend(include(inc.id + '.h', local=True))
-
-	for x in defs:
-		if x.is_stmt_import() and x.module != None and not x.module.hasAttribute('do_not_include'):
-			s = ""
-			if hasattr(x, 'cinclude'):
-				s = x.cinclude
-				#print(">> HAS cinclude %s" % s)
-			else:
-				s = os.path.basename(x.impline + '.h')
-			if s != "":
-				xdefs.extend(include(s, local=True))
+	# add C include directives for included & imported modules
+	xdefs.extend(include_imports(module))
 
 	xdefs.extend(include("stddef.h", local=False))
 	xdefs.extend(include("stdint.h", local=False))
@@ -2453,21 +2468,8 @@ def do_cfile(module):
 		if x.is_stmt_directive() and isinstance(x, StmtDirectiveCInclude):
 			xdefs.extend(include(x.c_name, local=x.is_local))
 
-	# print C include for included modules
-	for inc in module.included_modules:
-		if not inc.hasAttribute('do_not_include'):
-			xdefs.extend(include(inc.id + '.h', local=True))
-
-	for x in defs:
-		if x.is_stmt_import() and x.module != None and not x.module.hasAttribute('do_not_include'):
-			s = ""
-			if hasattr(x, 'cinclude'):
-				s = x.cinclude
-				#print(">> HAS cinclude %s" % s)
-			else:
-				s = os.path.basename(x.impline + '.h')
-			if s != "":
-				xdefs.extend(include(s, local=True))
+	# add C include directives for included & imported modules
+	xdefs.extend(include_imports(module))
 
 	for x in defs:
 		if isinstance(x, StmtDirectiveCInclude):

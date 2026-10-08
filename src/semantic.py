@@ -3188,12 +3188,6 @@ def do_import(x):
 			if v.definition != None and v.definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
 				csymtab.value_add(id_str, v, is_public=False)
 
-		# копируем все c_include из импортированного модуля себе
-		# это костыль, но пока так
-		for d in m.defs:
-			if isinstance(d, StmtDirectiveCInclude):
-				cmodule.defs.append(d)
-
 		cmodule.included_modules.append(m)
 		return StmtImport(impline, name=None, module=None, ti=x['ti'], include=True)
 

@@ -1389,3 +1389,48 @@ func f (v: Int32) -> Hidden {
   only records have `layout`, so any non-record type reaching it crashes
   the compiler instead of getting the `info`.
 - Fix: delete the `print`.  No test covers it.
+
+## BUG#90: C backend drops a construction on the right of an assignment
+
+```modest
+pragma unsafe
+
+var buf: [4]Word32
+var w: Word32
+var n: Nat32
+
+func main () -> Int {
+	let p: Ptr = &buf
+	var i: Int32 = -5
+	let a = unsafe(Word32 p)   // ok: (uint32_t)p
+	w = unsafe(Word32 p)       // c11: w = p;     — the cast is gone
+	n = Nat32 i                // c11: n = i;     — the abs() is gone
+	return 0
+}
+```
+
+- In `do_cstmt_assign` (`src/backend/c11.py`), a non-literal construction
+  into `IntX`/`NatX`/`WordX` whose operand is at most 32 bits wide is
+  stripped, leaving C's implicit conversion to do the job.  The operand's
+  kind is never checked, so the shortcut also fires where the construction
+  is not a plain integer conversion:
+  - **pointer → integer**: the `unsafe(WordX p)` / `unsafe(NatX p)` cast is
+    lost and clang rejects the assignment
+    (`incompatible pointer to integer conversion`).  Whether it fires
+    depends on the target's pointer width: with a 32-bit pointer
+    (`--config` with `pointer_width = 32`, e.g. RV32) `w = unsafe(Word32 &buf)`
+    gives `w = buf;`, on a 64-bit target `*q = unsafe(Word64 &buf)` keeps
+    the cast while `*q = unsafe(Word64 p)` (via a `Ptr` variable) loses it;
+  - **`IntY → NatX`**: the construction applies `abs()`, the stripped
+    assignment does not — `n = Nat32 i` with `i = -5` stores 4294967291
+    instead of 5, with no diagnostic.  The same source in a `let` /
+    `var` initializer is correct (`(uint32_t)abs(i)`).
+- The LLVM backend handles the pointer case in both forms.  It gets
+  `IntY → NatX` wrong in both forms too, but that is BUG#85, not this.
+- Found in RV32-EMU (`sw/display`): `*reg(displayFB) = unsafe(Word32 &fb)`
+  failed to compile.  Workaround: construct through `NatX` first —
+  `Word32 unsafe(Nat32 &fb)` emits `(uint32_t)fb`; for `IntY → NatX`, bind
+  the value with `let` first.
+- Fix: strip only when the conversion is value-preserving in C — the operand
+  is an `IntX`/`NatX`/`WordX` and not `IntY → NatX`; never for a pointer.
+- No test covers it.

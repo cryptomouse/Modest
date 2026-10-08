@@ -4,26 +4,15 @@ pragma unsafe
 include "libc/ctypes64"
 include "libc/stdio"
 
-include "./lib"
+//include "./lib"
 
 
-type Q1_31 = @fraction(31) Fixed32
-
-var globalQ1_31: Q1_31 = 0.999999999
-var globalQ1_31_2: Q1_31 = Q1_31 -0.9999999999999999999999
-
-type Q2_30 = @fraction(30) Fixed32
-
-var globalQ2_30: Q2_30 = Q2_30 1.0
-var globalQ2_30_2: Q2_30 = Q2_30 -2.0
+var a: [4] Int32 = [1, 2, 3, 4]
 
 
 func main () -> Int {
-	printf("freezingPoint = %f\n", Float32 freezingPoint)
-	printf("normalPoint = %f\n", Float32 normalPoint)
-
-	printf("globalQ2_30 = %f\n", Float32 globalQ2_30)
-	printf("globalQ2_30_2 = %f\n", Float32 globalQ2_30_2)
+	let adr = Nat64 unsafe(Word64 &a[0])
+	printf("adr = %llu\n", adr)
 
 	return 0
 }

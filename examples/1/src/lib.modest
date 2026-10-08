@@ -1,11 +1,11 @@
 // 1/lib.modest
 
-type Celsius = Fixed32
+public type Celsius = Fixed32
 
 public const freezingPoint = Celsius 0.0
 public const normalPoint = Celsius +25.0
 
-type LocalInt = Int32
+public type LocalInt = Int32
 
 public var x: LocalInt
 
@@ -19,7 +19,7 @@ public type X = {
 }
 
 
-public func f (p: {x: LocalInt}) -> Unit {
+// public func f (p: {x: LocalInt}) -> Unit {
 
-}
+// }
 

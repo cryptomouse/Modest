@@ -4,5 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include "fixed.h"
-typedef __fixed32 Celsius;
+lib_LocalInt lib_x;
+// public func f (p: {x: LocalInt}) -> Unit {
+// }
 
