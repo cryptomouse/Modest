@@ -1,5 +1,5 @@
 // TEST: reject
-// EXPECT-ERROR: expected type expr
+// EXPECT-ERROR: invalid field definition: expected 'name: Type', got type 'Int32'
 // EXPECT-ERROR: type NoName = (Int32) -> Int
 // EXPECT-ERROR: expected type expr
 // EXPECT-ERROR: type NotAType = (123) -> Int

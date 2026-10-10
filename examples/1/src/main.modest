@@ -9,7 +9,8 @@ include "libc/stdio"
 
 var a: [4] Int32 = [1, 2, 3, 4]
 
-type F = (Int32) -> Int   // a parameter without a name
+type R = {Int32}
+type F = (Int32) -> Unit
 
 func main () -> Int {
 	let adr = Nat64 unsafe(Word64 &a[0])

@@ -317,13 +317,13 @@ class Parser:
 				break
 
 			access_modifier = self.parse_access_modifier()
-			f = self.parse_stmt_field()
+			f = self.parse_stmt_field(in_type=True)
 			for ff in f:
 				ff['access_modifier'] = access_modifier
 
 			line_comm = self.parse_if_comment()
 
-			if f != None:
+			if f:
 				f[0].update({
 					'anno': annotations,
 					'comments': comments,
@@ -413,6 +413,11 @@ class Parser:
 				self.skip_tokens_class(['nl', 'comment-line', 'comment-block'])
 				#print("ok")
 				# is ` ( <#type_expr#> ) ` ?
+				# `(Int32)` — a parameter without a name; still a func type,
+				# parse_stmt_field() reports it
+				if self.is_type_name_as_field():
+					return True
+
 				if self.is_type_expr():
 					return self.match(')')
 
@@ -436,6 +441,10 @@ class Parser:
 					return True
 				self.skip_tokens_class(['nl'])
 				self.match("public") or self.match("private")
+				# `{Int32}` — a field without a name; still a record,
+				# parse_stmt_field() reports it
+				if self.is_type_name_as_field():
+					return True
 				if self.is_identifier():
 					self.skip1()
 					if self.match(":"):
@@ -471,6 +480,11 @@ class Parser:
 	def missing_colon_type_follows(self):
 		return not self.look_nl() and self.is_type_expr()
 
+	# a type name stands where a field / parameter is expected:
+	# `{Int32}`, `{x: Int32, Int32}`, `(Int32) -> Unit`
+	def is_type_name_as_field(self):
+		return self.is_Identifier() and self.nextok() in [',', '}', ')', '\n']
+
 	def is_expr(self):
 		return not self.is_type_expr()
 
@@ -489,8 +503,8 @@ class Parser:
 			if self.is_end():
 				error("expected ')' (unexpected end of file)", self.textInfo())
 				break
-			if self.is_identifier():
-				f = self.parse_stmt_field()
+			if self.is_identifier() or self.is_type_name_as_field():
+				f = self.parse_stmt_field(in_type=True)
 				if isinstance(f, list):
 					fields.extend(f)
 				else:
@@ -2168,10 +2182,17 @@ class Parser:
 		}
 
 
-	def parse_stmt_field(self):
+	def parse_stmt_field(self, in_type=False):
 		ti_start = self.textInfo()
 		ti_mid = ti_start
 		ti_end = ti_start
+
+		# record field / func parameter without a name: `{Int32}`, `(Int32)`
+		if in_type and self.is_type_name_as_field():
+			error("invalid field definition: expected 'name: Type', got type '%s'" % self.ctok(), ti_start)
+			self.skip1()
+			return []
+
 		id = self.parse_identifier()
 
 		ids = [id]
