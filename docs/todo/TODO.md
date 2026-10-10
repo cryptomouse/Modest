@@ -241,3 +241,18 @@ Open points:
   `modest` backend's output from the source file rather than only from
   the settings.
 
+
+## `@deprecated` annotation
+
+Design intent (Alex, 2026-10-09): `@deprecated` on a definition marks it
+as deprecated; every use site gets a warning.
+
+Status: not implemented — the annotation is rejected with
+`annotation 'deprecated' not defined`. The use-site half already exists
+(`semantic.py`: `using a deprecated type` / `using a deprecated value`
+fire on `hasAttribute("deprecated")`), but nothing turns the annotation
+into the attribute: the definition loop in `semantic.py` maps only
+`extern`, `alias`, `used`, `unused` and reports everything else. To do:
+`anno_to_attribute(df, annos, 'deprecated')` there (and for types in
+`def_type_global`), plus a test per definition kind. When done, return
+it to `docs/CHEATSHEET.md`.

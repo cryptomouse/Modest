@@ -19,7 +19,7 @@ pragma <#name#> [<#arguments#>]
 | `pragma c_include "h.h"` | emit `#include "h.h"` in C output |
 | `pragma do_not_include` | importers do not `#include` this module's header |
 | `pragma c_no_print` | omit this module's definitions from C output |
-| `pragma insert <#text#>` | insert text into output verbatim |
+| `pragma insert "<#text#>"` | insert text into output verbatim — currently does nothing (BUG#91) |
 
 ## Examples
 

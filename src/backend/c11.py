@@ -22,6 +22,13 @@ PTR_TO_ARR_AS_PTR_TO_ITEM = True
 RUNTIME_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'rt', 'c')
 FIXED_HEADER = 'fixed.h'
 
+# -fnofp: цель без плавающей точки (ни FPU, ни soft-float). FixedX тогда
+# обходится без double: литералы печатаются свернутым хранилищем, а не
+# макросом FIXEDX(), и из rt/c/fixed.h вырезается все, что требует FP
+def nofp():
+	return 'nofp' in features
+
+
 # какой хелпер какой заголовок притягивает
 runtime_headers = {
 	'use_fixed_point': FIXED_HEADER,
@@ -569,6 +576,8 @@ def do_cvalue_from_fixed(t, x, ctx):
 	from_type = value.type
 
 	if t.is_float():
+		if nofp():
+			error("FixedX -> FloatX requires floating point (-fnofp)", x.ti)
 		# у хелперов пивот всегда float64, FloatX уже поверх результата
 		op = "to_float64"
 		natural_width = 64
@@ -770,6 +779,10 @@ def do_cvalue_cons_record_literal_from_cons_asset(x, ctx):
 #   бэкенде верен и для параметров функции, а они значения рантаймовые
 def fixed_cons_via_macro(value, x):
 	if not x.is_immediate():
+		return False
+
+	# FIXEDX() считает в double
+	if nofp():
 		return False
 
 	if value.type.is_fixed():
@@ -1140,9 +1153,16 @@ def do_cvalue_cons_fixed(x, ctx):
 	if x.is_immediate():
 		# масштаб посчитан на этапе свертки (см. value/fixed.py),
 		# здесь печатаем готовое хранилище
-		return do_cvalue_fixed(type, x, ctx)
+		cv = do_cvalue_fixed(type, x, ctx)
+		# с -fnofp сюда уходит и то, что иначе напечатал бы FIXEDX():
+		# по голому 1638400 в .c не видно, что человек написал 25.0
+		if nofp() and not from_type.is_fixed():
+			cv.mark = str_cvalue(do_cvalue(value))
+		return cv
 
 	if from_type.is_float():
+		if nofp():
+			error("FloatX -> FixedX at runtime requires floating point (-fnofp)", x.ti)
 		# (!) не макрос: операнд может иметь побочный эффект
 		# (`Fixed32 next()`), а FIXED*() вычисляет его дважды
 		args = [do_cvalue(value), CValueInteger(type.fraction)]
@@ -2555,6 +2575,15 @@ def dump(filename, defs):
 # Кладем заголовки рантайма рядом с выхлопом: так собранный .c остается
 # самодостаточным - ни -I, ни MODEST_DIR на этапе сборки C не нужны.
 # Каталогов может быть два, если заголовок модуля уводили в include_dir
+# Блоки рантайма, которым нужна плавающая точка (см. шапку rt/c/fixed.h).
+# Вырезаем текстом, а не оставляем на #ifndef: с -fnofp в собранном
+# заголовке не должно остаться ни одного double вообще
+FP_BLOCK = re.compile(r'^#ifndef MODEST_NOFP\n.*?^#endif /\* MODEST_NOFP \*/\n', re.S | re.M)
+
+def strip_fp_blocks(text):
+	return FP_BLOCK.sub('', text)
+
+
 def copy_runtime_headers(module, dirs):
 	for use in module.helpers:
 		if not use in runtime_headers:
@@ -2568,7 +2597,13 @@ def copy_runtime_headers(module, dirs):
 			dst = os.path.join(d, name)
 			if os.path.abspath(dst) == os.path.abspath(src):
 				continue
-			shutil.copyfile(src, dst)
+			if nofp():
+				with open(src) as f:
+					text = strip_fp_blocks(f.read())
+				with open(dst, 'w') as f:
+					f.write(text)
+			else:
+				shutil.copyfile(src, dst)
 
 
 def run(module, _outname):

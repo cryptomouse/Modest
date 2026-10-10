@@ -19,6 +19,7 @@ modest -o main -mbackend=modest main.modest    # → main.modest (pretty-printed
 | `--metrics-format=yaml\|json` | format of that report (default `yaml`; implies `--metrics`) |
 | `-funsafe` | ignored — [unsafe constructions](./lang/value/cons.md) are enabled by `pragma unsafe` in the module ([BUG#19](./BUGS.md)) |
 | `-fparanoid` | warnings become errors |
+| `-fnofp` | c11: target without floating point. `FixedX` literals are printed as folded storage (`/*1.5*/98304`), the copied `fixed.h` has no FP helpers, and a run-time `FixedX` ↔ `FloatX` conversion is an error |
 | `--config=<file.toml>` | target config, applied over `cfg/default.toml` |
 
 The compiler emits source; producing a binary is the build system's job —

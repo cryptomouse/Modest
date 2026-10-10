@@ -1434,3 +1434,59 @@ func main () -> Int {
 - Fix: strip only when the conversion is value-preserving in C — the operand
   is an `IntX`/`NatX`/`WordX` and not `IntY → NatX`; never for a pointer.
 - No test covers it.
+
+## BUG#91: `pragma insert` is accepted and does nothing
+
+```modest
+pragma insert "/* HELLO */"
+
+func main () -> Int32 {
+	return 0
+}
+```
+
+- `c11` and `llvm` output contain no `/* HELLO */`, and there is no
+  diagnostic.  The pragma becomes a `StmtDirectiveInsert`
+  (`src/semantic.py`, `pragma` handling), but the C backend's call to
+  `print_directive` in the module loop is commented out
+  (`src/backend/c11.py`, `elif x.is_stmt_directive()`), and the LLVM
+  backend has no handling for it at all.
+- The node also stores the whole argument AST, not its text:
+  `StmtDirectiveInsert(args[0], ...)` instead of `args[0]['str']`.  The
+  `modest` backend, the only one that prints it, gives
+  `pragma insert "{'isa': 'ast_value', 'kind': 'string', ...}"` — a
+  round trip through `-mbackend=modest` breaks the source.
+- Documented in `docs/lang/directive.md` as working.
+- No test covers it.
+
+## BUG#92: `@nonstatic` is rejected on a `func`, and the `modest` backend writes it there
+
+```modest
+func main () -> Int32 {
+	return 0
+}
+```
+
+`-mbackend=modest` re-emits this as
+
+```modest
+@nonstatic
+func main () -> Int32 {
+	return 0
+}
+```
+
+and compiling that output fails with `annotation 'nonstatic' not defined`.
+
+- `@nonstatic` is turned into an attribute only for a global `var`
+  (`def_var_common`, `src/semantic.py`).  The definition loop that handles
+  annotations common to all definitions maps only `extern`, `alias`,
+  `used`, `unused` and reports everything else, so on a `func`, `const` or
+  `type` it is an error.
+- The compiler itself sets the attribute on `main` (`def_func2`), and the
+  `modest` backend prints every attribute it finds — so its output for any
+  program with `main` does not compile.
+- Either accept `@nonstatic` on a `func` (the C backend already honours the
+  attribute there) or keep the `modest` backend from printing an attribute
+  the compiler added itself.
+- No test covers it.

@@ -3,9 +3,18 @@
 
 #include <stdint.h>
 
+/* Все, что требует плавающей точки, - под MODEST_NOFP. С -fnofp
+   транслятор вырезает эти блоки при копировании заголовка рядом с
+   выхлопом (см. copy_runtime_headers в src/backend/c11.py), так что
+   в собранном fixed.h не остается плавающей точки вовсе: для целей без FPU
+   и без soft-float. Блок обязан начинаться строкой `#ifndef MODEST_NOFP`
+   и заканчиваться `#endif` с комментарием MODEST_NOFP - по этим
+   строкам он и вырезается; вкладывать такие блоки друг в друга нельзя */
+
 typedef int32_t __fixed32;
 typedef int64_t __fixed64;
 
+#ifndef MODEST_NOFP
 /* Округление к ближайшему, половина - от нуля: то же правило, что и у
    свертки констант, иначе одно и то же выражение давало бы разный
    результат в зависимости от того, известно оно заранее или нет.
@@ -15,6 +24,7 @@ typedef int64_t __fixed64;
    литералы и константы; для рантайма есть __fixedX_from_float64 */
 #define FIXED32(x, f) ((__fixed32)((double)(x) * (double)((int64_t)1 << (f)) + ((x) < 0 ? -0.5 : 0.5)))
 #define FIXED64(x, f) ((__fixed64)((double)(x) * (double)((int64_t)1 << (f)) + ((x) < 0 ? -0.5 : 0.5)))
+#endif /* MODEST_NOFP */
 
 /* (!) масштаб строим в ширине результата: `1 << 32` на int - UB,
    а у Fixed64 fraction по умолчанию как раз 32. И целую часть
@@ -53,6 +63,7 @@ static inline int64_t __fixed_rescale(int64_t a, uint8_t from_fraction, uint8_t 
 	}
 }
 
+#ifndef MODEST_NOFP
 /* аргумент вычисляется один раз (в отличие от макроса) - через это
    проходят рантаймовые значения, в т.ч. вызовы функций */
 __attribute__((used))
@@ -64,6 +75,7 @@ __attribute__((used))
 static inline __fixed64 __fixed64_from_float64(double a, uint8_t fraction) {
 	return FIXED64(a, fraction);
 }
+#endif /* MODEST_NOFP */
 
 /* Обратная сторона __fixedX_from_*: снимаем масштаб.
    (!) 1 сдвигаем как int64_t: @fraction(N) доходит до 31 у Fixed32
@@ -79,8 +91,10 @@ static inline __fixed64 __fixed64_from_float64(double a, uint8_t fraction) {
    поэтому оговорки "только литералы и константы" тут не нужно */
 #define __FIXED32_TO_INT32(x, f) ((int32_t)((x) / ((int64_t)1 << (f))))
 #define __FIXED64_TO_INT64(x, f) ((int64_t)((x) / ((int64_t)1 << (f))))
+#ifndef MODEST_NOFP
 #define __FIXED32_TO_FLOAT64(x, f) ((double)(x) / (double)((int64_t)1 << (f)))
 #define __FIXED64_TO_FLOAT64(x, f) ((double)(x) / (double)((int64_t)1 << (f)))
+#endif /* MODEST_NOFP */
 
 __attribute__((used))
 static inline int32_t __fixed32_to_int32(__fixed32 a, uint8_t fraction) {
@@ -92,6 +106,7 @@ static inline int64_t __fixed64_to_int64(__fixed64 a, uint8_t fraction) {
 	return a / ((int64_t)1 << fraction);
 }
 
+#ifndef MODEST_NOFP
 __attribute__((used))
 static inline double __fixed32_to_float64(__fixed32 a, uint8_t fraction) {
 	return (double)a / (double)((int64_t)1 << fraction);
@@ -101,6 +116,7 @@ __attribute__((used))
 static inline double __fixed64_to_float64(__fixed64 a, uint8_t fraction) {
 	return (double)a / (double)((int64_t)1 << fraction);
 }
+#endif /* MODEST_NOFP */
 
 /* у mul масштаб возводится в квадрат, у div - сокращается;
    половину младшего разряда добавляем ДО деления, чтобы округление

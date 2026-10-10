@@ -122,7 +122,7 @@ expr_4  ::= expr_5 (('+' | '-' | '&' | '|' | '^' | '<<' | '>>') expr_5)*
 
 expr_5  ::= expr_6 (('*' | '/' | '%') expr_6)*         (* multiplicative *)
 expr_6  ::= type_expr expr_6 | expr_7                  (* type construction (not a cast!) *)
-expr_7  ::= prefix_op* expr_8                          (* prefix / unary *)
+expr_7  ::= prefix_op expr_6 | expr_8                  (* prefix / unary; the operand may itself be a construction or another prefix *)
 expr_8  ::= expr_term postfix*                         (* postfix *)
 
 

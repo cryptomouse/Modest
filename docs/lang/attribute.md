@@ -32,8 +32,7 @@ Annotations are written before a definition, or inside a type expression
 | `@alias("name")` | output symbol name (C and LLVM) |
 | `@alias("c"\|"llvm", "name")` | per-backend output name |
 | `@cbyvalue` | on a `const`: print its literal value at each use site instead of the identifier (C backend only) |
-| `@nonstatic` | suppress `static` in C output |
-| `@no_print`, `@c_no_print`, `@ll_no_print` | omit the definition from output (both / C / LLVM) |
+| `@nonstatic` | on a global `var`: suppress `static` in C output (rejected on a `func` — BUG#92) |
 
 > `@extern` describes a symbol defined outside the module, so it belongs to a
 > global definition only — on a local `var` it is an error
@@ -45,7 +44,6 @@ Annotations are written before a definition, or inside a type expression
 | :-- | :-- |
 | `@used` | keep symbol even if unreferenced |
 | `@unused` | suppress unused warnings (also on return types: `-> @unused Int`) |
-| `@deprecated` | warn at use sites |
 
 ### Mutability
 
@@ -60,18 +58,28 @@ Annotations are written before a definition, or inside a type expression
 | `@layout("packed"\|"union"\|"exact")` | record layout |
 | `@alignment(N)` | alignment in bytes |
 | `@volatile` | volatile qualifier |
-| `@const` | const qualifier |
 | `@restrict` | restrict qualifier |
 | `@section("name")` | linker section |
 | `@branded` | nominal type (see [branded](./type/branded.md)) |
-| `@zarray` | zero-terminated array (see `docs/TODO.md`) |
-| `@fraction(N)` | binary point for `FixedX`: N fractional bits (applied by the fold and at run time alike; remaining limitations in BUG#25) |
+| `@fraction(N)` | in a type, before `FixedX` (`x: @fraction(16) Fixed32`): N fractional bits, the binary point (applied by the fold and at run time alike; remaining limitations in BUG#25) |
 
 ### Access
 
 | | |
 | :-- | :-- |
 | `@public` | on a record type: default-access fields become public |
+
+### Not implemented
+
+These names appear in the compiler's internals or in older docs, but the
+compiler rejects them in source with `annotation '...' not defined`:
+
+| | |
+| :-- | :-- |
+| `@deprecated` | planned: warn at use sites (see `docs/todo/TODO.md`) |
+| `@const` | const qualifier |
+| `@zarray` | zero-terminated array (see `docs/todo/TODO.md`) |
+| `@no_print`, `@c_no_print`, `@ll_no_print` | omit the definition from output; for a whole module there is `pragma c_no_print` |
 
 ## Examples
 

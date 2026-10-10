@@ -1,0 +1,29 @@
+// TEST: reject
+// BACKENDS: c11
+// FLAGS: -fnofp
+// EXPECT-ERROR: FloatX -> FixedX at runtime requires floating point (-fnofp)
+// EXPECT-ERROR: FixedX -> FloatX requires floating point (-fnofp)
+//
+// With -fnofp the fixed.h next to the output has no floating-point helpers,
+// so a FixedX <-> FloatX conversion that has to happen at run time cannot be
+// built.  modest refuses it itself, by name, instead of leaving the C
+// compiler to complain about an undeclared __fixedX_from_float64.
+
+include "libc/ctypes64"
+include "libc/stdlib"
+
+
+func toFixed (x: Float64) -> Fixed32 {
+	return Fixed32 x
+}
+
+
+func toFloat (x: Fixed32) -> Float64 {
+	return Float64 x
+}
+
+
+func main () -> Int {
+	return exitSuccess
+}
+

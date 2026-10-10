@@ -1,0 +1,127 @@
+// TEST: run
+// BACKENDS: c11
+// FLAGS: -fnofp
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: fixed nofp literals
+// EXPECT-OUT: passed: fixed nofp runtime
+// EXPECT-OUT: passed: fixed nofp
+//
+// FixedX on a target without floating point (-fnofp): no FPU, no soft-float.
+//
+// The C backend then never reaches for double.  Literals and constants are
+// printed as the folded storage rather than through the FIXEDX() macro (which
+// computes in double), and the fixed.h copied next to the output has every
+// floating-point helper cut out.  What is left — integer conversions, rescale,
+// and the scale correction of `*` and `/` — must still work.
+//
+// Nothing here touches FloatX: with -fnofp a FixedX <-> FloatX conversion is
+// refused (nofp_float.modest).  Values are checked against their raw storage
+// through `unsafe WordX`, as comptime.modest does.
+
+pragma unsafe
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+// 16.16: one whole unit is 0x10000
+const half: Fixed32 = 0.5
+const three: Fixed32 = 3.0
+
+
+func check (name: *ConstCharStr, got: Word32, expected: Word32) -> Bool {
+	if got == expected {
+		return true
+	}
+	printf("%s = 0x%08x, expected 0x%08x\n", name, got, expected)
+	return false
+}
+
+
+func check64 (name: *ConstCharStr, got: Word64, expected: Word64) -> Bool {
+	if got == expected {
+		return true
+	}
+	printf("%s = 0x%016llx, expected 0x%016llx\n", name, got, expected)
+	return false
+}
+
+
+// Everything the macro used to print: constants, literal initializers,
+// a signed literal, an integer literal and a non-default @fraction.
+func testLiterals () -> Bool {
+	var ok = true
+
+	ok = check("half", unsafe(Word32 half), 0x00008000) and ok
+	ok = check("three", unsafe(Word32 three), 0x00030000) and ok
+
+	var a: Fixed32 = 1.5
+	ok = check("1.5", unsafe(Word32 a), 0x00018000) and ok
+
+	var neg: Fixed32 = -2.25
+	ok = check("-2.25", unsafe(Word32 neg), 0xFFFDC000) and ok
+
+	var whole: Fixed32 = 7
+	ok = check("7", unsafe(Word32 whole), 0x00070000) and ok
+
+	var f12: @fraction(12) Fixed32 = 1.5
+	ok = check("@fraction(12) 1.5", unsafe(Word32 f12), 0x00001800) and ok
+
+	var w: Fixed64 = 100.5
+	ok = check64("Fixed64 100.5", unsafe(Word64 w), 0x0000006480000000) and ok
+
+	if not ok {
+		return false
+	}
+
+	printf("passed: fixed nofp literals\n")
+	return true
+}
+
+
+// Parameters keep every operation at run time: none of it can be folded.
+func testRuntime (a: Fixed32, b: Fixed32, i: Int32, w: Fixed64) -> Bool {
+	var ok = true
+
+	ok = check("a * b", unsafe(Word32 (a * b)), 0x00030000) and ok
+	ok = check("a / b", unsafe(Word32 (a / b)), 0x0000C000) and ok
+	ok = check("a * half", unsafe(Word32 (a * half)), 0x0000C000) and ok
+
+	var fromInt: Fixed32 = Fixed32 i
+	ok = check("Fixed32 i", unsafe(Word32 fromInt), 0x00070000) and ok
+
+	var neg: Fixed32 = -a
+	ok = check("Int32 -a", unsafe(Word32 (Int32 neg)), 0xFFFFFFFF) and ok
+
+	var wide: Fixed64 = Fixed64 a
+	ok = check64("Fixed64 a", unsafe(Word64 wide), 0x0000000180000000) and ok
+
+	var coarse: @fraction(12) Fixed32 = @fraction(12) Fixed32 a
+	ok = check("@fraction(12) a", unsafe(Word32 coarse), 0x00001800) and ok
+
+	ok = check64("w * w", unsafe(Word64 (w * w)), 0x0000000240000000) and ok
+
+	if not ok {
+		return false
+	}
+
+	printf("passed: fixed nofp runtime\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testLiterals() and result
+	result = testRuntime(1.5, 2.0, 7, 1.5) and result
+
+	if not result {
+		printf("failed: fixed nofp\n")
+		return exitFailure
+	}
+
+	printf("passed: fixed nofp\n")
+	return exitSuccess
+}
+
