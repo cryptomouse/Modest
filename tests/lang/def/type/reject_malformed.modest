@@ -1,0 +1,19 @@
+// TEST: reject
+// EXPECT-ERROR: expected type expr
+// EXPECT-ERROR: type NoName = (Int32) -> Int
+// EXPECT-ERROR: expected type expr
+// EXPECT-ERROR: type NotAType = (123) -> Int
+// EXPECT-ERROR: expected type expr
+// EXPECT-ERROR: type FuncForm = func: (x: Int32) -> Int
+//
+// A type definition whose type does not parse is reported and skipped,
+// like any other bad definition — it used to crash the compiler right
+// after the diagnostics. A function type names its parameters
+// (`(x: Int32) -> Int`), and the `func:` form belongs on a function
+// definition, not on a type.
+//
+// Guards BUG#33 (fixed 2026-10-10).
+
+type NoName = (Int32) -> Int
+type NotAType = (123) -> Int
+type FuncForm = func: (x: Int32) -> Int

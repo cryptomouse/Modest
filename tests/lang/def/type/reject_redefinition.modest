@@ -1,0 +1,11 @@
+// TEST: reject
+// EXPECT-ERROR: type redefinition
+// EXPECT-ERROR: type Twice = Int32
+//
+// A second definition of the same type name is reported and skipped — it
+// used to crash the compiler right after the diagnostic.
+//
+// Guards BUG#33 (fixed 2026-10-10).
+
+type Twice = Int32
+type Twice = Int32

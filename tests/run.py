@@ -276,7 +276,10 @@ def do_reject(t, backend, sources, workdir, result):
 			continue  # this one was fine; a later source may be the bad one
 
 		# The point of a negative test is *which* diagnostic came out, not
-		# merely that something did - a crash also exits non-zero.
+		# merely that something did - a crash also exits non-zero.  And a
+		# crash after the right diagnostics is still a crash.
+		if 'Traceback (most recent call last)' in out:
+			return result(FAIL, 'modest crashed', last_output(out), out)
 		rest = out
 		for n, want in enumerate(t.expect_error):
 			i = rest.find(want)

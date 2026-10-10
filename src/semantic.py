@@ -2552,7 +2552,7 @@ def def_type_common(x, nt):
 
 	if x['type'] == None:
 		error("expected type expr", x['ti'])
-		return None
+		return StmtBad(x['ti'])
 
 	# StmtDefType уже создан при декларации типа (def_type1)
 	definition = nt.definition
@@ -2638,7 +2638,7 @@ def def_type_global(x, annos):
 	nt = csymtab.type_get(x['id']['str'])
 	if not nt.is_incompleted():
 		error("type redefinition", x['ti'])
-		return None
+		return StmtBad(x['ti'])
 	df = def_type_common(x, nt)
 	return df
 
@@ -2975,7 +2975,7 @@ def def_func2(x, annos):
 		fn.change_type(ft)
 		if fn.type.is_incompleted():
 			cdef = prev_cdef
-			return None
+			return StmtBad(x['ti'])
 
 	if cdef.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
 		# позиция для возвращаемого типа (параметры несут свою)

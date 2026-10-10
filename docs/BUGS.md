@@ -277,39 +277,6 @@ var f: Word8 = 0xF0
 - Coverage: `tests/lang/value/binary/narrow_width.modest`, marked
   `EXPECTED-FAIL(c11)`.
 
-## BUG#33: A malformed type crashes the compiler after reporting the error
-
-```modest
-type F = (Int32) -> Int   // a parameter without a name
-```
-
-Three correct diagnostics are printed — `expected type expr`,
-`unexpected token '('`, `expected type expr` — and then the compiler dies
-with a Python traceback instead of exiting:
-
-```
-File "src/semantic.py", line 3088, in def_phase2
-    assert(df != None)
-AssertionError
-```
-
-- Cause: `def_phase2` (`src/semantic.py:3088`) asserts that every
-  definition was built, and `def_type_global` returns `None` for one whose
-  type failed to parse. The `if df.is_stmt_bad(): continue` on the next
-  line is the path this case should be taking.
-- Any malformed type definition does it: `type F = (123) -> Int`,
-  `type F = func: (x: Int32) -> Int` (the `func:` form belongs on a
-  function definition, not on a type).
-- A second crash site has the same root. `_parse_type_atom` returns `None`
-  after `expected type expr`, and its callers subscript that without a
-  check: `var p: *123` dies with `TypeError: 'NoneType' object is not
-  subscriptable` at `parse_stmt_field` (`src/parser.py:2091`). The array
-  and pointer branches of `_parse_type_atom` itself (`of['ti']`,
-  `to['ti']`) would do the same if the lookahead in `is_type_expr` ever
-  disagreed with the parse that follows it.
-- Expected: stop at the error that was already reported, the way every
-  other bad definition does.
-
 ## BUG#35: Backends disagree about `!=` on a NaN
 
 ```modest
