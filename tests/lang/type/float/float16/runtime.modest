@@ -218,10 +218,8 @@ func testFromInteger () -> Bool {
 }
 
 
-// The other direction truncates toward zero, as it does from any float.
-// Float16 is also the one width where an `Int32` target works: the check
-// that refuses `Int32 <- Float64` (BUG#37) compares the two widths,
-// and here the float is the narrower of the two.
+// The other direction truncates toward zero, as it does from any float,
+// at any target width (BUG#37).
 func testToInteger () -> Bool {
 	var f: Float16 = 2.75
 	var g: Float16 = -2.75

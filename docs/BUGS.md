@@ -300,46 +300,6 @@ if nan != nan { printf("NaN\n") }    // c11: prints    llvm: does not
 - Coverage: `tests/lang/type/float/nan.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#37: `IntX` from a wider `FloatY` is rejected as an integer overflow
-
-```modest
-var f: Float64 = 2.75
-var i: Int32 = Int32 f        // error: integer overflow
-                              // info: attempt to construct `Int32` from `Float64`
-```
-
-- `docs/lang/value/cons.md` puts no width condition on a float source:
-  `IntY` needs `Y≤X` to be implicit and `unsafe` above it, but `FloatY`
-  is explicit at any width, and `NatX` reads the same way. `Int64 ←
-  Float64` and `Int32 ← Float32` work; everything narrower does not.
-- Cause: `value_int_cons` (`src/value/int.py:56`) takes `from_width =
-  v.type.width` and rejects `from_width > to_width` for any source. For an
-  integer source that is the documented rule; for a float it compares two
-  unrelated things — a `Float64` holding `3.0` fits an `Int8`, one holding
-  a googol fits nothing — so the width of the float says nothing about
-  whether the value fits. `value_nat_cons` (`src/value/nat.py`) has the
-  same shape.
-- The line just above it is meant to handle exactly this case —
-  `if v.is_immediate() and v.type.is_float(): from_width =
-  nbits_for_num(int(v.value))`, i.e. ask the *value*, not the type — but
-  it only runs for a folded float, and it crashes when it does:
-
-  ```modest
-  const c: Float64 = 2.75
-  var i: Int64 = Int64 c      // AttributeError: 'ValueConst' object has no attribute 'value'
-  ```
-
-  The attribute is `asset`, not `value`; `value_int_cons` uses `v.asset`
-  correctly four lines further down. So the fold path has never run.
-- Expected: for a float source, check the value where there is one and
-  otherwise let it through — the conversion truncates at run time, which
-  is what the table promises. Whether an out-of-range float should be an
-  error, a trap or undefined is a language question worth settling at the
-  same time; C leaves it undefined.
-- Coverage: `tests/lang/type/float/narrow_int.modest`, marked
-  `EXPECTED-FAIL`. The working half of the table is
-  `tests/lang/type/float/cons.modest`, which passes.
-
 ## BUG#40: LLVM backend builds the `FixedX` scale in the source float's width
 
 ```modest
@@ -1485,3 +1445,30 @@ because of a bug in lookahead, and the message does not say what is wrong.
 - `tests/lang/def/type/reject_malformed.modest` and
   `reject_no_cascade.modest` currently match the generic
   `expected type expr` for this case — update them with the fix.
+
+## BUG#94: `NatX` of a negative `FloatY` applies `abs()` only when folded
+
+```modest
+const c: Float64 = -2.75
+var f: Float64 = -2.75
+let a = Nat8 c                // front end: 2    c11: 0    llvm: 2
+let b = Nat8 f                // c11: 0    llvm: 0
+```
+
+- `IntY -> NatX` applies `abs()`, and `FixedY -> NatX` truncates and then
+  applies it (`docs/lang/value/cons.md`). The front end folds a constant
+  `FloatY` the same way: `value_nat_cons` (`src/value/nat.py`) takes
+  `abs()` of the truncated value for every source.
+- Neither backend does that at run time. The C backend prints the
+  conversion as it is — `(uint8_t)f`, and `(uint8_t)NEG_HALF` for a
+  `const`, since it prints the expression rather than the folded value —
+  and LLVM emits `fptoui`. A negative float converted to an unsigned type
+  is UB in C (6.3.1.4p1) and `poison` in LLVM; both give 0 in practice.
+- So the same `Nat8 c` is 2 under LLVM and 0 under C11.
+- Expected: `abs()` of the truncated value, as for the other signed
+  sources — i.e. `fptosi` at the width of the source, then the same path
+  as `IntY -> NatX`. If the language instead decides that a negative float
+  does not fit `NatX` (QUESTION#6, UB#3), the fold has to stop applying
+  `abs()` and `cons.md` has to say so.
+- Coverage: `tests/lang/type/float/nat_negative.modest`, marked
+  `EXPECTED-FAIL`.

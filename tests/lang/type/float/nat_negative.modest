@@ -1,0 +1,48 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: nat from a negative float
+// EXPECTED-FAIL(c11, llvm): BUG#94 NatX of a negative FloatY: abs() only when folded
+//
+// `NatX` of a signed source is its magnitude: `IntY -> NatX` applies
+// abs(), `FixedY -> NatX` truncates and then applies abs().  A constant
+// `FloatY` is folded the same way by the front end, so `Nat8 c` with
+// `c = -2.75` is 2 — but only under LLVM, which prints the folded value.
+// The C backend prints the conversion itself, `(uint8_t)NEG_HALF`, and a
+// run-time value goes to `(uint8_t)f` / `fptoui` on both backends: a
+// negative float converted to an unsigned type, UB in C and `poison` in
+// LLVM.  Both give 0 in practice.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const negHalf: Float64 = -2.75
+
+
+func main () -> Int {
+	var f: Float64 = -2.75
+	var g: Float32 = -100.5
+
+	if Nat8 f != 2 {
+		printf("Nat8 Float64 -2.75 = %u, expected 2\n", Nat32 Nat8 f)
+		printf("failed: nat from a negative float\n")
+		return exitFailure
+	}
+
+	if Nat32 g != 100 {
+		printf("Nat32 Float32 -100.5 = %u, expected 100\n", Nat32 g)
+		printf("failed: nat from a negative float\n")
+		return exitFailure
+	}
+
+	if Nat8 negHalf != 2 {
+		printf("Nat8 const -2.75 = %u, expected 2\n", Nat32 Nat8 negHalf)
+		printf("failed: nat from a negative float\n")
+		return exitFailure
+	}
+
+	printf("passed: nat from a negative float\n")
+	return exitSuccess
+}

@@ -95,3 +95,39 @@ p[7] = 0            // `*[]T` has no length to check against
 - Could be caught by: a run-time bounds check under an opt-in flag, the
   same one as for UB#1.
 - See: [`lang/value/_index.md`](lang/value/_index.md)
+
+## UB#3: A numeric construction whose value does not fit the target, known only at run time
+
+```modest
+var f: Float64 = 10000000000.0
+var x: Fixed64 = 1000000.0
+var i: Int64 = 1000000
+let a = Int8 f          // out of range of Int8
+let b = Int32 (f * f)   // likewise
+let c = Int16 x         // the integer part does not fit
+let d = Fixed32 i       // 16.16 holds at most 32767
+```
+
+- Covers `FloatY → IntX/NatX`, `FixedY → IntX/NatX`, `IntY/NatY → FixedX`
+  and `FloatY → FixedX`, including a NaN or an infinity as the source.
+  `FloatY → FloatX` is not here: it gives an IEEE 754 infinity.
+- Why undefined: the width of the source says nothing about whether its
+  value fits, so these constructions are explicit at any width, and only
+  the run-time value can be wrong. Defining the result (saturation, a
+  trap) is an open question — QUESTION#6 in
+  [`lang/QUESTIONS.md`](lang/QUESTIONS.md); until it is answered, the case
+  is left undefined.
+- When the source is a constant the compiler does check it: `Int8 200.0`
+  and `Int8 (Fixed32 300)` are `integer overflow`, `Fixed32 40000` is
+  `fixed point overflow`.
+- C11: `(int8_t)f` — UB (C11 6.3.1.4p1). A Fixed source is divided by its
+  scale in its own width, then converted down — wraps in practice. A
+  `FixedX` from a wider integer goes through `__fixedX_from_intX`, which
+  truncates the argument and then overflows a signed multiply — UB.
+- LLVM: `fptosi` / `fptoui` — `poison` out of range. The Fixed paths
+  `trunc` and `mul` without `nsw` — a wrap.
+- Avoid: compare the source against the range of the target before
+  constructing.
+- Could be caught by: saturating or trapping conversions, if QUESTION#6
+  is answered that way.
+- See: [`lang/value/cons.md`](lang/value/cons.md)

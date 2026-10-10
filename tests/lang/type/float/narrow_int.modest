@@ -3,28 +3,20 @@
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: float to a narrower integer
 // EXPECT-OUT: passed: narrow int from float
-// EXPECTED-FAIL: BUG#37 IntX <- FloatY rejected when the float is wider
 //
 // `IntX <- FloatY` and `NatX <- FloatY` where the float is the wider of the
 // two — `Int32` from a `Float64`, the shape most rounding code is written
 // in.
 //
 // The construction table in `docs/lang/value/cons.md` puts no width
-// condition on the float source: `IntY` needs `Y<=X` to be implicit and is
-// unsafe above it, but `FloatY` is explicit at any width, and rightly so —
-// a width comparison between the two says nothing, since a Float64 holding
-// 3.0 fits an Int8 while one holding 1e300 fits nothing.
+// condition on the float source, and rightly so — a width comparison
+// between the two says nothing, since a Float64 holding 3.0 fits an Int8
+// while one holding 1e300 fits nothing.  The compiler used to compare them
+// anyway and reject every line below as `integer overflow`.  The working
+// half of the same table — `Int64 <- Float64`, `Int32 <- Float32` — is in
+// cons.modest.
 //
-// `value_int_cons` (`src/value/int.py`) compares them anyway, so every line
-// below is rejected with `integer overflow` before a backend sees it.  The
-// working half of the same table — `Int64 <- Float64`, `Int32 <- Float32`,
-// and the truncation-toward-zero they perform — is in cons.modest, which
-// passes.
-//
-// A compile-time float source is worse than rejected: `Int64 (Float64 2.75)`
-// reads `v.value` on a `ValueConst` and takes the compiler down with an
-// AttributeError.  It is not written out here, because a crash would stop
-// the file before the diagnostics below are reported.
+// Guards BUG#37 (fixed 2026-10-10).
 
 include "libc/ctypes64"
 include "libc/stdio"

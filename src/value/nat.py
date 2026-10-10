@@ -2,7 +2,7 @@
 from hlir import *
 from error import info, warning, error
 from bits import nbits_for_num
-from .int import fixed_to_int
+from .int import is_fractional, frac_to_int
 
 
 
@@ -50,12 +50,15 @@ def value_nat_cons(t, v, method, ti):
 	from_width = v.type.width
 	to_width = t.width
 
-	if v.is_immediate() and v.type.is_float():
-		from_width = nbits_for_num(int(v.value))
-
 	# ширина записи hex-литерала держит только неявную конструкцию
 	if method == 'explicit' and v.is_immediate() and v.type.is_integer():
 		from_width = nbits_for_num(v.asset)
+
+	if is_fractional(v.type):
+		# как в value_int_cons: значение, а не ширина; abs() - как ниже
+		from_width = 0
+		if v.is_immediate():
+			from_width = nbits_for_num(abs(frac_to_int(v)))
 
 	if method != 'unsafe':
 		if from_width > to_width:
@@ -71,7 +74,7 @@ def value_nat_cons(t, v, method, ti):
 	if v.is_immediate():
 		# FixedX: сперва снимаем масштаб (дробь - к нулю), потом abs(),
 		# как у знакового IntY -> NatX
-		a = abs(fixed_to_int(v) if v.type.is_fixed() else int(v.asset))
+		a = abs(frac_to_int(v))
 		nv.set_asset(a)
 		nv.stage = HLIR_VALUE_STAGE_COMPILETIME
 		return nv

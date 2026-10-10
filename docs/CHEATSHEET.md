@@ -496,8 +496,8 @@ Unit value                         // discard a value (suppress warnings)
 
 | Target | Safe sources | Unsafe sources | Comment |
 |---|---|---|---|
-| `IntX` | `Integer`, `IntY`(Y≤X), `NatY`(Y≤X), `WordY`(Y≤X), `FloatY`, `FixedY`(Y≤X), `Rational` | `IntY`(Y>X), `NatY`(Y>X), `WordY`(Y>X), `FixedY`(Y>X), `*T` | `FloatY→IntX` and `FixedY→IntX` truncate the fraction toward zero; compile-time overflow = error; `*T` only if pointer width ≤ X |
-| `NatX` | `Integer`, `NatY`(Y≤X), `WordY`(Y≤X), `IntY`(Y≤X), `FloatY`, `FixedY`(Y≤X), `Rational` | `NatY`(Y>X), `WordY`(Y>X), `IntY`(Y>X), `FixedY`(Y>X), `*T` | `IntY→NatX` applies `abs()`; `FloatY→NatX` truncates fraction; `FixedY→NatX` truncates toward zero, then `abs()` |
+| `IntX` | `Integer`, `IntY`(Y≤X), `NatY`(Y≤X), `WordY`(Y≤X), `FloatY`, `FixedY`, `Rational` | `IntY`(Y>X), `NatY`(Y>X), `WordY`(Y>X), `*T` | `FloatY→IntX` and `FixedY→IntX` truncate the fraction toward zero, at any width; compile-time overflow = error, run-time = UB#3; `*T` only if pointer width ≤ X |
+| `NatX` | `Integer`, `NatY`(Y≤X), `WordY`(Y≤X), `IntY`(Y≤X), `FloatY`, `FixedY`, `Rational` | `NatY`(Y>X), `WordY`(Y>X), `IntY`(Y>X), `*T` | `IntY→NatX` applies `abs()`; `FloatY→NatX` truncates fraction; `FixedY→NatX` truncates toward zero, then `abs()` |
 | `WordX` | `Integer`, `WordY`(any Y), `IntY`(Y≤X), `NatY`(Y≤X), `CharY`(Y≤X), `FloatY`(Y≤X), `FixedY`(Y≤X), `Bool` | `IntY`(Y>X), `NatY`(Y>X), `FloatY`(Y>X), `FixedY`(Y>X), `*T` | `WordY`(Y>X) truncates to the low X bits; signed→Word zero-extends (not sign-extends); `FloatY→WordX` reinterprets bits; `FixedY→WordX` gives the raw scaled storage |
 | `FloatX` | `Integer`, `Rational`, `IntY`, `NatY`, `FloatY`, `FixedY` | `WordY` | `WordY→FloatX` reinterprets bits; `FixedY→FloatX` removes the scale; compile-time overflow = error (`Float16 70000.0`), at run time IEEE infinity |
 | `FixedX` | `Integer`, `Rational`, `IntY`, `NatY`, `FloatY`, `FixedY` | `WordY` | applies the scale of the target's own `@fraction`; `WordY→FixedX` takes the raw storage as is |

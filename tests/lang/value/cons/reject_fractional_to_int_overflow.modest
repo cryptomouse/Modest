@@ -1,0 +1,30 @@
+// TEST: reject
+// EXPECT-ERROR: integer overflow
+// EXPECT-ERROR: attempt to construct `Int8` from `Float64`
+// EXPECT-ERROR: integer overflow
+// EXPECT-ERROR: attempt to construct `Int8` from `Fixed32`
+// EXPECT-ERROR: integer overflow
+// EXPECT-ERROR: attempt to construct `Nat8` from `Float64`
+// EXPECT-ERROR-COUNT: 3
+//
+// `IntX`/`NatX` from a fractional source is explicit at any width, so the
+// width no longer rejects anything — but a constant source is still
+// checked, by its value: after truncation it has to fit the target.
+// `Nat8` applies abs() first, so -300.0 is out of range as 300.
+//
+// Guards BUG#37 (fixed 2026-10-10).
+
+include "libc/ctypes64"
+
+
+const big: Float64 = 128.5
+const fixedBig: Fixed32 = -129.0
+const negBig: Float64 = -300.0
+
+
+func main () -> Int {
+	let a = Int8 big
+	let b = Int8 fixedBig
+	let c = Nat8 negBig
+	return 0
+}

@@ -1,0 +1,106 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: fixed to a narrower integer
+// EXPECT-OUT: passed: constant fractional to integer
+// EXPECT-OUT: passed: fractional to int
+//
+// `IntX`/`NatX` from a `FixedY` or `FloatY` is explicit at any width: the
+// width of a fractional source says nothing about whether its value fits.
+// `Fixed32` is 16.16, so its integer part fits an `Int16` whatever it
+// holds, which the old `FixedY (Y <= X)` rule refused.
+//
+// A constant source is checked by its value instead and folded by the
+// front end; that path used to crash on a `const` float.  A run-time value
+// that does not fit is UB#3, so every value here fits.
+//
+// Guards BUG#37 (fixed 2026-10-10).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const half: Float64 = 2.75
+const negHalf: Float64 = -2.75
+const edge: Float64 = -128.9
+const fixedEdge: Fixed32 = 127.5
+
+
+func testFixedNarrow () -> Bool {
+	var x: Fixed32 = -100.75
+	var y: Fixed64 = 3.5
+
+	if Int16 x != -100 {
+		printf("Int16 Fixed32 -100.75 = %d, expected -100\n", Int32 Int16 x)
+		return false
+	}
+
+	if Int8 x != -100 {
+		printf("Int8 Fixed32 -100.75 = %d, expected -100\n", Int32 Int8 x)
+		return false
+	}
+
+	if Int8 y != 3 {
+		printf("Int8 Fixed64 3.5 = %d, expected 3\n", Int32 Int8 y)
+		return false
+	}
+
+	// NatX: truncate toward zero, then abs()
+	if Nat8 x != 100 {
+		printf("Nat8 Fixed32 -100.75 = %u, expected 100\n", Nat32 Nat8 x)
+		return false
+	}
+
+	if Nat16 y != 3 {
+		printf("Nat16 Fixed64 3.5 = %u, expected 3\n", Nat32 Nat16 y)
+		return false
+	}
+
+	printf("passed: fixed to a narrower integer\n")
+	return true
+}
+
+
+func testConstant () -> Bool {
+	if Int64 half != 2 {
+		printf("Int64 2.75 = %lld, expected 2\n", Int64 half)
+		return false
+	}
+
+	if Int8 negHalf != -2 {
+		printf("Int8 -2.75 = %d, expected -2\n", Int32 Int8 negHalf)
+		return false
+	}
+
+	// the edges of the target: -128.9 truncates to -128, which fits
+	if Int8 edge != -128 {
+		printf("Int8 -128.9 = %d, expected -128\n", Int32 Int8 edge)
+		return false
+	}
+
+	if Int8 fixedEdge != 127 {
+		printf("Int8 Fixed32 127.5 = %d, expected 127\n", Int32 Int8 fixedEdge)
+		return false
+	}
+
+	// NatX of a negative float is BUG#94, so only a positive one here
+	if Nat8 half != 2 {
+		printf("Nat8 2.75 = %u, expected 2\n", Nat32 Nat8 half)
+		return false
+	}
+
+	printf("passed: constant fractional to integer\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testFixedNarrow() or not testConstant() {
+		printf("failed: fractional to int\n")
+		return exitFailure
+	}
+
+	printf("passed: fractional to int\n")
+	return exitSuccess
+}

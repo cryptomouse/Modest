@@ -491,3 +491,73 @@ mixed chain still asks for parentheses.
 
 - [`value/binary.md`](./value/binary.md) — which types each group takes,
   which is why arithmetic and bitwise can share a level at all
+
+---
+
+## QUESTION#6: What does a numeric construction give when the value does not fit?
+
+**Question.** `Int8 f` where `f: Float64` holds ten billion, `Int32 x` where
+`x: Fixed64` holds a million, `Fixed32 i` where `i: Int64` holds a million:
+the construction is explicit and legal, the width of the source says
+nothing about whether the value fits, and only the value at run time
+decides. What is the result when it does not fit?
+
+### Where it stands today
+
+Undefined — [`UB#3`](../UB.md). A constant source is checked at compile
+time (`integer overflow`, `fixed point overflow`); a run-time one is
+converted with whatever the backend emits:
+
+- `FloatY → IntX/NatX`: `(int8_t)f` in C, `fptosi` / `fptoui` in LLVM. Out
+  of range — and NaN — is UB in C and `poison` in LLVM, so the backends
+  may disagree.
+- `FixedY → IntX/NatX`: the integer part is computed in the width of the
+  source and then truncated to X bits — wraps in practice.
+- `IntY/NatY → FixedX`: the C helper is called at the target width
+  (`__fixed32_from_int32`) — the source is truncated first, then
+  multiplied by the scale with a signed overflow, which is UB in C. LLVM
+  truncates and multiplies without `nsw` — a defined wrap.
+- `FloatY → FixedX`: the same `fptosi` as above, after scaling.
+
+`FloatY → FloatX` is not in question: IEEE 754 already says it gives an
+infinity.
+
+### Options
+
+**A. Leave it undefined.** What there is today, written down.
+
+- Free, and it is what C does.
+- The same program may behave differently under the two backends, and a
+  conversion that "works" today may stop working at a higher optimisation
+  level — LLVM is free to assume `poison` never happens.
+
+**B. Saturate.** Out of range gives the nearest edge of the target type,
+NaN gives 0 — what `as` does in Rust.
+
+- Defined on every backend and every target. Rounding code that clamps by
+  hand (`if f > 127.0 { ... }`) becomes unnecessary.
+- LLVM has it ready: `llvm.fptosi.sat.*` / `llvm.fptoui.sat.*`. C needs a
+  small helper per pair of types, and the Fixed paths need compares.
+- Costs a few instructions per conversion — on a target without an FPU,
+  where every float operation is a library call anyway, next to nothing;
+  in a hot loop on a target with one, measurable.
+- Gives `unsafe` a meaning for these pairs: explicit saturates, `unsafe`
+  is the bare conversion with option A's semantics, for code that has
+  already checked the range.
+
+**C. Trap.** Out of range stops the program.
+
+- The most honest answer, but a trap path on every conversion and no good
+  story for embedded code, which is half of what the language is for.
+
+### What an answer touches
+
+- [`value/cons.md`](./value/cons.md) — the conversion rules
+- [`UB.md`](../UB.md) — `UB#3` goes away under B and C, or shrinks to the
+  `unsafe` form under B
+- the conversion code of both backends, and the Fixed helpers in the C
+  runtime (`__fixedX_from_*`, `__fixedX_to_*`)
+
+### Related
+
+- BUG#35 — the backends already disagree about a NaN in a comparison

@@ -12,6 +12,17 @@ def fixed_to_int(v):
 
 
 
+def is_fractional(t):
+	return t.is_float() or t.is_fixed()
+
+
+
+# FloatY/FixedY -> целое: дробь отбрасываем к нулю
+def frac_to_int(v):
+	return fixed_to_int(v) if v.type.is_fixed() else int(v.asset)
+
+
+
 def value_int_can(to, from_type, method, ti):
 	# ширина записи hex-литерала держит только неявную конструкцию,
 	# явная смотрит на значение (value_int_cons)
@@ -23,7 +34,10 @@ def value_int_can(to, from_type, method, ti):
 
 	# explicit or unsafe cons method
 
-	if from_type.is_float():
+	# ширина дробного источника ничего не говорит о том, влезет ли
+	# значение: Float64 с 3.0 влезет в Int8, а с 1e300 - никуда.
+	# Константу проверит value_int_cons, рантайм - UB#3
+	if from_type.is_float() or from_type.is_fixed():
 		return True
 
 	c0 = from_type.is_integer()
@@ -56,11 +70,15 @@ def value_int_cons(t, v, method, ti):
 	from_width = v.type.width
 	to_width = t.width
 
-	if v.is_immediate() and v.type.is_float():
-		from_width = nbits_for_num(int(v.value))
-
 	if method == 'explicit' and v.is_immediate() and v.type.is_integer():
 		from_width = nbits_for_num(v.asset)
+
+	if is_fractional(v.type):
+		# FloatY/FixedY: проверяем значение, а не ширину - и только
+		# известное. В рантайме не влезшее значение - UB#3
+		from_width = 0
+		if v.is_immediate():
+			from_width = nbits_for_num(frac_to_int(v), signed=True)
 
 	if method != 'unsafe':
 		if from_width > to_width:
@@ -69,7 +87,7 @@ def value_int_cons(t, v, method, ti):
 
 	nv = ValueCons(t, t, v, method, ti=ti)
 	if v.is_immediate():
-		a = fixed_to_int(v) if v.type.is_fixed() else int(v.asset)
+		a = frac_to_int(v) if is_fractional(v.type) else int(v.asset)
 		nv.set_asset(a)
 		nv.stage = HLIR_VALUE_STAGE_COMPILETIME
 		return nv

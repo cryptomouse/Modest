@@ -26,10 +26,10 @@ Per-target rules (`X`, `Y` — widths; verified against the compiler):
 
 | Target | Implicit | Explicit | Unsafe only |
 | :-- | :-- | :-- | :-- |
-| `IntX` | `Integer`, `IntY` Y≤X | + `NatY`, `WordY`, `FixedY` Y≤X; `FloatY`; `Rational` | wider sources; `*T` |
-| `NatX` | `Integer`, `NatY` Y≤X | + `IntY`, `WordY`, `FixedY` Y≤X; `FloatY` (`IntY` applies `abs`; `FixedY` truncates, then `abs`) | wider sources; `*T` |
+| `IntX` | `Integer`, `IntY` Y≤X | + `NatY`, `WordY` Y≤X; `FloatY`, `FixedY`; `Rational` | wider sources; `*T` |
+| `NatX` | `Integer`, `NatY` Y≤X | + `IntY`, `WordY` Y≤X; `FloatY`, `FixedY` (`IntY` applies `abs`; `FixedY` truncates, then `abs`) | wider sources; `*T` |
 | `WordX` | `Integer`, `WordY` Y≤X | + `WordY` any Y (truncates); `IntY`, `NatY`, `CharY`, `FloatY` Y≤X; `Bool` | wider `IntY`/`NatY`/`FloatY`; `*T` |
-| `FloatX` | `Rational`, `Integer`, `FloatY` | + `IntY`, `NatY`, `Fixed` | `WordY` (bit reinterpret) |
+| `FloatX` | `Rational`, `Integer` | + `FloatY` any Y; `IntY`, `NatY`, `FixedY` | `WordY` (bit reinterpret) |
 | `CharX` | length-1 `String`; generic char | + `Integer`, `WordY` Y≤X | any numeric |
 | `Bool` | `Bool` | — (use `x != 0`) | — |
 | `*T` | `nil`; `*[N]T`→`*[]T`; `String`→`*[]CharX` | `*Unit`→`*T`, `*T`→`*Unit` | `*U` (other pointee); integer sources |
@@ -60,9 +60,11 @@ Key behaviors:
   changes on the `WordX` side, as in `WordY → WordX`: `Word64` of a
   `Float32` is its pattern zero-extended, `unsafe(Float32 w)` of a
   `Word64` takes the low 32 bits.
-- `FloatY → IntX/NatX` truncates the fraction. **Partly implemented**:
-  a float wider than the integer is refused as `integer overflow`, so only
-  `Int64 ← Float64` and `Int32 ← Float32` work (BUG#37).
+- `FloatY → IntX/NatX` and `FixedY → IntX/NatX` truncate the fraction
+  toward zero, at any width: the width of a fractional source says nothing
+  about whether its value fits. A constant is checked by its value
+  (`Int8 c` with `c = 200.0` is `integer overflow`); a run-time value that
+  does not fit is undefined, see [UB#3](../../UB.md).
 - Operands of binary operations are **not** promoted implicitly —
   construct explicitly to a common type first
   (see [binary](./binary.md)).
