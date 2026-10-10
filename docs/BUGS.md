@@ -1457,3 +1457,31 @@ and compiling that output fails with `annotation 'nonstatic' not defined`.
   attribute there) or keep the `modest` backend from printing an attribute
   the compiler added itself.
 - No test covers it.
+
+## BUG#93: A function type with an unnamed parameter is rejected by accident, with a generic message
+
+```modest
+type F = (Int32) -> Int
+```
+
+gives `expected type expr` at the `(`. The source is wrong (a function
+type names its parameters, `(x: Int32) -> Int`), but it is rejected only
+because of a bug in lookahead, and the message does not say what is wrong.
+
+- The `(` branch of `check_is_type` (`src/parser.py:412-427`) first tries
+  ` ( <type> ) `: `if self.is_type_expr(): return self.match(')')`.
+  `is_type_expr` runs through `check()`, which restores the position, so
+  `match(')')` is tried on `Int32` rather than after it and always fails.
+  The parenthesized-type form therefore never matches at all, and
+  `(Int32) -> Int` falls through to `check_is_field`, which wants
+  `name:`.
+- Fixing the lookahead alone does not help: with `check_is_type()` in
+  place of `is_type_expr()` there (so the `)` is matched after the type)
+  the error at the `(` stays, and two more appear on the next definition
+  (`expected ':' token`, `expected type expr` at `func main () -> Int`).
+- What is wanted is a dedicated diagnostic in `parse_type_func`: a type
+  where a parameter is expected reports that the parameter has no name
+  (`(x: Int32) -> Int`).
+- `tests/lang/def/type/reject_malformed.modest` and
+  `reject_no_cascade.modest` currently match the generic
+  `expected type expr` for this case — update them with the fix.

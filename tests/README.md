@@ -95,6 +95,7 @@ prints nothing and returns 0 also "passes" otherwise.
 | `EXPECT-EXIT: 0` | `0` | required exit code |
 | `EXPECT-OUT: text` | — | substring that must appear in stdout; repeatable, matched **in order** |
 | `EXPECT-ERROR: text` | — | substring of a diagnostic a `reject` test must produce; repeatable, matched **in order** |
+| `EXPECT-ERROR-COUNT: 1` | — | exact number of errors a `reject` test must produce — catches a cascade after the right ones |
 | `LINK: misc/crc32.modest` | — | extra sources compiled and linked with this one; see below |
 | `FLAGS: -funsafe` | — | extra flags passed to `modest` |
 | `EXPECTED-FAIL: reason` | — | known-broken; see below |

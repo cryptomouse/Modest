@@ -1,0 +1,21 @@
+// TEST: reject
+// EXPECT-ERROR: expected type expr
+// EXPECT-ERROR: type Empty =
+// EXPECT-ERROR: expected type expr
+// EXPECT-ERROR: type NoName = (Int32) -> Int
+// EXPECT-ERROR-COUNT: 2
+//
+// A type definition whose type does not parse is reported once: the
+// parser skips the rest of it up to the next definition, and the
+// semantic pass does not report the missing type again. It used to add
+// "unexpected token '('" for the unparsed tail and a second
+// "expected type expr" for the whole definition.
+
+include "libc/ctypes64"
+
+type Empty =
+type NoName = (Int32) -> Int
+
+func main () -> Int {
+	return 0
+}

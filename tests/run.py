@@ -78,6 +78,7 @@ class Test:
 	expect_exit: int = 0
 	expect_out: list = field(default_factory=list)
 	expect_error: list = field(default_factory=list)  # diagnostics a `reject` test must produce
+	expect_error_count: int = None        # exact number of errors, None = any
 	link: list = field(default_factory=list)   # extra sources to link in, resolved
 	flags: list = field(default_factory=list)  # extra modest flags
 	xfail: dict = field(default_factory=dict)  # backend (or '*') -> reason
@@ -164,6 +165,8 @@ def apply_directive(t, key, scope, value, name):
 		t.expect_out.append(value)
 	elif key == 'EXPECT-ERROR':
 		t.expect_error.append(value)
+	elif key == 'EXPECT-ERROR-COUNT':
+		t.expect_error_count = int(value)
 	elif key == 'LINK':
 		test_dir = os.path.dirname(t.path)
 		t.link += [resolve_link(s.strip(), test_dir)
@@ -289,6 +292,14 @@ def do_reject(t, backend, sources, workdir, result):
 				return result(FAIL, 'diagnostics missing %r' % want,
 				              where + last_output(out), out)
 			rest = rest[i + len(want):]
+
+		# The right diagnostics followed by a cascade of bogus ones is a
+		# failure of recovery, which is what this count is there to catch.
+		if t.expect_error_count is not None:
+			got = len(re.findall(r'^error: ', out, re.M))
+			if got != t.expect_error_count:
+				return result(FAIL, '%d errors, expected %d' % (got, t.expect_error_count),
+				              last_output(out), out)
 		return result(PASS)
 
 	return result(FAIL, 'modest accepted it, expected it to be rejected')

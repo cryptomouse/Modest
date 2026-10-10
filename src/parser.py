@@ -2255,8 +2255,15 @@ class Parser:
 		self.need("=")
 
 		t = None
-		if not self.look_nl():
+		if self.look_nl():
+			error("expected type expr", self.textInfo())
+		else:
 			t = self.expr_type()
+
+		# the error is already reported — skip the rest of the definition,
+		# so the top level does not trip over its tail
+		if t is None:
+			self.restore_top_level()
 
 		return {
 			'isa': 'ast_definition',
@@ -2271,7 +2278,7 @@ class Parser:
 	def restore_top_level(self):
 		while not self.is_end():
 			token_str = self.ctok()
-			if token_str in ['func', 'const', 'var', 'type', 'exist', 'extern']:
+			if token_str in ['func', 'const', 'var', 'type', 'exist', 'extern', 'include', 'import']:
 				break
 			self.skip1()
 

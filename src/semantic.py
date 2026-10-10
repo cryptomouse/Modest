@@ -2551,8 +2551,7 @@ def def_type_common(x, nt):
 	ctx = None
 
 	if x['type'] == None:
-		error("expected type expr", x['ti'])
-		return StmtBad(x['ti'])
+		return StmtBad(x['ti'])  # the parser has already reported it
 
 	# StmtDefType уже создан при декларации типа (def_type1)
 	definition = nt.definition
