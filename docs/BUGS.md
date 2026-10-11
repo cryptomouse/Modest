@@ -571,27 +571,6 @@ struct __anonymous_variant_1 r = divide(10, 2);
 - Coverage: `tests/lang/type/variant/basic.modest` holds the working shape and
   points here.
 
-## BUG#58: `var` of type `Unit` is accepted and emits `void u;`
-
-```modest
-func main () -> Int {
-	var u: Unit
-	return 0
-}
-```
-
-```c
-void u;   // error: variable has incomplete type 'void'
-```
-
-- `Type.is_forbidden_var` (`src/hlir/types.py:1231`) rejects a function
-  type and a zero-volume array but says nothing about `Unit`, so a
-  variable of the type that has no storage gets storage anyway.
-- `Unit` is the result type of a function that returns nothing; a
-  variable of it is meaningless and belongs with the other forbidden
-  types in `is_forbidden_var`, next to `is_func()`.
-- No reproducer in the suite: a `reject` test belongs in
-  `tests/lang/type/unit/`.
 
 ## BUG#60: Annotations on a local `var` are silently ignored
 
