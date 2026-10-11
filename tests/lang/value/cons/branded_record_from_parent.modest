@@ -1,0 +1,18 @@
+include "libc/ctypes64"
+include "libc/stdio"
+
+//include "./lib"
+
+
+
+func main () -> Int {
+	type Point = {x: Int32, y: Int32}
+	type Brand = @branded Point
+
+	var p: Point = {x = 1, y = 2}
+	var b: Brand = Brand p     // error: cannot construct 'Brand' from 'Point' value
+	var q: Point = Point b     // error: cannot construct 'Point' from 'Brand' value
+
+	return 0
+}
+
