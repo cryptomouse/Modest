@@ -1376,6 +1376,14 @@ def do_eval_index(x):
 		return do_eval_literal(x)
 
 	left, indexes = index(x)
+
+	# массив пришел значением в регистре (поле записи, возвращенной по
+	# значению): адреса у него нет, а getelementptr нужен адрес (BUG#101)
+	if by_value(left) and not is_global_context():
+		if all(i.get('kind') == 'num' for i in indexes):
+			return llvm_extractvalue(left, x.type, indexes)
+		left = llvm_alloca_store(left['type'], init_value=left)
+
 	return ass(left, indexes)
 
 
@@ -1448,13 +1456,10 @@ def do_eval_slice(x):
 	result_type = x.type
 	index = do_reval(x.index_from)
 
-	# если сам массив находится в регистре: (let rec = get_rec())
+	# массив пришел значением в регистре (поле записи, возвращенной по
+	# значению): срезу нужен адрес, кладем массив во временный слот (BUG#101)
 	if not array['is_adr']:
-		if v[HLIR_VALUE_OP_INDEX].is_runtime():
-			error("expected immediate index value", x.ti)
-			return llvm_value_zero(x.type)
-
-		return extractvalue(array, result_type, index.asset)
+		array = llvm_alloca_store(array_type, init_value=array)
 
 	indexes = (llvm_value_num_zero, index)
 	et = getET(left.type)

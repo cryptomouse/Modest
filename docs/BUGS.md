@@ -1391,11 +1391,13 @@ body_1:
   (`print_slots`, covered by `stack_local.modest`). That works because
   they are statements, known in advance; a temporary appears only while
   an expression is being evaluated.
-- Three places emit such a temporary: a call result put under another
+- Four places emit such a temporary: a call result put under another
   record name (`cons_composite_from_composite`), a record or array value
-  compared with `==` (the operands are spilled for `memcmp`), and the
-  return buffer of a function that returns an array (`do_eval_call`,
-  `print_stmt_const`).
+  compared with `==` (the operands are spilled for `memcmp`), the return
+  buffer of a function that returns an array (`do_eval_call`,
+  `print_stmt_const`), and an array field of a record held in a register
+  that is indexed at run time or sliced (`do_eval_index`,
+  `do_eval_slice`).
 - Recursion is not the issue: a frame's slots go away with the frame.
 - Fix: emit the temporaries into the entry block too, as clang does.
   `out()` writes straight to the file and registers are numbered in
@@ -1491,37 +1493,3 @@ row[at(1, 2):at(2, 4)] = [2]Int32 [v3, v4]    // c11: 1 3 4 2 1   llvm: 1 3 4
   from those.
 - Coverage: `tests/lang/value/eval_order/slice.modest`, marked
   `EXPECTED-FAIL(c11, llvm)`.
-
-## BUG#101: LLVM backend emits invalid IR for a run-time index into an array field of a record held in a register
-
-```modest
-type Holder = {tag: Int32, items: [3]Int32}
-
-func holderValue () -> Holder { ... }
-
-let x = holderValue().items[i]    // i known only at run time
-```
-
-```llvm
-%3 = extractvalue %Holder %2, 1
-%4 = getelementptr [3 x %Int32], [3 x %Int32] %3, %Int32 0, %Int32 %1
-; clang: error: base of getelementptr must be a pointer
-```
-
-- A record returned by value lives in a register, and so does the array
-  `extractvalue` takes out of it. `ass()` (`src/backend/llvm.py`) then
-  indexes it with `getelementptr`, which needs an address — the IR does
-  not assemble.
-- `index()` routes an array held by value to `do_eval`, which is fine
-  when the value is in memory (a `var`, a returned array — that one comes
-  back through a return buffer); a field of a register record is not.
-  `do_eval_slice` checks for this case (`not array['is_adr']`), but its
-  run-time branch reads an undefined `v` — a slice of such a field has
-  not been tried.
-- A compile-time index would be fine as an `extractvalue` — the run-time
-  one needs the array spilled to a temporary first (in the entry block,
-  see BUG#96).
-- The C backend is unaffected: the C struct value has a C array member,
-  and C indexes it in place.
-- Reproducer: `tests/lang/value/index/field_of_value.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
