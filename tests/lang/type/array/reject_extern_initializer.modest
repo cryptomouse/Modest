@@ -1,0 +1,33 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: initializer in extern variable definition
+// EXPECT-ERROR: var externTable: []Int32 = [1, 2, 3]
+// EXPECT-ERROR: initializer in extern variable definition
+// EXPECT-ERROR: var externCount: Int32 = 5
+// EXPECT-ERROR-COUNT: 2
+//
+// An `@extern` variable declares storage defined somewhere else, so it has
+// nothing to initialize: the value, like the storage, belongs to the
+// definition.  An initializer here used to be accepted, used to size the
+// array, and then dropped — the C output was `extern int32_t
+// externTable[3];`, a declaration that quietly lost the data the source
+// claimed to put there.  It is refused instead, for an array and a scalar
+// alike; the size of an `@extern` array comes from its type, or stays
+// unknown — see `unsized_extern.modest`.
+//
+// Guards BUG#61 (fixed 2026-10-11).
+
+include "libc/ctypes64"
+
+
+@extern("C")
+var externTable: []Int32 = [1, 2, 3]
+
+@extern("C")
+var externCount: Int32 = 5
+
+
+func main () -> Int {
+	return 0
+}
+

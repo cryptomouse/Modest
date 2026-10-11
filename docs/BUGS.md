@@ -637,9 +637,6 @@ func main () -> Int {
   `static int32_t gimm = 3;` with no `const`, and LLVM prints
   `@gimm = internal global %Int32 3` — so this is an unenforced rule
   rather than a miscompilation.
-- Related but distinct from BUG#60: that one is about a local `var`'s
-  annotations never being read at all. This holds for a *global*
-  `@immutable var`, whose annotation is read and does stop assignment.
 - Root cause: `&` doesn't consult `is_immutable()` at all. It goes through
   `is_good_value_for_ref` (`src/semantic.py:1085`), which is a whitelist of
   value *kinds* (`is_var()`, `is_func()`, `is_index()`, ...), not a

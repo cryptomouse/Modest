@@ -719,7 +719,6 @@ def do_cvalue_cons_record(x, ctx):
 		if to_type.uid == from_type.uid and to_type.brand == from_type.brand:
 			# это одна и та же структура и приведение не требуется
 			cv = do_cvalue(value, ctx=ctx)
-			cv.mark = '??'
 			return cv
 
 		# C cannot just cast struct to struct ⚠️

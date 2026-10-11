@@ -1,0 +1,39 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: type mismatch Brand & Point
+// EXPECT-ERROR: type mismatch Point & Brand
+// EXPECT-ERROR: type mismatch Other & Brand
+// EXPECT-ERROR: cannot implicitly construct `Brand` from `Point`
+// EXPECT-ERROR-COUNT: 4
+//
+// The other half of `record_from_parent.modest`: a branded record and its
+// parent convert only when the conversion is written out.  The brand is
+// what tells them apart, and it must not stop counting once the explicit
+// conversion learned to look at it — neither an initializer nor an
+// argument crosses it on its own, and neither does a second brand of the
+// same parent.
+//
+// Guards BUG#52 (fixed 2026-10-11).
+
+include "libc/ctypes64"
+
+
+type Point = {x: Int32, y: Int32}
+
+type Brand = @branded Point
+type Other = @branded Point
+
+
+func takeBrand (b: Brand) -> Unit {}
+
+
+func main () -> Int {
+	var p: Point = {x = 1, y = 2}
+	var b: Brand = p
+	var q: Point = b
+	var o: Other = b
+	takeBrand(p)
+
+	return 0
+}
+

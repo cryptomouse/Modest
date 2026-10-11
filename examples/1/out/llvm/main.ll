@@ -136,10 +136,20 @@ declare void @perror(%ConstCharStr* %str)
 ; end from import "builtin"
 ; -- end print imports 'main' --
 ; -- strings --
+@.str1 = private constant [15 x i8] [i8 97, i8 108, i8 105, i8 103, i8 110, i8 111, i8 102, i8 32, i8 61, i8 32, i8 37, i8 122, i8 117, i8 10, i8 0]
+@.str2 = private constant [14 x i8] [i8 115, i8 105, i8 122, i8 101, i8 111, i8 102, i8 32, i8 61, i8 32, i8 37, i8 122, i8 117, i8 10, i8 0]
 ; -- endstrings --
 
 ;include "./lib"
+%Aligned = type {
+	%Word8
+};
+
 define %Int32 @main() {
+	%i = alloca %Int32, align 4
+	store %Int32 5, %Int32* %i
+	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([15 x i8]* @.str1 to [0 x i8]*), %Size 1)
+	%2 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([14 x i8]* @.str2 to [0 x i8]*), %Size 1)
 	ret %Int32 0
 }
 

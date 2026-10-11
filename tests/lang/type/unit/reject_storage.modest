@@ -1,0 +1,57 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: unsuitable type
+// EXPECT-ERROR: type Holder = {u: Unit}
+// EXPECT-ERROR: unsuitable type
+// EXPECT-ERROR: var globalUnit: Unit
+// EXPECT-ERROR: unsuitable type
+// EXPECT-ERROR: const constUnit: Unit = Unit {}
+// EXPECT-ERROR: unsuitable type
+// EXPECT-ERROR: func take (u: Unit) -> Unit {}
+// EXPECT-ERROR: unsuitable type
+// EXPECT-ERROR: var localUnit: Unit
+// EXPECT-ERROR: unsuitable type
+// EXPECT-ERROR: var units: [3]Unit
+// EXPECT-ERROR: unsuitable type
+// EXPECT-ERROR: let result: Unit = nothing()
+//
+// `Unit` is what a function returns when it returns nothing: a type with
+// no values worth keeping and no storage behind them.  It is fine as a
+// result type and behind a pointer (`*Unit`, C's `void *`), and nowhere
+// that would have to hold one — a field, a parameter, a variable, a
+// constant, an array element.  A `var` of it used to be accepted and came
+// out in C as `void u;`, which clang refuses.
+//
+// No EXPECT-ERROR-COUNT: a parameter currently gets a second diagnostic
+// (`forbidden param type`) at the same place, and that is not the rule
+// under test here.
+//
+// Guards BUG#58 (fixed 2026-10-11).
+
+include "libc/ctypes64"
+
+
+type Holder = {u: Unit}
+
+var globalUnit: Unit
+
+const constUnit: Unit = Unit {}
+
+
+func take (u: Unit) -> Unit {}
+
+func nothing () -> Unit {}
+
+
+func main () -> Int {
+	var localUnit: Unit
+	var units: [3]Unit
+	let result: Unit = nothing()
+
+	// the two places Unit does belong
+	var p: *Unit = nil
+	nothing()
+
+	return 0
+}
+

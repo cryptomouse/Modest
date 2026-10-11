@@ -3,8 +3,16 @@ include "libc/stdio"
 
 //include "./lib"
 
+type Aligned = @alignment(2) {
+	a: Word8
+}
+
+
 @nonstatic
 func main () -> Int32 {
+	var i: Int32 = 5
+	printf("alignof = %zu\n", alignof(Aligned))
+	printf("sizeof = %zu\n", sizeof(Aligned))
 	return 0
 }
 

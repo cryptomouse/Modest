@@ -1,0 +1,164 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: brand from parent
+// EXPECT-OUT: passed: parent from brand
+// EXPECT-OUT: passed: a round trip returns the original
+// EXPECT-OUT: passed: brand from a global and an argument
+// EXPECT-OUT: passed: brand to brand through the parent
+// EXPECT-OUT: passed: branded record from parent
+//
+// `B = @branded T` may be built from `T` and `T` from `B`, both written out
+// (`B x`, `T b`) — that is the whole newtype pattern, and for a scalar
+// parent it always held.  For a record parent the C output broke in both
+// directions: the brand shares the parent's record uid, and the front end
+// and the C backend took "same uid" for "same type" without looking at the
+// brand, so `struct point` went into a `struct brand` with no conversion
+// and clang refused it.
+//
+// The values are checked field by field: the two types have one layout,
+// so a conversion that reads the wrong bytes would still compile.  The
+// implicit side stays refused — see `reject_record_implicit.modest`.
+//
+// Guards BUG#52 (fixed 2026-10-11).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+// Word8 before Int32 leaves padding in the middle, so the field offsets
+// are not the trivial ones.
+type Point = {
+	tag: Word8
+	x: Int32
+	y: Int32
+}
+
+type Brand = @branded Point
+type Other = @branded Point
+
+var gp: Point = {tag = 0x5A, x = 100, y = -200}
+
+
+func isPoint (p: Point, tag: Word8, x: Int32, y: Int32) -> Bool {
+	return p.tag == tag and p.x == x and p.y == y
+}
+
+
+func takeBrand (b: Brand) -> Brand {
+	return b
+}
+
+
+func testBrandFromParent () -> Bool {
+	var p: Point = {tag = 0x11, x = 1, y = 2}
+	var b: Brand = Brand p
+
+	if b.tag != 0x11 or b.x != 1 or b.y != 2 {
+		printf("b = {%x, %d, %d}, expected {11, 1, 2}\n", Nat32 b.tag, b.x, b.y)
+		return false
+	}
+
+	return true
+}
+
+
+func testParentFromBrand () -> Bool {
+	var b: Brand = Brand {tag = 0x22, x = 3, y = -4}
+	var p: Point = Point b
+
+	if not isPoint(p, 0x22, 3, -4) {
+		printf("p = {%x, %d, %d}, expected {22, 3, -4}\n", Nat32 p.tag, p.x, p.y)
+		return false
+	}
+
+	return true
+}
+
+
+func testRoundTrip () -> Bool {
+	var p: Point = {tag = 0x33, x = 0x7FFFFFFF, y = -0x7FFFFFFF}
+	var q: Point = Point (Brand p)
+
+	if not isPoint(q, p.tag, p.x, p.y) {
+		printf("q = {%x, %d, %d}, expected {33, %d, %d}\n", Nat32 q.tag, q.x, q.y, p.x, p.y)
+		return false
+	}
+
+	return true
+}
+
+
+// the source need not be a local: a global and a call result take the
+// same conversion
+func testGlobalAndArgument () -> Bool {
+	let b = takeBrand(Brand gp)
+	var p: Point = Point takeBrand(b)
+
+	if not isPoint(p, 0x5A, 100, -200) {
+		printf("p = {%x, %d, %d}, expected {5A, 100, -200}\n", Nat32 p.tag, p.x, p.y)
+		return false
+	}
+
+	return true
+}
+
+
+// two brands of one parent meet only through the parent, written out
+func testBrandToBrand () -> Bool {
+	var b: Brand = Brand {tag = 0x44, x = 5, y = 6}
+	var o: Other = Other (Point b)
+	var p: Point = Point o
+
+	if not isPoint(p, 0x44, 5, 6) {
+		printf("p = {%x, %d, %d}, expected {44, 5, 6}\n", Nat32 p.tag, p.x, p.y)
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	if testBrandFromParent() {
+		printf("passed: brand from parent\n")
+	} else {
+		ok = false
+	}
+
+	if testParentFromBrand() {
+		printf("passed: parent from brand\n")
+	} else {
+		ok = false
+	}
+
+	if testRoundTrip() {
+		printf("passed: a round trip returns the original\n")
+	} else {
+		ok = false
+	}
+
+	if testGlobalAndArgument() {
+		printf("passed: brand from a global and an argument\n")
+	} else {
+		ok = false
+	}
+
+	if testBrandToBrand() {
+		printf("passed: brand to brand through the parent\n")
+	} else {
+		ok = false
+	}
+
+	if not ok {
+		printf("failed: branded record from parent\n")
+		return exitFailure
+	}
+
+	printf("passed: branded record from parent\n")
+	return exitSuccess
+}
+

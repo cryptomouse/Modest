@@ -592,7 +592,7 @@ def change_type_layout(t, layout, ti):
 			# чтобы это различать (см. rec_uid) - иначе `Packed.uid ==
 			# Record.uid` при разных @layout, и приведение между ними
 			# бэкенд принимает за отождествление одной и той же структуры
-			rec_uid = get_record_uid()
+			t.uid = get_record_uid()
 
 	t.layout = layout
 	return t

@@ -6,7 +6,15 @@ include "libc/stdio"
 
 //include "./lib"
 
+type Aligned = @alignment(2) {
+	a: Word8
+}
+
+
 func main () -> Int32 {
+	var i: Int32 = 5
+	printf("alignof = %zu\n", alignof(Aligned))  // c11: 16   llvm: 1   expected 2
+	printf("sizeof = %zu\n", sizeof(Aligned))    // c11: 16   llvm: 1   expected 2
 	return 0
 }
 
