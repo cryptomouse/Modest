@@ -139,10 +139,8 @@ declare void @perror(%ConstCharStr* %str)
 ; -- endstrings --
 
 ;include "./lib"
-define %Int @main() {
-	%u = alloca %void, align 1
-	store %void zeroinitializer, %void* %u
-	ret %Int 0
+define %Int32 @main() {
+	ret %Int32 0
 }
 
 

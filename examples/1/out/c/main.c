@@ -5,8 +5,7 @@
 #include <stdio.h>
 //include "./lib"
 
-int main(void) {
-	void u = {0};
+int32_t main(void) {
 	return 0;
 }
 

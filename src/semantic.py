@@ -2795,7 +2795,7 @@ def def_const_common(x, annos):
 	return definition
 
 
-
+#mass
 def def_var_common(x, annos):
 	global csymtab, cdef
 
@@ -2828,8 +2828,12 @@ def def_var_common(x, annos):
 
 	# аннотации навешиваются уже после def_var_common, поэтому смотрим в AST;
 	# extern бывает только у глобала, у него размер массива приходит извне
+	# mass
 	is_extern = any(a['kind'] == 'extern' for a in x['anno'])
-	if not is_extern:
+	if is_extern:
+		if not init_value.is_undefined():
+			error("initializer in extern variable definition", init_value.ti)
+	else:
 		if var_type.is_unsized_array() and init_value.is_undefined():
 			error("variable of unsized array type requires an initializer", x['ti'])
 

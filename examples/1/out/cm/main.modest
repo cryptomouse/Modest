@@ -3,12 +3,8 @@ include "libc/stdio"
 
 //include "./lib"
 
-
-
 @nonstatic
-func main () -> Int {
-	var u: Unit
-
+func main () -> Int32 {
 	return 0
 }
 
