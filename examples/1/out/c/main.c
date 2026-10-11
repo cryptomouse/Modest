@@ -3,12 +3,16 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#define RAWCAST(type_dst, type_src, value) (((union { type_src src; type_dst dst; }){ .src = (value) }).dst)
 //include "./lib"
-static int32_t a[4] = {1, 2, 3, 4};
 
 int main(void) {
-	const uint64_t adr = (uint64_t)&a[0];
-	printf("adr = %llu\n", adr);
+	struct point {int32_t x; int32_t y;};
+	typedef struct brand Brand;
+	struct brand {int32_t x; int32_t y;};
+	struct point p = (struct point){.x = 1, .y = 2};
+	Brand b = RAWCAST(Brand, struct point, p);
+	struct point q = RAWCAST(struct point, Brand, b);
 	return 0;
 }
 

@@ -128,4 +128,19 @@ define internal %Fixed64 @__fixed64_div(%Fixed64 %a, %Fixed64 %b, i8 %f) {
 ; -- strings --
 ; -- endstrings --
 %lib_Celsius = type %Fixed32;
+%lib_LocalInt = type %Int32;
+@lib_x = global %lib_LocalInt 0
+%lib_Int = type %lib_LocalInt;
+%lib_Y = type %lib_Int;
+%lib_X = type {
+	%lib_LocalInt,
+	%lib_LocalInt,
+	%lib_LocalInt
+};
+
+
+
+; public func f (p: {x: LocalInt}) -> Unit {
+
+; }
 

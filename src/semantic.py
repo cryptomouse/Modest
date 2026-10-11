@@ -592,9 +592,7 @@ def change_type_layout(t, layout, ti):
 			# чтобы это различать (см. rec_uid) - иначе `Packed.uid ==
 			# Record.uid` при разных @layout, и приведение между ними
 			# бэкенд принимает за отождествление одной и той же структуры
-			global rec_uid
-			t.uid = rec_uid
-			rec_uid += 1
+			rec_uid = get_record_uid()
 
 	t.layout = layout
 	return t
@@ -635,14 +633,26 @@ def do_type_array(x, anno, ctx):
 # Нужен для анонимных структур
 # и чтобы отличать копии типа структура от реально другой структуры (C)
 rec_uid = 0
+
+def get_record_uid():
+	global rec_uid
+	x = rec_uid
+	rec_uid += 1
+	return x
+
 var_uid = 0
 
+def get_var_uid():
+	global var_uid
+	x = var_uid
+	var_uid += 1
+	return x
+
+
 def do_type_record(x, anno, ctx):
-	global rec_uid
 	fields = []
 
-	uid = rec_uid
-	rec_uid += 1
+	uid = get_record_uid()
 
 	for ast_field in x['fields']:
 		field = do_field(ast_field, ctx=ctx, default_access_level=HLIR_ACCESS_LEVEL_UNDEFINED)
@@ -679,9 +689,7 @@ def pop_anno(alist, anno):
 
 def do_type_variant(x, anno, ctx):
 	#info("variant type", x['ti'])
-	global var_uid
-	uid = var_uid
-	var_uid += 1
+	uid = get_var_uid()
 	variants = [do_type(v, ctx=ctx) for v in x['variants']]
 	t = TypeVariant(variants=variants, ti=x['ti'])
 	t.uid = uid

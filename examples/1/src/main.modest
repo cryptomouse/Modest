@@ -7,14 +7,14 @@ include "libc/stdio"
 //include "./lib"
 
 
-var a: [4] Int32 = [1, 2, 3, 4]
-
-type R = {Int32}
-type F = (Int32) -> Unit
 
 func main () -> Int {
-	let adr = Nat64 unsafe(Word64 &a[0])
-	printf("adr = %llu\n", adr)
+	type Point = {x: Int32, y: Int32}
+	type Brand = @branded Point
+
+	var p: Point = {x = 1, y = 2}
+	var b: Brand = Brand p     // error: cannot construct 'Brand' from 'Point' value
+	var q: Point = Point b     // error: cannot construct 'Point' from 'Brand' value
 
 	return 0
 }

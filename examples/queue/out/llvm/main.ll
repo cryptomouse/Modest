@@ -284,69 +284,69 @@ declare %Bool @ringWord8_get(%ringWord8_RingWord8* %q, %Word8* %b)
 @br0 = internal global %ringWord8_RingWord8 zeroinitializer
 @ii = internal global %Int32 0
 define internal void @fill(%Nat32 %n) {
-	%1 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %1
+	%i = alloca %Nat32, align 4
+	store %Nat32 0, %Nat32* %i
 ; while_1
 	br label %again_1
 again_1:
-	%2 = load %Nat32, %Nat32* %1
-	%3 = icmp ult %Nat32 %2, %n
-	br %Bool %3 , label %body_1, label %break_1
+	%1 = load %Nat32, %Nat32* %i
+	%2 = icmp ult %Nat32 %1, %n
+	br %Bool %2 , label %body_1, label %break_1
 body_1:
 ; if_0
-	%4 = call %Bool @queueWord8_isFull(%queueWord8_QueueWord8* @bq0)
-	br %Bool %4 , label %then_0, label %endif_0
+	%3 = call %Bool @queueWord8_isFull(%queueWord8_QueueWord8* @bq0)
+	br %Bool %3 , label %then_0, label %endif_0
 then_0:
-	%5 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([17 x i8]* @.str1 to [0 x i8]*))
+	%4 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([17 x i8]* @.str1 to [0 x i8]*))
 	br label %break_1
 	br label %endif_0
 endif_0:
-	%7 = load %Int32, %Int32* @ii
-	%8 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([12 x i8]* @.str2 to [0 x i8]*), %Int32 %7)
-	%9 = load %Int32, %Int32* @ii
-	%10 = trunc %Int32 %9 to %Word8
-	%11 = call %Bool @queueWord8_put(%queueWord8_QueueWord8* @bq0, %Word8 %10)
-	%12 = load %Nat32, %Nat32* %1
-	%13 = add %Nat32 %12, 1
-	store %Nat32 %13, %Nat32* %1
-	%14 = load %Int32, %Int32* @ii
-	%15 = add %Int32 %14, 1
-	store %Int32 %15, %Int32* @ii
+	%6 = load %Int32, %Int32* @ii
+	%7 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([12 x i8]* @.str2 to [0 x i8]*), %Int32 %6)
+	%8 = load %Int32, %Int32* @ii
+	%9 = trunc %Int32 %8 to %Word8
+	%10 = call %Bool @queueWord8_put(%queueWord8_QueueWord8* @bq0, %Word8 %9)
+	%11 = load %Nat32, %Nat32* %i
+	%12 = add %Nat32 %11, 1
+	store %Nat32 %12, %Nat32* %i
+	%13 = load %Int32, %Int32* @ii
+	%14 = add %Int32 %13, 1
+	store %Int32 %14, %Int32* @ii
 	br label %again_1
 break_1:
 	ret void
 }
 
 define internal void @fetch(%Nat32 %n) {
-	%1 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %1
+	%i = alloca %Nat32, align 4
+	%x = alloca %Word8, align 1
+	store %Nat32 0, %Nat32* %i
 ; while_1
 	br label %again_1
 again_1:
-	%2 = load %Nat32, %Nat32* %1
-	%3 = icmp ult %Nat32 %2, %n
-	br %Bool %3 , label %body_1, label %break_1
+	%1 = load %Nat32, %Nat32* %i
+	%2 = icmp ult %Nat32 %1, %n
+	br %Bool %2 , label %body_1, label %break_1
 body_1:
 ; if_0
-	%4 = call %Bool @queueWord8_isEmpty(%queueWord8_QueueWord8* @bq0)
-	br %Bool %4 , label %then_0, label %endif_0
+	%3 = call %Bool @queueWord8_isEmpty(%queueWord8_QueueWord8* @bq0)
+	br %Bool %3 , label %then_0, label %endif_0
 then_0:
-	%5 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str3 to [0 x i8]*))
+	%4 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str3 to [0 x i8]*))
 	br label %break_1
 	br label %endif_0
 endif_0:
-	%7 = alloca %Word8, align 1
-	store %Word8 0, %Word8* %7
-	%8 = call %Bool @queueWord8_get(%queueWord8_QueueWord8* @bq0, %Word8* %7)
-	%9 = load %Word8, %Word8* %7
-	%10 = sext %Word8 %9 to %Int
-	%11 = zext %Bool %8 to %Word8
-	%12 = zext %Word8 %11 to %Word32
-	%13 = bitcast %Word32 %12 to %Int
-	%14 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([23 x i8]* @.str4 to [0 x i8]*), %Int %10, %Int %13)
-	%15 = load %Nat32, %Nat32* %1
-	%16 = add %Nat32 %15, 1
-	store %Nat32 %16, %Nat32* %1
+	store %Word8 0, %Word8* %x
+	%6 = call %Bool @queueWord8_get(%queueWord8_QueueWord8* @bq0, %Word8* %x)
+	%7 = load %Word8, %Word8* %x
+	%8 = sext %Word8 %7 to %Int
+	%9 = zext %Bool %6 to %Word8
+	%10 = zext %Word8 %9 to %Word32
+	%11 = bitcast %Word32 %10 to %Int
+	%12 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([23 x i8]* @.str4 to [0 x i8]*), %Int %8, %Int %11)
+	%13 = load %Nat32, %Nat32* %i
+	%14 = add %Nat32 %13, 1
+	store %Nat32 %14, %Nat32* %i
 	br label %again_1
 break_1:
 	ret void

@@ -169,50 +169,50 @@ declare void @perror(%ConstCharStr* %str)
 	%Int32 -9
 ]
 define internal %Bool @bubble_sort32_iter([0 x %Int32]* %array, %Nat32 %len) {
-	%1 = alloca %Bool, align 1
-	store %Bool 0, %Bool* %1
-	%2 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %2
+	%wasSwap = alloca %Bool, align 1
+	%i = alloca %Nat32, align 4
+	store %Bool 0, %Bool* %wasSwap
+	store %Nat32 0, %Nat32* %i
 ; while_1
 	br label %again_1
 again_1:
-	%3 = sub %Nat32 %len, 1
-	%4 = load %Nat32, %Nat32* %2
-	%5 = icmp ult %Nat32 %4, %3
-	br %Bool %5 , label %body_1, label %break_1
+	%1 = sub %Nat32 %len, 1
+	%2 = load %Nat32, %Nat32* %i
+	%3 = icmp ult %Nat32 %2, %1
+	br %Bool %3 , label %body_1, label %break_1
 body_1:
-	%6 = load %Nat32, %Nat32* %2
-	%7 = bitcast %Nat32 %6 to %Nat32
-	%8 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %7
-	%9 = load %Int32, %Int32* %8
-	%10 = load %Nat32, %Nat32* %2
-	%11 = add %Nat32 %10, 1
-	%12 = bitcast %Nat32 %11 to %Nat32
-	%13 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %12
-	%14 = load %Int32, %Int32* %13
+	%4 = load %Nat32, %Nat32* %i
+	%5 = bitcast %Nat32 %4 to %Nat32
+	%6 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %5
+	%7 = load %Int32, %Int32* %6
+	%8 = load %Nat32, %Nat32* %i
+	%9 = add %Nat32 %8, 1
+	%10 = bitcast %Nat32 %9 to %Nat32
+	%11 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %10
+	%12 = load %Int32, %Int32* %11
 ; if_0
-	%15 = icmp sgt %Int32 %9, %14
-	br %Bool %15 , label %then_0, label %endif_0
+	%13 = icmp sgt %Int32 %7, %12
+	br %Bool %13 , label %then_0, label %endif_0
 then_0:
-	%16 = load %Nat32, %Nat32* %2
-	%17 = bitcast %Nat32 %16 to %Nat32
-	%18 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %17
-	store %Int32 %14, %Int32* %18
-	%19 = load %Nat32, %Nat32* %2
-	%20 = add %Nat32 %19, 1
-	%21 = bitcast %Nat32 %20 to %Nat32
-	%22 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %21
-	store %Int32 %9, %Int32* %22
-	store %Bool 1, %Bool* %1
+	%14 = load %Nat32, %Nat32* %i
+	%15 = bitcast %Nat32 %14 to %Nat32
+	%16 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %15
+	store %Int32 %12, %Int32* %16
+	%17 = load %Nat32, %Nat32* %i
+	%18 = add %Nat32 %17, 1
+	%19 = bitcast %Nat32 %18 to %Nat32
+	%20 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %19
+	store %Int32 %7, %Int32* %20
+	store %Bool 1, %Bool* %wasSwap
 	br label %endif_0
 endif_0:
-	%23 = load %Nat32, %Nat32* %2
-	%24 = add %Nat32 %23, 1
-	store %Nat32 %24, %Nat32* %2
+	%21 = load %Nat32, %Nat32* %i
+	%22 = add %Nat32 %21, 1
+	store %Nat32 %22, %Nat32* %i
 	br label %again_1
 break_1:
-	%25 = load %Bool, %Bool* %1
-	ret %Bool %25
+	%23 = load %Bool, %Bool* %wasSwap
+	ret %Bool %23
 }
 
 define internal void @bubble_sort32([0 x %Int32]* %array, %Nat32 %len) {
@@ -242,25 +242,25 @@ define %Int32 @main() {
 }
 
 define internal void @print_array([0 x %Int32]* %array, %Nat32 %len) {
+	%i = alloca %Nat32, align 4
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str5 to [0 x i8]*))
-	%2 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %2
+	store %Nat32 0, %Nat32* %i
 ; while_1
 	br label %again_1
 again_1:
-	%3 = load %Nat32, %Nat32* %2
-	%4 = icmp ult %Nat32 %3, %len
-	br %Bool %4 , label %body_1, label %break_1
+	%2 = load %Nat32, %Nat32* %i
+	%3 = icmp ult %Nat32 %2, %len
+	br %Bool %3 , label %body_1, label %break_1
 body_1:
-	%5 = load %Nat32, %Nat32* %2
-	%6 = load %Nat32, %Nat32* %2
-	%7 = bitcast %Nat32 %6 to %Nat32
-	%8 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %7
-	%9 = load %Int32, %Int32* %8
-	%10 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str6 to [0 x i8]*), %Nat32 %5, %Int32 %9)
-	%11 = load %Nat32, %Nat32* %2
-	%12 = add %Nat32 %11, 1
-	store %Nat32 %12, %Nat32* %2
+	%4 = load %Nat32, %Nat32* %i
+	%5 = load %Nat32, %Nat32* %i
+	%6 = bitcast %Nat32 %5 to %Nat32
+	%7 = getelementptr [0 x %Int32], [0 x %Int32]* %array, %Int32 0, %Nat32 %6
+	%8 = load %Int32, %Int32* %7
+	%9 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str6 to [0 x i8]*), %Nat32 %4, %Int32 %8)
+	%10 = load %Nat32, %Nat32* %i
+	%11 = add %Nat32 %10, 1
+	store %Nat32 %11, %Nat32* %i
 	br label %again_1
 break_1:
 	ret void

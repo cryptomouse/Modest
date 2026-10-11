@@ -184,13 +184,13 @@ define internal void @hello() {
 }
 
 define %Int32 @main() {
-	%1 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %1
+	%staticCounter = alloca %Nat32, align 4
+	store %Nat32 0, %Nat32* %staticCounter
 	call void @hello()
-	%2 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([20 x i8]* @.str2 to [0 x i8]*))
-	%3 = call %Int32 @staticInlineFunc(%Int32 0)
-	%4 = call %Int32 @staticNoinlineFunc(%Int32 0)
-	%5 = call %Int32 @staticInlineHintFunc(%Int32 0)
+	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([20 x i8]* @.str2 to [0 x i8]*))
+	%2 = call %Int32 @staticInlineFunc(%Int32 0)
+	%3 = call %Int32 @staticNoinlineFunc(%Int32 0)
+	%4 = call %Int32 @staticInlineHintFunc(%Int32 0)
 	ret %Int32 0
 }
 

@@ -146,34 +146,34 @@ declare void @perror(%ConstCharStr* %str)
 @.str8 = private constant [8 x i8] [i8 97, i8 32, i8 61, i8 61, i8 32, i8 98, i8 10, i8 0]
 ; -- endstrings --
 define %Int @main() {
+	%a = alloca %Int32, align 4
+	%b = alloca %Int32, align 4
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([22 x i8]* @.str1 to [0 x i8]*))
-	%2 = alloca %Int32, align 4
-	store %Int32 0, %Int32* %2
-	%3 = alloca %Int32, align 4
-	store %Int32 0, %Int32* %3
-	%4 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([10 x i8]* @.str2 to [0 x i8]*))
-	%5 = call %Int (%ConstCharStr*, ...) @scanf(%ConstCharStr* bitcast ([3 x i8]* @.str3 to [0 x i8]*), %Int32* %2)
-	%6 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([10 x i8]* @.str4 to [0 x i8]*))
-	%7 = call %Int (%ConstCharStr*, ...) @scanf(%ConstCharStr* bitcast ([3 x i8]* @.str5 to [0 x i8]*), %Int32* %3)
+	store %Int32 0, %Int32* %a
+	store %Int32 0, %Int32* %b
+	%2 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([10 x i8]* @.str2 to [0 x i8]*))
+	%3 = call %Int (%ConstCharStr*, ...) @scanf(%ConstCharStr* bitcast ([3 x i8]* @.str3 to [0 x i8]*), %Int32* %a)
+	%4 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([10 x i8]* @.str4 to [0 x i8]*))
+	%5 = call %Int (%ConstCharStr*, ...) @scanf(%ConstCharStr* bitcast ([3 x i8]* @.str5 to [0 x i8]*), %Int32* %b)
 ; if_0
-	%8 = load %Int32, %Int32* %2
-	%9 = load %Int32, %Int32* %3
-	%10 = icmp sgt %Int32 %8, %9
-	br %Bool %10 , label %then_0, label %else_0
+	%6 = load %Int32, %Int32* %a
+	%7 = load %Int32, %Int32* %b
+	%8 = icmp sgt %Int32 %6, %7
+	br %Bool %8 , label %then_0, label %else_0
 then_0:
-	%11 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([7 x i8]* @.str6 to [0 x i8]*))
+	%9 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([7 x i8]* @.str6 to [0 x i8]*))
 	br label %endif_0
 else_0:
 ; if_1
-	%12 = load %Int32, %Int32* %2
-	%13 = load %Int32, %Int32* %3
-	%14 = icmp slt %Int32 %12, %13
-	br %Bool %14 , label %then_1, label %else_1
+	%10 = load %Int32, %Int32* %a
+	%11 = load %Int32, %Int32* %b
+	%12 = icmp slt %Int32 %10, %11
+	br %Bool %12 , label %then_1, label %else_1
 then_1:
-	%15 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([7 x i8]* @.str7 to [0 x i8]*))
+	%13 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([7 x i8]* @.str7 to [0 x i8]*))
 	br label %endif_1
 else_1:
-	%16 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str8 to [0 x i8]*))
+	%14 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str8 to [0 x i8]*))
 	br label %endif_1
 endif_1:
 	br label %endif_0

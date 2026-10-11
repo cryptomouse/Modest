@@ -716,9 +716,10 @@ def do_cvalue_cons_record(x, ctx):
 		if from_type.layout != to_type.layout and from_type.layout != TYPE_RECORD_LAYOUT_UNKNOWN:
 			return do_cvalue_cast_layout(to_type, value, ctx, ti=x.ti)
 
-		if to_type.uid == from_type.uid:
+		if to_type.uid == from_type.uid and to_type.brand == from_type.brand:
 			# это одна и та же структура и приведение не требуется
 			cv = do_cvalue(value, ctx=ctx)
+			cv.mark = '??'
 			return cv
 
 		# C cannot just cast struct to struct ⚠️

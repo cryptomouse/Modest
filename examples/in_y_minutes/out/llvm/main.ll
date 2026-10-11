@@ -281,28 +281,28 @@ define internal %Float64 @distance(%Point %__a, %Point %__b) alwaysinline {
 }
 
 define internal %Int32 @sum(%Int32 %n) {
-	%1 = alloca %Int32, align 4
-	store %Int32 0, %Int32* %1
-	%2 = alloca %Int32, align 4
-	store %Int32 0, %Int32* %2
+	%total = alloca %Int32, align 4
+	%i = alloca %Int32, align 4
+	store %Int32 0, %Int32* %total
+	store %Int32 0, %Int32* %i
 ; while_1
 	br label %again_1
 again_1:
-	%3 = load %Int32, %Int32* %2
-	%4 = icmp slt %Int32 %3, %n
-	br %Bool %4 , label %body_1, label %break_1
+	%1 = load %Int32, %Int32* %i
+	%2 = icmp slt %Int32 %1, %n
+	br %Bool %2 , label %body_1, label %break_1
 body_1:
-	%5 = load %Int32, %Int32* %1
-	%6 = load %Int32, %Int32* %2
-	%7 = add %Int32 %5, %6
-	store %Int32 %7, %Int32* %1
-	%8 = load %Int32, %Int32* %2
-	%9 = add %Int32 %8, 1
-	store %Int32 %9, %Int32* %2
+	%3 = load %Int32, %Int32* %total
+	%4 = load %Int32, %Int32* %i
+	%5 = add %Int32 %3, %4
+	store %Int32 %5, %Int32* %total
+	%6 = load %Int32, %Int32* %i
+	%7 = add %Int32 %6, 1
+	store %Int32 %7, %Int32* %i
 	br label %again_1
 break_1:
-	%10 = load %Int32, %Int32* %1
-	ret %Int32 %10
+	%8 = load %Int32, %Int32* %total
+	ret %Int32 %8
 }
 
 define internal void @announce() {
@@ -311,171 +311,171 @@ define internal void @announce() {
 }
 
 define %Int @main() {
-	%1 = alloca %Int32, align 4
-	store %Int32 42, %Int32* %1
-	%2 = alloca %Float64, align 8
-	store %Float64 3.14159, %Float64* %2
-	%3 = alloca %Int32, align 4
-	store %Int32 10, %Int32* %3
-	store %Int32 20, %Int32* %3
-	%4 = alloca %Int32, align 4
-	store %Int32 40, %Int32* %4
-	%5 = alloca %Word64, align 8
-	store %Word64 9223372036854775808, %Word64* %5
-	%6 = alloca %Int64, align 8
-	%7 = load %Word64, %Word64* %5
-	%8 = bitcast %Word64 %7 to %Int64
-	store %Int64 %8, %Int64* %6
-	%9 = load %Word64, %Word64* %5
-	%10 = load %Int64, %Int64* %6
-	%11 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([26 x i8]* @.str2 to [0 x i8]*), %Word64 %9, %Int64 %10)
-	%12 = alloca %Meters, align 8
-	store %Meters 1.8, %Meters* %12
-	%13 = load %Meters, %Meters* %12
-	%14 = bitcast %Meters %13 to %Float64
-	%15 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str3 to [0 x i8]*), %Float64 %14)
-	%16 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str5 to [0 x i8]*), %Str8* bitcast ([15 x i8]* @.str4 to [0 x i8]*), %Char8 77)
-	%17 = alloca [5 x %Int32], align 4
-	%18 = insertvalue [5 x %Int32] zeroinitializer, %Int32 1, 0
-	%19 = insertvalue [5 x %Int32] %18, %Int32 2, 1
-	%20 = insertvalue [5 x %Int32] %19, %Int32 3, 2
-	%21 = insertvalue [5 x %Int32] %20, %Int32 4, 3
-	%22 = insertvalue [5 x %Int32] %21, %Int32 5, 4
-	%23 = zext i8 5 to %Nat32
-	store [5 x %Int32] %22, [5 x %Int32]* %17
-	%24 = alloca [2 x %Int32], align 4
-	%25 = zext i8 1 to %Nat32
-	%26 = getelementptr [5 x %Int32], [5 x %Int32]* %17, %Int32 0, %Nat32 %25
-	%27 = bitcast %Int32* %26 to [2 x %Int32]*
-	%28 = load [2 x %Int32], [2 x %Int32]* %27
-	%29 = zext i8 2 to %Nat32
-	store [2 x %Int32] %28, [2 x %Int32]* %24
-	%30 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %30
+	%i32 = alloca %Int32, align 4
+	%f64 = alloca %Float64, align 8
+	%counter = alloca %Int32, align 4
+	%locked = alloca %Int32, align 4
+	%w = alloca %Word64, align 8
+	%asInt = alloca %Int64, align 8
+	%height = alloca %Meters, align 8
+	%arr = alloca [5 x %Int32], align 4
+	%slice = alloca [2 x %Int32], align 4
+	%i = alloca %Nat32, align 4
+	%origin = alloca %Point
+	%corner = alloca %Point
+	%p = alloca %Point, align 8
+	%pp = alloca %Point*, align 8
+	%c = alloca %Color, align 1
+	%u = alloca %Word32, align 4
+	%v = alloca %Word32, align 4
+	%k = alloca %Int32, align 4
+	%j = alloca %Int32, align 4
+	%cb = alloca %Action*, align 8
+	store %Int32 42, %Int32* %i32
+	store %Float64 3.14159, %Float64* %f64
+	store %Int32 10, %Int32* %counter
+	store %Int32 20, %Int32* %counter
+	store %Int32 40, %Int32* %locked
+	store %Word64 9223372036854775808, %Word64* %w
+	%1 = load %Word64, %Word64* %w
+	%2 = bitcast %Word64 %1 to %Int64
+	store %Int64 %2, %Int64* %asInt
+	%3 = load %Word64, %Word64* %w
+	%4 = load %Int64, %Int64* %asInt
+	%5 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([26 x i8]* @.str2 to [0 x i8]*), %Word64 %3, %Int64 %4)
+	store %Meters 1.8, %Meters* %height
+	%6 = load %Meters, %Meters* %height
+	%7 = bitcast %Meters %6 to %Float64
+	%8 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str3 to [0 x i8]*), %Float64 %7)
+	%9 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str5 to [0 x i8]*), %Str8* bitcast ([15 x i8]* @.str4 to [0 x i8]*), %Char8 77)
+	%10 = insertvalue [5 x %Int32] zeroinitializer, %Int32 1, 0
+	%11 = insertvalue [5 x %Int32] %10, %Int32 2, 1
+	%12 = insertvalue [5 x %Int32] %11, %Int32 3, 2
+	%13 = insertvalue [5 x %Int32] %12, %Int32 4, 3
+	%14 = insertvalue [5 x %Int32] %13, %Int32 5, 4
+	%15 = zext i8 5 to %Nat32
+	store [5 x %Int32] %14, [5 x %Int32]* %arr
+	%16 = zext i8 1 to %Nat32
+	%17 = getelementptr [5 x %Int32], [5 x %Int32]* %arr, %Int32 0, %Nat32 %16
+	%18 = bitcast %Int32* %17 to [2 x %Int32]*
+	%19 = load [2 x %Int32], [2 x %Int32]* %18
+	%20 = zext i8 2 to %Nat32
+	store [2 x %Int32] %19, [2 x %Int32]* %slice
+	store %Nat32 0, %Nat32* %i
 ; while_1
 	br label %again_1
 again_1:
-	%31 = load %Nat32, %Nat32* %30
-	%32 = icmp ult %Nat32 %31, 5
-	br %Bool %32 , label %body_1, label %break_1
+	%21 = load %Nat32, %Nat32* %i
+	%22 = icmp ult %Nat32 %21, 5
+	br %Bool %22 , label %body_1, label %break_1
 body_1:
-	%33 = load %Nat32, %Nat32* %30
-	%34 = bitcast %Nat32 %33 to %Nat32
-	%35 = getelementptr [5 x %Int32], [5 x %Int32]* %17, %Int32 0, %Nat32 %34
-	%36 = load %Int32, %Int32* %35
-	%37 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([4 x i8]* @.str6 to [0 x i8]*), %Int32 %36)
-	%38 = load %Nat32, %Nat32* %30
-	%39 = add %Nat32 %38, 1
-	store %Nat32 %39, %Nat32* %30
+	%23 = load %Nat32, %Nat32* %i
+	%24 = bitcast %Nat32 %23 to %Nat32
+	%25 = getelementptr [5 x %Int32], [5 x %Int32]* %arr, %Int32 0, %Nat32 %24
+	%26 = load %Int32, %Int32* %25
+	%27 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([4 x i8]* @.str6 to [0 x i8]*), %Int32 %26)
+	%28 = load %Nat32, %Nat32* %i
+	%29 = add %Nat32 %28, 1
+	store %Nat32 %29, %Nat32* %i
 	br label %again_1
 break_1:
-	%40 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str7 to [0 x i8]*))
-	%41 = alloca %Point
-	store %Point zeroinitializer, %Point* %41
-	%42 = insertvalue %Point zeroinitializer, %Float64 3.0, 0
-	%43 = insertvalue %Point %42, %Float64 4.0, 1
-	%44 = alloca %Point
-	store %Point %43, %Point* %44
-	%45 = load %Point, %Point* %41
-	%46 = load %Point, %Point* %44
-	%47 = call %Float64 @distance(%Point %45, %Point %46)
-	%48 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([15 x i8]* @.str8 to [0 x i8]*), %Float64 %47)
-	%49 = alloca %Point, align 8
-	%50 = load %Point, %Point* %44
-	store %Point %50, %Point* %49
-	%51 = alloca %Point*, align 8
-	store %Point* %49, %Point** %51
-	%52 = load %Point*, %Point** %51
-	%53 = getelementptr %Point, %Point* %52, %Int32 0, %Int32 0
-	store %Float64 99.0, %Float64* %53
-	%54 = getelementptr %Point, %Point* %49, %Int32 0, %Int32 0
-	%55 = load %Float64, %Float64* %54
-	%56 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([10 x i8]* @.str9 to [0 x i8]*), %Float64 %55)
-	%57 = alloca %Color, align 1
-	store %Color 1, %Color* %57
+	%30 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str7 to [0 x i8]*))
+	store %Point zeroinitializer, %Point* %origin
+	%31 = insertvalue %Point zeroinitializer, %Float64 3.0, 0
+	%32 = insertvalue %Point %31, %Float64 4.0, 1
+	store %Point %32, %Point* %corner
+	%33 = load %Point, %Point* %origin
+	%34 = load %Point, %Point* %corner
+	%35 = call %Float64 @distance(%Point %33, %Point %34)
+	%36 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([15 x i8]* @.str8 to [0 x i8]*), %Float64 %35)
+	%37 = load %Point, %Point* %corner
+	store %Point %37, %Point* %p
+	store %Point* %p, %Point** %pp
+	%38 = load %Point*, %Point** %pp
+	%39 = getelementptr %Point, %Point* %38, %Int32 0, %Int32 0
+	store %Float64 99.0, %Float64* %39
+	%40 = getelementptr %Point, %Point* %p, %Int32 0, %Int32 0
+	%41 = load %Float64, %Float64* %40
+	%42 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([10 x i8]* @.str9 to [0 x i8]*), %Float64 %41)
+	store %Color 1, %Color* %c
 ; if_0
-	%58 = load %Color, %Color* %57
-	%59 = icmp eq %Color %58, 1
-	br %Bool %59 , label %then_0, label %endif_0
+	%43 = load %Color, %Color* %c
+	%44 = icmp eq %Color %43, 1
+	br %Bool %44 , label %then_0, label %endif_0
 then_0:
-	%60 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str10 to [0 x i8]*))
+	%45 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str10 to [0 x i8]*))
 	br label %endif_0
 endif_0:
-	%61 = alloca %Word32, align 4
-	%62 = zext i8 15 to %Word32
-	store %Word32 %62, %Word32* %61
-	%63 = alloca %Word32, align 4
-	%64 = zext i8 51 to %Word32
-	store %Word32 %64, %Word32* %63
-	%65 = load %Word32, %Word32* %61
-	%66 = load %Word32, %Word32* %63
-	%67 = or %Word32 %65, %66
-	%68 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([12 x i8]* @.str11 to [0 x i8]*), %Word32 %67)
-	%69 = alloca %Int32, align 4
-	store %Int32 0, %Int32* %69
+	%46 = zext i8 15 to %Word32
+	store %Word32 %46, %Word32* %u
+	%47 = zext i8 51 to %Word32
+	store %Word32 %47, %Word32* %v
+	%48 = load %Word32, %Word32* %u
+	%49 = load %Word32, %Word32* %v
+	%50 = or %Word32 %48, %49
+	%51 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([12 x i8]* @.str11 to [0 x i8]*), %Word32 %50)
+	store %Int32 0, %Int32* %k
 ; while_2
 	br label %again_2
 again_2:
-	%70 = load %Int32, %Int32* %69
-	%71 = icmp slt %Int32 %70, 5
-	br %Bool %71 , label %body_2, label %break_2
+	%52 = load %Int32, %Int32* %k
+	%53 = icmp slt %Int32 %52, 5
+	br %Bool %53 , label %body_2, label %break_2
 body_2:
-	%72 = load %Int32, %Int32* %69
-	%73 = add %Int32 %72, 1
-	store %Int32 %73, %Int32* %69
+	%54 = load %Int32, %Int32* %k
+	%55 = add %Int32 %54, 1
+	store %Int32 %55, %Int32* %k
 ; if_1
-	%74 = load %Int32, %Int32* %69
-	%75 = icmp eq %Int32 %74, 3
-	br %Bool %75 , label %then_1, label %endif_1
+	%56 = load %Int32, %Int32* %k
+	%57 = icmp eq %Int32 %56, 3
+	br %Bool %57 , label %then_1, label %endif_1
 then_1:
 	br label %again_2
 	br label %endif_1
 endif_1:
-	%77 = load %Int32, %Int32* %69
-	%78 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str12 to [0 x i8]*), %Int32 %77)
+	%59 = load %Int32, %Int32* %k
+	%60 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str12 to [0 x i8]*), %Int32 %59)
 	br label %again_2
 break_2:
-	%79 = alloca %Int32, align 4
-	store %Int32 0, %Int32* %79
+	store %Int32 0, %Int32* %j
 ; while_3
 	br label %again_3
 again_3:
 	br %Bool 1 , label %body_3, label %break_3
 body_3:
 ; if_2
-	%80 = load %Int32, %Int32* %79
-	%81 = icmp eq %Int32 %80, 2
-	br %Bool %81 , label %then_2, label %endif_2
+	%61 = load %Int32, %Int32* %j
+	%62 = icmp eq %Int32 %61, 2
+	br %Bool %62 , label %then_2, label %endif_2
 then_2:
 	br label %break_3
 	br label %endif_2
 endif_2:
-	%83 = load %Int32, %Int32* %79
-	%84 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str13 to [0 x i8]*), %Int32 %83)
-	%85 = load %Int32, %Int32* %79
-	%86 = add %Int32 %85, 1
-	store %Int32 %86, %Int32* %79
+	%64 = load %Int32, %Int32* %j
+	%65 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str13 to [0 x i8]*), %Int32 %64)
+	%66 = load %Int32, %Int32* %j
+	%67 = add %Int32 %66, 1
+	store %Int32 %67, %Int32* %j
 	br label %again_3
 break_3:
 ; if_3
-	%87 = load %Int32, %Int32* %1
-	%88 = icmp sgt %Int32 %87, 0
-	%89 = load %Int32, %Int32* %3
-	%90 = icmp slt %Int32 %89, 0
-	%91 = xor %Bool %90, 1
-	%92 = and %Bool %88, %91
-	br %Bool %92 , label %then_3, label %endif_3
+	%68 = load %Int32, %Int32* %i32
+	%69 = icmp sgt %Int32 %68, 0
+	%70 = load %Int32, %Int32* %counter
+	%71 = icmp slt %Int32 %70, 0
+	%72 = xor %Bool %71, 1
+	%73 = and %Bool %69, %72
+	br %Bool %73 , label %then_3, label %endif_3
 then_3:
-	%93 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str14 to [0 x i8]*))
+	%74 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str14 to [0 x i8]*))
 	br label %endif_3
 endif_3:
-	%94 = alloca %Action*, align 8
-	store %Action* @announce, %Action** %94
-	%95 = load %Action*, %Action** %94
-	call void %95()
-	%96 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str15 to [0 x i8]*), %Size 16)
-	%97 = call %Int32 @sum(%Int32 5)
-	%98 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str16 to [0 x i8]*), %Int32 %97)
+	store %Action* @announce, %Action** %cb
+	%75 = load %Action*, %Action** %cb
+	call void %75()
+	%76 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str15 to [0 x i8]*), %Size 16)
+	%77 = call %Int32 @sum(%Int32 5)
+	%78 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str16 to [0 x i8]*), %Int32 %77)
 	ret %Int 0
 }
 

@@ -90,7 +90,7 @@ def value_record_cons(t, v, method, ti):
 		return nv
 
 	if not v.type.is_generic(): #and not v.is_immediate():
-		if t.uid != v.type.uid:
+		if t.uid != v.type.uid or t.brand != v.type.brand:
 			# Если это реально разные типы-записи то да нужен будет raw cast (по крайней мере в C)
 			from semantic import cmodule_use
 			cmodule_use('use_raw_cast')

@@ -169,31 +169,31 @@ endif_0:
 }
 
 define internal %Int32 @get_number(%Int32 %min, %Int32 %max) {
-	%1 = alloca %Int32, align 4
-	store %Int32 0, %Int32* %1
-	store %Int32 0, %Int32* %1
+	%number = alloca %Int32, align 4
+	store %Int32 0, %Int32* %number
+	store %Int32 0, %Int32* %number
 ; while_1
 	br label %again_1
 again_1:
 	br %Bool 1 , label %body_1, label %break_1
 body_1:
-	%2 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([28 x i8]* @.str4 to [0 x i8]*), %Int32 %min, %Int32 %max)
-	%3 = call %Int (%ConstCharStr*, ...) @scanf(%ConstCharStr* bitcast ([3 x i8]* @.str5 to [0 x i8]*), %Int32* %1)
+	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([28 x i8]* @.str4 to [0 x i8]*), %Int32 %min, %Int32 %max)
+	%2 = call %Int (%ConstCharStr*, ...) @scanf(%ConstCharStr* bitcast ([3 x i8]* @.str5 to [0 x i8]*), %Int32* %number)
 ; if_0
-	%4 = load %Int32, %Int32* %1
-	%5 = icmp slt %Int32 %4, %min
-	br %Bool %5 , label %then_0, label %else_0
+	%3 = load %Int32, %Int32* %number
+	%4 = icmp slt %Int32 %3, %min
+	br %Bool %4 , label %then_0, label %else_0
 then_0:
-	%6 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([43 x i8]* @.str6 to [0 x i8]*), %Int32 %min)
+	%5 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([43 x i8]* @.str6 to [0 x i8]*), %Int32 %min)
 	br label %again_1
 	br label %endif_0
 else_0:
 ; if_1
-	%8 = load %Int32, %Int32* %1
-	%9 = icmp sgt %Int32 %8, %max
-	br %Bool %9 , label %then_1, label %else_1
+	%7 = load %Int32, %Int32* %number
+	%8 = icmp sgt %Int32 %7, %max
+	br %Bool %8 , label %then_1, label %else_1
 then_1:
-	%10 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([40 x i8]* @.str7 to [0 x i8]*), %Int32 %max)
+	%9 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([40 x i8]* @.str7 to [0 x i8]*), %Int32 %max)
 	br label %again_1
 	br label %endif_1
 else_1:
@@ -204,8 +204,8 @@ endif_1:
 endif_0:
 	br label %again_1
 break_1:
-	%13 = load %Int32, %Int32* %1
-	ret %Int32 %13
+	%12 = load %Int32, %Int32* %number
+	ret %Int32 %12
 }
 
 

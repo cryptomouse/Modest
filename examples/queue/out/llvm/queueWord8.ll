@@ -189,68 +189,68 @@ endif_0:
 }
 
 define %Nat32 @queueWord8_read(%queueWord8_QueueWord8* %q, [0 x %Word8]* %data, %Nat32 %len) {
-	%1 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %1
+	%n = alloca %Nat32, align 4
+	%x = alloca %Word8, align 1
+	store %Nat32 0, %Nat32* %n
 ; while_1
 	br label %again_1
 again_1:
-	%2 = load %Nat32, %Nat32* %1
-	%3 = icmp ult %Nat32 %2, %len
-	br %Bool %3 , label %body_1, label %break_1
+	%1 = load %Nat32, %Nat32* %n
+	%2 = icmp ult %Nat32 %1, %len
+	br %Bool %2 , label %body_1, label %break_1
 body_1:
-	%4 = alloca %Word8, align 1
-	store %Word8 0, %Word8* %4
+	store %Word8 0, %Word8* %x
 ; if_0
-	%5 = call %Bool @queueWord8_get(%queueWord8_QueueWord8* %q, %Word8* %4)
-	%6 = xor %Bool %5, 1
-	br %Bool %6 , label %then_0, label %endif_0
+	%3 = call %Bool @queueWord8_get(%queueWord8_QueueWord8* %q, %Word8* %x)
+	%4 = xor %Bool %3, 1
+	br %Bool %4 , label %then_0, label %endif_0
 then_0:
 	br label %break_1
 	br label %endif_0
 endif_0:
-	%8 = load %Nat32, %Nat32* %1
-	%9 = bitcast %Nat32 %8 to %Nat32
-	%10 = getelementptr [0 x %Word8], [0 x %Word8]* %data, %Int32 0, %Nat32 %9
-	%11 = load %Word8, %Word8* %4
-	store %Word8 %11, %Word8* %10
-	%12 = load %Nat32, %Nat32* %1
-	%13 = add %Nat32 %12, 1
-	store %Nat32 %13, %Nat32* %1
+	%6 = load %Nat32, %Nat32* %n
+	%7 = bitcast %Nat32 %6 to %Nat32
+	%8 = getelementptr [0 x %Word8], [0 x %Word8]* %data, %Int32 0, %Nat32 %7
+	%9 = load %Word8, %Word8* %x
+	store %Word8 %9, %Word8* %8
+	%10 = load %Nat32, %Nat32* %n
+	%11 = add %Nat32 %10, 1
+	store %Nat32 %11, %Nat32* %n
 	br label %again_1
 break_1:
-	%14 = load %Nat32, %Nat32* %1
-	ret %Nat32 %14
+	%12 = load %Nat32, %Nat32* %n
+	ret %Nat32 %12
 }
 
 define %Nat32 @queueWord8_write(%queueWord8_QueueWord8* %q, [0 x %Word8]* %data, %Nat32 %len) {
-	%1 = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %1
+	%n = alloca %Nat32, align 4
+	store %Nat32 0, %Nat32* %n
 ; while_1
 	br label %again_1
 again_1:
-	%2 = load %Nat32, %Nat32* %1
-	%3 = icmp ult %Nat32 %2, %len
-	br %Bool %3 , label %body_1, label %break_1
+	%1 = load %Nat32, %Nat32* %n
+	%2 = icmp ult %Nat32 %1, %len
+	br %Bool %2 , label %body_1, label %break_1
 body_1:
-	%4 = load %Nat32, %Nat32* %1
-	%5 = bitcast %Nat32 %4 to %Nat32
-	%6 = getelementptr [0 x %Word8], [0 x %Word8]* %data, %Int32 0, %Nat32 %5
-	%7 = load %Word8, %Word8* %6
+	%3 = load %Nat32, %Nat32* %n
+	%4 = bitcast %Nat32 %3 to %Nat32
+	%5 = getelementptr [0 x %Word8], [0 x %Word8]* %data, %Int32 0, %Nat32 %4
+	%6 = load %Word8, %Word8* %5
 ; if_0
-	%8 = call %Bool @queueWord8_put(%queueWord8_QueueWord8* %q, %Word8 %7)
-	%9 = xor %Bool %8, 1
-	br %Bool %9 , label %then_0, label %endif_0
+	%7 = call %Bool @queueWord8_put(%queueWord8_QueueWord8* %q, %Word8 %6)
+	%8 = xor %Bool %7, 1
+	br %Bool %8 , label %then_0, label %endif_0
 then_0:
 	br label %break_1
 	br label %endif_0
 endif_0:
-	%11 = load %Nat32, %Nat32* %1
-	%12 = add %Nat32 %11, 1
-	store %Nat32 %12, %Nat32* %1
+	%10 = load %Nat32, %Nat32* %n
+	%11 = add %Nat32 %10, 1
+	store %Nat32 %11, %Nat32* %n
 	br label %again_1
 break_1:
-	%13 = load %Nat32, %Nat32* %1
-	ret %Nat32 %13
+	%12 = load %Nat32, %Nat32* %n
+	ret %Nat32 %12
 }
 
 define void @queueWord8_clear(%queueWord8_QueueWord8* %q) {

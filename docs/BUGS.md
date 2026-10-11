@@ -498,29 +498,6 @@ type Size = {w: Int32, h: Int32}
   user types under names that cannot collide with the prelude's.
 - No reproducer in the suite.
 
-## BUG#52: A branded record cannot be constructed from its parent
-
-```modest
-type Point = {x: Int32, y: Int32}
-type Brand = @branded Point
-
-var p: Point = {x = 1, y = 2}
-var b: Brand = Brand p     // error: cannot construct 'Brand' from 'Point' value
-var q: Point = Point b     // error: cannot construct 'Point' from 'Brand' value
-```
-
-- `docs/lang/type/branded.md` states both directions as allowed: `B` from
-  `T` and `T` from `B`, explicitly, and that is what the whole newtype
-  pattern rests on. It holds for scalar parents — `Meters 5.0`,
-  `Float64 m` — and fails for a record parent, in both directions, in the
-  front end.
-- Constructing the brand from a literal works (`Brand {x = 1, y = 2}`),
-  so a branded record is usable, only not convertible.
-- Explicit construction between two *unbranded* records of the same
-  fields is accepted (with an `explicit cons from the same type` note),
-  which is the same code path minus the brand.
-- No reproducer in the suite: the branded type has no test file yet, and
-  `tests/lang/type/branded.modest` is where one belongs.
 
 ## BUG#54: An empty record type is emitted as `void` in an initializer
 

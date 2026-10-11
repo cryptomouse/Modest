@@ -3,12 +3,21 @@ public type Celsius = Fixed32
 public const freezingPoint = Celsius 0.0
 public const normalPoint = Celsius +25.0
 
-
 public type LocalInt = Int32
-public type Int = Int32
+
+public var x: LocalInt
+
+public type Int = LocalInt
+
 public type Y = Int
 public type X = {
 	a: LocalInt
-	b: LocalInt
+	public b: LocalInt
+	c: LocalInt
 }
+
+
+// public func f (p: {x: LocalInt}) -> Unit {
+
+// }
 
