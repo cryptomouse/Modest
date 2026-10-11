@@ -16,6 +16,9 @@
 // body, and an `alloca` outside the entry block is not released until the
 // function returns: the stack grows by one slot per iteration and the
 // program runs out of it.
+//
+// The slots of `var` and `let` are already taken in the entry block; that
+// is `stack_local.modest`.
 
 include "libc/ctypes64"
 include "libc/stdio"

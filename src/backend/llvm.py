@@ -102,6 +102,92 @@ def param_needs_holder(t):
 	return t.is_record() and not t.is_empty_record()
 
 
+# Слоты локальных переменных выделяются один раз на всю функцию, в entry-
+# блоке. alloca вне entry-блока - динамическая: она выполняется заново при
+# каждом проходе и освобождается только при возврате из функции, так что
+# `var` в теле цикла брал бы новый кусок стека на каждой итерации (BUG#96).
+#
+# print_def_func() заранее обходит тело, выделяет слоты и печатает их сразу
+# после `{`; print_stmt_var() и print_stmt_const() берут готовый слот по
+# своему оператору и делают только store начального значения на месте.
+# VLA остаются где были: их размер известен только при выполнении.
+#
+# Слот называется по переменной; одинаковые имена из разных областей
+# различаются суффиксом: counter, counter.2, ... Точки в идентификаторах
+# Modest нет, поэтому суффикс не совпадет с пользовательским именем.
+
+# имена меток, которые печатают print_stmt_if() и print_stmt_while()
+LABEL_PREFIXES = ('then', 'else', 'endif', 'again', 'break', 'body')
+
+def is_label_name(name):
+	prefix, sep, num = name.rpartition('_')
+	return sep != '' and prefix in LABEL_PREFIXES and num.isdigit()
+
+
+# Тип слота для `var`/`let`, или None, если слот выделяется не здесь
+def stmt_slot_type(x):
+	if x.is_stmt_def_var():
+		t = x.value.type
+		if t.contains_vla():
+			return None
+		return t
+
+	# x.is_stmt_def_const(); условия - те же, что в print_stmt_const()
+	iv = x.init_value
+	if iv.type.is_string():
+		return None
+	if iv.is_call() and need_sret(iv.func.type):
+		return None
+	t = x.value.type
+	if t.contains_vla():
+		return None
+	if t.is_sized_array() or t.is_record():
+		return t
+	return None
+
+
+def collect_slot_stmts(x, acc):
+	if x == None:
+		return
+	if x.is_stmt_block():
+		for stmt in x.stmts:
+			collect_slot_stmts(stmt, acc)
+	elif x.is_stmt_if():
+		collect_slot_stmts(x.then, acc)
+		collect_slot_stmts(x.els, acc)
+	elif x.is_stmt_while():
+		collect_slot_stmts(x.stmt, acc)
+	elif x.is_stmt_def_var() or x.is_stmt_def_const():
+		t = stmt_slot_type(x)
+		if t != None:
+			acc.append((x, t))
+
+
+def unique_slot_name(id_str, taken):
+	name = id_str
+	n = 1
+	while name in taken or is_label_name(name):
+		n = n + 1
+		name = '%s.%d' % (id_str, n)
+	taken.add(name)
+	return name
+
+
+# Печатает alloca всех слотов функции; вызывается сразу после `{`
+def print_slots(fn, body):
+	taken = set()
+	for param in fn.type.params:
+		taken.add(get_id_str(param))
+		taken.add('__' + param.id.str)
+
+	acc = []
+	collect_slot_stmts(body, acc)
+	for x, t in acc:
+		name = unique_slot_name(get_id_str(x.value), taken)
+		alignment = t.get_align() if x.is_stmt_def_var() else 0
+		fctx['slots'][id(x)] = llvm_alloca(t, id_str=name, alignment=alignment)
+
+
 INDENT_SYMBOL = "\t"
 
 NL_INDENT = "\n%s" % INDENT_SYMBOL
@@ -2379,19 +2465,23 @@ def print_stmt_var(x):
 	t = var.type
 	id_str = get_id_str(var)
 
-	sz = None
+	# слот выделен в entry-блоке (см. print_slots)
+	left = fctx['slots'].get(id(x))
 
-	# VLA VLA VLA
-	# Calculate size of VLA value in runtime (!)
-	if t.contains_vla():
-		handleVLA(t)
-		sz = t.runtimeSizeRoots
-	if t.is_vla():
-		t = t.get_array_root()
-	# VLA VLA VLA
+	if left == None:
+		sz = None
 
+		# VLA VLA VLA
+		# Calculate size of VLA value in runtime (!)
+		if t.contains_vla():
+			handleVLA(t)
+			sz = t.runtimeSizeRoots
+		if t.is_vla():
+			t = t.get_array_root()
+		# VLA VLA VLA
 
-	left = llvm_alloca(t, size=sz, alignment=t.get_align())
+		left = llvm_alloca(t, size=sz, alignment=t.get_align())
+
 	locals_add(id_str, left)
 
 	init_value = x.init_value
@@ -2432,7 +2522,13 @@ def print_stmt_const(x):
 	# поскольку их могут индексировать переменной
 	# а массив-значение в "регистре" невозможно индексировать переменной
 	if t.is_sized_array() or t.is_record():
-		v = llvm_alloca_store(t, id_str=None, init_value=v)
+		slot = fctx['slots'].get(id(x))
+		if slot != None:
+			# слот выделен в entry-блоке (см. print_slots)
+			llvm_store(slot, v)
+			v = slot
+		else:
+			v = llvm_alloca_store(t, id_str=None, init_value=v)
 
 	locals_add(id_str, v)
 	return None
@@ -2758,6 +2854,9 @@ def print_def_func(x):
 		'locals': [],
 
 		'stackptr': None,  # for VLA
+
+		# id(StmtDefVar/StmtDefConst) => слот в entry-блоке (see print_slots)
+		'slots': {},
 	}
 
 	fctx_push(fctx)
@@ -2805,6 +2904,8 @@ def print_def_func(x):
 
 	out(" {")
 	indent_up()
+
+	print_slots(fn, x.stmt)
 
 	# for any composite parameter print local holder value
 	for param in params:

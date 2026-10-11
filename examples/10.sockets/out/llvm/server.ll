@@ -197,15 +197,15 @@ declare %Int @accept(%Int %socket, %SockAddr* %addr, %SocklenT* %addrlen)
 @.str13 = private constant [22 x i8] [i8 91, i8 45, i8 93, i8 32, i8 67, i8 97, i8 110, i8 110, i8 111, i8 116, i8 32, i8 119, i8 114, i8 105, i8 116, i8 101, i8 32, i8 102, i8 105, i8 108, i8 101, i8 0]
 ; -- endstrings --
 define internal %Bool @writeFile(%Int %sockFd) {
-	%1 = alloca [1024 x %Char8], align 1
-	%2 = zext i16 1024 to %Nat32
-	%3 = mul %Nat32 %2, 1
-	%4 = bitcast [1024 x %Char8]* %1 to i8*
-	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %4, i8 0, %Nat32 %3, i1 0)
-	%5 = call i8* @fopen(%ConstCharStr* bitcast ([10 x i8]* @.str1 to [0 x i8]*), %ConstCharStr* bitcast ([2 x i8]* @.str2 to [0 x i8]*))
+	%buffer = alloca [1024 x %Char8], align 1
+	%1 = zext i16 1024 to %Nat32
+	%2 = mul %Nat32 %1, 1
+	%3 = bitcast [1024 x %Char8]* %buffer to i8*
+	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %3, i8 0, %Nat32 %2, i1 0)
+	%4 = call i8* @fopen(%ConstCharStr* bitcast ([10 x i8]* @.str1 to [0 x i8]*), %ConstCharStr* bitcast ([2 x i8]* @.str2 to [0 x i8]*))
 ; if_0
-	%6 = icmp eq i8* %5, null
-	br %Bool %6 , label %then_0, label %endif_0
+	%5 = icmp eq i8* %4, null
+	br %Bool %5 , label %then_0, label %endif_0
 then_0:
 	call void @perror(%ConstCharStr* bitcast ([27 x i8]* @.str3 to [0 x i8]*))
 	ret %Bool 0
@@ -216,26 +216,30 @@ endif_0:
 again_1:
 	br %Bool 1 , label %body_1, label %break_1
 body_1:
-	%8 = bitcast [1024 x %Char8]* %1 to i8*
-	%9 = call %SSizeT @recv(%Int %sockFd, i8* %8, %SizeT 1024, %Int 0)
+	%7 = bitcast [1024 x %Char8]* %buffer to i8*
+	%8 = call %SSizeT @recv(%Int %sockFd, i8* %7, %SizeT 1024, %Int 0)
 ; if_1
-	%10 = icmp sle %SSizeT %9, 0
-	br %Bool %10 , label %then_1, label %endif_1
+	%9 = icmp sle %SSizeT %8, 0
+	br %Bool %9 , label %then_1, label %endif_1
 then_1:
 	br label %break_1
 	br label %endif_1
 endif_1:
-	%12 = call %Int (i8*, %Str*, ...) @fprintf(i8* %5, %Str* bitcast ([3 x i8]* @.str4 to [0 x i8]*), [1024 x %Char8]* %1)
-	%13 = zext i16 1024 to %Nat32
-	%14 = mul %Nat32 %13, 1
-	%15 = bitcast [1024 x %Char8]* %1 to i8*
-	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %15, i8 0, %Nat32 %14, i1 0)
+	%11 = call %Int (i8*, %Str*, ...) @fprintf(i8* %4, %Str* bitcast ([3 x i8]* @.str4 to [0 x i8]*), [1024 x %Char8]* %buffer)
+	%12 = zext i16 1024 to %Nat32
+	%13 = mul %Nat32 %12, 1
+	%14 = bitcast [1024 x %Char8]* %buffer to i8*
+	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %14, i8 0, %Nat32 %13, i1 0)
 	br label %again_1
 break_1:
 	ret %Bool 1
 }
 
 define %Int @main() {
+	%serverAddr = alloca %SockAddrIn, align 4
+	%e = alloca %Int, align 4
+	%addrSize = alloca %SocklenT, align 4
+	%newAddr = alloca %SockAddrIn, align 4
 	%1 = call %Int @socket(%AddressFamily 2, %Int 1, %Int 0)
 ; if_0
 	%2 = icmp slt %Int %1, 0
@@ -246,52 +250,48 @@ then_0:
 	br label %endif_0
 endif_0:
 	%3 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([27 x i8]* @.str6 to [0 x i8]*))
-	%4 = alloca %SockAddrIn, align 4
-	%5 = insertvalue %SockAddrIn zeroinitializer, %AddressFamily 2, 1
-	%6 = insertvalue %SockAddrIn %5, %UnsignedShort 8080, 2
-	%7 = call %InAddrT @inet_addr([0 x %ConstChar]* bitcast ([10 x i8]* @.str7 to [0 x i8]*))
-	%8 = insertvalue %Struct_in_addr zeroinitializer, %InAddrT %7, 0
-	%9 = insertvalue %SockAddrIn %6, %Struct_in_addr %8, 3
-	store %SockAddrIn %9, %SockAddrIn* %4
-	%10 = bitcast %SockAddrIn* %4 to i8*
-	%11 = bitcast i8* %10 to %SockAddr*
-	%12 = alloca %Int, align 4
-	%13 = call %Int @bind(%Int %1, %SockAddr* %11, %SocklenT 16)
-	store %Int %13, %Int* %12
+	%4 = insertvalue %SockAddrIn zeroinitializer, %AddressFamily 2, 1
+	%5 = insertvalue %SockAddrIn %4, %UnsignedShort 8080, 2
+	%6 = call %InAddrT @inet_addr([0 x %ConstChar]* bitcast ([10 x i8]* @.str7 to [0 x i8]*))
+	%7 = insertvalue %Struct_in_addr zeroinitializer, %InAddrT %6, 0
+	%8 = insertvalue %SockAddrIn %5, %Struct_in_addr %7, 3
+	store %SockAddrIn %8, %SockAddrIn* %serverAddr
+	%9 = bitcast %SockAddrIn* %serverAddr to i8*
+	%10 = bitcast i8* %9 to %SockAddr*
+	%11 = call %Int @bind(%Int %1, %SockAddr* %10, %SocklenT 16)
+	store %Int %11, %Int* %e
 ; if_1
-	%14 = load %Int, %Int* %12
-	%15 = icmp slt %Int %14, 0
-	br %Bool %15 , label %then_1, label %endif_1
+	%12 = load %Int, %Int* %e
+	%13 = icmp slt %Int %12, 0
+	br %Bool %13 , label %then_1, label %endif_1
 then_1:
 	call void @perror(%ConstCharStr* bitcast ([21 x i8]* @.str8 to [0 x i8]*))
 	call void @exit(%Int 1)
 	br label %endif_1
 endif_1:
-	%16 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([25 x i8]* @.str9 to [0 x i8]*))
-	%17 = call %Int @listen(%Int %1, %Int 10)
-	store %Int %17, %Int* %12
+	%14 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([25 x i8]* @.str9 to [0 x i8]*))
+	%15 = call %Int @listen(%Int %1, %Int 10)
+	store %Int %15, %Int* %e
 ; if_2
-	%18 = load %Int, %Int* %12
-	%19 = icmp ne %Int %18, 0
-	br %Bool %19 , label %then_2, label %endif_2
+	%16 = load %Int, %Int* %e
+	%17 = icmp ne %Int %16, 0
+	br %Bool %17 , label %then_2, label %endif_2
 then_2:
 	call void @perror(%ConstCharStr* bitcast ([21 x i8]* @.str10 to [0 x i8]*))
 	call void @exit(%Int 1)
 	br label %endif_2
 endif_2:
-	%20 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str11 to [0 x i8]*))
-	%21 = alloca %SocklenT, align 4
-	store %SocklenT 16, %SocklenT* %21
-	%22 = alloca %SockAddrIn, align 4
-	store %SockAddrIn zeroinitializer, %SockAddrIn* %22
-	%23 = bitcast %SockAddrIn* %22 to i8*
-	%24 = bitcast i8* %23 to %SockAddr*
-	%25 = call %Int @accept(%Int %1, %SockAddr* %24, %SocklenT* %21)
-	%26 = call %Bool @writeFile(%Int %25)
+	%18 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str11 to [0 x i8]*))
+	store %SocklenT 16, %SocklenT* %addrSize
+	store %SockAddrIn zeroinitializer, %SockAddrIn* %newAddr
+	%19 = bitcast %SockAddrIn* %newAddr to i8*
+	%20 = bitcast i8* %19 to %SockAddr*
+	%21 = call %Int @accept(%Int %1, %SockAddr* %20, %SocklenT* %addrSize)
+	%22 = call %Bool @writeFile(%Int %21)
 ; if_3
-	br %Bool %26 , label %then_3, label %else_3
+	br %Bool %22 , label %then_3, label %else_3
 then_3:
-	%27 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([34 x i8]* @.str12 to [0 x i8]*))
+	%23 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([34 x i8]* @.str12 to [0 x i8]*))
 	br label %endif_3
 else_3:
 	call void @perror(%ConstCharStr* bitcast ([22 x i8]* @.str13 to [0 x i8]*))

@@ -148,62 +148,62 @@ define internal void @memoryBarrier() {
 }
 
 define internal %Int64 @sum64(%Int64 %a, %Int64 %b) {
-	%1 = alloca %Int64, align 8
-	store %Int64 0, %Int64* %1
-	%2 = call %Int64 asm sideeffect "add $0, $1, $2", "=r,r,r,~{cc}" (%Int64 %a, %Int64 %b)
-	store %Int64 %2, %Int64* %1
-	%3 = load %Int64, %Int64* %1
-	ret %Int64 %3
+	%sum = alloca %Int64, align 8
+	store %Int64 0, %Int64* %sum
+	%1 = call %Int64 asm sideeffect "add $0, $1, $2", "=r,r,r,~{cc}" (%Int64 %a, %Int64 %b)
+	store %Int64 %1, %Int64* %sum
+	%2 = load %Int64, %Int64* %sum
+	ret %Int64 %2
 }
 
 define internal %Int64 @sub64(%Int64 %a, %Int64 %b) {
-	%1 = alloca %Int64, align 8
-	store %Int64 0, %Int64* %1
-	%2 = call %Int64 asm sideeffect "sub $0, $1, $2", "=r,r,r,~{cc}" (%Int64 %a, %Int64 %b)
-	store %Int64 %2, %Int64* %1
-	%3 = load %Int64, %Int64* %1
-	ret %Int64 %3
+	%sub = alloca %Int64, align 8
+	store %Int64 0, %Int64* %sub
+	%1 = call %Int64 asm sideeffect "sub $0, $1, $2", "=r,r,r,~{cc}" (%Int64 %a, %Int64 %b)
+	store %Int64 %1, %Int64* %sub
+	%2 = load %Int64, %Int64* %sub
+	ret %Int64 %2
 }
 
 define internal void @sumsub64(%Int64 %a, %Int64 %b) {
-	%1 = alloca %Int64, align 8
-	store %Int64 0, %Int64* %1
-	%2 = alloca %Int64, align 8
-	store %Int64 0, %Int64* %2
-	%3 = call {%Int64,%Int64} asm sideeffect "add $0, $2, $3\0Asub $1, $2, $3\0A", "=&r,=&r,r,r,~{cc}" (%Int64 %a, %Int64 %b)
-	%4 = extractvalue {%Int64,%Int64} %3, 0
-	store %Int64 %4, %Int64* %1
-	%5 = extractvalue {%Int64,%Int64} %3, 1
-	store %Int64 %5, %Int64* %2
-	%6 = load %Int64, %Int64* %1
-	%7 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str1 to [0 x i8]*), %Int64 %6)
-	%8 = load %Int64, %Int64* %2
-	%9 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str2 to [0 x i8]*), %Int64 %8)
+	%sum = alloca %Int64, align 8
+	%sub = alloca %Int64, align 8
+	store %Int64 0, %Int64* %sum
+	store %Int64 0, %Int64* %sub
+	%1 = call {%Int64,%Int64} asm sideeffect "add $0, $2, $3\0Asub $1, $2, $3\0A", "=&r,=&r,r,r,~{cc}" (%Int64 %a, %Int64 %b)
+	%2 = extractvalue {%Int64,%Int64} %1, 0
+	store %Int64 %2, %Int64* %sum
+	%3 = extractvalue {%Int64,%Int64} %1, 1
+	store %Int64 %3, %Int64* %sub
+	%4 = load %Int64, %Int64* %sum
+	%5 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str1 to [0 x i8]*), %Int64 %4)
+	%6 = load %Int64, %Int64* %sub
+	%7 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str2 to [0 x i8]*), %Int64 %6)
 	ret void
 }
 
 define %Int @main() {
+	%a = alloca %Int64, align 8
+	%b = alloca %Int64, align 8
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([17 x i8]* @.str3 to [0 x i8]*))
 	call void asm sideeffect "nop", "" ()
-	%2 = alloca %Int64, align 8
-	store %Int64 10, %Int64* %2
-	%3 = alloca %Int64, align 8
-	store %Int64 20, %Int64* %3
-	%4 = load %Int64, %Int64* %2
-	%5 = load %Int64, %Int64* %3
-	%6 = call %Int64 @sum64(%Int64 %4, %Int64 %5)
-	%7 = load %Int64, %Int64* %2
-	%8 = load %Int64, %Int64* %3
-	%9 = call %Int64 @sub64(%Int64 %7, %Int64 %8)
-	%10 = load %Int64, %Int64* %2
-	%11 = load %Int64, %Int64* %3
-	%12 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([24 x i8]* @.str4 to [0 x i8]*), %Int64 %10, %Int64 %11, %Int64 %6)
-	%13 = load %Int64, %Int64* %2
-	%14 = load %Int64, %Int64* %3
-	%15 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([24 x i8]* @.str5 to [0 x i8]*), %Int64 %13, %Int64 %14, %Int64 %9)
-	%16 = load %Int64, %Int64* %2
-	%17 = load %Int64, %Int64* %3
-	call void @sumsub64(%Int64 %16, %Int64 %17)
+	store %Int64 10, %Int64* %a
+	store %Int64 20, %Int64* %b
+	%2 = load %Int64, %Int64* %a
+	%3 = load %Int64, %Int64* %b
+	%4 = call %Int64 @sum64(%Int64 %2, %Int64 %3)
+	%5 = load %Int64, %Int64* %a
+	%6 = load %Int64, %Int64* %b
+	%7 = call %Int64 @sub64(%Int64 %5, %Int64 %6)
+	%8 = load %Int64, %Int64* %a
+	%9 = load %Int64, %Int64* %b
+	%10 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([24 x i8]* @.str4 to [0 x i8]*), %Int64 %8, %Int64 %9, %Int64 %4)
+	%11 = load %Int64, %Int64* %a
+	%12 = load %Int64, %Int64* %b
+	%13 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([24 x i8]* @.str5 to [0 x i8]*), %Int64 %11, %Int64 %12, %Int64 %7)
+	%14 = load %Int64, %Int64* %a
+	%15 = load %Int64, %Int64* %b
+	call void @sumsub64(%Int64 %14, %Int64 %15)
 	ret %Int 0
 }
 

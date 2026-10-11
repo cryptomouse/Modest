@@ -168,6 +168,7 @@ declare void @perror(%ConstCharStr* %str)
 };
 
 define internal void @writeExample() {
+	%chunk = alloca %Chunk, align 1
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([20 x i8]* @.str2 to [0 x i8]*))
 	%2 = call i8* @fopen(%Str8* bitcast ([9 x i8]* @.str1 to [0 x i8]*), %ConstCharStr* bitcast ([3 x i8]* @.str3 to [0 x i8]*))
 ; if_0
@@ -178,23 +179,23 @@ then_0:
 	ret void
 	br label %endif_0
 endif_0:
-	%6 = alloca %Chunk, align 1
-	%7 = insertvalue [100 x %Char] zeroinitializer, %Char 105, 0
-	%8 = insertvalue [100 x %Char] %7, %Char 100, 1
-	%9 = insertvalue %Chunk zeroinitializer, [100 x %Char] %8, 0
-	%10 = insertvalue [1024 x %Char] zeroinitializer, %Char 100, 0
-	%11 = insertvalue [1024 x %Char] %10, %Char 97, 1
-	%12 = insertvalue [1024 x %Char] %11, %Char 116, 2
-	%13 = insertvalue [1024 x %Char] %12, %Char 97, 3
-	%14 = insertvalue %Chunk %9, [1024 x %Char] %13, 1
-	store %Chunk %14, %Chunk* %6
-	%15 = bitcast %Chunk* %6 to i8*
-	%16 = call %SizeT @fwrite(i8* %15, %SizeT 1124, %SizeT 1, i8* %2)
-	%17 = call %Int @fclose(i8* %2)
+	%6 = insertvalue [100 x %Char] zeroinitializer, %Char 105, 0
+	%7 = insertvalue [100 x %Char] %6, %Char 100, 1
+	%8 = insertvalue %Chunk zeroinitializer, [100 x %Char] %7, 0
+	%9 = insertvalue [1024 x %Char] zeroinitializer, %Char 100, 0
+	%10 = insertvalue [1024 x %Char] %9, %Char 97, 1
+	%11 = insertvalue [1024 x %Char] %10, %Char 116, 2
+	%12 = insertvalue [1024 x %Char] %11, %Char 97, 3
+	%13 = insertvalue %Chunk %8, [1024 x %Char] %12, 1
+	store %Chunk %13, %Chunk* %chunk
+	%14 = bitcast %Chunk* %chunk to i8*
+	%15 = call %SizeT @fwrite(i8* %14, %SizeT 1124, %SizeT 1, i8* %2)
+	%16 = call %Int @fclose(i8* %2)
 	ret void
 }
 
 define internal void @readExample() {
+	%chunk = alloca %Chunk, align 1
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([19 x i8]* @.str5 to [0 x i8]*))
 	%2 = call i8* @fopen(%Str8* bitcast ([9 x i8]* @.str1 to [0 x i8]*), %ConstCharStr* bitcast ([3 x i8]* @.str6 to [0 x i8]*))
 ; if_0
@@ -205,16 +206,15 @@ then_0:
 	ret void
 	br label %endif_0
 endif_0:
-	%6 = alloca %Chunk, align 1
-	store %Chunk zeroinitializer, %Chunk* %6
-	%7 = bitcast %Chunk* %6 to i8*
-	%8 = call %SizeT @fread(i8* %7, %SizeT 1124, %SizeT 1, i8* %2)
-	%9 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str8 to [0 x i8]*), %Str8* bitcast ([9 x i8]* @.str1 to [0 x i8]*))
-	%10 = getelementptr %Chunk, %Chunk* %6, %Int32 0, %Int32 0
-	%11 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str9 to [0 x i8]*), [100 x %Char]* %10)
-	%12 = getelementptr %Chunk, %Chunk* %6, %Int32 0, %Int32 1
-	%13 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str10 to [0 x i8]*), [1024 x %Char]* %12)
-	%14 = call %Int @fclose(i8* %2)
+	store %Chunk zeroinitializer, %Chunk* %chunk
+	%6 = bitcast %Chunk* %chunk to i8*
+	%7 = call %SizeT @fread(i8* %6, %SizeT 1124, %SizeT 1, i8* %2)
+	%8 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str8 to [0 x i8]*), %Str8* bitcast ([9 x i8]* @.str1 to [0 x i8]*))
+	%9 = getelementptr %Chunk, %Chunk* %chunk, %Int32 0, %Int32 0
+	%10 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str9 to [0 x i8]*), [100 x %Char]* %9)
+	%11 = getelementptr %Chunk, %Chunk* %chunk, %Int32 0, %Int32 1
+	%12 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str10 to [0 x i8]*), [1024 x %Char]* %11)
+	%13 = call %Int @fclose(i8* %2)
 	ret void
 }
 

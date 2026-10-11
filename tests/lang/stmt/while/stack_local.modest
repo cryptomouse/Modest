@@ -1,0 +1,122 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: var in a loop
+// EXPECT-OUT: passed: let in a loop
+// EXPECT-OUT: passed: shadowed names
+// EXPECT-OUT: passed: stack local
+//
+// A `var` or a `let` holding an array or a record, declared in the body
+// of a loop that runs millions of times.  Its stack slot must be taken
+// once for the whole function, not once per iteration, or the program
+// runs out of stack.
+//
+// The LLVM backend allocates every such slot in the function's entry
+// block and names it after the variable.  Variables of one name from
+// different scopes, a variable shadowing a parameter, and a variable named
+// like one of the backend's own labels (`body_1`) each need a slot name of
+// their own; the third test checks that each still reads its own value.
+//
+// Temporaries the backend makes itself are BUG#96
+// (`stack_temporary.modest`).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+
+// Enough iterations that one slot of 4 bytes each is far past a usual
+// 8 MiB stack.
+const iterations: Int32 = 4000000
+
+
+func testVar () -> Bool {
+	var sum: Int32 = 0
+	var i: Int32 = 0
+	while i < iterations {
+		var one: Int32 = 1
+		sum = sum + one
+		i = i + 1
+	}
+
+	if sum != iterations {
+		printf("sum = %d, expected %d\n", sum, iterations)
+		return false
+	}
+
+	printf("passed: var in a loop\n")
+	return true
+}
+
+
+func testLet () -> Bool {
+	var sum: Int32 = 0
+	var i: Int32 = 0
+	while i < iterations {
+		let pair: [2]Int32 = [i, 1]
+		let p: Point = {x = 1, y = pair[1]}
+		sum = sum + p.y
+		i = i + 1
+	}
+
+	if sum != iterations {
+		printf("sum = %d, expected %d\n", sum, iterations)
+		return false
+	}
+
+	printf("passed: let in a loop\n")
+	return true
+}
+
+
+func shadowed (counter: Int32) -> Int32 {
+	var total: Int32 = 0
+	var i: Int32 = 0
+	while i < 3 {
+		var counter: Int32 = 10
+		var body_1: Int32 = 1000
+		if i == 0 {
+			var counter: Int32 = 100
+			total = total + counter
+		}
+		total = total + counter + body_1
+		i = i + 1
+	}
+
+	// the parameter, untouched by the two variables that shadow it
+	return total + counter
+}
+
+
+func testShadowed () -> Bool {
+	// 100 once, then (10 + 1000) three times, then the parameter 5
+	let r = shadowed(5)
+	if r != 3135 {
+		printf("shadowed(5) = %d, expected 3135\n", r)
+		return false
+	}
+
+	printf("passed: shadowed names\n")
+	return true
+}
+
+
+func main () -> Int {
+	var ok = testVar()
+	ok = testLet() and ok
+	ok = testShadowed() and ok
+
+	if not ok {
+		printf("failed: stack local\n")
+		return exitFailure
+	}
+
+	printf("passed: stack local\n")
+	return exitSuccess
+}

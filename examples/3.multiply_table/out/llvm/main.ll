@@ -140,22 +140,22 @@ declare void @perror(%ConstCharStr* %str)
 @.str2 = private constant [23 x i8] [i8 109, i8 117, i8 108, i8 116, i8 105, i8 112, i8 108, i8 121, i8 32, i8 116, i8 97, i8 98, i8 108, i8 101, i8 32, i8 102, i8 111, i8 114, i8 32, i8 37, i8 100, i8 10, i8 0]
 ; -- endstrings --
 define internal void @mtab(%Nat32 %n) {
-	%1 = alloca %Nat32, align 4
-	store %Nat32 1, %Nat32* %1
+	%m = alloca %Nat32, align 4
+	store %Nat32 1, %Nat32* %m
 ; while_1
 	br label %again_1
 again_1:
-	%2 = load %Nat32, %Nat32* %1
-	%3 = icmp ult %Nat32 %2, 10
-	br %Bool %3 , label %body_1, label %break_1
+	%1 = load %Nat32, %Nat32* %m
+	%2 = icmp ult %Nat32 %1, 10
+	br %Bool %2 , label %body_1, label %break_1
 body_1:
-	%4 = load %Nat32, %Nat32* %1
-	%5 = mul %Nat32 %n, %4
-	%6 = load %Nat32, %Nat32* %1
-	%7 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([14 x i8]* @.str1 to [0 x i8]*), %Nat32 %n, %Nat32 %6, %Nat32 %5)
-	%8 = load %Nat32, %Nat32* %1
-	%9 = add %Nat32 %8, 1
-	store %Nat32 %9, %Nat32* %1
+	%3 = load %Nat32, %Nat32* %m
+	%4 = mul %Nat32 %n, %3
+	%5 = load %Nat32, %Nat32* %m
+	%6 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([14 x i8]* @.str1 to [0 x i8]*), %Nat32 %n, %Nat32 %5, %Nat32 %4)
+	%7 = load %Nat32, %Nat32* %m
+	%8 = add %Nat32 %7, 1
+	store %Nat32 %8, %Nat32* %m
 	br label %again_1
 break_1:
 	ret void

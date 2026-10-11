@@ -1470,21 +1470,27 @@ body_1:
 	store %Vec2 %6, %Vec2* %7
 ```
 
-- Every `alloca` is written where its value is needed. An `alloca`
-  outside the entry block is a dynamic one: it is released only when the
-  function returns, so inside a loop the stack grows by one slot per
-  iteration until the program crashes (exit -11 on 4 million
-  iterations).
+- A temporary the backend makes for itself is written where its value is
+  needed. An `alloca` outside the entry block is a dynamic one: it is
+  released only when the function returns, so inside a loop the stack
+  grows by one slot per iteration until the program crashes (exit -11 on
+  4 million iterations).
+- The slots of `var` and `let` no longer have this problem: they are
+  collected before the body is printed and allocated in the entry block
+  (`print_slots`, covered by `stack_local.modest`). That works because
+  they are statements, known in advance; a temporary appears only while
+  an expression is being evaluated.
 - Three places emit such a temporary: a call result put under another
   record name (`cons_composite_from_composite`), a record or array value
   compared with `==` (the operands are spilled for `memcmp`), and the
   return buffer of a function that returns an array (`do_eval_call`,
   `print_stmt_const`).
 - Recursion is not the issue: a frame's slots go away with the frame.
-- Fix: emit the temporaries into the entry block, as clang does. `out()`
-  writes straight to the file and registers are numbered in order, so the
-  body has to be buffered (`print_def_func`) and the hoisted `alloca`s
-  given named registers that do not disturb the numbering.
+- Fix: emit the temporaries into the entry block too, as clang does.
+  `out()` writes straight to the file and registers are numbered in
+  order, so the body has to be buffered (`print_def_func`) and the
+  hoisted `alloca`s given named registers that do not disturb the
+  numbering.
 - The C backend is unaffected: its temporaries are block-scoped C
   objects.
 - Coverage: `tests/lang/stmt/while/stack_temporary.modest`, marked
