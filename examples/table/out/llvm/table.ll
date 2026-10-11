@@ -228,11 +228,11 @@ again_1:
 	%30 = icmp ult %Nat32 %28, %29
 	br %Bool %30 , label %body_1, label %break_1
 body_1:
-	%31 = load %Nat32, %Nat32* %i
-	%32 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
-	%33 = load %table_Row*, %table_Row** %32
-	%34 = bitcast %Nat32 %31 to %Nat32
-	%35 = getelementptr %table_Row, %table_Row* %33, %Int32 0, %Nat32 %34
+	%31 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
+	%32 = load %table_Row*, %table_Row** %31
+	%33 = load %Nat32, %Nat32* %i
+	%34 = bitcast %Nat32 %33 to %Nat32
+	%35 = getelementptr %table_Row, %table_Row* %32, %Int32 0, %Nat32 %34
 	%36 = load %Str8*, %Str8** %35
 	%37 = call %SizeT @strlen(%Str8* %36)
 	%38 = trunc %SizeT %37 to %Nat32
@@ -279,11 +279,11 @@ again_3:
 	%58 = icmp ult %Nat32 %56, %57
 	br %Bool %58 , label %body_3, label %break_3
 body_3:
-	%59 = load %Nat32, %Nat32* %j
-	%60 = load %Nat32, %Nat32* %i
-	%61 = mul %Nat32 %60, %6
+	%59 = load %Nat32, %Nat32* %i
+	%60 = load %Nat32, %Nat32* %j
+	%61 = mul %Nat32 %59, %6
 	%62 = add %Int32 0, %61
-	%63 = mul %Nat32 %59, 1
+	%63 = mul %Nat32 %60, 1
 	%64 = add %Int32 %62, %63
 	%65 = getelementptr %Str8*, [0 x [0 x %Str8*]]* %14, %Int32 %64
 	%66 = load %Str8*, %Str8** %65
