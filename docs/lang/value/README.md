@@ -87,6 +87,41 @@ w << n * 2               // w << (n * 2)      — `*` tighter than the shift
 Word64 b << 8            // (Word64 b) << 8   — construction tighter still
 ```
 
+## Evaluation order
+
+Code runs the way it reads: left to right, top to bottom. The parts of an
+expression are evaluated in the order they are **written** — never in an
+order the compiler or the target picks.
+
+- Operands of a binary operator: the left one first.
+- Arguments of a call, named ones included: in the order they are written,
+  not the order of the parameters. `area(h = g(), w = f())` calls `g()`
+  first; which parameter an argument lands in is a separate matter.
+- Elements of an array literal, fields of a record literal: in the order
+  they are written, not the order of the fields in the type.
+- Index and slice: the array first, then the index — `m[i][j]` is `m`,
+  `i`, `j`; `a[i:j]` is `a`, `i`, `j`.
+- Assignment: the target first, then the value. In `a[i()] = f()` the
+  place is found before the value is computed.
+- Every part runs exactly once, however many times the compiler needs its
+  value.
+- Precedence decides how operands group, not when they run:
+  `f() + g() * h()` calls `f`, `g`, `h` in that order.
+
+Whether `and` / `or` evaluate the right operand when the left one already
+decides the answer is not settled yet — see
+QUESTION#4 in [open questions](../QUESTIONS.md).
+When both operands run, the left one runs first.
+
+```modest
+func area (w: Int32, h: Int32) -> Int32 { return w * h }
+
+area(h = next(), w = next())      // h gets the first next(), w the second
+let r: Point = {y = next(), x = next()}   // y first, then x
+let d = next() - next()           // left operand first
+row[next()] = next()              // the index gets the first next()
+```
+
 ## Value categories
 
 - **Immediate** — known at compile time: literals, `const`, and any

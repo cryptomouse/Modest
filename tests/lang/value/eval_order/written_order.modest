@@ -1,0 +1,77 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: named arguments
+// EXPECT-OUT: passed: record literal reversed
+// EXPECT-OUT: passed: written order
+// EXPECTED-FAIL(c11, llvm): BUG#97 named arguments and record fields are evaluated in declaration order
+//
+// Parts written out of their declared order are still evaluated in the
+// order they are written (docs/lang/value/README.md, "Evaluation order").
+// Where a part lands — which parameter, which field — is decided by its
+// name; when it runs is decided by its place on the line.
+//
+// `tick()` returns 0, 1, 2, ... on successive calls, so the first part
+// written gets 0: `c = tick(), b = tick(), a = tick()` gives c = 0,
+// b = 1, a = 2.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var counter: Nat32
+
+func tick () -> Nat32 {
+	let n = counter
+	++counter
+	return n
+}
+
+
+func descending (a: Nat32, b: Nat32, c: Nat32) -> Bool {
+	return a > b and b > c
+}
+
+
+func testNamedArguments () -> Bool {
+	counter = 0
+	if not descending(c = tick(), b = tick(), a = tick()) {
+		printf("descending(c = tick(), b = tick(), a = tick()) not evaluated in written order\n")
+		return false
+	}
+
+	printf("passed: named arguments\n")
+	return true
+}
+
+
+type Triple = {a: Nat32, b: Nat32, c: Nat32}
+
+func testRecordLiteralReversed () -> Bool {
+	counter = 0
+	let r: Triple = {c = tick(), b = tick(), a = tick()}
+	if r.c != 0 or r.b != 1 or r.a != 2 {
+		printf("{c = tick(), b = tick(), a = tick()} gives c = %u, b = %u, a = %u, expected 0, 1, 2\n", r.c, r.b, r.a)
+		return false
+	}
+
+	printf("passed: record literal reversed\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testNamedArguments() and result
+	result = testRecordLiteralReversed() and result
+
+	if not result {
+		printf("failed: written order\n")
+		return exitFailure
+	}
+
+	printf("passed: written order\n")
+	return exitSuccess
+}
+

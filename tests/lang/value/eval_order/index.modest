@@ -1,0 +1,131 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: index of a value
+// EXPECT-OUT: passed: index through a pointer
+// EXPECT-OUT: passed: nested index
+// EXPECT-OUT: passed: index eval order
+//
+// `a[i]` is written array first, index second, and is evaluated in that
+// order (docs/lang/value/README.md, "Evaluation order"); `m[i][j]` is
+// `m`, then `i`, then `j`.
+//
+// Every part here is a call that appends its id to `trace` as a decimal
+// digit, so `rowValue(1)[at(2, i)]` traces 12 when the array runs first.
+// The values are checked too: the element has to come from the right
+// place, not just from the right order.
+//
+// As everywhere in this directory, the C backend leaves the order to the
+// C compiler (BUG#98); a passing c11 run records what clang chose.
+//
+// Guards BUG#99 (fixed 2026-10-11).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var trace: Int32
+
+var row: [4]Int32 = [10, 20, 30, 40]
+var grid: [2][3]Int32 = [[1, 2, 3], [4, 5, 6]]
+
+
+func at (id: Int32, i: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return i
+}
+
+func rowValue (id: Int32) -> [4]Int32 {
+	trace = trace * 10 + id
+	return row
+}
+
+func rowPointer (id: Int32) -> *[4]Int32 {
+	trace = trace * 10 + id
+	return &row
+}
+
+func gridPointer (id: Int32) -> *[2][3]Int32 {
+	trace = trace * 10 + id
+	return &grid
+}
+
+
+// Resets the trace after reporting, so every check starts from an empty one.
+func check (what: *Str8, expected: Int32) -> Bool {
+	let got = trace
+	trace = 0
+	if got != expected {
+		printf("%s: trace %d, expected %d\n", what, got, expected)
+		return false
+	}
+	return true
+}
+
+
+func testIndexOfValue () -> Bool {
+	let x = rowValue(1)[at(2, 2)]
+	if not check("rowValue(1)[at(2, i)]", 12) {
+		return false
+	}
+
+	if x != 30 {
+		printf("rowValue(1)[at(2, 2)] = %d, expected 30\n", x)
+		return false
+	}
+
+	printf("passed: index of a value\n")
+	return true
+}
+
+
+func testIndexThroughPointer () -> Bool {
+	let x = rowPointer(1)[at(2, 3)]
+	if not check("rowPointer(1)[at(2, i)]", 12) {
+		return false
+	}
+
+	if x != 40 {
+		printf("rowPointer(1)[at(2, 3)] = %d, expected 40\n", x)
+		return false
+	}
+
+	printf("passed: index through a pointer\n")
+	return true
+}
+
+
+// The outer index is written first, so it runs first — even though it is
+// the inner `[]` that the value is read from last.
+func testNestedIndex () -> Bool {
+	let x = gridPointer(1)[at(2, 1)][at(3, 2)]
+	if not check("gridPointer(1)[at(2, i)][at(3, j)]", 123) {
+		return false
+	}
+
+	if x != 6 {
+		printf("gridPointer(1)[at(2, 1)][at(3, 2)] = %d, expected 6\n", x)
+		return false
+	}
+
+	printf("passed: nested index\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testIndexOfValue() and result
+	result = testIndexThroughPointer() and result
+	result = testNestedIndex() and result
+
+	if not result {
+		printf("failed: index eval order\n")
+		return exitFailure
+	}
+
+	printf("passed: index eval order\n")
+	return exitSuccess
+}
+

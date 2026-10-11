@@ -1356,18 +1356,18 @@ def do_eval_call(v):
 
 
 def index(x):
-	i = do_reval(x.index)
+	# сперва массив, затем индекс - порядок записи (BUG#99)
 
 	# разфменовываем указатель на массив по умолчанию сами
 	if x.left.type.is_pointer():
-		ll = do_reval(x.left)
-		return (ll, (i,))
+		left, indexes = do_reval(x.left), ()
+	elif x.left.is_index():
+		left, indexes = index(x.left)
+	else:
+		left, indexes = do_eval(x.left), ()
 
-	if x.left.is_index():
-		y, i2 = index(x.left)
-		return (y, i2 + (i,))
-
-	return do_eval(x.left), (i,)
+	i = do_reval(x.index)
+	return left, indexes + (i,)
 
 
 

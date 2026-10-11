@@ -1,0 +1,71 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: compile-time index
+// EXPECT-OUT: passed: run-time index
+// EXPECT-OUT: passed: field of value
+// EXPECTED-FAIL(llvm): BUG#101 run-time index into an array field of a record in a register
+//
+// An index into an array that is a field of a record returned by value:
+// `holderValue().items[i]`.  The record is a temporary, never stored
+// anywhere, so the array has no address of its own to index from — the
+// backend has to find the element in the value itself, or give it an
+// address first.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Holder = {tag: Int32, items: [3]Int32}
+
+var holder: Holder = {tag = 7, items = [100, 200, 300]}
+
+
+func holderValue () -> Holder {
+	return holder
+}
+
+func opaque (n: Int32) -> Int32 {
+	return n
+}
+
+
+func testCompileTimeIndex () -> Bool {
+	let x = holderValue().items[1]
+	if x != 200 {
+		printf("holderValue().items[1] = %d, expected 200\n", x)
+		return false
+	}
+
+	printf("passed: compile-time index\n")
+	return true
+}
+
+
+func testRunTimeIndex () -> Bool {
+	let x = holderValue().items[opaque(2)]
+	if x != 300 {
+		printf("holderValue().items[opaque(2)] = %d, expected 300\n", x)
+		return false
+	}
+
+	printf("passed: run-time index\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testCompileTimeIndex() and result
+	result = testRunTimeIndex() and result
+
+	if not result {
+		printf("failed: field of value\n")
+		return exitFailure
+	}
+
+	printf("passed: field of value\n")
+	return exitSuccess
+}
+

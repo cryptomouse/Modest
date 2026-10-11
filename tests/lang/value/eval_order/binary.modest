@@ -1,0 +1,366 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: equality
+// EXPECT-OUT: passed: ordering
+// EXPECT-OUT: passed: arithmetic
+// EXPECT-OUT: passed: float
+// EXPECT-OUT: passed: bitwise
+// EXPECT-OUT: passed: shift
+// EXPECT-OUT: passed: logical
+// EXPECT-OUT: passed: composite equality
+// EXPECT-OUT: passed: precedence
+// EXPECT-OUT: passed: nested
+// EXPECT-OUT: passed: binary eval order
+//
+// The two operands of a binary operator are evaluated left to right — the
+// same rule basic.modest checks for arguments and literals, applied to
+// every group of operators in value/binary.md.
+//
+// Every operand here is a `mark(id, value)` call: it appends `id` to
+// `trace` as a decimal digit and returns `value` unchanged, so after
+// `mark(1, a) - mark(2, b)` the trace reads 12 if the left operand ran
+// first and 21 if it did not.  Precedence decides how operands group, not
+// when they run: `m(1) + m(2) * m(3)` still traces 123.
+//
+// `and` / `or` are checked only with a left operand that does not decide
+// the answer, so that both sides run whatever the answer to QUESTION#4
+// turns out to be.  Whether the right operand of `false and ...` runs at
+// all is that question, not this one.
+//
+// As in basic.modest, the C backend emits each expression as one C
+// expression, whose operand order C11 leaves unspecified — a passing c11
+// run records what clang chose (BUG#98).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var trace: Int32
+
+
+func markInt (id: Int32, value: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return value
+}
+
+func markNat (id: Int32, value: Nat32) -> Nat32 {
+	trace = trace * 10 + id
+	return value
+}
+
+func markWord (id: Int32, value: Word32) -> Word32 {
+	trace = trace * 10 + id
+	return value
+}
+
+func markFloat (id: Int32, value: Float64) -> Float64 {
+	trace = trace * 10 + id
+	return value
+}
+
+func markBool (id: Int32, value: Bool) -> Bool {
+	trace = trace * 10 + id
+	return value
+}
+
+
+// Resets the trace after reporting, so every check starts from an empty one.
+func check (what: *Str8, expected: Int32) -> Bool {
+	let got = trace
+	trace = 0
+	if got != expected {
+		printf("%s: trace %d, expected %d\n", what, got, expected)
+		return false
+	}
+	return true
+}
+
+
+func testEquality () -> Bool {
+	var ok = true
+
+	let eq = markInt(1, 5) == markInt(2, 5)
+	ok = check("==", 12) and ok
+
+	let ne = markInt(1, 5) != markInt(2, 6)
+	ok = check("!=", 12) and ok
+
+	let beq = markBool(1, true) == markBool(2, true)
+	ok = check("Bool ==", 12) and ok
+
+	if not (eq and ne and beq) {
+		printf("equality gave a wrong value\n")
+		return false
+	}
+
+	if ok {
+		printf("passed: equality\n")
+	}
+	return ok
+}
+
+
+func testOrdering () -> Bool {
+	var ok = true
+
+	let lt = markInt(1, 1) < markInt(2, 2)
+	ok = check("<", 12) and ok
+
+	let gt = markInt(1, 2) > markInt(2, 1)
+	ok = check(">", 12) and ok
+
+	let le = markNat(1, 1) <= markNat(2, 1)
+	ok = check("<=", 12) and ok
+
+	let ge = markNat(1, 2) >= markNat(2, 1)
+	ok = check(">=", 12) and ok
+
+	if not (lt and gt and le and ge) {
+		printf("ordering gave a wrong value\n")
+		return false
+	}
+
+	if ok {
+		printf("passed: ordering\n")
+	}
+	return ok
+}
+
+
+// `-`, `/` and `%` do not commute, so the value checks that the operands
+// also reached the operator in the right places, not only in the right
+// order.
+func testArithmetic () -> Bool {
+	var ok = true
+
+	let sum = markInt(1, 3) + markInt(2, 4)
+	ok = check("+", 12) and ok
+
+	let diff = markInt(1, 3) - markInt(2, 4)
+	ok = check("-", 12) and ok
+
+	let prod = markInt(1, 3) * markInt(2, 4)
+	ok = check("*", 12) and ok
+
+	let quot = markInt(1, 12) / markInt(2, 4)
+	ok = check("/", 12) and ok
+
+	let rem = markNat(1, 14) % markNat(2, 4)
+	ok = check("%", 12) and ok
+
+	if sum != 7 or diff != -1 or prod != 12 or quot != 3 or rem != 2 {
+		printf("arithmetic gave %d %d %d %d %u, expected 7 -1 12 3 2\n", sum, diff, prod, quot, rem)
+		return false
+	}
+
+	if ok {
+		printf("passed: arithmetic\n")
+	}
+	return ok
+}
+
+
+func testFloat () -> Bool {
+	var ok = true
+
+	let diff = markFloat(1, 1.5) - markFloat(2, 0.5)
+	ok = check("Float64 -", 12) and ok
+
+	let quot = markFloat(1, 3.0) / markFloat(2, 2.0)
+	ok = check("Float64 /", 12) and ok
+
+	if diff != 1.0 or quot != 1.5 {
+		printf("float gave %f %f, expected 1.0 1.5\n", diff, quot)
+		return false
+	}
+
+	if ok {
+		printf("passed: float\n")
+	}
+	return ok
+}
+
+
+func testBitwise () -> Bool {
+	var ok = true
+
+	let a = markWord(1, 0x0000000C) & markWord(2, 0x0000000A)
+	ok = check("&", 12) and ok
+
+	let o = markWord(1, 0x0000000C) | markWord(2, 0x0000000A)
+	ok = check("|", 12) and ok
+
+	let x = markWord(1, 0x0000000C) ^ markWord(2, 0x0000000A)
+	ok = check("^", 12) and ok
+
+	if a != 0x00000008 or o != 0x0000000E or x != 0x00000006 {
+		printf("bitwise gave a wrong value\n")
+		return false
+	}
+
+	if ok {
+		printf("passed: bitwise\n")
+	}
+	return ok
+}
+
+
+// The count of a shift is an operand like any other, even though its type
+// differs from the left one.
+func testShift () -> Bool {
+	var ok = true
+
+	let l = markWord(1, 0x00000001) << markNat(2, 4)
+	ok = check("<<", 12) and ok
+
+	let r = markWord(1, 0x00000010) >> markNat(2, 4)
+	ok = check(">>", 12) and ok
+
+	if l != 0x00000010 or r != 0x00000001 {
+		printf("shift gave a wrong value\n")
+		return false
+	}
+
+	if ok {
+		printf("passed: shift\n")
+	}
+	return ok
+}
+
+
+// The left operand never decides the answer here — see the header.
+func testLogical () -> Bool {
+	var ok = true
+
+	let a = markBool(1, true) and markBool(2, true)
+	ok = check("true and ...", 12) and ok
+
+	let o = markBool(1, false) or markBool(2, true)
+	ok = check("false or ...", 12) and ok
+
+	if not (a and o) {
+		printf("logical gave a wrong value\n")
+		return false
+	}
+
+	if ok {
+		printf("passed: logical\n")
+	}
+	return ok
+}
+
+
+type Pair = {x: Int32, y: Int32}
+
+func markPair (id: Int32, value: Pair) -> Pair {
+	trace = trace * 10 + id
+	return value
+}
+
+func markArray (id: Int32, value: [3]Int32) -> [3]Int32 {
+	trace = trace * 10 + id
+	return value
+}
+
+// A comparison of composites is one operator in Modest, however many
+// fields it compares in the output.
+func testCompositeEquality () -> Bool {
+	var ok = true
+
+	let p: Pair = {x = 1, y = 2}
+	let req = markPair(1, p) == markPair(2, p)
+	ok = check("record ==", 12) and ok
+
+	let arr: [3]Int32 = [1, 2, 3]
+	let aeq = markArray(1, arr) == markArray(2, arr)
+	ok = check("array ==", 12) and ok
+
+	if not (req and aeq) {
+		printf("composite equality gave a wrong value\n")
+		return false
+	}
+
+	if ok {
+		printf("passed: composite equality\n")
+	}
+	return ok
+}
+
+
+// Precedence groups `m(2) * m(3)` first, but `m(1)` is still evaluated
+// before it: operands run in the order they are written.
+func testPrecedence () -> Bool {
+	var ok = true
+
+	let a = markInt(1, 1) + markInt(2, 2) * markInt(3, 3)
+	ok = check("1 + 2 * 3", 123) and ok
+
+	let b = markInt(1, 1) * markInt(2, 2) + markInt(3, 3)
+	ok = check("1 * 2 + 3", 123) and ok
+
+	let c = markInt(1, 1) < markInt(2, 2) + markInt(3, 3)
+	ok = check("1 < 2 + 3", 123) and ok
+
+	let d = markInt(1, 1) == markInt(2, 1) and markInt(3, 2) < markInt(4, 3)
+	ok = check("1 == 2 and 3 < 4", 1234) and ok
+
+	if a != 7 or b != 5 or not c or not d {
+		printf("precedence gave a wrong value\n")
+		return false
+	}
+
+	if ok {
+		printf("passed: precedence\n")
+	}
+	return ok
+}
+
+
+func testNested () -> Bool {
+	var ok = true
+
+	let a = (markInt(1, 1) + markInt(2, 2)) * (markInt(3, 3) - markInt(4, 4))
+	ok = check("(1 + 2) * (3 - 4)", 1234) and ok
+
+	let b = markInt(1, 10) - (markInt(2, 3) - markInt(3, 2))
+	ok = check("1 - (2 - 3)", 123) and ok
+
+	let c = (markInt(1, 10) - markInt(2, 3)) - markInt(3, 2)
+	ok = check("(1 - 2) - 3", 123) and ok
+
+	if a != -3 or b != 9 or c != 5 {
+		printf("nested gave %d %d %d, expected -3 9 5\n", a, b, c)
+		return false
+	}
+
+	if ok {
+		printf("passed: nested\n")
+	}
+	return ok
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testEquality() and result
+	result = testOrdering() and result
+	result = testArithmetic() and result
+	result = testFloat() and result
+	result = testBitwise() and result
+	result = testShift() and result
+	result = testLogical() and result
+	result = testCompositeEquality() and result
+	result = testPrecedence() and result
+	result = testNested() and result
+
+	if not result {
+		printf("failed: binary eval order\n")
+		return exitFailure
+	}
+
+	printf("passed: binary eval order\n")
+	return exitSuccess
+}
+

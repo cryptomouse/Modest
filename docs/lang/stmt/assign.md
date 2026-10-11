@@ -25,6 +25,9 @@ p.field = 10             // record field (auto-deref through pointer)
 The right-hand side is implicitly [constructed](../value/cons.md) to the
 lvalue's type; incompatible types are an error.
 
+The target is evaluated before the value: in `a[i()] = f()`, `i()` runs
+first (see [evaluation order](../value/README.md#evaluation-order)).
+
 ## Increment / decrement
 
 `++x` and `--x` are statements (prefix only):

@@ -45,6 +45,10 @@ type at the use site.
   (`var c: Char8 = "A"`) or explicitly (`Char8 "A"`).
 - `[]` / `{}` fill any array/record they are assigned to with default
   values (see [fields](../fields.md)).
+- The elements of an array literal and the fields of a record literal are
+  evaluated left to right in the order they are written, not in the order
+  of the fields in the type (see
+  [evaluation order](./README.md#evaluation-order)).
 - Constant expressions over literals fold at compile time and stay
   generic: `2 + 2` is still a generic `Integer`.
 

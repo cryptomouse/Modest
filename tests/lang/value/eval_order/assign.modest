@@ -1,0 +1,134 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: element
+// EXPECT-OUT: passed: dereference
+// EXPECT-OUT: passed: field through a pointer
+// EXPECT-OUT: passed: assign eval order
+// EXPECTED-FAIL(c11): BUG#98 clang evaluates the right-hand side of an assignment first
+//
+// An assignment is written target first, value second, and is evaluated
+// in that order (docs/lang/value/README.md, "Evaluation order"): in
+// `arr[at(1)] = value(2)` the place is found before the value is
+// computed.
+//
+// Every part here is a call that appends its id to `trace` as a decimal
+// digit, so the target running first traces 12.  The stored value is
+// checked too: it has to land where the target said.
+//
+// Targets with more than one part of their own — an index into a call,
+// an index of an index — are assign_index.modest, which fails for a
+// second reason under LLVM.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var trace: Int32
+
+var row: [4]Int32
+
+type Pair = {x: Int32, y: Int32}
+var pair: Pair
+
+
+func at (id: Int32, i: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return i
+}
+
+func value (id: Int32, v: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return v
+}
+
+func elementPointer (id: Int32, i: Int32) -> *Int32 {
+	trace = trace * 10 + id
+	return &row[i]
+}
+
+func pairPointer (id: Int32) -> *Pair {
+	trace = trace * 10 + id
+	return &pair
+}
+
+
+// Resets the trace after reporting, so every check starts from an empty one.
+func check (what: *Str8, expected: Int32) -> Bool {
+	let got = trace
+	trace = 0
+	if got != expected {
+		printf("%s: trace %d, expected %d\n", what, got, expected)
+		return false
+	}
+	return true
+}
+
+
+func testElement () -> Bool {
+	row = [0, 0, 0, 0]
+	row[at(1, 2)] = value(2, 7)
+	if not check("row[at(1, i)] = value(2, v)", 12) {
+		return false
+	}
+
+	if row[2] != 7 {
+		printf("row[at(1, 2)] = value(2, 7) left row[2] = %d\n", row[2])
+		return false
+	}
+
+	printf("passed: element\n")
+	return true
+}
+
+
+func testDereference () -> Bool {
+	row = [0, 0, 0, 0]
+	*elementPointer(1, 3) = value(2, 9)
+	if not check("*elementPointer(1, i) = value(2, v)", 12) {
+		return false
+	}
+
+	if row[3] != 9 {
+		printf("*elementPointer(1, 3) = value(2, 9) left row[3] = %d\n", row[3])
+		return false
+	}
+
+	printf("passed: dereference\n")
+	return true
+}
+
+
+func testFieldThroughPointer () -> Bool {
+	pair = {}
+	pairPointer(1).y = value(2, 5)
+	if not check("pairPointer(1).y = value(2, v)", 12) {
+		return false
+	}
+
+	if pair.x != 0 or pair.y != 5 {
+		printf("pairPointer(1).y = value(2, 5) left {%d, %d}\n", pair.x, pair.y)
+		return false
+	}
+
+	printf("passed: field through a pointer\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testElement() and result
+	result = testDereference() and result
+	result = testFieldThroughPointer() and result
+
+	if not result {
+		printf("failed: assign eval order\n")
+		return exitFailure
+	}
+
+	printf("passed: assign eval order\n")
+	return exitSuccess
+}
+

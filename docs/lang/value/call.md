@@ -16,6 +16,9 @@ Invokes a function — directly or through a pointer to function.
 - **Named arguments**: any argument may be passed as `name = value`,
   in any order; positional and named arguments may be mixed
   (`area(3, h = 4)`).
+- Arguments are evaluated left to right in the order they are written —
+  named ones too, whatever order the parameters are declared in (see
+  [evaluation order](./README.md#evaluation-order)).
 - Parameters with default values may be omitted
   (see [function definition](../def/func.md)).
 - Variadic functions (`...`) accept extra arguments after the fixed

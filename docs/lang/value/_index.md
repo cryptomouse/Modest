@@ -20,6 +20,8 @@ read, assignment target, or address-of (`&a[i]`).
   array (`*[]T`) has no length, so only the sign is checked there; an
   index known only at run time is not checked at all (UB#2,
   [`UB.md`](../../UB.md)).
+- The array is evaluated before the index; `m[i][j]` is `m`, `i`, `j`
+  (see [evaluation order](./README.md#evaluation-order)).
 - Usable as an rvalue, as an lvalue (`a[i] = v`), and as the operand of
   `&` — `&a[i]` is a pointer to the element (the standard way to point
   into an array, see [pointer](../type/pointer.md)).

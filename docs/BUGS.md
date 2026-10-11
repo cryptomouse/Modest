@@ -67,6 +67,11 @@ prints `f32 = 3.141593`, which is correct.
   verified on other targets/ABIs — the underlying missing-promotion
   cause is the same for both, so integer variadic args should not be
   assumed safe on every target either.
+- `Bool` is the same case at its narrowest: it goes out as a bare `i1`
+  (`printf("%d\n", ok)` emits `%Bool %4`), where clang would `zext` it
+  to `i32` first. On arm64 the backend happens to mask the stack slot
+  with `and #0x1`, so `printf` prints 0 or 1; nothing in the IR promises
+  the upper bits on other targets.
 - Scope: not specific to this test file or to `Rational` — any
   `Float32` value (whatever its origin) passed to a variadic function
   (`printf`, `sprintf`, any `@extern` with `...`) through the LLVM
@@ -1400,4 +1405,123 @@ body_1:
 - The C backend is unaffected: its temporaries are block-scoped C
   objects.
 - Coverage: `tests/lang/stmt/while/stack_temporary.modest`, marked
+  `EXPECTED-FAIL(llvm)`.
+
+## BUG#97: Named arguments and record literal fields are evaluated in declaration order
+
+```modest
+ascending(c = tick(), b = tick(), a = tick())   // a = 0, b = 1, c = 2
+let r: Triple = {c = tick(), b = tick(), a = tick()}   // same
+```
+
+- [Evaluation order](lang/value/README.md#evaluation-order) is the
+  order things are written: `c` should take the first `tick()`, so
+  `c = 0, b = 1, a = 2`. Both backends give the opposite.
+- The frontend sorts the parts into declaration order before anything is
+  evaluated, and every backend then evaluates the sorted list: named
+  arguments in the call lowering (`src/semantic.py`, the `process named
+  args` loop walks the parameters and picks the matching argument for
+  each), record fields in `value_record_cons` (`src/value/record.py`,
+  walks `t.fields` and looks up the initializer by name).
+- The C backend prints the record literal in the written order
+  (`{.c = tick(), .b = tick(), .a = tick()}`), but C leaves the order of
+  initializers unspecified, and clang happens to evaluate them in field
+  order — so it fails the same way, see BUG#98.
+- Fix: keep the written order as the evaluation order, and map each part
+  to its parameter or field separately. When the two orders differ, a
+  part with a side effect has to be evaluated into a temporary first.
+- Coverage: `tests/lang/value/eval_order/written_order.modest`, marked
+  `EXPECTED-FAIL(c11, llvm)`.
+
+## BUG#98: C backend leaves evaluation order to the C compiler
+
+```c
+(void)ascending(tick(), tick(), tick());
+(uint32_t [3]){tick(), tick(), tick()};
+tick() - tick();
+row[at(1, 2)] = value(2, 7);     // clang: value() runs first
+```
+
+- Modest evaluates left to right as written
+  ([evaluation order](lang/value/README.md#evaluation-order)). The C
+  backend emits arguments, literal elements, binary operands and both
+  sides of an assignment as parts of one C expression, and C11 leaves
+  their order unspecified (6.5p3, 6.5.2.2p10, 6.5.16p3, 6.7.9p23).
+- Assignment already goes wrong: clang evaluates the right-hand side
+  first, so `row[at(1)] = value(2)` runs `value` before `at`, and
+  `rowPointer(1)[at(2)] = value(3)` traces 3, 1, 2. The rest happens to
+  come out left to right under clang on the targets tried — another C
+  compiler, or another clang version, may legally pick a different
+  order. The LLVM backend emits each part as its own instruction and
+  gets these right.
+- Fix: when two or more parts of one expression or assignment can have a
+  side effect (a call, `++`, an assignment), evaluate them into
+  temporaries in order first. Expressions without side effects stay as
+  they are, so the common `f(x, y + 1)` and `a[i] = x` keep their plain C.
+- Coverage: `tests/lang/value/eval_order/assign.modest` and
+  `assign_index.modest`, marked `EXPECTED-FAIL(c11)`;
+  `basic.modest`, `binary.modest` and `index.modest` pass under clang,
+  and are what catches a compiler that disagrees.
+
+## BUG#100: The bounds of a run-time slice are evaluated more than once, or not at all
+
+```modest
+s = rowValue(1)[at(2, 1):at(3, 3)]            // c11: 1 2     llvm: 1 2 3 2
+row[at(1, 2):at(2, 4)] = [2]Int32 [v3, v4]    // c11: 1 3 4 2 1   llvm: 1 3 4
+```
+
+- Each part of `a[i:j]` should run exactly once, `a`, `i`, `j` in that
+  order ([evaluation order](lang/value/README.md#evaluation-order)). With
+  a bound known only at run time, the slice's length `j - i` is computed
+  from the bound *expressions* wherever a length is needed, not from
+  their values, so a bound with a side effect runs as many times as the
+  length is used — and not at all when the length comes from elsewhere:
+  - c11, read: `memcpy(&s, &rowValue(1)[at(2, 1)], sizeof(int32_t [2]))`
+    — the length is taken from `s`, so `at(3, 3)` never runs.
+  - c11, target: `memcpy(&row[at(1, 2)], ..., sizeof(int32_t) * (at(2, 4)
+    - at(1, 2)))` — `at(1, 2)` runs twice, after the value.
+  - llvm, read: the lower bound runs once for the address and again for
+    the length.
+  - llvm, target: the length is taken from the value, so the upper bound
+    never runs.
+- Worse than an ordering problem: a counter, a read from a device
+  register or an allocation in a bound happens the wrong number of times
+  on both backends.
+- Fix: evaluate each bound once into a temporary and compute the length
+  from those.
+- Coverage: `tests/lang/value/eval_order/slice.modest`, marked
+  `EXPECTED-FAIL(c11, llvm)`.
+
+## BUG#101: LLVM backend emits invalid IR for a run-time index into an array field of a record held in a register
+
+```modest
+type Holder = {tag: Int32, items: [3]Int32}
+
+func holderValue () -> Holder { ... }
+
+let x = holderValue().items[i]    // i known only at run time
+```
+
+```llvm
+%3 = extractvalue %Holder %2, 1
+%4 = getelementptr [3 x %Int32], [3 x %Int32] %3, %Int32 0, %Int32 %1
+; clang: error: base of getelementptr must be a pointer
+```
+
+- A record returned by value lives in a register, and so does the array
+  `extractvalue` takes out of it. `ass()` (`src/backend/llvm.py`) then
+  indexes it with `getelementptr`, which needs an address — the IR does
+  not assemble.
+- `index()` routes an array held by value to `do_eval`, which is fine
+  when the value is in memory (a `var`, a returned array — that one comes
+  back through a return buffer); a field of a register record is not.
+  `do_eval_slice` checks for this case (`not array['is_adr']`), but its
+  run-time branch reads an undefined `v` — a slice of such a field has
+  not been tried.
+- A compile-time index would be fine as an `extractvalue` — the run-time
+  one needs the array spilled to a temporary first (in the entry block,
+  see BUG#96).
+- The C backend is unaffected: the C struct value has a C array member,
+  and C indexes it in place.
+- Reproducer: `tests/lang/value/index/field_of_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.

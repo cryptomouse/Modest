@@ -1,0 +1,102 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: slice of a value
+// EXPECT-OUT: passed: slice as a target
+// EXPECT-OUT: passed: slice eval order
+// EXPECTED-FAIL(c11, llvm): BUG#100 the bounds of a run-time slice are evaluated more than once, or not at all
+//
+// `a[i:j]` is evaluated `a`, `i`, `j` — each exactly once
+// (docs/lang/value/README.md, "Evaluation order").  As a target,
+// `a[i:j] = v`, the slice comes first and the value after it.
+//
+// Every part here is a call that appends its id to `trace` as a decimal
+// digit, so the trace shows both the order and the count: a bound
+// evaluated twice leaves its digit twice, a bound skipped leaves none.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var trace: Int32
+
+var row: [6]Int32 = [10, 20, 30, 40, 50, 60]
+
+
+func at (id: Int32, i: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return i
+}
+
+func value (id: Int32, v: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return v
+}
+
+func rowValue (id: Int32) -> [6]Int32 {
+	trace = trace * 10 + id
+	return row
+}
+
+
+// Resets the trace after reporting, so every check starts from an empty one.
+func check (what: *Str8, expected: Int32) -> Bool {
+	let got = trace
+	trace = 0
+	if got != expected {
+		printf("%s: trace %d, expected %d\n", what, got, expected)
+		return false
+	}
+	return true
+}
+
+
+func testSliceOfValue () -> Bool {
+	var s: [2]Int32
+	s = rowValue(1)[at(2, 1):at(3, 3)]
+	if not check("rowValue(1)[at(2, i):at(3, j)]", 123) {
+		return false
+	}
+
+	if s[0] != 20 or s[1] != 30 {
+		printf("rowValue(1)[at(2, 1):at(3, 3)] = [%d, %d], expected [20, 30]\n", s[0], s[1])
+		return false
+	}
+
+	printf("passed: slice of a value\n")
+	return true
+}
+
+
+func testSliceAsTarget () -> Bool {
+	row = [0, 0, 0, 0, 0, 0]
+	row[at(1, 2):at(2, 4)] = [2]Int32 [value(3, 7), value(4, 8)]
+	if not check("row[at(1, i):at(2, j)] = [value(3), value(4)]", 1234) {
+		return false
+	}
+
+	if row[1] != 0 or row[2] != 7 or row[3] != 8 or row[4] != 0 {
+		printf("row[2:4] = [7, 8] left [%d, %d, %d, %d] at 1..4\n", row[1], row[2], row[3], row[4])
+		return false
+	}
+
+	printf("passed: slice as a target\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testSliceOfValue() and result
+	result = testSliceAsTarget() and result
+
+	if not result {
+		printf("failed: slice eval order\n")
+		return exitFailure
+	}
+
+	printf("passed: slice eval order\n")
+	return exitSuccess
+}
+

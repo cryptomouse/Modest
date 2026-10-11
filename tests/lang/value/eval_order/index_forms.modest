@@ -1,0 +1,157 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: nested index of a value
+// EXPECT-OUT: passed: unsized pointer
+// EXPECT-OUT: passed: address of an element
+// EXPECT-OUT: passed: index among arguments
+// EXPECT-OUT: passed: index forms eval order
+//
+// The array-before-index rule of index.modest, across the other shapes an
+// index takes: a nested index into an array held by value, a pointer to
+// an unsized array, `&a[i]`, and an index that is itself one argument
+// among others.  Each of these goes down its own branch of the LLVM
+// backend's index lowering, and all of them used to evaluate the index
+// first.  A store through `*[]T` is in assign_index.modest, with the
+// other indexed targets.
+//
+// Every part here is a call that appends its id to `trace` as a decimal
+// digit; the values are checked as well as the order.
+//
+// Guards BUG#99 (fixed 2026-10-11).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var trace: Int32
+
+var row: [4]Int32 = [10, 20, 30, 40]
+var grid: [2][3]Int32 = [[1, 2, 3], [4, 5, 6]]
+
+
+func at (id: Int32, i: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return i
+}
+
+func value (id: Int32, v: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return v
+}
+
+func gridValue (id: Int32) -> [2][3]Int32 {
+	trace = trace * 10 + id
+	return grid
+}
+
+func rowPointer (id: Int32) -> *[4]Int32 {
+	trace = trace * 10 + id
+	return &row
+}
+
+func unsizedPointer (id: Int32) -> *[]Int32 {
+	trace = trace * 10 + id
+	return &row
+}
+
+func sum3 (a: Int32, b: Int32, c: Int32) -> Int32 {
+	return a + b + c
+}
+
+
+// Resets the trace after reporting, so every check starts from an empty one.
+func check (what: *Str8, expected: Int32) -> Bool {
+	let got = trace
+	trace = 0
+	if got != expected {
+		printf("%s: trace %d, expected %d\n", what, got, expected)
+		return false
+	}
+	return true
+}
+
+
+func testNestedIndexOfValue () -> Bool {
+	let x = gridValue(1)[at(2, 1)][at(3, 0)]
+	if not check("gridValue(1)[at(2, i)][at(3, j)]", 123) {
+		return false
+	}
+
+	if x != 4 {
+		printf("gridValue(1)[at(2, 1)][at(3, 0)] = %d, expected 4\n", x)
+		return false
+	}
+
+	printf("passed: nested index of a value\n")
+	return true
+}
+
+
+func testUnsizedPointer () -> Bool {
+	let x = unsizedPointer(1)[at(2, 2)]
+	if not check("unsizedPointer(1)[at(2, i)]", 12) {
+		return false
+	}
+
+	if x != 30 {
+		printf("unsizedPointer(1)[at(2, 2)] = %d, expected 30\n", x)
+		return false
+	}
+
+	printf("passed: unsized pointer\n")
+	return true
+}
+
+
+func testAddressOfElement () -> Bool {
+	let p = &rowPointer(1)[at(2, 1)]
+	if not check("&rowPointer(1)[at(2, i)]", 12) {
+		return false
+	}
+
+	if *p != 20 {
+		printf("*&rowPointer(1)[at(2, 1)] = %d, expected 20\n", *p)
+		return false
+	}
+
+	printf("passed: address of an element\n")
+	return true
+}
+
+
+// The index is one argument among three; the parts still run in the order
+// they are written across the whole call.
+func testIndexAmongArguments () -> Bool {
+	let x = sum3(value(1, 1), rowPointer(2)[at(3, 0)], value(4, 2))
+	if not check("sum3(value(1), rowPointer(2)[at(3)], value(4))", 1234) {
+		return false
+	}
+
+	if x != 13 {
+		printf("sum3(1, row[0], 2) = %d, expected 13\n", x)
+		return false
+	}
+
+	printf("passed: index among arguments\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testNestedIndexOfValue() and result
+	result = testUnsizedPointer() and result
+	result = testAddressOfElement() and result
+	result = testIndexAmongArguments() and result
+
+	if not result {
+		printf("failed: index forms eval order\n")
+		return exitFailure
+	}
+
+	printf("passed: index forms eval order\n")
+	return exitSuccess
+}
+

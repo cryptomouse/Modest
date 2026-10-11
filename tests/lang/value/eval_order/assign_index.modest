@@ -1,0 +1,127 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: index into a call
+// EXPECT-OUT: passed: index of an index
+// EXPECT-OUT: passed: store through an unsized pointer
+// EXPECT-OUT: passed: assign index eval order
+// EXPECTED-FAIL(c11): BUG#98 clang evaluates the right-hand side of an assignment first
+//
+// A target with parts of its own: `rowPointer(1)[at(2, i)] = value(3, v)`
+// is evaluated 1, 2, 3 — the target left to right as in index.modest, and
+// then the value, as in assign.modest.  The C backend still evaluates the
+// value first (BUG#98); the LLVM backend used to get the target wrong
+// instead, evaluating the index before the array.
+//
+// Guards BUG#99 (fixed 2026-10-11).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var trace: Int32
+
+var row: [4]Int32
+var grid: [2][3]Int32
+
+
+func at (id: Int32, i: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return i
+}
+
+func value (id: Int32, v: Int32) -> Int32 {
+	trace = trace * 10 + id
+	return v
+}
+
+func rowPointer (id: Int32) -> *[4]Int32 {
+	trace = trace * 10 + id
+	return &row
+}
+
+func unsizedPointer (id: Int32) -> *[]Int32 {
+	trace = trace * 10 + id
+	return &row
+}
+
+
+// Resets the trace after reporting, so every check starts from an empty one.
+func check (what: *Str8, expected: Int32) -> Bool {
+	let got = trace
+	trace = 0
+	if got != expected {
+		printf("%s: trace %d, expected %d\n", what, got, expected)
+		return false
+	}
+	return true
+}
+
+
+func testIndexIntoCall () -> Bool {
+	row = [0, 0, 0, 0]
+	rowPointer(1)[at(2, 1)] = value(3, 8)
+	if not check("rowPointer(1)[at(2, i)] = value(3, v)", 123) {
+		return false
+	}
+
+	if row[1] != 8 {
+		printf("rowPointer(1)[at(2, 1)] = value(3, 8) left row[1] = %d\n", row[1])
+		return false
+	}
+
+	printf("passed: index into a call\n")
+	return true
+}
+
+
+func testIndexOfIndex () -> Bool {
+	grid = [[0, 0, 0], [0, 0, 0]]
+	grid[at(1, 1)][at(2, 0)] = value(3, 4)
+	if not check("grid[at(1, i)][at(2, j)] = value(3, v)", 123) {
+		return false
+	}
+
+	if grid[1][0] != 4 {
+		printf("grid[at(1, 1)][at(2, 0)] = value(3, 4) left grid[1][0] = %d\n", grid[1][0])
+		return false
+	}
+
+	printf("passed: index of an index\n")
+	return true
+}
+
+
+func testStoreThroughUnsizedPointer () -> Bool {
+	row = [10, 20, 30, 40]
+	unsizedPointer(1)[at(2, 3)] = value(3, 99)
+	if not check("unsizedPointer(1)[at(2, i)] = value(3, v)", 123) {
+		return false
+	}
+
+	if row[3] != 99 {
+		printf("unsizedPointer(1)[at(2, 3)] = value(3, 99) left row[3] = %d\n", row[3])
+		return false
+	}
+
+	printf("passed: store through an unsized pointer\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testIndexIntoCall() and result
+	result = testIndexOfIndex() and result
+	result = testStoreThroughUnsizedPointer() and result
+
+	if not result {
+		printf("failed: assign index eval order\n")
+		return exitFailure
+	}
+
+	printf("passed: assign index eval order\n")
+	return exitSuccess
+}
+

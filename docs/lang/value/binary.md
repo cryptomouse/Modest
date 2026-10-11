@@ -17,6 +17,9 @@
 
 ## Semantics
 
+- The left operand is evaluated before the right one (see
+  [evaluation order](./README.md#evaluation-order)); whether `and` / `or`
+  skip the right one is QUESTION#4.
 - **Operand types must match exactly** — there are no implicit numeric
   promotions: `Int32 + Int64` is an error (`different types ... in
   operation`). Construct to a common type explicitly. Generic literals

@@ -141,103 +141,6 @@ there is nothing left for a backend to decide.
 
 ---
 
-## QUESTION#2: In what order are call arguments evaluated?
-
-**Question.** Is the evaluation order of arguments part of the language,
-or left unspecified as it is in C? Left to right is the expected answer —
-but left to right *of what*: the order the arguments are **written**, or
-the order the parameters are **declared**? The two differ as soon as
-named arguments are used out of order.
-
-### Where it stands today
-
-Every combination tried evaluates left to right, and nothing disagrees:
-
-```modest
-func mark (id: Int32) -> Int32 {        // records that it ran, returns id
-	...
-}
-
-take3(mark(1), mark(2), mark(3))        // 1 2 3 everywhere
-```
-
-| | order observed |
-| :-- | :-- |
-| `-mbackend=llvm` | 1 2 3 |
-| `-mbackend=c11` + clang 14, `-O0` and `-O2` | 1 2 3 |
-| `-mbackend=c11` + gcc 14 | 1 2 3 |
-
-Two things about that agreement are worth knowing before leaning on it.
-
-- **Only one backend actually pins the order.** The LLVM backend emits
-  the calls as a sequence of `call` instructions, so the order is fixed
-  by construction. The C backend emits the arguments as expressions
-  inside the C call —
-
-  ```c
-  (void)take3(mark(1), mark(2), mark(3));
-  ```
-
-  — and argument evaluation order is *unspecified* in C. The table above
-  records what two compilers happen to do on one target; it is not a
-  guarantee the language can offer.
-
-- **Named arguments already answer the second half — as parameter
-  order.** They are rewritten into declaration order before emission:
-
-  ```modest
-  area(h = mark(1), w = mark(2))    // written: h first
-  ```
-  ```c
-  area(mark(2), mark(1));           // emitted: w first
-  ```
-
-  So `mark(2)` runs first, and the de-facto rule today is "left to right
-  through the parameter list", not "left to right across the source
-  line". Whichever way this is settled, that behaviour is either the
-  answer or a bug.
-
-### Options
-
-**A. Left to right in parameter order** — a guarantee, matching what
-happens today.
-
-- The C backend has to stop delegating: arguments would be evaluated into
-  temporaries in order, then passed.
-- That costs readability in the C output, which is a stated goal of the
-  project — a plain `f(g(), h())` becomes two locals and a call. Whether
-  to pay it always, or only when an argument can have side effects, is
-  part of this option.
-
-**B. Left to right in written order.** Same cost as A, plus named
-arguments must stop being reordered.
-
-- Arguably the more surprising rule: `f(b = g(), a = h())` would run
-  `g()` first, and a reader checking against the signature sees the
-  opposite.
-
-**C. Leave it unspecified**, as C does.
-
-- Costs nothing and keeps the C output plain.
-- But the same program could then legitimately behave differently under
-  `-mbackend=c11` and `-mbackend=llvm` — the shape of problem this
-  project keeps having to chase down (question 1 above was one).
-  "Unspecified" is a cheap answer that gets expensive later.
-
-### What an answer touches
-
-- [`value/call.md`](./value/call.md) — says nothing about order today
-- the C backend, under options A and B
-- a test: the order is observable, so it can be pinned down like any
-  other behaviour
-
-### Related
-
-- [`value/call.md`](./value/call.md) — argument passing and named arguments
-- question 1 above — backends disagreeing on unspecified behaviour
-
----
-
 ## QUESTION#3: Should `NatX` accept a `CharY` source?
 
 **Question.** A `CharX` is a code unit — a number in an encoding. Ordering
@@ -398,8 +301,9 @@ state, and the one that makes `and` symmetric with `&`.
 - Nothing else in the language works this way — `if` does not evaluate the
   branch it does not take.
 
-**C. Leave it unspecified.** Cheapest, and the same trap as question 2: the
-same program behaves differently under the two backends, and the
+**C. Leave it unspecified.** Cheapest, and the trap
+[evaluation order](./value/README.md#evaluation-order) was settled to
+avoid: the same program behaves differently under the two backends, and the
 difference only shows when an operand has a side effect — which is exactly
 when it hurts.
 
@@ -413,7 +317,8 @@ when it hurts.
 
 ### Related
 
-- question 2 above — the same shape, for argument evaluation order
+- [evaluation order](./value/README.md#evaluation-order) — the same shape,
+  for argument order, settled as left to right as written
 - question 1 above — backends disagreeing about unstated behaviour
 
 ---

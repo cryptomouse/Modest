@@ -8,11 +8,44 @@ type Aligned = @alignment(2) {
 }
 
 
+var num: Nat32
+func getnum () -> Nat32 {
+	let n: Nat32 = num
+	++num
+	return n
+}
+
+
+func checkArgs (a: Nat32, b: Nat32, c: Nat32) -> Bool {
+	return a < b and b < c
+}
+
+func checkArray (a: [3]Nat32) -> Bool {
+	return a[0] < a[1] and a[1] < a[2]
+}
+
+type Triple = {a: Nat32, b: Nat32, c: Nat32}
+
+func checkRecord (r: Triple) -> Bool {
+	return r.a < r.b and r.b < r.c
+}
+
+
+
 @nonstatic
 func main () -> Int32 {
-	var i: Int32 = 5
-	printf("alignof = %zu\n", alignof(Aligned))
-	printf("sizeof = %zu\n", sizeof(Aligned))
+
+	let c0: Bool = checkArgs(getnum(), getnum(), getnum())
+	printf("checkArgs() = %d\n", c0)
+
+	let c1: Bool = checkArray([getnum(), getnum(), getnum()])
+	printf("checkArray() = %d\n", c1)
+
+	let c2: Bool = checkRecord({a = getnum(), b = getnum(), c = getnum()})
+	printf("checkRecord() = %d\n", c2)
+	let c3: Bool = checkRecord({c = getnum(), b = getnum(), a = getnum()})
+	printf("checkRecord(reversed) = %d\n", c3)
+
 	return 0
 }
 

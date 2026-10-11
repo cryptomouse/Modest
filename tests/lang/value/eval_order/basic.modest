@@ -1,0 +1,97 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: arguments
+// EXPECT-OUT: passed: array literal
+// EXPECT-OUT: passed: record literal
+// EXPECT-OUT: passed: eval order
+//
+// The order in which the parts of one expression are evaluated, made
+// observable: `tick()` returns 0, 1, 2, ... on successive calls, so the
+// values that reach the callee tell which part ran first.
+//
+// The rule is left to right as written (docs/lang/value/README.md,
+// "Evaluation order").  This file covers the parts written in the order
+// they are declared; named arguments and record fields written out of
+// order are written_order.modest, and binary operands are binary.modest.
+//
+// Only the LLVM backend fixes the order by construction.  The C backend
+// leaves the parts inside one C expression — a call, a compound literal —
+// whose order C11 leaves unspecified, so a passing c11 run records what
+// clang chose rather than a guarantee (BUG#98).  If another C compiler
+// disagrees, this is the test that says so.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+var counter: Nat32
+
+func tick () -> Nat32 {
+	let n = counter
+	++counter
+	return n
+}
+
+
+func ascending (a: Nat32, b: Nat32, c: Nat32) -> Bool {
+	return a < b and b < c
+}
+
+
+func testArguments () -> Bool {
+	counter = 0
+	if not ascending(tick(), tick(), tick()) {
+		printf("ascending(tick(), tick(), tick()) not evaluated left to right\n")
+		return false
+	}
+
+	printf("passed: arguments\n")
+	return true
+}
+
+
+func testArrayLiteral () -> Bool {
+	counter = 0
+	let a: [3]Nat32 = [tick(), tick(), tick()]
+	if a[0] != 0 or a[1] != 1 or a[2] != 2 {
+		printf("[tick(), tick(), tick()] = [%u, %u, %u], expected [0, 1, 2]\n", a[0], a[1], a[2])
+		return false
+	}
+
+	printf("passed: array literal\n")
+	return true
+}
+
+
+type Triple = {a: Nat32, b: Nat32, c: Nat32}
+
+func testRecordLiteral () -> Bool {
+	counter = 0
+	let r: Triple = {a = tick(), b = tick(), c = tick()}
+	if r.a != 0 or r.b != 1 or r.c != 2 {
+		printf("{a = tick(), b = tick(), c = tick()} = {%u, %u, %u}, expected {0, 1, 2}\n", r.a, r.b, r.c)
+		return false
+	}
+
+	printf("passed: record literal\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testArguments() and result
+	result = testArrayLiteral() and result
+	result = testRecordLiteral() and result
+
+	if not result {
+		printf("failed: eval order\n")
+		return exitFailure
+	}
+
+	printf("passed: eval order\n")
+	return exitSuccess
+}
+
