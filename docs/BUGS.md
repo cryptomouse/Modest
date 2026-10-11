@@ -366,26 +366,6 @@ c.bytes[0]              // c11: 5    llvm: 0
 - Coverage: `tests/lang/type/record/union.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#45: A comment after an empty record literal is a parse error
-
-```modest
-var p: Point = {}    // fills the record
-```
-
-```
-error: unexpected token1 ' fills the record'
-```
-
-- Only the empty literal is affected, and only when a comment follows it
-  on the same line: `{a = 1} // ...` and `[] // ...` both parse. Line and
-  block comments fail alike, so it is the `{}` that leaves the lexer or
-  the parser somewhere a comment cannot be read from.
-- It bites where `{}` is most natural to explain — the line that fills a
-  whole record with its defaults — and the workaround is to put the
-  comment on the line above.
-- No reproducer in the suite: a test for it would have to be a compile
-  failure, and the runner has no expectation for that yet.
-
 ## BUG#46: C backend hands a compound literal to the `RAWCAST` macro
 
 ```modest

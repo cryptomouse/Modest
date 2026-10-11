@@ -24,6 +24,8 @@
 // What is *not* here is the nested record: a record-typed field with no
 // declared default, and the defaults of a literal written inside another
 // literal.  Both live in `defaults_nested.modest`.
+//
+// Guards BUG#45 (fixed 2026-10-11).
 
 include "libc/ctypes64"
 include "libc/stdio"
@@ -63,7 +65,7 @@ type Outer = {
 
 
 func testTypeDefault () -> Bool {
-	var p: Plain = {}
+	var p: Plain = {}    // every field at its type's default
 
 	if p.n != 0 or p.f != 0.0 {
 		printf("p.n = %d, p.f = %f, expected 0 and 0.0\n", p.n, p.f)
@@ -88,7 +90,7 @@ func testTypeDefault () -> Bool {
 
 
 func testDeclaredDefaults () -> Bool {
-	var d: Declared = {}
+	var d: Declared = {}    /* every field at its declared default */
 
 	if d.n != 42 or d.f != 1.5 {
 		printf("d.n = %d, d.f = %f, expected 42 and 1.5\n", d.n, d.f)
