@@ -572,31 +572,6 @@ struct __anonymous_variant_1 r = divide(10, 2);
   points here.
 
 
-## BUG#60: Annotations on a local `var` are silently ignored
-
-```modest
-func main () -> Int32 {
-	@immutable
-	var lmax: Int32 = 100
-	lmax = 200          // compiles; on a global the same code is an error
-	return 0
-}
-```
-
-- A global definition passes through `def_add_annotations`
-  (`src/semantic.py:3227`), which handles the whole annotation set. A
-  local `var` never reaches it: `do_stmt_var` (`src/semantic.py:1974`)
-  walks `x['anno']` itself and only looks at `static` (and now
-  `extern`, which it rejects). Everything else — `@immutable`,
-  `@volatile`, `@used`, `@alias`, `@section` — is dropped without a
-  word.
-- Two outcomes are defensible: apply the annotations that make sense
-  for a local, or reject the rest explicitly. Silence is the one that
-  is not — `@immutable` reads as enforced and is not.
-- No reproducer in the suite: `tests/lang/attribute/` (or wherever the
-  annotation tests land) needs both a `reject` case and a case that
-  proves an applied annotation works on a local.
-
 ## BUG#61: `@extern` variable with an initializer silently drops it
 
 ```modest

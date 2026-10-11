@@ -8,9 +8,10 @@ include "libc/stdio"
 
 
 
-func main () -> Int {
-	var u: Unit
-
+func main () -> Int32 {
+	@immutable
+	var lmax: Int32 = 100
+	lmax = 200          // compiles; on a global the same code is an error
 	return 0
 }
 
