@@ -1164,26 +1164,21 @@ class Type(Entity):
 
 
 	def is_forbidden_any(self):
-		if self.is_func():
-			return True
-
+		if self.is_func(): return True
+		if self.is_unit(): return True
 		return False
 
 
 	# cannot create field with type
 	def is_forbidden_field(self):
-		if self.is_func():
-			return True
-
-		if self.is_unsized_array():
-			return True
-
+		if self.is_func(): return True
+		if self.is_unit(): return True
+		if self.is_unsized_array(): return True
 		return False
 
 
 	def is_forbidden_param(self):
-		if self.is_func():
-			return True
+		if self.is_forbidden_field(): return True
 		return False
 
 
@@ -1191,18 +1186,14 @@ class Type(Entity):
 		if self.is_func():
 			return True
 		if self.is_array():
-			if self.of.is_forbidden_any():
-				return True
-			if self.is_unsized_array():
-				return True
-			if self.volume.is_immediate():
-				if self.volume.asset == 0:
-					return True
+			if self.of.is_forbidden_any(): return True
+			if self.is_unsized_array(): return True
+			if self.volume.is_immediate() and self.volume.asset == 0: return True
 		return False
 
 
 	def is_forbidden_var(self):
-		if self.is_func():
+		if self.is_forbidden_any():
 			return True
 
 		if self.is_array():

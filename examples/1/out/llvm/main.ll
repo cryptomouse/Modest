@@ -139,33 +139,9 @@ declare void @perror(%ConstCharStr* %str)
 ; -- endstrings --
 
 ;include "./lib"
-%main.Point = type {
-	%Int32,
-	%Int32
-};
-
-%main.Brand = type {
-	%Int32,
-	%Int32
-};
-
 define %Int @main() {
-	%p = alloca %main.Point, align 4
-	%b = alloca %main.Brand, align 4
-	%q = alloca %main.Point, align 4
-	%1 = insertvalue %main.Point zeroinitializer, %Int32 1, 0
-	%2 = insertvalue %main.Point %1, %Int32 2, 1
-	store %main.Point %2, %main.Point* %p
-; -- cons_composite_from_composite_by_adr --
-	%3 = bitcast %main.Point* %p to %main.Brand*
-	%4 = load %main.Brand, %main.Brand* %3
-; -- end cons_composite_from_composite_by_adr --
-	store %main.Brand %4, %main.Brand* %b
-; -- cons_composite_from_composite_by_adr --
-	%5 = bitcast %main.Brand* %b to %main.Point*
-	%6 = load %main.Point, %main.Point* %5
-; -- end cons_composite_from_composite_by_adr --
-	store %main.Point %6, %main.Point* %q
+	%u = alloca %void, align 1
+	store %void zeroinitializer, %void* %u
 	ret %Int 0
 }
 
