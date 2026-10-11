@@ -1,0 +1,61 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: array under the other name
+// EXPECT-OUT: passed: structural call array
+// EXPECTED-FAIL(c11): BUG#95 an array return buffer keeps the caller's element type
+//
+// A function returning an array of one record type, into a variable that
+// is an array of a structurally identical type of another name:
+// `var ps: [2]Point = makeVecs()`.
+//
+// An array is returned through a buffer the caller passes in.  The LLVM
+// backend converts the buffer's address to the callee's type; the C
+// backend hands `ps` over as it stands, a `struct point *` where the
+// callee takes a `struct vec2 *`, which C will not accept.
+//
+// The same for a single record is `structural_call.modest`.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+type Vec2 = {
+	x: Int32
+	y: Int32
+}
+
+
+func makeVecs () -> [2]Vec2 {
+	var vs: [2]Vec2 = [{x = 5, y = 6}, {x = 7, y = 8}]
+	return vs
+}
+
+
+func testArray () -> Bool {
+	var ps: [2]Point = makeVecs()
+	if ps[0].x != 5 or ps[0].y != 6 or ps[1].x != 7 or ps[1].y != 8 {
+		printf("ps = [{%d, %d}, {%d, %d}], expected [{5, 6}, {7, 8}]\n", ps[0].x, ps[0].y, ps[1].x, ps[1].y)
+		return false
+	}
+
+	printf("passed: array under the other name\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testArray() {
+		printf("failed: structural call array\n")
+		return exitFailure
+	}
+
+	printf("passed: structural call array\n")
+	return exitSuccess
+}

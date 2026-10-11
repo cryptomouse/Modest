@@ -1,0 +1,181 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: argument
+// EXPECT-OUT: passed: return
+// EXPECT-OUT: passed: comparison
+// EXPECT-OUT: passed: field
+// EXPECT-OUT: passed: nested
+// EXPECT-OUT: passed: loop
+// EXPECT-OUT: passed: structural call positions
+//
+// A call result of one record type used where a structurally identical
+// type of another name is expected, in every position other than the
+// `var` initializer and the assignment that `structural_call.modest`
+// covers: an argument, a `return`, an operand of `==`, a field, a record
+// that holds such records, and a call repeated in a loop.  An array of
+// them is `structural_call_array.modest`.
+//
+// In the LLVM backend the result arrives in a register under the callee's
+// type name; it is put into a temporary slot and read back under the
+// other name, the same way a variable is.
+//
+// Guards BUG#47 (fixed 2026-10-11).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+type Vec2 = {
+	x: Int32
+	y: Int32
+}
+
+type Line = {
+	a: Point
+	b: Point
+}
+
+type Segment = {
+	a: Vec2
+	b: Vec2
+}
+
+type Body = {
+	pos: Point
+	mass: Int32
+}
+
+
+func makeVec (x: Int32, y: Int32) -> Vec2 {
+	var v: Vec2 = {x = x, y = y}
+	return v
+}
+
+
+func makeSegment () -> Segment {
+	var s: Segment = {a = {x = 1, y = 2}, b = {x = 3, y = 4}}
+	return s
+}
+
+
+func sumPoint (p: Point) -> Int32 {
+	return p.x + p.y
+}
+
+
+func makePoint () -> Point {
+	// The callee says Vec2, this function says Point.
+	return makeVec(9, 10)
+}
+
+
+func testArgument () -> Bool {
+	let s = sumPoint(makeVec(3, 4))
+	if s != 7 {
+		printf("sumPoint(makeVec(3, 4)) = %d, expected 7\n", s)
+		return false
+	}
+
+	printf("passed: argument\n")
+	return true
+}
+
+
+func testReturn () -> Bool {
+	let p = makePoint()
+	if p.x != 9 or p.y != 10 {
+		printf("makePoint() = {%d, %d}, expected {9, 10}\n", p.x, p.y)
+		return false
+	}
+
+	printf("passed: return\n")
+	return true
+}
+
+
+func testComparison () -> Bool {
+	var p: Point = {x = 3, y = 4}
+	if not (p == makeVec(3, 4)) {
+		printf("p == makeVec(3, 4) is false, expected true\n")
+		return false
+	}
+	if p == makeVec(3, 5) {
+		printf("p == makeVec(3, 5) is true, expected false\n")
+		return false
+	}
+
+	printf("passed: comparison\n")
+	return true
+}
+
+
+func testField () -> Bool {
+	var b: Body = {}
+	b.pos = makeVec(11, 12)
+	if b.pos.x != 11 or b.pos.y != 12 {
+		printf("b.pos = {%d, %d}, expected {11, 12}\n", b.pos.x, b.pos.y)
+		return false
+	}
+
+	printf("passed: field\n")
+	return true
+}
+
+
+func testNested () -> Bool {
+	// Line and Segment differ only in the names of the records they hold.
+	var l: Line = makeSegment()
+	if l.a.x != 1 or l.a.y != 2 or l.b.x != 3 or l.b.y != 4 {
+		printf("l = {{%d, %d}, {%d, %d}}, expected {{1, 2}, {3, 4}}\n", l.a.x, l.a.y, l.b.x, l.b.y)
+		return false
+	}
+
+	printf("passed: nested\n")
+	return true
+}
+
+
+func testLoop () -> Bool {
+	var p: Point = {}
+	var sum: Int32 = 0
+	var i: Int32 = 0
+	while i < 100 {
+		p = makeVec(i, 1)
+		sum = sum + p.x + p.y
+		i = i + 1
+	}
+
+	// 0 + 1 + ... + 99 = 4950, plus 1 a hundred times
+	if sum != 5050 {
+		printf("sum = %d, expected 5050\n", sum)
+		return false
+	}
+
+	printf("passed: loop\n")
+	return true
+}
+
+
+func main () -> Int {
+	var ok = testArgument()
+	ok = testReturn() and ok
+	ok = testComparison() and ok
+	ok = testField() and ok
+	ok = testNested() and ok
+	ok = testLoop() and ok
+
+	if not ok {
+		printf("failed: structural call positions\n")
+		return exitFailure
+	}
+
+	printf("passed: structural call positions\n")
+	return exitSuccess
+}

@@ -3,18 +3,20 @@
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: call result under the other name
 // EXPECT-OUT: passed: structural call result
-// EXPECTED-FAIL(llvm): BUG#47 a returned record keeps the callee's type name
 //
 // A function returning one record type, into a variable of a structurally
 // identical type of another name: `var p: Point = returnsVec2()`.
 //
-// Everywhere else the LLVM backend bridges the two names with a bitcast
-// through the address (`cons_composite_from_composite_by_adr`).  A call
-// result has no address to bitcast: the value arrives as `%Vec2` and is
-// stored straight into a `%Point*`, which is not IR clang will accept.
+// The LLVM backend bridges the two names with a bitcast through the
+// address (`cons_composite_from_composite_by_adr`).  A call result has no
+// address to bitcast: the value arrives in a register as `%Vec2`, so it is
+// first put into a temporary slot.
 //
 // Assignment between two such variables is what `structural.modest`
-// covers, and it works; only the call result is left out.
+// covers; the call result in other positions is
+// `structural_call_positions.modest`.
+//
+// Guards BUG#47 (fixed 2026-10-11).
 
 include "libc/ctypes64"
 include "libc/stdio"

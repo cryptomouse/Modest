@@ -394,32 +394,6 @@ struct vec2 w = RAWCAST(struct vec2, struct point, (struct point){.x = 5, .y = 6
 - Coverage: `tests/lang/type/record/structural_literal.modest`, marked
   `EXPECTED-FAIL(c11)`.
 
-## BUG#47: LLVM backend stores a returned record under the callee's type
-
-```modest
-type Point = {x: Int32, y: Int32}
-type Vec2 = {x: Int32, y: Int32}
-
-func makeVec () -> Vec2 { ... }
-
-var p: Point = makeVec()
-```
-
-```llvm
-store %Point %2, %Point* %1   ; %2 is a %Vec2
-; error: '%2' defined with type '%Vec2' but expected '%Point'
-```
-
-- Between two structurally identical record types the backend bridges the
-  two LLVM names by bitcasting the *address*
-  (`cons_composite_from_composite_by_adr`), which is why assignment
-  between two variables works. A call result has no address to bitcast:
-  the value arrives as `%Vec2` and is stored straight into a `%Point*`.
-- The C backend converts through `RAWCAST` and is unaffected (its own
-  trouble with that macro is BUG#46).
-- Coverage: `tests/lang/type/record/structural_call.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#48: C backend emits an anonymous record before the type it contains
 
 ```modest
@@ -1452,3 +1426,66 @@ let b = Nat8 f                // c11: 0    llvm: 0
   `abs()` and `cons.md` has to say so.
 - Coverage: `tests/lang/type/float/nat_negative.modest`, marked
   `EXPECTED-FAIL`.
+
+## BUG#95: C backend passes an array return buffer of the other record name as it stands
+
+```modest
+type Point = {x: Int32, y: Int32}
+type Vec2 = {x: Int32, y: Int32}
+
+func makeVecs () -> [2]Vec2 { ... }
+
+var ps: [2]Point = makeVecs()
+```
+
+```c
+makeVecs(ps);
+// error: incompatible pointer types passing 'struct point[2]' to
+// parameter of type 'struct vec2 *'
+```
+
+- An array is returned through a buffer the caller passes in (`__out`).
+  When the variable is an array of a structurally identical record type
+  of another name, the backend hands the variable over as the
+  buffer without converting the pointer, and the C compiler rejects the
+  call.
+- The LLVM backend is unaffected.
+- Coverage: `tests/lang/type/record/structural_call_array.modest`, marked
+  `EXPECTED-FAIL(c11)`.
+
+## BUG#96: LLVM backend allocates a temporary slot anew on every loop iteration
+
+```modest
+var p: Point = {}
+while i < 4000000 {
+	p = makeVec(1, 1)        // makeVec () -> Vec2
+	i = i + 1
+}
+```
+
+```llvm
+body_1:
+	%6 = call %Vec2 @makeVec(%Int32 1, %Int32 1)
+	%7 = alloca %Vec2          ; one more slot on every pass
+	store %Vec2 %6, %Vec2* %7
+```
+
+- Every `alloca` is written where its value is needed. An `alloca`
+  outside the entry block is a dynamic one: it is released only when the
+  function returns, so inside a loop the stack grows by one slot per
+  iteration until the program crashes (exit -11 on 4 million
+  iterations).
+- Three places emit such a temporary: a call result put under another
+  record name (`cons_composite_from_composite`), a record or array value
+  compared with `==` (the operands are spilled for `memcmp`), and the
+  return buffer of a function that returns an array (`do_eval_call`,
+  `print_stmt_const`).
+- Recursion is not the issue: a frame's slots go away with the frame.
+- Fix: emit the temporaries into the entry block, as clang does. `out()`
+  writes straight to the file and registers are numbered in order, so the
+  body has to be buffered (`print_def_func`) and the hoisted `alloca`s
+  given named registers that do not disturb the numbering.
+- The C backend is unaffected: its temporaries are block-scoped C
+  objects.
+- Coverage: `tests/lang/stmt/while/stack_temporary.modest`, marked
+  `EXPECTED-FAIL(llvm)`.

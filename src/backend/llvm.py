@@ -1531,6 +1531,12 @@ def cons_composite_from_composite(to_type, value, ti):
 		# не можем приводить глобально (used!)
 		return v
 
+	if not v['is_adr'] and str_type(v['type']) != str_type(to_type):
+		# значение пришло в регистре (результат вызова и т.п.) под чужим
+		# LLVM-именем: адреса у него нет, так что кладем его во временный
+		# слот и дальше идем общим путем через адрес (BUG#47)
+		v = llvm_alloca_store(v['type'], init_value=v)
+
 	if v['is_adr']:
 		# received not value but it address (formally pointer)
 		out("\n; -- cons_composite_from_composite_by_adr --")
@@ -1541,28 +1547,8 @@ def cons_composite_from_composite(to_type, value, ti):
 		out("\n; -- end cons_composite_from_composite_by_adr --")
 		return llv
 
-	#
-	# received value in reg
-	#
-
+	# значение в регистре и уже под нужным LLVM-именем
 	return v
-
-#	out("\n; -- cons_composite_from_composite_by_value --")
-#	if to_type.get_size() > value.type.get_size():
-#		#out("\n\t; extend")
-#		# выделим память под новое значение
-#		nv = llvm_alloca(to_type)
-#		# приводим указатель на слот к указателю на (меньшее) значение
-#		xnv = llvm_cast("bitcast", nv, TypePointer(v['type']))
-#		llvm_store(xnv, v)
-#		nv['is_adr'] = True
-#	else:
-#		#out("\n\t; trunk")
-#		y = llvm_alloca_store(v['type'], init_value=v)
-#		nv = llvm_cast("bitcast", y, TypePointer(to_type))
-#		nv['is_adr'] = True
-#	out("\n; -- end cons_composite_from_composite_by_value --")
-#	return nv
 
 
 

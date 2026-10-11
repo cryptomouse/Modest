@@ -23,10 +23,10 @@
 // same fields in a different order (`{y, x}`) each fail with
 // `type mismatch`.
 //
-// Two shapes are missing for a reason of their own, each with a
-// reproducer: an *explicitly named* literal handed to the other name
-// (`structural_literal.modest`, BUG#46) and a call result taken into
-// the other name (`structural_call.modest`, BUG#47).
+// Two shapes are covered elsewhere: an *explicitly named* literal handed
+// to the other name (`structural_literal.modest`, BUG#46) and a call
+// result taken into the other name (`structural_call.modest` and
+// `structural_call_positions.modest`).
 
 include "libc/ctypes64"
 include "libc/stdio"
