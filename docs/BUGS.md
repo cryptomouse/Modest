@@ -572,28 +572,6 @@ struct __anonymous_variant_1 r = divide(10, 2);
   points here.
 
 
-## BUG#61: `@extern` variable with an initializer silently drops it
-
-```modest
-@extern("C")
-var env: []Int32 = [1, 2, 3]
-```
-
-```c
-extern int32_t env[3];   // the initializer is gone
-```
-
-- The initializer is accepted, used to infer the array size, and then
-  never emitted, so the source claims storage that the output only
-  declares.
-- An `@extern` variable is a declaration of storage defined elsewhere;
-  an initializer contradicts it and belongs in an error
-  (C says the same: `extern int a[] = {...};` is a definition, not a
-  declaration). The size should come from the type — `[3]Int32` — not
-  from a dropped initializer.
-- No reproducer in the suite: a `reject` test belongs next to the other
-  `@extern` cases.
-
 ## BUG#62: C backend runs two unary signs together into `--` / `++`
 
 ```modest
