@@ -1,9 +1,9 @@
 // TEST: reject
 // EXPECT-ERROR: value identifier must start with a small letter; 'K' names a type
-// EXPECT-ERROR: unexpected token1 ')'
-// EXPECT-ERROR: unexpected token1 ','
+// EXPECT-ERROR: unexpected token ')'
+// EXPECT-ERROR: unexpected token ','
 // EXPECT-ERROR: expected separator
-// EXPECT-ERROR: unexpected token1 ')'
+// EXPECT-ERROR: unexpected token ')'
 // EXPECT-ERROR: expected ')' token
 // EXPECT-ERROR: undefined value 'reached'
 //

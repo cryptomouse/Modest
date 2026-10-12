@@ -30,7 +30,7 @@
 
 ## Наблюдения
 
-**Отладочные / временные тексты, видимые пользователю.** `undefined type2`, `expected immediate value2`, `type error2`, `annotation '%s' not defined2`, `unexpected token1`, `rec dep!`, `is_incompleted`, `do_eval_string??`. Цифра в конце — явно метка «второй экземпляр», её надо убрать и дать нормальный текст.
+**Отладочные / временные тексты, видимые пользователю.** `undefined type2`, `expected immediate value2`, `type error2`, `annotation '%s' not defined2`, `rec dep!`, `is_incompleted`, `do_eval_string??`. Цифра в конце — явно метка «второй экземпляр», её надо убрать и дать нормальный текст.
 
 **Нет имени виновника.** `undefined type`, `undefined type2`, `access to private type`, `unsuitable type`, `unknown value`, `expected mutable value`, `type redefinition`, `using of an incompleted type` — не говорят, *какой* тип/значение. Рядом `undefined value '%s'` и `undefined field '%s'` имя дают — стоит выровнять.
 
@@ -109,7 +109,7 @@
 | [parser.py:1081](../src/parser.py#L1081) | error | `"expected identifier"` |
 | [parser.py:709](../src/parser.py#L709) | error | `"required parentheses"` |
 | [parser.py:797](../src/parser.py#L797) | error | `"required parentheses"` |
-| [parser.py:1691](../src/parser.py#L1691) | error | `"unexpected token1 '%s'" % tokstr` |
+| [parser.py:1691](../src/parser.py#L1691) | error | `"unexpected token '%s'" % tokstr` |
 | [parser.py:2434](../src/parser.py#L2434) | error | `"unexpected token '%s'" % self.ctok()` |
 
 ### 4. Синтаксис: стиль и соглашения

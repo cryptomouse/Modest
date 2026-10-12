@@ -20,6 +20,19 @@ Float64 (a + b)
 unsafe(Nat64 p)          // pointer address as integer
 ```
 
+The value starts on the line of the type: a type left alone at the end of
+a line, with the value on the next one, is an error (`value construction
+split across lines`). In a list, where a newline separates items, it would
+read as two items; to spread the value over several lines, open a
+parenthesis on the line of the type:
+
+```modest
+let v = Int32 (
+	a +
+	b
+)
+```
+
 ## Semantics
 
 Per-target rules (`X`, `Y` — widths; verified against the compiler):

@@ -128,7 +128,7 @@ error: for use 'unsafe' operator required -funsafe option
 
 ```modest
 let v = a
-	| (a << 8)      // error: unexpected token1 '|'
+	| (a << 8)      // error: unexpected token '|'
 ```
 
 ```modest
@@ -142,8 +142,6 @@ return 0            // error: undefined value 'return'
   start of line; to continue an expression, put it at the end of the previous
   line". For a trailing operator with nothing to continue into — point at the
   operator, not at the innocent token on the next line that got swallowed.
-- `unexpected token1` leaks an internal name into user-facing output; it appears
-  in many other diagnostics too and deserves a separate pass.
 
 ## BUG#25: `FixedX` — the gaps left around a working type
 
@@ -930,7 +928,7 @@ let x = take({x = )}, 2)
 ```
 
 ```
-error: unexpected token1 ')'
+error: unexpected token ')'
 error: cannot implicitly construct `Int32` from `{x: <hlir.types.TypeBad object at 0x109f65940>}`
 ```
 

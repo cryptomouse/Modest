@@ -1,0 +1,87 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: array without commas
+// EXPECT-OUT: passed: record without commas
+// EXPECT-OUT: passed: nested without commas
+// EXPECT-OUT: passed: construction per line
+//
+// In an array or record literal laid out over several lines the newline
+// separates the items, so the commas may be left out.  A value
+// construction stays on one line — `Int32 5` — and is one item; to spread
+// its value over several lines, the value goes in parentheses opened on
+// the line of the type (reject_split_lines.modest in value/cons is the
+// form that is refused).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+
+func main () -> Int {
+	var result = true
+
+	let a: [3]Int32 = [
+		1
+		2
+		3
+	]
+	if a[0] + a[1] + a[2] != 6 or a[2] != 3 {
+		printf("a = [%d, %d, %d], expected [1, 2, 3]\n", a[0], a[1], a[2])
+		result = false
+	} else {
+		printf("passed: array without commas\n")
+	}
+
+	let p: Point = {
+		x = 4
+		y = 5
+	}
+	if p.x != 4 or p.y != 5 {
+		printf("p = {x = %d, y = %d}, expected {x = 4, y = 5}\n", p.x, p.y)
+		result = false
+	} else {
+		printf("passed: record without commas\n")
+	}
+
+	let ps: [2]Point = [
+		{
+			x = 1
+			y = 2
+		}
+		{x = 3, y = 4}
+	]
+	if ps[0].y != 2 or ps[1].x != 3 {
+		printf("ps[0].y = %d, ps[1].x = %d, expected 2 and 3\n", ps[0].y, ps[1].x)
+		result = false
+	} else {
+		printf("passed: nested without commas\n")
+	}
+
+	let c: [3]Int32 = [
+		Int32 7
+		Int32 Nat8 8
+		Int32 (
+			2 +
+			3
+		)
+	]
+	if c[0] != 7 or c[1] != 8 or c[2] != 5 {
+		printf("c = [%d, %d, %d], expected [7, 8, 5]\n", c[0], c[1], c[2])
+		result = false
+	} else {
+		printf("passed: construction per line\n")
+	}
+
+	if not result {
+		return exitFailure
+	}
+	return exitSuccess
+}
+

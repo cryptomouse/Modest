@@ -259,7 +259,7 @@ printf("%d %d\n",
 > **The operator goes at the end of the line, not at the start of the next one.**
 > It is the mark that the expression continues — the parser decides at the line
 > break, using what it has already read. Starting a line with `|` gives
-> `unexpected token1 '|'`.
+> `unexpected token '|'`.
 >
 > Blank lines and comments after the trailing operator are fine — annotate the
 > terms of a long expression to their right:
@@ -268,6 +268,39 @@ printf("%d %d\n",
 > 	(a << 8)     // next byte
 > ```
 > The same goes after `(`, before `)` and after the `=` of `let`/`var`/assignment.
+
+In a list (record fields, parameters, call arguments, array and record
+literals) a newline separates items just as a comma does, so a list laid out
+one item per line needs no commas:
+
+```modest
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+let p: Point = {
+	x = 1
+	y = 2
+}
+
+func sub (
+	a: Nat32
+	b: Nat32
+) -> Nat32 {
+	return a - b
+}
+
+let d = sub(
+	10
+	3
+)
+```
+
+> **A value construction stays on one line.** `Int32` alone at the end of a
+> line with its value on the next one is an error (`value construction split
+> across lines`) — in a list it would read as two items. To spread the value
+> over several lines, open a parenthesis on the line of the type: `Int32 (`.
 
 ### If/Else
 ```modest

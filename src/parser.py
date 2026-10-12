@@ -979,6 +979,17 @@ class Parser:
 		if self.is_type_before_value():
 			ti = self.textInfo()
 			t = self.expr_type()
+			# the value goes on the line of its type: `Int32` alone on a
+			# line, the value on the next one, is never a construction
+			if self.ctok_class() in ['nl', 'comment-line']:
+				error("value construction split across lines: the value must start on the line of its type", ti)
+				# read on as if the value stood on that line, so the
+				# construction does not fall apart into more errors —
+				# unless the next line closes the list or is empty
+				self.skip_tokens_class(['comment-line'])
+				if self.nextok() in ['}', ']', ')', '', '\n']:
+					return ast_value_bad(ti)
+				self.skip1()
 			v = self.expr_value_6()
 			return {
 				'isa': 'ast_value',
@@ -1713,7 +1724,7 @@ class Parser:
 			elif tokstr == '':
 				tokstr = 'end-of-file'
 
-			error("unexpected token1 '%s'" % tokstr, self.textInfo())
+			error("unexpected token '%s'" % tokstr, self.textInfo())
 			# The closer of the list around this value is left for that
 			# list to end on.
 			if not (len(self.closers) > 0 and tokstr in [self.closers[-1], ',']):

@@ -1,0 +1,98 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: parameters without commas
+// EXPECT-OUT: passed: default argument without commas
+// EXPECT-OUT: passed: function type without commas
+// EXPECT-OUT: passed: commas and newlines mixed
+//
+// A parameter list laid out one parameter per line needs no commas: the
+// newline separates parameters just as it separates fields of a record.
+// The same holds for a function type and for the arguments of a call.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type BinOp = (
+	a: Int32
+	b: Int32
+) -> Int32
+
+
+func sub (
+	a: Int32
+	b: Int32
+) -> Int32 {
+	return a - b
+}
+
+func scale (
+	v: Int32
+	k: Int32 = 3
+) -> Int32 {
+	return v * k
+}
+
+func mix (
+	a: Int32, b: Int32
+	c: Int32
+) -> Int32 {
+	return a * 100 + b * 10 + c
+}
+
+
+func main () -> Int {
+	var result = true
+
+	let d = sub(
+		10
+		3
+	)
+	if d != 7 {
+		printf("sub(10, 3) = %d, expected 7\n", d)
+		result = false
+	} else {
+		printf("passed: parameters without commas\n")
+	}
+
+	let s = scale(
+		5
+	)
+	if s != 15 {
+		printf("scale(5) = %d, expected 15\n", s)
+		result = false
+	} else {
+		printf("passed: default argument without commas\n")
+	}
+
+	let op: *BinOp = &sub
+	let o = op(
+		20
+		5
+	)
+	if o != 15 {
+		printf("op(20, 5) = %d, expected 15\n", o)
+		result = false
+	} else {
+		printf("passed: function type without commas\n")
+	}
+
+	let m = mix(
+		1, 2
+		3
+	)
+	if m != 123 {
+		printf("mix(1, 2, 3) = %d, expected 123\n", m)
+		result = false
+	} else {
+		printf("passed: commas and newlines mixed\n")
+	}
+
+	if not result {
+		return exitFailure
+	}
+	return exitSuccess
+}
+

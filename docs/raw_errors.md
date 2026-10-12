@@ -181,7 +181,7 @@
 | [parser.py:1367](../src/parser.py#L1367) | error | `parse_value_string` | `"expected '{' after \\u"` |
 | [parser.py:1376](../src/parser.py#L1376) | error | `parse_value_string` | `"expected \\u{H...H} with 1-6 hex digits"` |
 | [parser.py:1385](../src/parser.py#L1385) | error | `parse_value_string` | `"\\u{%s} is outside the Unicode range (max 10FFFF)" % cod` |
-| [parser.py:1691](../src/parser.py#L1691) | error | `expr_value_term` | `"unexpected token1 '%s'" % tokstr` |
+| [parser.py:1691](../src/parser.py#L1691) | error | `expr_value_term` | `"unexpected token '%s'" % tokstr` |
 | [parser.py:1943](../src/parser.py#L1943) | error | `stmt_block` | `"expected '}' (unexpected end of file)"` |
 | [parser.py:1944](../src/parser.py#L1944) | note | `stmt_block` | `"to match this '{'"` |
 | [parser.py:2124](../src/parser.py#L2124) | error | `parse_def_func` | `"expected ':' token"` |

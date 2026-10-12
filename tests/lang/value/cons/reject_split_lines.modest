@@ -1,0 +1,58 @@
+// TEST: reject
+// EXPECT-ERROR: value construction split across lines
+// EXPECT-ERROR: value construction split across lines
+// EXPECT-ERROR: value construction split across lines
+// EXPECT-ERROR: value construction split across lines
+// EXPECT-ERROR: value construction split across lines
+// EXPECT-ERROR-COUNT: 5
+//
+// A value construction is written on one line: the type, then its value.
+// A type left alone at the end of a line, with the value on the next one,
+// is refused — in a list the newline separates items, so `Int32` and `5`
+// on two lines read as two items, and anywhere else the split only
+// obscures what is being built.  To spread the value over several lines,
+// open a parenthesis on the line of the type: `Int32 (`.
+//
+// Each site reports the one error and nothing after it: the parser reads
+// on as if the value stood on the line of the type.
+
+include "libc/ctypes64"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+
+func take (a: Int32) -> Int32 {
+	return a
+}
+
+func main () -> Int {
+	let plain = Int32
+		5
+
+	let commented = Int32  // the value is below
+		5
+
+	let arr: [2]Int32 = [
+		Int32
+		5
+		6
+	]
+
+	let arg = take(
+		Int32
+		5
+	)
+
+	let p: Point = {
+		x = Int32
+		5
+		y = 1
+	}
+
+	return 0
+}
+
