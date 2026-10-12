@@ -1165,14 +1165,14 @@ class Type(Entity):
 
 	def is_forbidden_any(self):
 		if self.is_func(): return True
-		if self.is_unit(): return True
+		#if self.is_unit(): return True
 		return False
 
 
 	# cannot create field with type
 	def is_forbidden_field(self):
 		if self.is_func(): return True
-		if self.is_unit(): return True
+		#if self.is_unit(): return True
 		if self.is_unsized_array(): return True
 		return False
 
