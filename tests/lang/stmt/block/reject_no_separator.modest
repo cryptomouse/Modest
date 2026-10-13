@@ -1,0 +1,31 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: expected newline or ';'
+// EXPECT-ERROR: const b: Int32 = 2
+// EXPECT-ERROR: expected separator
+// EXPECT-ERROR: b: Int32
+// EXPECT-ERROR: expected newline or ';'
+// EXPECT-ERROR: x = 2
+// EXPECT-ERROR: expected newline or ';'
+// EXPECT-ERROR: ++x
+// EXPECT-ERROR-COUNT: 4
+//
+// Two statements on one line need a newline or a ';' between them — at
+// the top level and in a block alike.  Record fields take ',' or a
+// newline.  One diagnostic per missing separator, and parsing goes on
+// from the next line.
+
+include "libc/ctypes64"
+
+
+const a: Int32 = 1 const b: Int32 = 2
+
+type Pair = {a: Int32 b: Int32}
+
+
+func main () -> Int {
+	var x: Int32 = 1 x = 2
+	x = 3 ++x
+	return 0
+}
+

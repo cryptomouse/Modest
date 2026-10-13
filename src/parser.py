@@ -3,7 +3,7 @@
 import os
 
 from hlir import *
-from error import error, warning, info, note
+from error import error, warning, info, note, get_errcnt
 from unicode import utf32cc_to_utf8_str
 
 top_level_stoppers = ['type', 'let', 'const', 'var', 'func']
@@ -180,6 +180,34 @@ class Parser:
 		return self.ctok_class() == 'nl'
 
 
+	# a statement (in a block or at the top level) ends at a newline or ';'
+	def look_sep(self):
+		return self.look_nl() or self.look(';')
+
+
+	# step over the separators that end a statement; returns the number of
+	# newlines among them — ';' is not an empty line
+	def skip_seps(self):
+		nl_cnt = 0
+		while self.look_sep():
+			if self.look_nl():
+				nl_cnt += 1
+			self.skip1()
+		return nl_cnt
+
+
+	# a statement ends at a separator, a '}' or a comment — 'var x = 1 x = 2'
+	# is an error; skipped if the statement has already reported one
+	# (errcnt — the count before it), so as not to pile up on it
+	def need_stmt_end(self, errcnt):
+		if self.look_sep() or self.look('}') or self.is_comment() or self.is_end():
+			return
+		if get_errcnt() != errcnt:
+			return
+		error("expected newline or ';'", self.textInfo())
+		self.restore(['\n', ';', '}'])
+
+
 	# step over the single newline that may separate `token` from what
 	# precedes it — 'header\n{' and '}\nelse' (see ALLOW_BRACE_ON_NEXT_LINE);
 	# only one, so a blank line is never skipped
@@ -302,8 +330,6 @@ class Parser:
 					nl_cnt += 1
 				elif self.match(","):
 					pass
-				elif self.match(";"):
-					pass
 				else:
 					break
 			if self.look("}"):
@@ -322,6 +348,9 @@ class Parser:
 				ff['access_modifier'] = access_modifier
 
 			line_comm = self.parse_if_comment()
+
+			# fields are separated by ',' or a newline — never ';'
+			self.need_sep(separators=[',', '\n'], stoppers=['}'], eat=False, restore_to=['}', '\n'])
 
 			if f:
 				f[0].update({
@@ -1818,7 +1847,7 @@ class Parser:
 		self.skip("return")
 
 		v = None
-		if not (self.look_nl() or self.look(";") or self.look("}") or self.is_comment()):
+		if not (self.look_sep() or self.look("}") or self.is_comment()):
 			v = self.expr_value()
 			ti_end = v['ti'].end
 
@@ -1980,6 +2009,7 @@ class Parser:
 				note("to match this '{'", brace_ti)
 				break
 
+			errcnt = get_errcnt()
 
 			if self.look('let'):
 				s = self.stmt_let()
@@ -2018,14 +2048,12 @@ class Parser:
 				s = self.parse_def_func()
 			elif self.look('__asm'):
 				s = self.stmt_asm()
-			elif self.match(';'):
-				pass
 			else:
 				s = self.stmt_expr_value()
 
 			if s != None:
-				while self.match(";"):
-					pass
+				if isinstance(s, list) or s['isa'] != 'ast_comment':
+					self.need_stmt_end(errcnt)
 
 				if isinstance(s, list):
 					s[0]['nl'] = spaceline_cnt
@@ -2070,7 +2098,7 @@ class Parser:
 		nl_cnt = 0
 
 		while not self.is_end():
-			nl_cnt = self.skip_blanks()
+			nl_cnt = self.skip_seps()
 
 			comm = self.parse_if_comment()
 			if comm != None:
@@ -2375,7 +2403,7 @@ class Parser:
 		id = self.parse_identifier() # pragma 'name'
 
 		args = []
-		while not self.match("\n"):
+		while not self.look_sep():
 			if self.is_end():
 				break
 			a = self.expr_value()
@@ -2445,9 +2473,10 @@ class Parser:
 			access_modifier = self.parse_access_modifier()
 
 			x = None
+			errcnt = get_errcnt()
 
-			if self.match('\n'):
-				spaceline_cnt += 1
+			if self.look_sep():
+				spaceline_cnt += self.skip_seps()
 
 				if spaceline_cnt > 1:
 					if self.comment != None:
@@ -2486,6 +2515,8 @@ class Parser:
 				continue
 
 			if x != None:
+				self.need_stmt_end(errcnt)
+
 				if not isinstance(x, list):
 					if x['isa'] == 'ast_directive' and x['kind'] != 'include':
 						if access_modifier != 'undefined':

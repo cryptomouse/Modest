@@ -1,0 +1,104 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: statements
+// EXPECT-OUT: passed: one line
+// EXPECT-OUT: passed: semicolon
+//
+// Covers ';' as a statement separator, the same as a newline: every
+// statement and every top-level definition here ends with one.  Only
+// statements take it — fields, arguments and initializers are separated
+// by ',' or a newline.
+//
+// The ';' after a closing '}' and the run of ';;;' below only check that
+// the parser accepts them — they are not a style to follow.
+
+include "libc/ctypes64";
+include "libc/stdio";
+include "libc/stdlib";
+
+
+type Point = {x: Int32, y: Int32};
+
+const base: Int32 = 10;
+var counter: Int32 = 0;
+
+
+// check only, not a recommendation: ';' after a function body is accepted
+func bump () -> Unit {
+	counter = counter + 1;
+	return;
+};
+
+
+func twice (x: Int32) -> Int32 {
+	return x * 2;
+}
+
+
+func testStatements () -> Bool {
+	let a: Int32 = twice(base);
+	var b: Int32 = 0;
+	var p: Point = {x = 1, y = 2};
+
+	++b;
+	--b;
+	++b;
+
+	var i: Int32 = 0;
+	while true {
+		++i;
+		if i < 3 {
+			again;
+		}
+		break;
+	}
+
+	if a == 20 {
+		bump();
+	} else {
+		return false;
+	}
+
+	type Local = Int32;
+	const local: Local = 5;
+	p.x = p.x + local;
+
+	if a != 20 or b != 1 or i != 3 or counter != 1 or p.x != 6 or p.y != 2 {
+		printf("a = %d, b = %d, i = %d, counter = %d, p = {%d, %d}\n", a, b, i, counter, p.x, p.y);
+		return false;
+	}
+
+	printf("passed: statements\n");
+	return true;
+}
+
+
+func testOneLine () -> Bool {
+	// check only, not a recommendation: a run of ';' is accepted
+	var x: Int32 = 1; var y: Int32 = 2; x = x + y;;; y = x * y;
+
+	if x != 3 or y != 6 {
+		printf("x = %d, y = %d, expected 3, 6\n", x, y);
+		return false;
+	}
+
+	printf("passed: one line\n");
+	return true;
+}
+
+
+func main () -> Int {
+	var ok: Bool = true;
+	ok = testStatements() and ok;
+	ok = testOneLine() and ok;
+
+	if not ok {
+		printf("failed: semicolon\n");
+		return exitFailure;
+	}
+
+	printf("passed: semicolon\n");
+	return exitSuccess;
+}
+

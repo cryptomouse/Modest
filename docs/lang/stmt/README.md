@@ -27,6 +27,13 @@ several statements on one line:
 var a: Int32 = 1; var b: Int32 = 2
 ```
 
+The same holds for top-level definitions.  A `;` separates statements
+only: record fields, arguments and initializers are separated by `,` or
+a newline.
+
+`;` is allowed but not recommended; when a file does use it, it uses it
+everywhere — see [style](../../STYLE.md#semicolons).
+
 ## Notes
 
 - Statements are not expressions: assignment, `++`/`--` and definitions

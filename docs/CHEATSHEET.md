@@ -242,18 +242,23 @@ pragma c_no_print             // omit this module's definitions from C output
 
 ### Line breaks
 
-A statement ends at the end of the line — there are no semicolons. An expression
-continues on the next line when the line ends with a token that cannot finish it:
-a binary operator (`+`, `|`, `and`, `==`, ...), `=`, `,`, `(` or `[`.
+A statement ends at the end of the line, or at a `;` — `a = 1; b = 2` (statements
+and top-level definitions only; fields and arguments take `,`). `;` is allowed but
+not recommended: a file that uses it uses it everywhere ([style](STYLE.md#semicolons)).
+
+An expression continues on the next line when the line ends with a token that
+cannot finish it: a binary operator (`+`, `|`, `and`, `==`, ...), `=`, `,`, `(` or `[`.
 
 ```modest
 let v = a |
 	(a << 8) |
 	(a << 16)
 
-printf("%d %d\n",
+printf(
+	"%d %d\n",
 	first,
-	second)
+	second
+)
 ```
 
 > **The operator goes at the end of the line, not at the start of the next one.**

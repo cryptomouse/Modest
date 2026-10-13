@@ -97,6 +97,31 @@ func main () -> Int {
   next-line `else` is experimental and may be dropped.
 
 
+## Semicolons
+
+- A statement ends at the end of its line.  The compiler also accepts a
+  `;` after any statement or top-level definition, but it is **allowed,
+  not recommended**.
+- The one place it is at home: several short statements on one line —
+  `var a: Int32 = 1; var b: Int32 = 2`.
+- A file that ends its lines with `;` anyway does so **everywhere**: every
+  statement and top-level definition in it ends with `;`.  One style per
+  file — never a mix.
+- Even then, no `;` after the `}` that closes a body (`func`, `if`, `else`,
+  `while`) — the brace already ends it.  A `}` that ends a type or a
+  record literal is not a body: `type Point = {x: Int32, y: Int32};`.
+
+```modest
+// either — the recommended style
+var total: Int32 = 0
+total = total + step
+
+// or — consistently, through the whole file
+var total: Int32 = 0;
+total = total + step;
+```
+
+
 ## Comments
 
 - An inline comment (to the right of a line of code) is separated from

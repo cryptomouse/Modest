@@ -1047,7 +1047,14 @@ def str_top_level_stmt2(x):
 		ss.append(str_stmt_comment(x.comment))
 
 	if not x.is_stmt_directive():
-		ss.append(str_newline(n=x.nl))
+		# nl == 0: shares the line with the previous definition — a trailing
+		# comment, or a definition separated from it by ';'
+		if x.nl > 0:
+			ss.append(str_newline(n=x.nl))
+		elif x.is_stmt_comment():
+			ss.append(" ")
+		else:
+			ss.append("; ")
 
 	for a in x.attributes:
 		v = x.attributes[a]
@@ -1098,7 +1105,7 @@ def run(module, fname):
 	# каждый top-level оператор печатает отступ перед собой, поэтому первый
 	# из них открывает файл пустыми строками
 	if ss != []:
-		ss[0] = ss[0].lstrip(nl_symbol)
+		ss[0] = ss[0].lstrip(nl_symbol).removeprefix("; ").removeprefix(" ")
 
 	dirname = os.path.dirname(fname)
 	if dirname != '':
