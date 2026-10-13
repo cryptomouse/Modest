@@ -6,7 +6,7 @@
 //include "./lib"
 struct aligned {
 	uint8_t a;
-};
+} __attribute__((deprecated));
 static uint32_t num;
 
 static uint32_t getnum(void) {
@@ -31,6 +31,7 @@ static bool checkRecord(struct triple r) {
 }
 
 int32_t main(void) {
+	struct aligned a = {0};
 	const bool c0 = checkArgs(getnum(), getnum(), getnum());
 	printf("checkArgs() = %d\n", c0);
 	const bool c1 = checkArray((uint32_t [3]){getnum(), getnum(), getnum()});

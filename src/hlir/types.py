@@ -1155,12 +1155,23 @@ class Type(Entity):
 
 	def update(self, src):
 		# Это даже как то работает, ок, пока сойдет
+		orig_id = None
+		if hasattr(self, 'id'):
+			orig_id = self.id
+		orig_atts = self.attributes.copy()
 		self.__dict__.clear()
 		self.__dict__.update(src.__dict__)
 		if hasattr(src, 'id'):
 			self.id = copy.copy(src.id)
-		self.attributes = copy.copy(src.attributes)
+
 		self.__class__ = src.__class__
+
+		orig_atts.update(src.attributes)
+		self.attributes = orig_atts
+		if orig_id:
+			self.id = orig_id
+
+				
 
 
 	def is_forbidden_any(self):

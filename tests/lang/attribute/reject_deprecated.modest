@@ -1,0 +1,54 @@
+// TEST: reject
+// FLAGS: -fparanoid
+// EXPECT-ERROR: using a deprecated type
+// EXPECT-ERROR: using a deprecated type
+// EXPECT-ERROR: using a deprecated value
+// EXPECT-ERROR: using a deprecated value
+// EXPECT-ERROR: using a deprecated value
+// EXPECT-ERROR: using a deprecated value
+// EXPECT-ERROR-COUNT: 6
+//
+// Every use of a @deprecated definition warns; -fparanoid turns the
+// warnings into errors so that they can be counted.  In order:
+// `type New = Old`, then in useEarly `Old`, `oldFn`, `oldConst`, `oldVar`,
+// then `oldFn` in main.
+//
+// useEarly comes before oldFn's definition on purpose: @deprecated on
+// type and func is applied when the symbol is declared (def_phase1), so
+// a use earlier in the file warns as well.
+//
+// `New` itself is not deprecated: `type New = Old` warns once, at the
+// definition, but uses of `New` do not inherit the attribute from `Old`.
+
+include "libc/ctypes64"
+
+
+@deprecated
+type Old = Int32
+
+type New = Old
+
+@deprecated
+const oldConst: Int32 = 2
+
+@deprecated
+var oldVar: Int32 = 3
+
+
+func useEarly () -> Int32 {
+	let a: Old = oldFn()
+	return a + oldConst + oldVar
+}
+
+
+@deprecated
+func oldFn () -> Int32 {
+	return 1
+}
+
+
+func main () -> Int {
+	let n: New = 5
+	return n + useEarly() + oldFn()
+}
+

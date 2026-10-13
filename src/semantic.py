@@ -564,7 +564,8 @@ def do_type_named(x, anno, ctx):
 	if cdef != None and t.is_incompleted():
 		cdef.deps.append(t)
 
-	if t.hasAttribute("deprecated"):
+	definition = getattr(t, 'definition', None)
+	if definition != None and definition.hasAttribute("deprecated"):
 		warning("using a deprecated type", x['ti'])
 
 	return t
@@ -2299,7 +2300,8 @@ def do_stmt_type(x):
 	global csymtab
 
 	nt = Type(x['ti'])
-	new_def_type(x, nt)
+	definition = new_def_type(x, nt)
+	nt.id = definition.id
 	df = def_type_common(x, nt)
 	if df == None or df.is_stmt_bad():
 		return StmtBad(x['ti'])
@@ -2549,6 +2551,13 @@ def def_type1(x):
 	t = Type(x['ti'])  # Incomplete type (!)
 	definition = new_def_type(x, t)
 	csymtab.type_add(x['id']['str'], t, is_public=is_public)
+
+	# deprecated - свойство имени, а не типа: держим его на определении,
+	# чтобы алиасы (type New = Old) его не наследовали
+	deprecated_anno = pop_anno(x['anno'], 'deprecated')
+	if deprecated_anno != None:
+		definition.addAttribute('deprecated')
+	t.id = definition.id
 	return definition
 
 
@@ -2604,11 +2613,9 @@ def def_type_common(x, nt):
 	ty.c_anon_id = None
 
 	# Замещаем внутренности undefined типа на тип справа
-	# НО! имя даем новое
-	Type.update(nt, ty)
-	nt.id = id
+	# расширяем атрибуты
+	nt.update(ty)
 
-	#info("?%d?" % hasattr(ty, 'id'), x['ti'])
 
 	nt.definition = definition
 	nt.module = cmodule
@@ -2893,7 +2900,8 @@ def def_const_global(x, annos):
 			error("expected immediate value", iv.ti)
 
 	anno_to_attribute(df.value, annos, 'cbyvalue')
-	
+	anno_to_attribute(df.value, annos, 'deprecated')
+
 	return df
 
 
@@ -2910,6 +2918,7 @@ def def_var_global(x, annos):
 
 	df.value.storage_class = HLIR_VALUE_STORAGE_CLASS_GLOBAL
 	df.value.is_initialized = True
+	anno_to_attribute(df.value, annos, 'deprecated')
 	return df
 
 
@@ -2953,6 +2962,10 @@ def def_func1(x):
 
 	csymtab.value_add(x['id']['str'], v, is_public=is_public)
 	v.storage_class = HLIR_VALUE_STORAGE_CLASS_GLOBAL
+
+	deprecated_anno = pop_anno(x['anno'], 'deprecated')
+	if deprecated_anno != None:
+		v.addAttribute('deprecated')
 
 	return definition
 

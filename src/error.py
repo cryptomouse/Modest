@@ -159,7 +159,7 @@ def puterr(s):
 
 def info(s, ti=None):
 	if 'paranoid' in features:
-		printWarning(s, ti)
+		warning(s, ti)
 		return
 	if not show_info:
 		return

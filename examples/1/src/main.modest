@@ -6,6 +6,7 @@ include "libc/stdio"
 
 //include "./lib"
 
+@deprecated
 type Aligned = @alignment(2) {
 	a: Word8
 }
@@ -36,6 +37,8 @@ func checkRecord (r: Triple) -> Bool {
 
 
 func main () -> Int32 {
+	var a: Aligned
+
 	//var i: Int32 = 5
 	//printf("alignof = %zu\n", alignof(Aligned))  // c11: 16   llvm: 1   expected 2
 	//printf("sizeof = %zu\n", sizeof(Aligned))    // c11: 16   llvm: 1   expected 2
