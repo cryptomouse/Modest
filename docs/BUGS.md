@@ -1491,3 +1491,22 @@ row[at(1, 2):at(2, 4)] = [2]Int32 [v3, v4]    // c11: 1 3 4 2 1   llvm: 1 3 4
   from those.
 - Coverage: `tests/lang/value/eval_order/slice.modest`, marked
   `EXPECTED-FAIL(c11, llvm)`.
+
+## BUG#102: `Unit` is accepted as a storage type again (regression of BUG#58)
+
+```modest
+type Holder = {u: Unit}           // accepted, should be "unsuitable type"
+var globalUnit: Unit              // accepted; in C: `void globalUnit;`
+func take (u: Unit) -> Unit {}    // accepted
+```
+
+- `Unit` has no storage, so a field, parameter, variable, constant or
+  array element of it must be rejected with `unsuitable type`; it is
+  fine only as a result type and behind a pointer (`*Unit`).
+- The `is_unit()` checks in `Type.is_forbidden_any` /
+  `Type.is_forbidden_field` (`src/hlir/types.py`) are commented out
+  (fcec4bb9, 2026-10-12), so every such definition compiles silently.
+  They were disabled on purpose; what they broke still has to be sorted
+  out before they come back.
+- Coverage: `tests/lang/type/unit/reject_storage.modest`, marked
+  `EXPECTED-FAIL`.

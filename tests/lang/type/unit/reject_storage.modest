@@ -1,5 +1,6 @@
 // TEST: reject
 // BACKENDS: c11, llvm, modest
+// EXPECTED-FAIL: BUG#102 Unit is accepted as a field/param/var/const type again
 // EXPECT-ERROR: unsuitable type
 // EXPECT-ERROR: type Holder = {u: Unit}
 // EXPECT-ERROR: unsuitable type

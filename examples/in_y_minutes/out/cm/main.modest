@@ -2,7 +2,7 @@ include "libc/ctypes64"
 include "libc/stdio"
 include "libc/math"
 
-// This is a line comment. There are no block comments.// sqrt
+// This is a line comment. There are no block comments. // sqrt
 
 
 // `include` pastes a module's names directly into scope — used for C
