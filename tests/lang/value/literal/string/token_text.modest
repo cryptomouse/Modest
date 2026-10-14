@@ -1,0 +1,41 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: punctuation strings
+// EXPECT-OUT: passed: keyword strings
+// EXPECT-OUT: passed: empty string
+//
+// A string argument is a string whatever its text: "}" is not the end of
+// a block, "let" or "if" is not a statement, "" is not the end of the
+// file.  The argument list used to compare the bare text of a token with
+// its stoppers and refused such calls with "expected ')' token".
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+include "libc/string"
+
+
+func main () -> Int {
+	if strlen("}") != 1 or strlen(")") != 1 or strlen(",") != 1 or strlen(";") != 1 {
+		printf("failed: punctuation strings\n")
+		return exitFailure
+	}
+	printf("passed: punctuation strings\n")
+
+	if strlen("let") != 3 or strlen("if") != 2 or strlen("func") != 4 or strlen("type") != 4 {
+		printf("failed: keyword strings\n")
+		return exitFailure
+	}
+	printf("passed: keyword strings\n")
+
+	if strlen("") != 0 {
+		printf("failed: empty string\n")
+		return exitFailure
+	}
+	printf("passed: empty string\n")
+
+	return exitSuccess
+}
+
+

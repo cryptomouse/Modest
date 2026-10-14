@@ -1,0 +1,16 @@
+// TEST: reject
+// EXPECT-ERROR: expected separator
+// EXPECT-ERROR:     a: Int32 "}"
+// EXPECT-ERROR-COUNT: 1
+//
+// A string with the text of a closing brace is not a closing brace: after
+// a field it is junk and has to be reported.  The field separator check
+// used to compare the bare text of the token, took "}" for the end of the
+// record, and the compiler went on to crash in the backend.
+
+type Rec = record {
+	a: Int32 "}"
+	b: Int32
+}
+
+

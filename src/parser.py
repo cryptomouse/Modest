@@ -133,12 +133,6 @@ class Parser:
 			return None
 		return self.tokens[self.ctoken + n]
 
-	def nextok(self):
-		t = self.get_ntok(1)
-		if t == None:
-			return None
-		return t[1]
-
 
 	def tokenInfo(self):
 		assert(len(self.tokens[self.ctoken]) == 3)
@@ -166,14 +160,31 @@ class Parser:
 
 
 	def skip_tokens(self, tokens):
-		while self.ctok() in tokens:
+		while self.look_any(tokens):
 			self.skip1()
 
 
+	# Token checks go by class as well as text: a string "}" or a comment
+	# '//}' carries the same text as the '}' operator, so the text alone
+	# never tells what a token is.
 	def look(self, token):
-		if self.ctok_class() in ('id', 'op', 'nl'):
-			return self.ctok() == token
-		return False
+		return self.look_at(0, token)
+
+
+	def look_any(self, tokens):
+		return self.look_at_any(0, tokens)
+
+
+	# the token n positions ahead of the current one is `token`
+	def look_at(self, n, token):
+		t = self.get_ntok(n)
+		if t == None or t[0] not in ('id', 'op', 'nl'):
+			return False
+		return t[1] == token
+
+
+	def look_at_any(self, n, tokens):
+		return any(self.look_at(n, t) for t in tokens)
 
 
 	def look_nl(self):
@@ -212,7 +223,7 @@ class Parser:
 	# precedes it — 'header\n{' and '}\nelse' (see ALLOW_BRACE_ON_NEXT_LINE);
 	# only one, so a blank line is never skipped
 	def skip_nl_before(self, token):
-		if ALLOW_BRACE_ON_NEXT_LINE and self.look_nl() and self.nextok() == token:
+		if ALLOW_BRACE_ON_NEXT_LINE and self.look_nl() and self.look_at(1, token):
 			self.skip1()
 
 	def skip_nl_before_brace(self):
@@ -282,12 +293,12 @@ class Parser:
 
 
 	def need_sep(self, separators=['\n', ';'], stoppers=['}'], eat=True, restore_to=top_level_stoppers + func_stoppers):
-		if self.ctok() in separators:
+		if self.look_any(separators):
 			if eat:
-				while self.is_operator() and self.ctok() in separators:
+				while self.is_operator() and self.look_any(separators):
 					self.skip1()
 
-		elif self.ctok() in stoppers:
+		elif self.look_any(stoppers):
 			pass
 		elif self.ctok_class() in ['comment-line', 'comment-block']:
 			self.skip1()
@@ -402,13 +413,13 @@ class Parser:
 
 		elif self.is_identifier():
 			# `record { ... }` — record type with explicit keyword
-			if self.ctok() == 'record' and self.nextok() == '{':
+			if self.look('record') and self.look_at(1, '{'):
 				return True
 
 			# parse type expressions like 'builtin.machine.Word'
 			while self.is_identifier():
 				self.skip1() # skip ident
-				if self.ctok() != '.':
+				if not self.look('.'):
 					return False
 				self.skip1() # skip '.'
 				if self.is_Identifier():
@@ -512,7 +523,7 @@ class Parser:
 	# a type name stands where a field / parameter is expected:
 	# `{Int32}`, `{x: Int32, Int32}`, `(Int32) -> Unit`
 	def is_type_name_as_field(self):
-		return self.is_Identifier() and self.nextok() in [',', '}', ')', '\n']
+		return self.is_Identifier() and self.look_at_any(1, [',', '}', ')', '\n'])
 
 	def is_expr(self):
 		return not self.is_type_expr()
@@ -759,7 +770,7 @@ class Parser:
 			ti_mid = self.tokenInfo()
 			ti = self.textInfo()
 
-			if v['kind'] in comparison_ops and self.ctok() in comparison_tokens:
+			if v['kind'] in comparison_ops and self.look_any(comparison_tokens):
 				error("required parentheses", ti)
 				v = ast_value_bad(ti)
 
@@ -845,7 +856,7 @@ class Parser:
 			# type error is the more useful thing to say.
 			left_kind = bitwise_kind_of_op.get(v['kind'])
 			if left_kind != None:
-				op_kind = bitwise_kind_of_token.get(self.ctok())
+				op_kind = bitwise_kind_of_token.get(self.ctok()) if self.is_operator() else None
 				if op_kind != None and op_kind != left_kind:
 					ti = self.textInfo()
 					error("required parentheses", ti)
@@ -987,19 +998,19 @@ class Parser:
 		c = self.ctok_class()
 		if c == 'num' or c == 'str':
 			return False
-		if c == 'id' and self.nextok() != '.':
+		if c == 'id' and not self.look_at(1, '.'):
 			return False
 		if not self.is_type_expr():
 			return False
 		if self.look("{"):
-			if self.nextok() == "}":
+			if self.look_at(1, '}'):
 				# Встретили в выражении значения {} и не понимаем это тип {} или значение {} ?
 				# считаем что если дальше None | NL | комментарий | ';' | ',' | ')' | ']' | '}' - то это литерал пустой записи
 				# (эти токены не могут быть началом следующего значения, так что "тип перед значением" тут невозможен)
 				nex = self.get_ntok(2)
 				if nex == None:
 					return False
-				if (nex[0] in ('nl', 'comment-line', 'comment-block')) or (nex[1] in (';', ',', ')', ']', '}')):
+				if (nex[0] in ('nl', 'comment-line', 'comment-block')) or self.look_at_any(2, [';', ',', ')', ']', '}']):
 					return False
 		return True
 
@@ -1016,7 +1027,8 @@ class Parser:
 				# construction does not fall apart into more errors —
 				# unless the next line closes the list or is empty
 				self.skip_tokens_class(['comment-line'])
-				if self.nextok() in ['}', ']', ')', '', '\n']:
+				nex = self.get_ntok(1)
+				if nex == None or nex[0] == None or self.look_at_any(1, ['}', ']', ')', '\n']):
 					return ast_value_bad(ti)
 				self.skip1()
 			v = self.expr_value_6()
@@ -1123,7 +1135,7 @@ class Parser:
 			if self.look(")"):
 				break
 
-			if self.is_end() or self.ctok() in args_stoppers:
+			if self.is_end() or self.look_any(args_stoppers):
 				error("expected ')' token", self.textInfo())
 				break
 
@@ -1748,15 +1760,15 @@ class Parser:
 			cl = self.ctok_class()
 			tokstr = self.ctok()
 
-			if tokstr == '\n':
+			if cl == 'nl':
 				tokstr = 'newline'
-			elif tokstr == '':
+			elif cl == None:
 				tokstr = 'end-of-file'
 
 			error("unexpected token '%s'" % tokstr, self.textInfo())
 			# The closer of the list around this value is left for that
 			# list to end on.
-			if not (len(self.closers) > 0 and tokstr in [self.closers[-1], ',']):
+			if not (len(self.closers) > 0 and self.look_any([self.closers[-1], ','])):
 				self.skip1()
 			return ast_value_bad(ti_start)
 
@@ -2337,8 +2349,7 @@ class Parser:
 
 	def restore_top_level(self):
 		while not self.is_end():
-			token_str = self.ctok()
-			if token_str in ['func', 'const', 'var', 'type', 'exist', 'extern', 'include', 'import']:
+			if self.look_any(['func', 'const', 'var', 'type', 'exist', 'extern', 'include', 'import']):
 				break
 			self.skip1()
 
@@ -2545,7 +2556,7 @@ class Parser:
 
 
 	def restore(self, stoppers):
-		while not self.ctok() in stoppers:
+		while not self.look_any(stoppers):
 			if self.is_end():
 				return
 			self.skip1()
