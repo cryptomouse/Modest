@@ -478,7 +478,10 @@ def do_field(x, ctx, default_access_level=HLIR_ACCESS_LEVEL_PRIVATE):
 	if access_level == HLIR_ACCESS_LEVEL_UNDEFINED:
 		access_level = default_access_level
 	f = Field(id, field_type, init_value=init_value, access_level = access_level, ti=x['ti'])
-	f.add_atts(x['anno'])
+	# @alias у поля - имя поля в выводе, по тем же правилам, что у определений
+	annos = x['anno'].copy()
+	def_set_output_names(f, pop_annos(annos, 'alias'))
+	f.add_atts(annos)
 	f.nl = x['nl']
 	return f
 

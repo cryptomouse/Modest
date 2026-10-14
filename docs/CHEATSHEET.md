@@ -589,7 +589,8 @@ Unit value                         // discard a value (suppress warnings)
 > The first argument is the name; anything after it is named
 > (`backend="c11"`). Without `backend` the name holds for every backend;
 > different names per backend take one annotation each:
-> `@alias("x", backend="c11") @alias("y", backend="llvm")`.
+> `@alias("x", backend="c11") @alias("y", backend="llvm")`. On a record
+> field `@alias` names the field in the output: `@alias("tm_mday") day: Int`.
 >
 > ```modest
 > @extern("malloc")

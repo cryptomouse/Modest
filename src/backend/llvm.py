@@ -2148,7 +2148,7 @@ def do_eval_record(v):
 		# тк она порождается из zeroinitializer и по умолчанию заполнена нулями
 		if not (initializer.value.is_zero() or initializer.value.is_undefined()):
 			iv = do_reval(initializer.value)
-			field = TypeRecord.record_field_get(rec_type, get_id_str(initializer))
+			field = TypeRecord.record_field_get(rec_type, initializer.id.str)
 			xv = insertvalue(xv, iv, field.field_no)
 
 	return xv

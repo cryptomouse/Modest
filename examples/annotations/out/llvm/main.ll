@@ -148,8 +148,8 @@ declare void @perror(%ConstCharStr* %str)
 	%Nat16
 }>;
 
-@name1 = external global %Bool
-@name11 = external global %Bool
+@name2 = external global %Bool
+@name22 = external global %Bool
 @ext = external global %Int32
 @ext_arr = external global [0 x %Int32]
 @x = internal global %Word32 0, section "__DATA, .xdata", align 8

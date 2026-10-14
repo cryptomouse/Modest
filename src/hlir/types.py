@@ -286,21 +286,9 @@ class Field(Entity):
 		self.line_comment = None
 
 	def add_atts(self, atts):
-		from error import info, error
-		if atts == []:
-			return self
+		# @alias разбирает semantic (do_field) до вызова
 		for a in atts:
 			self.addAttribute(a['kind'])
-			if a['kind'] == 'alias':
-				if len(a['args']) > 1:
-					backend_name = a['args'][0]['value']['str']
-					alias = a['args'][1]['value']['str']
-					setattr(self.id, backend_name, alias)
-					print("self.id.c = %s" % self.id.c)
-				elif len(a['args']) == 1:
-					alias = a['args'][1]['value']['str']
-					self.id.common = alias
-
 		return self
 
 

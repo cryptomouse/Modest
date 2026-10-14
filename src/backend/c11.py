@@ -753,7 +753,7 @@ def do_cvalue_cons_record_literal_from_cons_asset(x, ctx):
 		# затем добавим поля, которые имеют default value отличное от zero
 		# add extra non-zero items ⚠️
 		for cons_ini in x.asset:
-			if get_initializer_by_id_str(asset, get_id_str(cons_ini)) != None:
+			if get_initializer_by_id_str(asset, cons_ini.id.str) != None:
 				continue
 			if not cons_ini.value.is_zero():
 				asset.append(cons_ini)

@@ -1,0 +1,66 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: alias field
+//
+// @alias on a record field names the field in the output, by the same
+// rules as on a definition: the name first, `backend=` after it.  `Date`
+// is libc's `struct tm` under Modest names — the C backend has to call
+// every field by its C name (`.tm_mday = 2`, `d.tm_wday`), or the program
+// does not compile.  The LLVM backend has no field names, it goes by the
+// layout, which is the same.
+//
+// Initializers are matched to fields by the Modest name and printed by the
+// output one.  Matching by the output name once lost the field in LLVM
+// (the compiler crashed — this test catches that) and in C printed every
+// set field twice, `{.tm_mday = 2, .tm_year = 70, .tm_mday = 2, ...}`,
+// which clang only warns about and which changes nothing at run time, so
+// that half shows only in the output.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+include "libc/time"
+
+
+@c_no_print
+@alias("struct tm", backend="c11")
+type Date = {
+	@alias("tm_sec") second: Int
+	@alias("tm_min") minute: Int
+	@alias("tm_hour") hour: Int
+	@alias("tm_mday") day: Int
+	@alias("tm_mon") month: Int
+	@alias("tm_year") year: Int
+	@alias("tm_wday") weekday: Int
+	@alias("tm_yday") yearDay: Int
+	@alias("tm_isdst") dst: Int
+	@alias("tm_gmtoff") gmtOffset: LongInt
+	@alias("tm_zone") zone: *ConstChar
+}
+
+@extern
+func timegm (date: *Date) -> TimeT
+
+
+func main () -> Int {
+	// 1970-01-02 00:00:00 UTC
+	var d: Date = {day = 2, year = 70}
+	let t = timegm(&d)
+	if t != 86400 {
+		printf("timegm = %lld, expected 86400\n", LongLong t)
+		printf("failed: alias field\n")
+		return exitFailure
+	}
+
+	// timegm fills in the rest: 1970-01-02 was a Friday
+	if d.weekday != 5 or d.yearDay != 1 {
+		printf("weekday = %d, yearDay = %d, expected 5, 1\n", d.weekday, d.yearDay)
+		printf("failed: alias field\n")
+		return exitFailure
+	}
+
+	printf("passed: alias field\n")
+	return exitSuccess
+}
+

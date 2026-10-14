@@ -53,6 +53,11 @@ Annotations are written before a definition, or inside a type expression
 > `@alias("x", backend="c11") @alias("y", backend="llvm")`; two for the
 > same backend are an error.
 >
+> On a record field `@alias` names the field in the output, by the same
+> rules — a C struct can be bound under Modest names:
+> `@alias("tm_mday") day: Int`. LLVM has no field names, so there it
+> changes nothing.
+>
 > A C macro or typedef the compiler must know the value or layout of
 > (`INT8_MIN`, `ino_t`, `struct dirent`) is a definition on the Modest
 > side: write it out and name it with `@alias("...", backend="c11")`. In
