@@ -4,18 +4,12 @@
 #include <stdbool.h>
 #include <stdio.h>
 //include "./lib"
-struct aligned {
-	uint8_t a;
-};
-
-static void init(void);
+static char *cmd[7] = {"abc", "def", "zyx", "123", "456", "780", "0"};
 
 int32_t main(void) {
-	struct aligned a = {0};
-	init();
+	uint32_t i = 0;
+	char **paramline = &cmd[i];
+	printf("%s\n", paramline[0]);
 	return 0;
-}
-
-static void init(void) {
 }
 

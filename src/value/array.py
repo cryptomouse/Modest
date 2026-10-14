@@ -48,7 +48,7 @@ def value_array_create(t, items, ti):
 	items = implicit_cons_list(items, item_type)
 
 	from .integer import value_integer_create
-	array_volume = value_integer_create(length)
+	array_volume = value_integer_create(length, ti=builtin_ti)
 	array_type = TypeArray(item_type, volume=array_volume, ti=ti)
 	array_type.generic = True
 	nv = ValueArray(array_type, items, ti)
@@ -113,7 +113,7 @@ def _resolve(t1, t2):
 
 		if t2.is_string():
 			from .integer import value_integer_create
-			volume = value_integer_create(t2.length)
+			volume = value_integer_create(t2.length, ti=builtin_ti)
 			t2 = TypeArray(t1.of, volume=volume, ti=None)
 
 		nt = t1
@@ -208,7 +208,7 @@ def value_array_concat(l, r, ti):
 	items = l.asset + r.asset
 	length = len(items)
 	from .integer import value_integer_create
-	str_array_volume = value_integer_create(length)
+	str_array_volume = value_integer_create(length, ti=builtin_ti)
 	item_type = Type.select_common_type(l.type.of, r.type.of, ti)
 
 	# неявно приводим все элементы к общему типу

@@ -61,6 +61,8 @@ def type_word_create(width, ti=None):
 
 
 def type_int_create(width, ti=None):
+	if ti == None:
+		ti = builtin_ti
 	width = align_bits_up(width)
 	id = Id('Int%d' % width)
 	if width < 128:
@@ -75,6 +77,8 @@ def type_int_create(width, ti=None):
 
 
 def type_nat_create(width, ti=None):
+	if ti == None:
+		ti = builtin_ti
 	width = align_bits_up(width)
 	id = Id('Nat%d' % width)
 	if width < 128:
@@ -89,6 +93,8 @@ def type_nat_create(width, ti=None):
 
 
 def type_char_create(width, ti=None):
+	if ti == None:
+		ti = builtin_ti
 	width = align_bits_up(width)
 	id = Id('Char%d' % width)
 	if width == 8:
@@ -103,6 +109,8 @@ def type_char_create(width, ti=None):
 
 
 def type_float_create(width, ti=None):
+	if ti == None:
+		ti = builtin_ti
 	width = align_bits_up(width)
 	id = Id('Float%d' % width)
 	if width == 16:
@@ -122,6 +130,8 @@ def type_float_create(width, ti=None):
 
 
 def type_fixed_create(width, ti=None):
+	if ti == None:
+		ti = builtin_ti
 	width = align_bits_up(width)
 	id = Id('Fixed%d' % width)
 	# (!) не int32_t/int64_t: FixedX это не целое, и в C оно должно быть

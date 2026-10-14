@@ -6,23 +6,15 @@ include "libc/stdio"
 
 //include "./lib"
 
-@deprecated
-type Aligned = @alignment(2) {
-	a: Word8
-}
-
+var cmd: []*Str8 = ["abc", "def", "zyx", "123", "456", "780", "0"]
 
 func main () -> Int32 {
-	var a: Aligned
 
-	init()
+	var i: Nat32 = 0
+	var paramline = &cmd[i:]
+
+	printf("%s\n", paramline[0])
 
 	return 0
-}
-
-
-@deprecated("just test for deprecated annotation")
-func init () -> Unit {
-
 }
 
