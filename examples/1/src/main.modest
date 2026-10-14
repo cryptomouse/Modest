@@ -12,50 +12,17 @@ type Aligned = @alignment(2) {
 }
 
 
-var num: Nat32
-func getnum () -> Nat32 {
-	let n = num
-	++num
-	return n
-}
-
-
-func checkArgs (a: Nat32, b: Nat32, c: Nat32) -> Bool {
-	return a < b and b < c
-}
-
-func checkArray (a: [3]Nat32) -> Bool {
-	return a[0] < a[1] and a[1] < a[2]
-}
-
-type Triple = {a: Nat32, b: Nat32, c: Nat32}
-
-func checkRecord (r: Triple) -> Bool {
-	return r.a < r.b and r.b < r.c
-}
-
-
-
 func main () -> Int32 {
 	var a: Aligned
 
-	//var i: Int32 = 5
-	//printf("alignof = %zu\n", alignof(Aligned))  // c11: 16   llvm: 1   expected 2
-	//printf("sizeof = %zu\n", sizeof(Aligned))    // c11: 16   llvm: 1   expected 2
-
-	let c0 = checkArgs(getnum(), getnum(), getnum())
-	printf("checkArgs() = %d\n", c0)
-
-	let c1 = checkArray([getnum(), getnum(), getnum()])
-	printf("checkArray() = %d\n", c1)
-
-	let c2 = checkRecord({a = getnum(), b = getnum(), c = getnum()})
-	printf("checkRecord() = %d\n", c2)
-
-	// fields written in reverse: 1 = evaluated in declaration order, 0 = as written
-	let c3 = checkRecord({c = getnum(), b = getnum(), a = getnum()})
-	printf("checkRecord(reversed) = %d\n", c3)
+	init()
 
 	return 0
+}
+
+
+@deprecated("just test for deprecated annotation")
+func init () -> Unit {
+
 }
 

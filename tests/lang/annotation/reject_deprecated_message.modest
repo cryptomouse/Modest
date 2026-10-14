@@ -1,0 +1,44 @@
+// TEST: reject
+// FLAGS: -fparanoid
+// EXPECT-ERROR: expected string literal
+// EXPECT-ERROR: using a deprecated type: use New instead
+// EXPECT-ERROR: using a deprecated value: use newFn instead
+// EXPECT-ERROR: using a deprecated value: use newConst instead
+// EXPECT-ERROR: using a deprecated value: use newVar instead
+// EXPECT-ERROR: using a deprecated value
+// EXPECT-ERROR-COUNT: 6
+//
+// The optional argument of @deprecated is appended to the warning
+// (-fparanoid turns it into an error so that it can be counted).
+// `bare` has no argument and gets the plain warning; `badArg` has a
+// non-string argument, which is an error.
+
+include "libc/ctypes64"
+
+
+@deprecated("use New instead")
+type Old = Int32
+
+@deprecated("use newConst instead")
+const oldConst: Int32 = 2
+
+@deprecated("use newVar instead")
+var oldVar: Int32 = 3
+
+@deprecated
+const bare: Int32 = 4
+
+@deprecated(1)
+const badArg: Int32 = 5
+
+
+func main () -> Int {
+	let a: Old = oldFn()
+	return a + oldConst + oldVar + bare
+}
+
+
+@deprecated("use newFn instead")
+func oldFn () -> Int32 {
+	return 1
+}

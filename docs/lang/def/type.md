@@ -33,7 +33,7 @@ type <#identifier#> = <#type_expression#>
   local to the body.
 - Layout and qualifiers are controlled with annotations on the right-hand
   side: `@layout("packed" | "union" | "exact")`, `@alignment(N)`,
-  `@volatile`, `@const` (see [annotations](../attribute.md)).
+  `@volatile`, `@const` (see [annotations](../annotation.md)).
 
 ## Examples
 

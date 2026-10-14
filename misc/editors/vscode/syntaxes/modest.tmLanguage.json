@@ -6,7 +6,7 @@
 		{ "include": "#comments" },
 		{ "include": "#strings" },
 		{ "include": "#chars" },
-		{ "include": "#attributes" },
+		{ "include": "#annotations" },
 		{ "include": "#directives" },
 		{ "include": "#tags" },
 		{ "include": "#numbers" },
@@ -55,8 +55,8 @@
 				}
 			]
 		},
-		"attributes": {
-			"name": "storage.modifier.attribute.modest",
+		"annotations": {
+			"name": "storage.modifier.annotation.modest",
 			"match": "@[A-Za-z_][A-Za-z0-9_]*"
 		},
 		"directives": {

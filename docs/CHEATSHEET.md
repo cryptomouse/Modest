@@ -99,7 +99,7 @@ type Name = @branded Type          // branded type (newtype pattern)
 > **Access modifiers:** `public` and `private` can be applied to any definition.
 > If omitted, the entity gets the internal **default** access, which resolves by context:
 > - module-level definitions: default → `private`
-> - named record fields: default → `private`; with the `@public` attribute on the record, default → `public`
+> - named record fields: default → `private`; with the `@public` annotation on the record, default → `public`
 > - anonymous record fields: default → `public`
 >
 > Privacy is enforced only across modules — inside the defining module, `private` fields are freely accessible.

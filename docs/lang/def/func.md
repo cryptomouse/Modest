@@ -111,7 +111,7 @@ share one signature.
 - A function's address is taken with `&name` and stored in a
   [pointer to function](../type/func.md).
 - Inlining is controlled with `@inline` / `@inlinehint` / `@noinline`
-  (see [annotations](../attribute.md)).
+  (see [annotations](../annotation.md)).
 
 ## Example
 

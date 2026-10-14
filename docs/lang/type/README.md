@@ -17,7 +17,7 @@ compatible, regardless of their names. Nominal typing is opt-in via
 
 Named types are created with a [type definition](../def/type.md).
 Type layout and qualifiers are controlled with
-[annotations](../attribute.md): `@layout`, `@alignment`, `@volatile`,
+[annotations](../annotation.md): `@layout`, `@alignment`, `@volatile`,
 `@const`.
 
 There are no type casts; values of one type are obtained from another by

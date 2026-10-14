@@ -47,5 +47,5 @@ Tokens of the form `$name` are reserved for compiler directives
 
 ## See also
 
-- [Annotations](./attribute.md) — per-definition metadata
+- [Annotations](./annotation.md) — per-definition metadata
 - [Import](./import.md)

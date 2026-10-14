@@ -197,7 +197,7 @@ What is left:
   `#ifdef __SIZEOF_INT128__`, so a module that uses `Fixed64 *` or `/` on a
   32-bit target fails to compile. The LLVM backend does not share the problem:
   `i128` is a native IR type there.
-- The `modest` backend drops the attribute's argument: `@fraction(12)
+- The `modest` backend drops the annotation's argument: `@fraction(12)
   Fixed32` comes back out as `@fraction Fixed32`. It only has to survive
   codegen, so the tests pass there — but the emitted source silently loses
   the binary point. Same class as the backend's other round-trip gaps.

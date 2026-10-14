@@ -5,7 +5,7 @@ Syntax highlighting for the [Modest programming language](https://github.com/lex
 ## Features
 
 - Syntax highlighting: keywords, types, functions, strings, numbers, comments
-- Attributes (`@layout`, `@branded`, ...), directives (`$if`, ...) and tags (`#tag`)
+- Annotations (`@layout`, `@branded`, ...), directives (`$if`, ...) and tags (`#tag`)
 - Bracket matching, auto-closing pairs, comment toggling (`Cmd+/`)
 
 ## Installation (local, from source)

@@ -565,8 +565,8 @@ def do_type_named(x, anno, ctx):
 		cdef.deps.append(t)
 
 	definition = getattr(t, 'definition', None)
-	if definition != None and definition.hasAttribute("deprecated"):
-		warning("using a deprecated type", x['ti'])
+	if definition != None:
+		check_deprecated(definition, "type", x['ti'])
 
 	return t
 
@@ -1896,8 +1896,7 @@ def do_value_named(x, ctx):
 	if v.is_bad():
 		return v
 
-	if v.hasAttribute("deprecated"):
-		warning("using a deprecated value", x['ti'])
+	check_deprecated(v, "value", x['ti'])
 
 	if v.type.is_incompleted():
 		v_upd = value_update_incompleted_type(cmodule, v, v.id.str)
@@ -2554,9 +2553,7 @@ def def_type1(x):
 
 	# deprecated - свойство имени, а не типа: держим его на определении,
 	# чтобы алиасы (type New = Old) его не наследовали
-	deprecated_anno = pop_anno(x['anno'], 'deprecated')
-	if deprecated_anno != None:
-		definition.addAttribute('deprecated')
+	deprecated_anno_to_attribute(definition, x['anno'])
 	t.id = definition.id
 	return definition
 
@@ -2900,7 +2897,7 @@ def def_const_global(x, annos):
 			error("expected immediate value", iv.ti)
 
 	anno_to_attribute(df.value, annos, 'cbyvalue')
-	anno_to_attribute(df.value, annos, 'deprecated')
+	deprecated_anno_to_attribute(df.value, annos)
 
 	return df
 
@@ -2918,7 +2915,7 @@ def def_var_global(x, annos):
 
 	df.value.storage_class = HLIR_VALUE_STORAGE_CLASS_GLOBAL
 	df.value.is_initialized = True
-	anno_to_attribute(df.value, annos, 'deprecated')
+	deprecated_anno_to_attribute(df.value, annos)
 	return df
 
 
@@ -2963,9 +2960,7 @@ def def_func1(x):
 	csymtab.value_add(x['id']['str'], v, is_public=is_public)
 	v.storage_class = HLIR_VALUE_STORAGE_CLASS_GLOBAL
 
-	deprecated_anno = pop_anno(x['anno'], 'deprecated')
-	if deprecated_anno != None:
-		v.addAttribute('deprecated')
+	deprecated_anno_to_attribute(v, x['anno'])
 
 	return definition
 
@@ -3717,3 +3712,27 @@ def value_lvalue_root(v):
 		v = v.left
 	return v
 
+
+def deprecated_anno_to_attribute(x, annos):
+	# Значение атрибута - необязательное сообщение из @deprecated("...")
+	a = pop_anno(annos, 'deprecated')
+	if a == None:
+		return
+	msg = None
+	if len(a['args']) > 0:
+		arg = a['args'][0]['value']
+		if arg['kind'] == 'string':
+			msg = arg['str']
+		else:
+			error("expected string literal", arg['ti'])
+	x.addAttribute('deprecated', msg)
+
+
+def check_deprecated(entity, what, ti):
+	if not entity.hasAttribute('deprecated'):
+		return
+	msg = entity.getAttribute('deprecated')
+	if msg != None:
+		warning("using a deprecated %s: %s" % (what, msg), ti)
+	else:
+		warning("using a deprecated %s" % what, ti)

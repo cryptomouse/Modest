@@ -166,7 +166,7 @@ class CmLexer(Lexer):
 			self.doOperator2,
 			self.doOperator1,
 			self.doString,
-			self.doAttribute,
+			self.doAnnotation,
 			self.doDirective,
 			self.doTag,
 			self.doBadSymbol,
@@ -382,7 +382,7 @@ class CmLexer(Lexer):
 		return ('tag', ''.join(s))
 
 
-	def doAttribute(self):
+	def doAnnotation(self):
 		s = self.peep()
 		if s != '@':
 			return False

@@ -34,7 +34,7 @@ construct: Form, Semantics, Examples.
 
 | Construct | Form | Page |
 | :-- | :-- | :-- |
-| Annotations | `@inline`, `@layout`, `@extern`, ... | [attribute](./attribute.md) |
+| Annotations | `@inline`, `@layout`, `@extern`, ... | [annotation](./annotation.md) |
 | Variadic functions | `__VA_List`, `__va_start` | [va_arg](./va_arg.md) |
 
 ## Quick example
