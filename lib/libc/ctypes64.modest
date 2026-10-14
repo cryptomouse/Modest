@@ -4,90 +4,90 @@ pragma do_not_include
 pragma prefix ""
 
 
-@extern("C", "char *")
+@alias("char *", backend="c11")
 public type Str = Str8
 
-@extern("C", "char")
+@alias("char", backend="c11")
 public type Char = Char8
 
-@extern("C", "const char")
+@alias("const char", backend="c11")
 public type ConstChar = Char
 
-@extern("C", "signed char")
+@alias("signed char", backend="c11")
 public type SignedChar = Int8
 
-@extern("C", "unsigned char")
+@alias("unsigned char", backend="c11")
 public type UnsignedChar = Nat8
 
-@extern("C", "short")
+@alias("short", backend="c11")
 public type Short = Int16
 
-@extern("C", "unsigned short")
+@alias("unsigned short", backend="c11")
 public type UnsignedShort = Nat16
 
-@extern("C", "int")
+@alias("int", backend="c11")
 public type Int = Int32
 
-@extern("C", "unsigned int")
+@alias("unsigned int", backend="c11")
 public type UnsignedInt = Nat32
 
-@extern("C", "long int")
+@alias("long int", backend="c11")
 public type LongInt = Int64
 
-@extern("C", "unsigned long int")
+@alias("unsigned long int", backend="c11")
 public type UnsignedLongInt = Nat64
 
-@extern("C", "long")
+@alias("long", backend="c11")
 public type Long = Int64
 
-@extern("C", "unsigned long")
+@alias("unsigned long", backend="c11")
 public type UnsignedLong = Nat64
 
-@extern("C", "long long")
+@alias("long long", backend="c11")
 public type LongLong = Int64
 
-@extern("C", "unsigned long long")
+@alias("unsigned long long", backend="c11")
 public type UnsignedLongLong = Nat64
 
-@extern("C", "long long int")
+@alias("long long int", backend="c11")
 public type LongLongInt = Int64
 
-@extern("C", "unsigned long long int")
+@alias("unsigned long long int", backend="c11")
 public type UnsignedLongLongInt = Nat64
 
-@extern("C", "float")
+@alias("float", backend="c11")
 public type Float = Float32
 
-@extern("C", "double")
+@alias("double", backend="c11")
 public type Double = Float64
 
-@extern("C", "long double")
+@alias("long double", backend="c11")
 public type LongDouble = Float64
 
-@extern("C", "size_t")
+@alias("size_t", backend="c11")
 public type SizeT = UnsignedLongInt
 
-@extern("C", "ssize_t")
+@alias("ssize_t", backend="c11")
 public type SSizeT = LongInt
 
-@extern("C", "intptr_t")
+@alias("intptr_t", backend="c11")
 public type IntPtrT = Nat64
 
-@extern("C", "ptrdiff_t")
+@alias("ptrdiff_t", backend="c11")
 public type PtrDiffT = Int64
 
-@extern("C", "off_t")
+@alias("off_t", backend="c11")
 public type OffT = Int64
 
-@extern("C", "useconds_t")
+@alias("useconds_t", backend="c11")
 public type USecondsT = Nat32
 
-@extern("C", "pid_t")
+@alias("pid_t", backend="c11")
 public type PIDT = Int32
 
-@extern("C", "uid_t")
+@alias("uid_t", backend="c11")
 public type UIDT = Nat32
 
-@extern("C", "gid_t")
+@alias("gid_t", backend="c11")
 public type GIDT = Nat32
 

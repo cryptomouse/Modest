@@ -42,7 +42,7 @@ var y = 10                     // Integer literal -> target Int
 var z: Int32 = 20
 var r, g, b: Nat8              // three variables of one type
 
-@extern("C")
+@extern
 var environ: []Ptr             // size comes from outside; only extern may do this
 
 func main () -> Int {

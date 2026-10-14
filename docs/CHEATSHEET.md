@@ -570,12 +570,39 @@ Unit value                         // discard a value (suppress warnings)
 
 ### Linkage & C interop
 ```modest
-@extern                            // external symbol (C linkage)
-@extern("C", "symbol_name")        // maps to a different C symbol name
-@alias("name")                     // output symbol name (C and LLVM)
-@alias("c", "name")                // output symbol name for one backend ("c" or "llvm")
+@extern                            // declaration of a symbol defined elsewhere (no body)
+@extern("symbol_name")             // ... under a different symbol name
+@extern("name", backend="llvm")    // ... symbol name for one backend ("c11" or "llvm")
+@alias("name")                     // definition emitted under another name (all backends)
+@alias("name", backend="c11")      // output name for one backend ("c11" or "llvm")
+@c_no_print                        // keep the definition out of C output (the C side already has it)
 @cbyvalue                          // on a const: print its literal value at each use (C backend only)
 ```
+
+> **`@extern` is for declarations, `@alias` for definitions.** A body —
+> the block of a `func`, the initializer of a `var`/`const`, the right side
+> of a `type` — makes a definition. `@extern` goes only where there is none
+> (the symbol is defined outside the module, nothing is emitted for it);
+> `@alias` only where there is one (defined here, emitted under another
+> name). The two never go together.
+>
+> The first argument is the name; anything after it is named
+> (`backend="c11"`). Without `backend` the name holds for every backend;
+> different names per backend take one annotation each:
+> `@alias("x", backend="c11") @alias("y", backend="llvm")`.
+>
+> ```modest
+> @extern("malloc")
+> func myAlloc (size: Size) -> Ptr          // declaration: links to malloc
+>
+> @alias("INT8_MIN", backend="c11")
+> const int8MinValue: Int8 = -128           // definition: C code says INT8_MIN
+> ```
+>
+> A C macro or a typedef is a definition on the Modest side: the compiler
+> needs its value or layout, so it is written out and named with `@alias`.
+> In a module that is `include`d it is never printed anyway; elsewhere
+> `@c_no_print` keeps it from clashing with the header.
 
 > `@extern` applies to global definitions only — a local `var` cannot be
 > external.
@@ -615,7 +642,7 @@ Unit value                         // discard a value (suppress warnings)
 type Vec2 = @public {x: Float32, y: Float32}  // on a named record: fields without a modifier become public
 ```
 
-> `@const`, `@zarray`, `@no_print` / `@c_no_print` / `@ll_no_print` show up
+> `@const`, `@zarray`, `@no_print` / `@ll_no_print` show up
 > in compiler internals, but are not accepted in source (`annotation '...' not
 > defined`). To keep a module out of C output use `pragma c_no_print`.
 > `@nonstatic` (no `static` in C output) works on a global `var` only (BUG#92).
@@ -634,7 +661,7 @@ func expensive (x: Int32) -> Int32 {
 	return x
 }
 
-@extern("C", "malloc")
+@extern("malloc")
 func myAlloc (size: Nat64) -> *Unit
 
 @used
@@ -827,10 +854,10 @@ By default, symbol names are emitted as-is. Module imports add a prefix for publ
 | Public symbol in module `utils` | `public myFunc` | `utils_myFunc` |
 | `include`d symbol | used directly | original name, no prefix |
 | `@extern` | `myFunc` | `myFunc` (no module prefix) |
-| `@extern("C", "malloc")` | `myAlloc` | `malloc` |
+| `@extern("malloc")` | `myAlloc` | `malloc` |
 | `@alias("myAlias")` | `myFunc` | `myAlias` (C and LLVM) |
-| `@alias("c", "myAlias")` | `myFunc` | `myAlias` (C only) |
-| `@alias("llvm", "myAlias")` | `myFunc` | `myAlias` (LLVM only) |
+| `@alias("myAlias", backend="c11")` | `myFunc` | `myAlias` (C only) |
+| `@alias("myAlias", backend="llvm")` | `myFunc` | `myAlias` (LLVM only) |
 
 ```modest
 // module: utils
@@ -838,13 +865,13 @@ By default, symbol names are emitted as-is. Module imports add a prefix for publ
 public func greet () -> Unit { ... }   // emitted as: utils_greet
 private func helper () -> Unit { ... } // emitted as: helper  (private, no prefix)
 
-@extern("C", "printf")
+@extern("printf")
 public func myPrint (s: Str8) -> Unit  // emitted as: printf
 ```
 
 > `public` marks a symbol as public (visible to importers). The module name becomes a prefix in the output.
 > `private` (default) keeps the symbol local — no module prefix is added.
-> `@extern` suppresses the module prefix — the symbol links directly to an external name.
+> `@extern` declares a symbol defined elsewhere, so it never carries the module prefix — it links directly to the external name.
 
 > Because names are emitted as-is, a value identifier that is a **C keyword**
 > (`double`, `switch`, `union`, `register`, ...) produces C that does not

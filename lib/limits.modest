@@ -6,24 +6,24 @@ pragma prefix ""
 pragma c_include "limits.h"
 
 
-@extern("C", "INT8_MIN")
+@alias("INT8_MIN", backend="c11")
 public const int8MinValue: Int8  = -128
-@extern("C", "INT8_MAX")
+@alias("INT8_MAX", backend="c11")
 public const int8MaxValue: Int8  = 127
 
-@extern("C", "INT16_MIN")
+@alias("INT16_MIN", backend="c11")
 public const int16MinValue: Int16 = -32768
-@extern("C", "INT16_MAX")
+@alias("INT16_MAX", backend="c11")
 public const int16MaxValue: Int16 = 32767
 
-@extern("C", "INT32_MIN")
+@alias("INT32_MIN", backend="c11")
 public const int32MinValue: Int32 = -2147483648
-@extern("C", "INT32_MAX")
+@alias("INT32_MAX", backend="c11")
 public const int32MaxValue: Int32 = 2147483647
 
-@extern("C", "INT64_MIN")
+@alias("INT64_MIN", backend="c11")
 public const int64MinValue: Int64 = -9223372036854775808
-@extern("C", "INT64_MAX")
+@alias("INT64_MAX", backend="c11")
 public const int64MaxValue: Int64 = 9223372036854775807
 
 @cbyvalue
@@ -33,22 +33,22 @@ public const int128MaxValue: Int128 = 170141183460469231731687303715884105727
 
 @cbyvalue
 public const nat8MinValue: Nat8  = 0
-@extern("C", "UINT8_MAX")
+@alias("UINT8_MAX", backend="c11")
 public const nat8MaxValue: Nat8  = 255
 
 @cbyvalue
 public const nat16MinValue: Nat16 = 0
-@extern("C", "UINT16_MAX")
+@alias("UINT16_MAX", backend="c11")
 public const nat16MaxValue: Nat16 = 65535
 
 @cbyvalue
 public const nat32MinValue: Nat32 = 0
-@extern("C", "UINT32_MAX")
+@alias("UINT32_MAX", backend="c11")
 public const nat32MaxValue: Nat32 = 4294967295
 
 @cbyvalue
 public const nat64MinValue: Nat64 = 0
-@extern("C", "UINT64_MAX")
+@alias("UINT64_MAX", backend="c11")
 public const nat64MaxValue: Nat64 = 18446744073709551615
 
 @cbyvalue

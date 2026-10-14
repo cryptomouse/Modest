@@ -1,0 +1,45 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: extern
+//
+// @extern declares a symbol defined outside the module: a func without a
+// body, a var without an initializer.  Nothing is defined here — the C
+// output is an `extern` declaration and the program links against libc.
+//
+// `environ` guards the var side.  Whether a var has a body is decided by
+// the source (`=` or not): by the time the annotation is applied, a var
+// without an initializer already holds its default value, and taking that
+// for a body once dropped @extern silently — the output was
+// `static void **environ;`, a fresh zeroed variable, and the check below
+// saw nil instead of the real environment.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+@extern
+var environ: *Ptr
+
+@extern
+func getpid () -> Int32
+
+
+func main () -> Int {
+	if environ == nil {
+		printf("environ = nil, expected the process environment\n")
+		printf("failed: extern\n")
+		return exitFailure
+	}
+
+	if getpid() <= 0 {
+		printf("getpid() = %d, expected > 0\n", getpid())
+		printf("failed: extern\n")
+		return exitFailure
+	}
+
+	printf("passed: extern\n")
+	return exitSuccess
+}
+

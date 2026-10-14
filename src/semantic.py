@@ -688,6 +688,16 @@ def pop_anno(alist, anno):
 			return a
 
 
+# Снимает все аннотации вида anno (их может быть несколько)
+def pop_annos(alist, anno):
+	res = []
+	a = pop_anno(alist, anno)
+	while a != None:
+		res.append(a)
+		a = pop_anno(alist, anno)
+	return res
+
+
 def do_type_variant(x, anno, ctx):
 	#info("variant type", x['ti'])
 	uid = get_var_uid()
@@ -3480,14 +3490,16 @@ def def_phase2(ast):
 
 			# handle common annotations for all definitions
 
-			extern_anno = pop_anno(annos, 'extern')
-			if extern_anno != None:
-				def_add_annotation_extern(df, extern_anno)
+			extern_annos = pop_annos(annos, 'extern')
+			alias_annos = pop_annos(annos, 'alias')
+			if extern_annos != [] and alias_annos != []:
+				error("@extern and @alias cannot be used together", alias_annos[0]['ti'])
+			elif extern_annos != []:
+				def_add_annotation_extern(df, extern_annos, x)
+			elif alias_annos != []:
+				def_add_annotation_alias(df, alias_annos, x)
 
-			alias_anno = pop_anno(annos, 'alias')
-			if alias_anno != None:
-				def_add_annotation_alias(df, alias_anno)
-
+			anno_to_attribute(df, annos, 'c_no_print')
 			anno_to_attribute(df, annos, 'used')
 			anno_to_attribute(df, annos, 'unused')
 			# used_anno = pop_anno(annos, 'used')
@@ -3573,40 +3585,109 @@ def setObjAttrByPath(x, path, value):
 
 
 
-def def_add_annotation_alias(x, a):
-	# 1. @alias("alias")
-	# 2. @alias("llvm", "llvm_alias")
+# Есть ли у определения тело: у функции - блок, у var/const - инициализатор,
+# у типа - всегда (правая часть). Без тела это декларация.
+# Смотрим в AST: var без инициализатора к этому моменту уже получил
+# значение по умолчанию
+def def_has_body(df, x):
+	if df.is_stmt_def_func():
+		return df.stmt != None
+	if df.is_stmt_def_var() or df.is_stmt_def_const():
+		return x['init_value']['kind'] != 'undefined'
+	return True
+
+
+# Бэкенды (из -mbackend), у которых есть выходные имена символов
+OUTPUT_NAME_BACKENDS = ['c11', 'llvm']
+
+
+# Разбирает @alias/@extern: ("name") или ("name", backend="c11"|"llvm").
+# Первый аргумент - имя, остальные только именованные.
+# Возвращает (name, backend) - backend None, если имя общее, - или None
+def parse_output_name(a):
+	kind = a['kind']
 	args = a['args']
-	if len(args) == 2:
-		backend = args[0]['value']['str']
-		identifier = args[1]['value']['str']
+	if args == [] or args[0]['key'] != None or args[0]['value']['kind'] != 'string':
+		error("@%s expects the symbol name as its first argument" % kind, a['ti'])
+		return None
 
-		if backend == 'c':
-			x.id.c_alias = identifier
+	name = args[0]['value']['str']
+	backend = None
+	for arg in args[1:]:
+		if arg['key'] == None:
+			error("@%s: arguments after the name must be named, like backend=\"llvm\"" % kind, arg['ti'])
+			return None
+
+		key = arg['key']['str']
+		if key == 'backend':
+			v = arg['value']
+			if v['kind'] != 'string' or v['str'] not in OUTPUT_NAME_BACKENDS:
+				error("unknown backend in @%s, expected \"c11\" or \"llvm\"" % kind, v['ti'])
+				return None
+			backend = v['str']
+		else:
+			error("unknown argument '%s' in @%s" % (key, kind), arg['ti'])
+			return None
+
+	return (name, backend)
+
+
+# Общая часть @alias и @extern: каждая аннотация задает имя для своего
+# бэкенда (или общее), повторяться для одного и того же они не могут
+def def_set_output_names(x, annos):
+	seen = []
+	for a in annos:
+		r = parse_output_name(a)
+		if r == None:
+			continue
+
+		name, backend = r
+		if backend in seen:
+			if backend == None:
+				error("duplicate @%s without a backend" % a['kind'], a['ti'])
+			else:
+				error("duplicate @%s for backend '%s'" % (a['kind'], backend), a['ti'])
+			continue
+		seen.append(backend)
+
+		if backend == None:
+			x.id.common = name
+		elif backend == 'c11':
+			x.id.c_alias = name
 		elif backend == 'llvm':
-			x.id.llvm_alias = identifier
-
-	elif len(args) == 1:
-		identifier = args[0]['value']['str']
-		x.id.common = identifier
+			x.id.llvm_alias = name
 
 
-def def_add_annotation_extern(x, a):
-	# 1. @extern()
-	# 2. @extern("C")
-	# 3. @extern("C", "alias")
+def def_add_annotation_alias(x, annos, ast):
+	# @alias("name")                  - имя для всех бэкендов
+	# @alias("name", backend="llvm")  - для одного; таких может быть несколько
+	# @alias переименовывает то, что определено здесь
+	if not def_has_body(x, ast):
+		error("@alias on a declaration, use @extern for a symbol defined elsewhere", annos[0]['ti'])
+		return
+
+	def_set_output_names(x, annos)
+
+
+def def_add_annotation_extern(x, annos, ast):
+	# @extern                          - символ под своим именем
+	# @extern("name")                  - под другим именем
+	# @extern("name", backend="llvm")  - для одного бэкенда
+	# @extern объявляет то, что определено снаружи: тела у него нет
+	if def_has_body(x, ast):
+		# у var это уже отловил def_var_common ("initializer in extern variable definition")
+		if not x.is_stmt_def_var():
+			error("@extern on a definition, use @alias to rename a symbol defined here", annos[0]['ti'])
+		return
 
 	add_att(x, "extern")
-	args = a['args']
 	x.id.common = x.id.str
 
-	if len(args) == 1:
-		abi = args[0]['value']['str']
-
-	elif len(args) == 2:
-		abi = args[0]['value']['str']
-		alias = args[1]['value']['str']
-		x.id.c_alias = alias
+	# голый @extern имени не задает
+	named = [a for a in annos if a['args'] != []]
+	if len(named) < len(annos) and len(annos) > 1:
+		error("bare @extern together with a named one", annos[0]['ti'])
+	def_set_output_names(x, named)
 
 
 def add_att(x, att):

@@ -1,0 +1,76 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: alias
+//
+// @alias renames a symbol defined here; @extern declares one defined
+// elsewhere.  The two meet in one program: `answer` is emitted as
+// `renamedAnswer`, and `viaExtern` is a declaration of that same symbol —
+// it links only if the rename really reached the output.  `myPid` is
+// the same on the other side: a declaration of libc's `getpid` under a
+// Modest name of its own.  `perBackend` carries a different name for each
+// backend, one annotation per backend, and `viaPerBackend` declares it
+// the same way — it links only if each backend took its own name.
+//
+// `answer` is public so that it is not `static` in C: an `extern`
+// declaration may not refer to a symbol with internal linkage defined
+// after it.  In LLVM the module ends up with both `declare` and `define`
+// for `renamedAnswer`, which LLVM refuses — the declaration is dropped
+// there.
+//
+// Guards BUG#103 (fixed 2026-10-14): the LLVM backend ignored both
+// names, emitting `@answer` and `declare @viaExtern`, so the program did
+// not link.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+@extern("renamedAnswer")
+func viaExtern () -> Int32
+
+@extern("getpid")
+func myPid () -> Int32
+
+@extern("cName", backend="c11")
+@extern("llName", backend="llvm")
+func viaPerBackend () -> Int32
+
+
+@alias("renamedAnswer")
+public func answer () -> Int32 {
+	return 42
+}
+
+
+@alias("cName", backend="c11")
+@alias("llName", backend="llvm")
+public func perBackend () -> Int32 {
+	return 7
+}
+
+
+func main () -> Int {
+	if viaExtern() != 42 {
+		printf("viaExtern() = %d, expected 42\n", viaExtern())
+		printf("failed: alias\n")
+		return exitFailure
+	}
+
+	if viaPerBackend() != 7 {
+		printf("viaPerBackend() = %d, expected 7\n", viaPerBackend())
+		printf("failed: alias\n")
+		return exitFailure
+	}
+
+	if myPid() <= 0 {
+		printf("myPid() = %d, expected > 0\n", myPid())
+		printf("failed: alias\n")
+		return exitFailure
+	}
+
+	printf("passed: alias\n")
+	return exitSuccess
+}
+

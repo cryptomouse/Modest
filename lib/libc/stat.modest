@@ -20,7 +20,7 @@ public type BlkCntT = Nat64
 public type DarwinIno64T = Nat64
 
 //
-//@extern("C", "struct stat")
+//@alias("struct stat", backend="c11")
 //type Stat {
 //	st_dev: DevT			/* номер устройства */
 //	st_ino: InoT			/* inode */
@@ -40,7 +40,7 @@ public type DarwinIno64T = Nat64
 
 public type DarwinTimeT = Nat64
 
-@extern("C", "struct timespec")
+@alias("struct timespec", backend="c11")
 public type Timespec = @public {
 	tv_sec: DarwinTimeT
 	tv_nsec: Long
@@ -48,7 +48,7 @@ public type Timespec = @public {
 
 /* for MACOS see: /Library/Developer/CommandLineTools/SDKs/MacOSX13.0.sdk/System/Library/Frameworks/Kernel.framework/Versions/A/Headers/sys */
 
-@extern("C", "struct stat")
+@alias("struct stat", backend="c11")
 public type Stat = @public {
 	st_dev: DevT             // [XSI] ID of device containing file
 	st_mode: ModeT           // [XSI] Mode of file (see below)
@@ -76,7 +76,7 @@ public type Stat = @public {
 
 
 // 01_stat for MACOS
-@alias("llvm", "\\01_stat")
+@extern("\\01_stat", backend="llvm")
 public func stat (path: *[]ConstChar, stat: *Stat) -> Int
 
 
@@ -98,59 +98,59 @@ struct stat {
 };
 */
 
-@extern("C", "S_ISUID") public const sIsuid: ModeT = 0x0800      // (0004000) set user id on execution
-@extern("C", "S_ISGID") public const sIsgid: ModeT = 0x0400      // (0002000) set group id on execution
-@extern("C", "S_ISTXT") public const sIstxt: ModeT = 0x0200      // (0001000) sticky bit
+@alias("S_ISUID", backend="c11") public const sIsuid: ModeT = 0x0800      // (0004000) set user id on execution
+@alias("S_ISGID", backend="c11") public const sIsgid: ModeT = 0x0400      // (0002000) set group id on execution
+@alias("S_ISTXT", backend="c11") public const sIstxt: ModeT = 0x0200      // (0001000) sticky bit
 
-@extern("C", "S_IRWXU") public const sIrwxu: ModeT = 0x01C0    // (0000700) RWX mask for owner
-@extern("C", "S_IRUSR") public const sIrusr: ModeT = 0x0100    // (0000400) R for owner
-@extern("C", "S_IWUSR") public const sIwusr: ModeT = 0x0080    // (0000200) W for owner
-@extern("C", "S_IXUSR") public const sIxusr: ModeT = 0x0040    // (0000100) X for owner
+@alias("S_IRWXU", backend="c11") public const sIrwxu: ModeT = 0x01C0    // (0000700) RWX mask for owner
+@alias("S_IRUSR", backend="c11") public const sIrusr: ModeT = 0x0100    // (0000400) R for owner
+@alias("S_IWUSR", backend="c11") public const sIwusr: ModeT = 0x0080    // (0000200) W for owner
+@alias("S_IXUSR", backend="c11") public const sIxusr: ModeT = 0x0040    // (0000100) X for owner
 
-@extern("C", "S_IRWXG") public const sIrwxg: ModeT = 0x0038    // (0000070) RWX mask for group
-@extern("C", "S_IRGRP") public const sIrgp: ModeT = 0x0020    // (0000040) R for group
-@extern("C", "S_IWGRP") public const sIwriteg: ModeT = 0x0010    // (0000020) W for group
-@extern("C", "S_IXGRP") public const sIexecg: ModeT = 0x0008    // (0000010) X for group
+@alias("S_IRWXG", backend="c11") public const sIrwxg: ModeT = 0x0038    // (0000070) RWX mask for group
+@alias("S_IRGRP", backend="c11") public const sIrgp: ModeT = 0x0020    // (0000040) R for group
+@alias("S_IWGRP", backend="c11") public const sIwriteg: ModeT = 0x0010    // (0000020) W for group
+@alias("S_IXGRP", backend="c11") public const sIexecg: ModeT = 0x0008    // (0000010) X for group
 
-@extern("C", "S_IRWXO") public const sIrwxo: ModeT = 0x0007    // (0000007) RWX mask for other
-@extern("C", "S_IROTH") public const sIro: ModeT = 0x0004    // (0000004) R for other
-@extern("C", "S_IWOTH") public const sIwo: ModeT = 0x0002    // (0000002) W for other
-@extern("C", "S_IXOTH") public const sIxo: ModeT = 0x0001    // (0000001) X for other
-@extern("C", "S_IFIFO") public const sIfifo: ModeT = 0x1000    // (0010000) named pipe (fifo)
-@extern("C", "S_IFCHR") public const sIfchr: ModeT = 0x2000    // (0020000) character special
-@extern("C", "S_IFDIR") public const sIfdir: ModeT = 0x4000    // (0040000) directory
-@extern("C", "S_IFBLK") public const sIfblk: ModeT = 0x6000    // (0060000) block special
-@extern("C", "S_IFREG") public const sIfreg: ModeT = 0x8000    // (0100000) regular
-@extern("C", "S_IFLNK") public const sIflnk: ModeT = 0xA000    // (0120000) symbolic link
-@extern("C", "S_IFSOCK") public const sIfsock: ModeT = 0xC000  // (0140000) socket
-@extern("C", "S_IFWHT") public const sIfwht: ModeT = 0xE000    // (0160000) whiteout
-@extern("C", "S_ISVTX") public const sIsvtx: ModeT = 0x0200    // (0001000) save swapped text even after use
-@extern("C", "S_IREAD") public const sIread: ModeT = sIrusr
-@extern("C", "S_IWRITE") public const sIwrite: ModeT = sIwusr
-@extern("C", "S_IEXEC") public const sIexec: ModeT = sIxusr
-@extern("C", "S_IFMT") public const sIfmt: ModeT = 0xF000      // (0170000) type of file mask
+@alias("S_IRWXO", backend="c11") public const sIrwxo: ModeT = 0x0007    // (0000007) RWX mask for other
+@alias("S_IROTH", backend="c11") public const sIro: ModeT = 0x0004    // (0000004) R for other
+@alias("S_IWOTH", backend="c11") public const sIwo: ModeT = 0x0002    // (0000002) W for other
+@alias("S_IXOTH", backend="c11") public const sIxo: ModeT = 0x0001    // (0000001) X for other
+@alias("S_IFIFO", backend="c11") public const sIfifo: ModeT = 0x1000    // (0010000) named pipe (fifo)
+@alias("S_IFCHR", backend="c11") public const sIfchr: ModeT = 0x2000    // (0020000) character special
+@alias("S_IFDIR", backend="c11") public const sIfdir: ModeT = 0x4000    // (0040000) directory
+@alias("S_IFBLK", backend="c11") public const sIfblk: ModeT = 0x6000    // (0060000) block special
+@alias("S_IFREG", backend="c11") public const sIfreg: ModeT = 0x8000    // (0100000) regular
+@alias("S_IFLNK", backend="c11") public const sIflnk: ModeT = 0xA000    // (0120000) symbolic link
+@alias("S_IFSOCK", backend="c11") public const sIfsock: ModeT = 0xC000  // (0140000) socket
+@alias("S_IFWHT", backend="c11") public const sIfwht: ModeT = 0xE000    // (0160000) whiteout
+@alias("S_ISVTX", backend="c11") public const sIsvtx: ModeT = 0x0200    // (0001000) save swapped text even after use
+@alias("S_IREAD", backend="c11") public const sIread: ModeT = sIrusr
+@alias("S_IWRITE", backend="c11") public const sIwrite: ModeT = sIwusr
+@alias("S_IEXEC", backend="c11") public const sIexec: ModeT = sIxusr
+@alias("S_IFMT", backend="c11") public const sIfmt: ModeT = 0xF000      // (0170000) type of file mask
 
 /* is directory */
-@extern("C", "S_ISDIR") public func sIsdir (m: ModeT) -> Bool { return m & sIfmt == sIfdir }
+@alias("S_ISDIR", backend="c11") public func sIsdir (m: ModeT) -> Bool { return m & sIfmt == sIfdir }
 
 /* is char special */
-@extern("C", "S_ISCHR") public func sIschr (m: ModeT) -> Bool { return m & sIfmt == sIfchr }
+@alias("S_ISCHR", backend="c11") public func sIschr (m: ModeT) -> Bool { return m & sIfmt == sIfchr }
 
 /* is block special */
-@extern("C", "S_ISBLK") public func sIsblk (m: ModeT) -> Bool { return m & sIfmt == sIfblk }
+@alias("S_ISBLK", backend="c11") public func sIsblk (m: ModeT) -> Bool { return m & sIfmt == sIfblk }
 
 /* is regular file */
-@extern("C", "S_ISREG") public func sIsreg (m: ModeT) -> Bool { return m & sIfmt == sIfreg }
+@alias("S_ISREG", backend="c11") public func sIsreg (m: ModeT) -> Bool { return m & sIfmt == sIfreg }
 
 /* is fifo or socket */
-@extern("C", "S_ISFIFO") public func sIsfifo (m: ModeT) -> Bool { return m & sIfmt == sIfifo }
+@alias("S_ISFIFO", backend="c11") public func sIsfifo (m: ModeT) -> Bool { return m & sIfmt == sIfifo }
 
 /* is symbolic link */
-@extern("C", "S_ISLNK") public func sIslnk (m: ModeT) -> Bool { return m & sIfmt == sIflnk }
+@alias("S_ISLNK", backend="c11") public func sIslnk (m: ModeT) -> Bool { return m & sIfmt == sIflnk }
 
 /* is socket */
-@extern("C", "S_ISSOCK") public func sIssock (m: ModeT) -> Bool { return m & sIfmt == sIfsock }
+@alias("S_ISSOCK", backend="c11") public func sIssock (m: ModeT) -> Bool { return m & sIfmt == sIfsock }
 
 /* is whiteout */
-@extern("C", "S_ISWHT") public func sIswht (m: ModeT) -> Bool { return m & sIfmt == sIfwht }
+@alias("S_ISWHT", backend="c11") public func sIswht (m: ModeT) -> Bool { return m & sIfmt == sIfwht }
 

@@ -1,0 +1,33 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: include func body
+// EXPECTED-FAIL: BUG#104 bodies of functions in an included module are not emitted
+//
+// A function with a body in an `include`d module.  Neither backend emits
+// it: the C output has no definition (and, the module being
+// `do_not_include`, no prototype either), the LLVM output only
+// `declare`s it — so `twice` does not link.
+//
+// Library bindings get away with it only while C has the same name: a
+// function-like macro under `@alias("...", backend="c11")` (`sIsdir` → `S_ISDIR`) or
+// a libc function that happens to exist as a symbol (`htons`).  `twice`
+// has no such twin.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+include "./_include_body/bind"
+
+
+func main () -> Int {
+	if twice(21) != 42 {
+		printf("twice(21) = %d, expected 42\n", twice(21))
+		printf("failed: include func body\n")
+		return exitFailure
+	}
+
+	printf("passed: include func body\n")
+	return exitSuccess
+}
+

@@ -8,30 +8,30 @@ pragma c_include "arpa/inet.h"
 include "libc/ctypes64"
 
 
-@extern("C", "in_addr_t")
+@alias("in_addr_t", backend="c11")
 public type InAddrT = Nat32
 
-@extern("C", "INADDR_ANY")
+@alias("INADDR_ANY", backend="c11")
 public const inAddrAny: InAddrT = 0
 
-@extern("C", "in_port_t")
+@alias("in_port_t", backend="c11")
 public type InPortT = Nat16
 
-@extern("C", "socklen_t")
+@alias("socklen_t", backend="c11")
 public type SocklenT = Nat32
 
-@extern("C", "struct sockaddr")
+@alias("struct sockaddr", backend="c11")
 public type SockAddr = @public {
 	sa_family: UnsignedShort  // address family
 	sa_data: [14]Char8        // up to 14 bytes of direct address
 }
 
-@extern("C", "struct in_addr")
+@alias("struct in_addr", backend="c11")
 public type Struct_in_addr = @public {
 	s_addr: InAddrT
 }
 
-@extern("C", "struct sockaddr_in")
+@alias("struct sockaddr_in", backend="c11")
 public type SockAddrIn = @public {
 // $if APPLE
 	sin_len: Nat8
@@ -44,10 +44,10 @@ public type SockAddrIn = @public {
 	sin_zero: [8]Nat8
 }
 
-@extern("C", "SOL_SOCKET")
+@alias("SOL_SOCKET", backend="c11")
 public const solSocket: Int = 1   // for setsockopt
 
-@extern("C", "SO_REUSEADDR")
+@alias("SO_REUSEADDR", backend="c11")
 public const soReuseaddr: Int = 2
 
 
@@ -60,11 +60,11 @@ public func setsockopt (
 ) -> @unused Int
 
 
-@extern("C", "SOCK_STREAM") public const sockStream: Int = 1  // stream socket
-@extern("C", "SOCK_DGRAM") public const sockDgram: Int = 2   // datagram socket
-@extern("C", "SOCK_RAW") public const sockRaw: Int = 3     // raw-protocol interface
-@extern("C", "SOCK_RDM") public const sockRdm: Int = 4     // reliably-delivered message
-@extern("C", "SOCK_SEQPACKET") public const sockSeqpacket: Int = 5  // sequenced packet stream
+@alias("SOCK_STREAM", backend="c11") public const sockStream: Int = 1  // stream socket
+@alias("SOCK_DGRAM", backend="c11") public const sockDgram: Int = 2   // datagram socket
+@alias("SOCK_RAW", backend="c11") public const sockRaw: Int = 3     // raw-protocol interface
+@alias("SOCK_RDM", backend="c11") public const sockRdm: Int = 4     // reliably-delivered message
+@alias("SOCK_SEQPACKET", backend="c11") public const sockSeqpacket: Int = 5  // sequenced packet stream
 //#ifdef _KERNEL
 //const SOCK_TYPE_MASK = 0x000F	// mask that covers the above
 //#endif
@@ -75,50 +75,50 @@ public func setsockopt (
 
 public type AddressFamily = Nat8
 
-@extern("C", "AF_UNSPEC") public const afUnspec = AddressFamily 0       // unspecified
-@extern("C", "AF_UNIX") public const afUnix = AddressFamily 1         // local to host
-@extern("C", "AF_LOCAL") public const afLocal = afUnix   // draft POSIX compatibility
+@alias("AF_UNSPEC", backend="c11") public const afUnspec = AddressFamily 0       // unspecified
+@alias("AF_UNIX", backend="c11") public const afUnix = AddressFamily 1         // local to host
+@alias("AF_LOCAL", backend="c11") public const afLocal = afUnix   // draft POSIX compatibility
 
-@extern("C", "AF_INET") public const afInet = AddressFamily 2         // internetwork: UDP, TCP, etc.
+@alias("AF_INET", backend="c11") public const afInet = AddressFamily 2         // internetwork: UDP, TCP, etc.
 
-@extern("C", "AF_IMPLINK") public const afImplink = AddressFamily 3      // arpanet imp addresses
-@extern("C", "AF_PUP") public const afPup = AddressFamily 4          // pup protocols: e.g. BSP
-@extern("C", "AF_CHAOS") public const afChaos = AddressFamily 5        // mit CHAOS protocols
-@extern("C", "AF_NS") public const afNs = AddressFamily 6           // XEROX NS protocols
-@extern("C", "AF_ISO") public const afIso = AddressFamily 7          // ISO protocols
-@extern("C", "AF_OSI") public const afOsi = AddressFamily 7      // OSI protocols
-@extern("C", "AF_ECMA") public const afEcma = AddressFamily 8         // european computer manufacturers
-@extern("C", "AF_DATKIT") public const afDatakit = AddressFamily 9      // datakit protocols
-@extern("C", "AF_CCITT") public const afCcitt = AddressFamily 10       // CCITT protocols, X.25 etc
-@extern("C", "AF_SNA") public const afSna = AddressFamily 11         // IBM SNA
-@extern("C", "AF_DECNET") public const afDecnet = AddressFamily 12      // DECnet
-@extern("C", "AF_DLI") public const afDli = AddressFamily 13         // DEC Direct data link interface
-@extern("C", "AF_LAT") public const afLat = AddressFamily 14         // LAT
-@extern("C", "AF_HYLINK") public const afHylink = AddressFamily 15      // NSC Hyperchannel
-@extern("C", "AF_APPLETALK") public const afAppletalk = AddressFamily 16   // Apple Talk
-@extern("C", "AF_ROUTE") public const afRoute = AddressFamily 17       // Internal Routing Protocol
-@extern("C", "AF_LINK") public const afLink = AddressFamily 18        // Link layer interface
-@extern("C", "AF_XTP") public const pseudoAfXtp = AddressFamily 19   // eXpress Transfer Protocol (no AF)
-@extern("C", "AF_COIP") public const afCoip = AddressFamily 20        // connection-oriented IP, aka ST II
-@extern("C", "AF_CNT") public const afCnt = AddressFamily 21         // Computer Network Technology
-@extern("C", "AF_RTIP") public const pseudoAfRtip = AddressFamily 22  // Help Identify RTIP packets
-@extern("C", "AF_IPX") public const afIpx = AddressFamily 23         // Novell Internet Protocol
-@extern("C", "AF_INET6") public const afInet6 = AddressFamily 24       // IPv6
-@extern("C", "AF_PIP") public const pseudoAfPip = AddressFamily 25   // Help Identify PIP packets
-@extern("C", "AF_ISDN") public const afIsdn = AddressFamily 26        // Integrated Services Digital Network*/
-@extern("C", "AF_E164") public const afE164 = AddressFamily 26    // CCITT E.164 recommendation
-@extern("C", "AF_NATM") public const afNatm = AddressFamily 27        // native ATM access
-@extern("C", "AF_ENCAP") public const afEncap = AddressFamily 28       //
-@extern("C", "AF_SIP") public const afSip = AddressFamily 29         // Simple Internet Protocol
-@extern("C", "AF_KEY") public const afKey = AddressFamily 30
+@alias("AF_IMPLINK", backend="c11") public const afImplink = AddressFamily 3      // arpanet imp addresses
+@alias("AF_PUP", backend="c11") public const afPup = AddressFamily 4          // pup protocols: e.g. BSP
+@alias("AF_CHAOS", backend="c11") public const afChaos = AddressFamily 5        // mit CHAOS protocols
+@alias("AF_NS", backend="c11") public const afNs = AddressFamily 6           // XEROX NS protocols
+@alias("AF_ISO", backend="c11") public const afIso = AddressFamily 7          // ISO protocols
+@alias("AF_OSI", backend="c11") public const afOsi = AddressFamily 7      // OSI protocols
+@alias("AF_ECMA", backend="c11") public const afEcma = AddressFamily 8         // european computer manufacturers
+@alias("AF_DATKIT", backend="c11") public const afDatakit = AddressFamily 9      // datakit protocols
+@alias("AF_CCITT", backend="c11") public const afCcitt = AddressFamily 10       // CCITT protocols, X.25 etc
+@alias("AF_SNA", backend="c11") public const afSna = AddressFamily 11         // IBM SNA
+@alias("AF_DECNET", backend="c11") public const afDecnet = AddressFamily 12      // DECnet
+@alias("AF_DLI", backend="c11") public const afDli = AddressFamily 13         // DEC Direct data link interface
+@alias("AF_LAT", backend="c11") public const afLat = AddressFamily 14         // LAT
+@alias("AF_HYLINK", backend="c11") public const afHylink = AddressFamily 15      // NSC Hyperchannel
+@alias("AF_APPLETALK", backend="c11") public const afAppletalk = AddressFamily 16   // Apple Talk
+@alias("AF_ROUTE", backend="c11") public const afRoute = AddressFamily 17       // Internal Routing Protocol
+@alias("AF_LINK", backend="c11") public const afLink = AddressFamily 18        // Link layer interface
+@alias("AF_XTP", backend="c11") public const pseudoAfXtp = AddressFamily 19   // eXpress Transfer Protocol (no AF)
+@alias("AF_COIP", backend="c11") public const afCoip = AddressFamily 20        // connection-oriented IP, aka ST II
+@alias("AF_CNT", backend="c11") public const afCnt = AddressFamily 21         // Computer Network Technology
+@alias("AF_RTIP", backend="c11") public const pseudoAfRtip = AddressFamily 22  // Help Identify RTIP packets
+@alias("AF_IPX", backend="c11") public const afIpx = AddressFamily 23         // Novell Internet Protocol
+@alias("AF_INET6", backend="c11") public const afInet6 = AddressFamily 24       // IPv6
+@alias("AF_PIP", backend="c11") public const pseudoAfPip = AddressFamily 25   // Help Identify PIP packets
+@alias("AF_ISDN", backend="c11") public const afIsdn = AddressFamily 26        // Integrated Services Digital Network*/
+@alias("AF_E164", backend="c11") public const afE164 = AddressFamily 26    // CCITT E.164 recommendation
+@alias("AF_NATM", backend="c11") public const afNatm = AddressFamily 27        // native ATM access
+@alias("AF_ENCAP", backend="c11") public const afEncap = AddressFamily 28       //
+@alias("AF_SIP", backend="c11") public const afSip = AddressFamily 29         // Simple Internet Protocol
+@alias("AF_KEY", backend="c11") public const afKey = AddressFamily 30
 // Used by BPF to not rewrite headers
 // in interface output routine
-@extern("C", "AF_HDRCMPLT") public const pseudoAfHdrcmplt = AddressFamily 31
-@extern("C", "AF_BLUETOOTH") public const afBluetooth = AddressFamily 32     // Bluetooth
-@extern("C", "AF_MPLS") public const afMpls = AddressFamily 33          // MPLS
-@extern("C", "AF_PFLOW") public const pseudoAfPflow = AddressFamily 34   // pflow
-@extern("C", "AF_PIPEX") public const pseudoAfPipex = AddressFamily 35   // PIPEX
-@extern("C", "AF_MAX") public const afMax = AddressFamily 36
+@alias("AF_HDRCMPLT", backend="c11") public const pseudoAfHdrcmplt = AddressFamily 31
+@alias("AF_BLUETOOTH", backend="c11") public const afBluetooth = AddressFamily 32     // Bluetooth
+@alias("AF_MPLS", backend="c11") public const afMpls = AddressFamily 33          // MPLS
+@alias("AF_PFLOW", backend="c11") public const pseudoAfPflow = AddressFamily 34   // pflow
+@alias("AF_PIPEX", backend="c11") public const pseudoAfPipex = AddressFamily 35   // PIPEX
+@alias("AF_MAX", backend="c11") public const afMax = AddressFamily 36
 
 
 public func inet_addr (cp: *[]ConstChar) -> InAddrT

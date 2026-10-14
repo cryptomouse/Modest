@@ -7,10 +7,10 @@ pragma c_include "math.h"
 include "./ctypes64"
 
 
-@extern("C", "M_PI")
+@alias("M_PI", backend="c11")
 public const pi: Double = 3.1415926535897932384626433832795028841971693993751058209749445923
 
-@extern("C", "M_E")
+@alias("M_E", backend="c11")
 public const e: Double = 2.7182818284590452353602874713526624977572470936999595749669676277
 
 

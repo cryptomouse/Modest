@@ -1,6 +1,7 @@
 
 import os
 import copy
+import re
 
 from hlir import *
 from common import get_setting
@@ -289,8 +290,24 @@ def is_machine_type(t):
 
 
 
+# Имя, которое не проходит как голый идентификатор LLVM (например
+# "\01_stat" - имя без подчеркивания, которое добавил бы mach-o),
+# пишется в кавычках: @"\01_stat"
+LLVM_BARE_ID = re.compile(r'^[-a-zA-Z$._][-a-zA-Z$._0-9]*$')
+
+def llvm_quote_id(s):
+	if LLVM_BARE_ID.match(s):
+		return s
+	return '"' + s + '"'
+
+
 def get_id_str(x):
 	if hasattr(x, 'id') and x.id != None:
+		# @alias / @extern: имя в выводе задано явно (сначала для LLVM, потом общее)
+		if x.id.llvm_alias != None:
+			return llvm_quote_id(x.id.llvm_alias)
+		if x.id.common != None:
+			return llvm_quote_id(x.id.common)
 		return x.id.prefix + x.id.llvm
 	return None
 
@@ -2822,11 +2839,29 @@ def print_linkage(x, is_decl=False):
 
 
 
+# Имена функций, у которых в выводе есть тело, и уже объявленные.
+# Несколько Modest-имен могут указывать на один символ (@alias + @extern):
+# C это переносит, а LLVM считает повторный declare/define ошибкой.
+# Тела печатаются только у функций самого модуля: включенные и
+# импортированные модули выводятся одними декларациями
+defined_funcs = set()
+declared_funcs = set()
+
+def collect_defined_funcs(m):
+	for x in m.defs:
+		if x.is_stmt_def_func() and x.stmt != None:
+			defined_funcs.add(get_id_str(x.value))
+
+
 def print_decl_func(x):
-	out("\ndeclare ")
-	print_linkage(x, is_decl=True)
 	fn = x.value
 	str = get_id_str(fn)
+	if str in defined_funcs or str in declared_funcs:
+		return
+	declared_funcs.add(str)
+
+	out("\ndeclare ")
+	print_linkage(x, is_decl=True)
 	print_func_signature(fn.type, str)
 
 
@@ -3275,6 +3310,7 @@ def print_module(m):
 def run(module, outname):
 	global cmodule
 	cmodule = module
+	collect_defined_funcs(module)
 	outname = outname + '.ll'
 	output_open(outname)
 

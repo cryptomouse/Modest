@@ -1,0 +1,53 @@
+// TEST: reject
+// BACKENDS: c11
+// EXPECT-ERROR: @extern on a definition
+// EXPECT-ERROR: @extern on a definition
+// EXPECT-ERROR: @extern on a definition
+// EXPECT-ERROR: @alias on a declaration
+// EXPECT-ERROR: @alias on a declaration
+// EXPECT-ERROR: @extern and @alias cannot be used together
+// EXPECT-ERROR-COUNT: 6
+//
+// @extern and @alias split by whether there is a body.  @extern declares
+// a symbol defined elsewhere, so it goes on a func without a body, a var
+// or const without an initializer; @alias renames a symbol defined here,
+// so it needs the body — a block, an initializer, the right side of a
+// `type`.  Using one where the other belongs is an error, and so is
+// using both.  In order:
+// - @extern on a func with a body, a const with a value, a type;
+// - @alias on a func without a body, a const without a value;
+// - both on one func.
+//
+// A var with an initializer under @extern has its own message, see
+// `type/array/reject_extern_initializer.modest`.  The arguments of both
+// annotations are checked by `reject_extern_alias_args.modest`.
+
+include "libc/ctypes64"
+
+
+@extern("cFn")
+func withBody () -> Int32 {
+	return 0
+}
+
+@extern("C_CONST")
+const withValue: Int32 = 1
+
+@extern("c_type")
+type WithRight = Int32
+
+@alias("noBodyFn")
+func noBody () -> Int32
+
+@alias("NO_VALUE")
+const noValue: Int32
+
+@extern
+@alias("bothFn")
+func both () -> Int32
+
+
+func main () -> Int {
+	return 0
+}
+

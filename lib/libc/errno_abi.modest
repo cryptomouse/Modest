@@ -1,5 +1,5 @@
 
 
-@extern("C", "__errno_location")
+@extern
 public func __errno_location () -> *Int32
 

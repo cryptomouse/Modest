@@ -1,0 +1,54 @@
+// TEST: reject
+// BACKENDS: c11
+// EXPECT-ERROR: @extern: arguments after the name must be named
+// EXPECT-ERROR: @alias: arguments after the name must be named
+// EXPECT-ERROR: @alias expects the symbol name as its first argument
+// EXPECT-ERROR: unknown backend in @alias
+// EXPECT-ERROR: unknown argument 'abi' in @alias
+// EXPECT-ERROR: duplicate @alias for backend 'llvm'
+// EXPECT-ERROR: duplicate @alias without a backend
+// EXPECT-ERROR-COUNT: 7
+//
+// The arguments of @extern and @alias: the symbol name first, anything
+// after it named.  In order:
+// - the old two-string forms `@extern("C", "malloc")` and
+//   `@alias("c", "X")`: the second argument is not named;
+// - no name, only `backend=`;
+// - `backend="c"`: backends are named as in -mbackend, "c11";
+// - an argument nobody knows;
+// - two names for one backend, and two without a backend.
+//
+// Several annotations for different backends are fine — see
+// `alias.modest`.
+
+include "libc/ctypes64"
+
+
+@extern("C", "malloc")
+func oldExtern (size: Size) -> Ptr
+
+@alias("c", "OLD")
+const oldAlias: Int32 = 2
+
+@alias(backend="c11")
+const noName: Int32 = 3
+
+@alias("SHORT", backend="c")
+const shortBackend: Int32 = 4
+
+@alias("ABI", abi="C")
+const unknownArg: Int32 = 5
+
+@alias("first", backend="llvm")
+@alias("second", backend="llvm")
+const twiceLlvm: Int32 = 6
+
+@alias("first")
+@alias("second")
+const twiceCommon: Int32 = 7
+
+
+func main () -> Int {
+	return 0
+}
+

@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdio.h>
 typedef int32_t MyInt32;
+#define MY_ZERO ((MyInt32)0)
+#define MY_ONE ((MyInt32)1)
 typedef MyInt32 MyInt32_2;
 typedef MyInt32 MyInt32_3;
 #define CVB 0

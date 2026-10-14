@@ -28,7 +28,7 @@ pragma <#name#> [<#arguments#>]
 pragma prefix ""
 pragma do_not_include
 
-@extern("C")
+@extern
 public func write (fd: Int, buf: Ptr, n: Size) -> Size
 ```
 

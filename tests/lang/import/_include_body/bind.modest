@@ -1,0 +1,12 @@
+// A binding module whose function has a body and no C counterpart:
+// nothing but this module defines `twice`.  Used by
+// `include_func_body.modest`.
+
+pragma do_not_include
+pragma prefix ""
+
+
+public func twice (x: Int32) -> Int32 {
+	return x * 2
+}
+

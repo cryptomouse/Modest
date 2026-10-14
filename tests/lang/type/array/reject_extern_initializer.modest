@@ -20,10 +20,10 @@
 include "libc/ctypes64"
 
 
-@extern("C")
+@extern
 var externTable: []Int32 = [1, 2, 3]
 
-@extern("C")
+@extern
 var externCount: Int32 = 5
 
 

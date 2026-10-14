@@ -8,40 +8,40 @@ pragma c_include "unistd.h"
 include "libc/ctypes64"
 
 
-//@extern("C)
+//@extern
 //var environ: *[]*Char
 
-//@extern("C", "SEEK_SET")
+//@alias("SEEK_SET", backend="c11")
 //public const seekSet = 0
-//@extern("C", "SEEK_CUR")
+//@alias("SEEK_CUR", backend="c11")
 //public const seekCur = 1
-//@extern("C", "SEEK_END")
+//@alias("SEEK_END", backend="c11")
 //public const seekEnd = 2
 
-@extern("C", "STDIN_FILENO")
+@alias("STDIN_FILENO", backend="c11")
 public const c_STDIN_FILENO: Int = 0
-@extern("C", "STDOUT_FILENO")
+@alias("STDOUT_FILENO", backend="c11")
 public const c_STDOUT_FILENO: Int = 1
-@extern("C", "STDERR_FILENO")
+@alias("STDERR_FILENO", backend="c11")
 public const c_STDERR_FILENO: Int = 2
 
 // lockf function - record locking on files
-@extern("C", "F_ULOCK")
+@alias("F_ULOCK", backend="c11")
 public const c_F_ULOCK: Int = 0  // unlock locked sections
-@extern("C", "F_LOCK")
+@alias("F_LOCK", backend="c11")
 public const c_F_LOCK: Int = 1   // lock a section for exclusive use
-@extern("C", "F_TLOCK")
+@alias("F_TLOCK", backend="c11")
 public const c_F_TLOCK: Int = 2  // test and lock a section for exclusive use
-@extern("C", "F_TEST")
+@alias("F_TEST", backend="c11")
 public const c_F_TEST: Int = 3
 
-@extern("C", "F_OK")
+@alias("F_OK", backend="c11")
 public const c_F_OK: Int = 0  // Test for existence of file
-@extern("C", "R_OK")
+@alias("R_OK", backend="c11")
 public const c_R_OK: Int = 4  // Test for read permission
-@extern("C", "W_OK")
+@alias("W_OK", backend="c11")
 public const c_W_OK: Int = 2  // Test for write permission
-@extern("C", "X_OK")
+@alias("X_OK", backend="c11")
 public const c_X_OK: Int = 1  // Test for execute (search) permission
 
 /*

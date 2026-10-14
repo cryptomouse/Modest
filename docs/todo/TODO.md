@@ -252,7 +252,7 @@ Status: not implemented — the annotation is rejected with
 (`semantic.py`: `using a deprecated type` / `using a deprecated value`
 fire on `hasAttribute("deprecated")`), but nothing turns the annotation
 into the attribute: the definition loop in `semantic.py` maps only
-`extern`, `alias`, `used`, `unused` and reports everything else. To do:
+`extern`, `alias`, `c_no_print`, `used`, `unused` and reports everything else. To do:
 `anno_to_attribute(df, annos, 'deprecated')` there (and for types in
 `def_type_global`), plus a test per definition kind. When done, return
 it to `docs/CHEATSHEET.md`.

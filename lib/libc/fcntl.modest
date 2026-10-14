@@ -7,49 +7,49 @@ include "libc/stat"
 
 
 // open-only flags
-@extern("C", "O_RDONLY") public const oRdonly = Word32 0x00000000    // open for reading only
-@extern("C", "O_WRONLY") public const oWronly = Word32 0x00000001    // open for writing only
-@extern("C", "O_RDWR") public const oRdwr = Word32 0x00000002      // open for reading and writing
-@extern("C", "O_ACCMODE") public const oAccmode = Word32 0x00000003   // mask for above modes
+@alias("O_RDONLY", backend="c11") public const oRdonly = Word32 0x00000000    // open for reading only
+@alias("O_WRONLY", backend="c11") public const oWronly = Word32 0x00000001    // open for writing only
+@alias("O_RDWR", backend="c11") public const oRdwr = Word32 0x00000002      // open for reading and writing
+@alias("O_ACCMODE", backend="c11") public const oAccmode = Word32 0x00000003   // mask for above modes
 
-@extern("C", "O_NONBLOCK") public const oNonblock = Word32 0x00000004  // no delay
-@extern("C", "O_APPEND") public const oAppend = Word32 0x00000008    // set append mode
+@alias("O_NONBLOCK", backend="c11") public const oNonblock = Word32 0x00000004  // no delay
+@alias("O_APPEND", backend="c11") public const oAppend = Word32 0x00000008    // set append mode
 
-@extern("C", "O_CREAT") public const oCreat = Word32 0x00000200     // create if nonexistent
-@extern("C", "O_TRUNC") public const oTrunc = Word32 0x00000400     // truncate to zero length
-@extern("C", "O_EXCL") public const oExcl = Word32 0x00000800      // error if already exists
+@alias("O_CREAT", backend="c11") public const oCreat = Word32 0x00000200     // create if nonexistent
+@alias("O_TRUNC", backend="c11") public const oTrunc = Word32 0x00000400     // truncate to zero length
+@alias("O_EXCL", backend="c11") public const oExcl = Word32 0x00000800      // error if already exists
 
 /*
  * Constants used for fcntl()
  */
 
 // command values
-@extern("C", "F_DUPFD") public const fDupfd: Int = 0           // duplicate file descriptor
-@extern("C", "F_GETFD") public const fGetfd: Int = 1           // get file descriptor flags
-@extern("C", "F_SETFD") public const fSetfd: Int = 2           // set file descriptor flags
-@extern("C", "F_GETFL") public const fGetfl: Int = 3           // get file status flags
-@extern("C", "F_SETFL") public const fSetfl: Int = 4           // set file status flags
-@extern("C", "F_GETOWN") public const fGetown: Int = 5         // get SIGIO/SIGURG proc/pgrp
-@extern("C", "F_SETOWN") public const fSetown: Int = 6         // set SIGIO/SIGURG proc/pgrp
-@extern("C", "F_GETLK") public const fGetlk: Int = 7           // get record locking information
-@extern("C", "F_SETLK") public const fSetlk: Int = 8           // set record locking information
-@extern("C", "F_SETLKW") public const fSetlkw: Int = 9         // f_SETLK, wait if blocked
-@extern("C", "F_CLOSEM") public const fClosem: Int = 10        // close all fds >= to the one given
-@extern("C", "F_MAXFD") public const fMaxfd: Int = 11          // return the max open fd
-@extern("C", "F_DUPFD_CLOEXEC") public const fDupfdCloexec: Int = 12  // close on exec duplicated fd
-@extern("C", "F_GETNOSIGPIPE") public const fGetnosigpipe: Int = 13   // get SIGPIPE disposition
-@extern("C", "F_SETNOSIGPIPE") public const fSetnosigpipe: Int = 14   // set SIGPIPE disposition
-@extern("C", "F_GETPATH") public const fGetpath: Int = 15         // get pathname associated with fd
-@extern("C", "F_ADD_SEALS") public const fAddSeals: Int = 16      // set seals
-@extern("C", "F_GET_SEALS") public const fGetSeals: Int = 17      // get seals
+@alias("F_DUPFD", backend="c11") public const fDupfd: Int = 0           // duplicate file descriptor
+@alias("F_GETFD", backend="c11") public const fGetfd: Int = 1           // get file descriptor flags
+@alias("F_SETFD", backend="c11") public const fSetfd: Int = 2           // set file descriptor flags
+@alias("F_GETFL", backend="c11") public const fGetfl: Int = 3           // get file status flags
+@alias("F_SETFL", backend="c11") public const fSetfl: Int = 4           // set file status flags
+@alias("F_GETOWN", backend="c11") public const fGetown: Int = 5         // get SIGIO/SIGURG proc/pgrp
+@alias("F_SETOWN", backend="c11") public const fSetown: Int = 6         // set SIGIO/SIGURG proc/pgrp
+@alias("F_GETLK", backend="c11") public const fGetlk: Int = 7           // get record locking information
+@alias("F_SETLK", backend="c11") public const fSetlk: Int = 8           // set record locking information
+@alias("F_SETLKW", backend="c11") public const fSetlkw: Int = 9         // f_SETLK, wait if blocked
+@alias("F_CLOSEM", backend="c11") public const fClosem: Int = 10        // close all fds >= to the one given
+@alias("F_MAXFD", backend="c11") public const fMaxfd: Int = 11          // return the max open fd
+@alias("F_DUPFD_CLOEXEC", backend="c11") public const fDupfdCloexec: Int = 12  // close on exec duplicated fd
+@alias("F_GETNOSIGPIPE", backend="c11") public const fGetnosigpipe: Int = 13   // get SIGPIPE disposition
+@alias("F_SETNOSIGPIPE", backend="c11") public const fSetnosigpipe: Int = 14   // set SIGPIPE disposition
+@alias("F_GETPATH", backend="c11") public const fGetpath: Int = 15         // get pathname associated with fd
+@alias("F_ADD_SEALS", backend="c11") public const fAddSeals: Int = 16      // set seals
+@alias("F_GET_SEALS", backend="c11") public const fGetSeals: Int = 17      // get seals
 
 // file descriptor flags (f_GETFD, f_SETFD)
-@extern("C", "FD_CLOEXEC") public const fdCloexec: Int = 1        // close-on-exec flag
+@alias("FD_CLOEXEC", backend="c11") public const fdCloexec: Int = 1        // close-on-exec flag
 
 // record locking flags (F_GETLK, F_SETLK, F_SETLKW)
-@extern("C", "F_RDLCK") public const fRdlck: Int = 1  // shared or read lock
-@extern("C", "F_UNLCK") public const fUnlck: Int = 2  // unlock
-@extern("C", "F_WRLCK") public const fWrlck: Int = 3  // exclusive or write lock
+@alias("F_RDLCK", backend="c11") public const fRdlck: Int = 1  // shared or read lock
+@alias("F_UNLCK", backend="c11") public const fUnlck: Int = 2  // unlock
+@alias("F_WRLCK", backend="c11") public const fWrlck: Int = 3  // exclusive or write lock
 
 
 public func open (fname: *[]ConstChar, opt: Word32, ...) -> Int

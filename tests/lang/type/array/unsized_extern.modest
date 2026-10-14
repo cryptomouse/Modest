@@ -18,7 +18,7 @@
 include "libc/ctypes64"
 
 
-@extern("C")
+@extern
 var externTable: []Int32
 
 

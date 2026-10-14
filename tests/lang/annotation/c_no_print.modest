@@ -1,0 +1,39 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: c_no_print
+//
+// @c_no_print keeps a definition out of the C output — for something the
+// C side already has, typically from a header (a macro, a libc function).
+// Together with @alias("...", backend="c11") the C backend calls the C name, while
+// the LLVM backend, which has no headers, compiles the body given here.
+//
+// Without @c_no_print the C output would define `static int abs(int)`
+// after <stdlib.h> declared `int abs(int)` — clang refuses that.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+@c_no_print
+@alias("abs", backend="c11")
+func myAbs (x: Int) -> Int {
+	if x < 0 {
+		return -x
+	}
+	return x
+}
+
+
+func main () -> Int {
+	if myAbs(-5) != 5 {
+		printf("myAbs(-5) = %d, expected 5\n", myAbs(-5))
+		printf("failed: c_no_print\n")
+		return exitFailure
+	}
+
+	printf("passed: c_no_print\n")
+	return exitSuccess
+}
+

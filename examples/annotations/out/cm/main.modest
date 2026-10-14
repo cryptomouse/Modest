@@ -4,10 +4,8 @@ include "libc/stdio"
 
 type MyInt32 = @branded Int32
 
-@extern
 const myZero = MyInt32 0
 
-@extern
 const myOne = MyInt32 1
 
 // These refined MyInt32 types are compatible with MyInt32

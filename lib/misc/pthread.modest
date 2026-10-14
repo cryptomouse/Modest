@@ -8,61 +8,61 @@ include "libc/ctypes64"
 
 type Nat = Nat64
 
-@extern("C", "clockid_t")
+@alias("clockid_t", backend="c11")
 type ClockIdT = Int
 
-@extern("C", "struct timespec")
+@alias("struct timespec", backend="c11")
 type StructTimespec = {}
 
-@extern("C", "struct sched_param")
+@alias("struct sched_param", backend="c11")
 type StructSchedParam = {}
 
-@extern("C", "struct pthread")
+@alias("struct pthread", backend="c11")
 public type PThread = {}
 
-@extern("C", "pthread_t")
+@alias("pthread_t", backend="c11")
 public type PThreadT = Ptr
 
-@extern("C", "pthread_mutex_t")
+@alias("pthread_mutex_t", backend="c11")
 public type PThreadMutexT = Ptr
 
-@extern("C", "struct pthread_attr")
+@alias("struct pthread_attr", backend="c11")
 public type PThreadAttr = Ptr
-@extern("C", "pthread_attr_t")
+@alias("pthread_attr_t", backend="c11")
 public type PThreadAttrT = Ptr
-@extern("C", "pthread_mutexattr_t")
+@alias("pthread_mutexattr_t", backend="c11")
 public type PThreadMutexAttrT = Ptr
-@extern("C", "pthread_cond_t")
+@alias("pthread_cond_t", backend="c11")
 public type PThreadCondT = Ptr
-@extern("C", "pthread_condattr_t")
+@alias("pthread_condattr_t", backend="c11")
 public type PThreadCondAttrT = Ptr
-@extern("C", "pthread_key_t")
+@alias("pthread_key_t", backend="c11")
 public type PThreadKeyT = Int
-@extern("C", "pthread_once_t")
+@alias("pthread_once_t", backend="c11")
 public type PThreadOnceT = Ptr
-@extern("C", "pthread_rwlock_t")
+@alias("pthread_rwlock_t", backend="c11")
 public type PThreadRWLockT = Ptr
-@extern("C", "pthread_rwlockattr_t")
+@alias("pthread_rwlockattr_t", backend="c11")
 public type PThreadRWLockAttrT = Ptr
-@extern("C", "pthread_barrier_t")
+@alias("pthread_barrier_t", backend="c11")
 public type PThreadBarrierT = Ptr
-@extern("C", "pthread_barrierattr_t")
+@alias("pthread_barrierattr_t", backend="c11")
 public type PThreadBarrierAttrT = Ptr
-@extern("C", "pthread_spinlock_t")
+@alias("pthread_spinlock_t", backend="c11")
 public type PThreadSpinlockT = Ptr
 
-@extern("C", "PTHREAD_MUTEX_INITIALIZER")
+@alias("PTHREAD_MUTEX_INITIALIZER", backend="c11")
 public const mutexInitializer: *Unit = nil
-@extern("C", "PTHREAD_COND_INITIALIZER")
+@alias("PTHREAD_COND_INITIALIZER", backend="c11")
 public const condInitializer: *Unit = nil
-@extern("C", "PTHREAD_RWLOCK_INITIALIZER")
+@alias("PTHREAD_RWLOCK_INITIALIZER", backend="c11")
 public const rwlockInitializer: *Unit = nil
 
-@extern("C", "PTHREAD_PRIO_NONE")
+@alias("PTHREAD_PRIO_NONE", backend="c11")
 public const pthreadPrioNone: *Unit = nil
-@extern("C", "PTHREAD_PRIO_INHERIT")
+@alias("PTHREAD_PRIO_INHERIT", backend="c11")
 public const pthreadPrioInherit: *Unit = nil
-@extern("C", "PTHREAD_PRIO_PROTECT")
+@alias("PTHREAD_PRIO_PROTECT", backend="c11")
 public const pthreadPrioProtect: *Unit = nil
 
 

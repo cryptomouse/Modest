@@ -1,0 +1,26 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: include same type
+// EXPECTED-FAIL(llvm): BUG#105 a type defined in two included modules is emitted twice in LLVM
+//
+// `libc/stat` includes `libc/ctypes64` and then defines `UIDT` and `GIDT`
+// once more, the same way.  The front end takes the second definition
+// without a word, the C backend prints neither (an included module is
+// never printed in C), and the LLVM backend prints both:
+// `%UIDT = type %Nat32` twice, which LLVM refuses as a redefinition of
+// type — before anything here is even used, so the program does not use
+// `UIDT` at all.  (It could not in C anyway: a binding type with no
+// `@alias("...", backend="c11")` is never given a C name.)
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+include "libc/stat"
+
+
+func main () -> Int {
+	printf("passed: include same type\n")
+	return exitSuccess
+}
+

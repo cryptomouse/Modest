@@ -34,7 +34,7 @@ func main () -> Int {
 
 	// `@extern` on a local takes the same escape hatch as a global does,
 	// even though there is no external storage behind it here.
-	@extern("C")
+	@extern
 	var borrowed: []Int32
 
 	return 0

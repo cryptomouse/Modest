@@ -18,89 +18,89 @@ public func set (value: Int32) -> Unit { *errno_abi.__errno_location() = value }
 /*
  * Error codes
  */
-@extern("C", "EPERM") public const ePerm: Errno = 1     // Operation not permitted
-@extern("C", "ENOENT") public const eNoent: Errno = 2    // No such file or directory
-@extern("C", "ESRCH") public const eSrch: Errno = 3     // No such process
-@extern("C", "EINTR") public const eIntr: Errno = 4     // Interrupted system call
-@extern("C", "EIO") public const eIo: Errno = 5       // Input/output error
-@extern("C", "ENXIO") public const eNxio: Errno = 6     // Device not configured
-@extern("C", "E2BIG") public const e2Big: Errno = 7     // Argument list too long
-@extern("C", "ENOEXEC") public const eNoexec: Errno = 8   // Exec format error
-@extern("C", "EBADF") public const eBadf: Errno = 9     // Bad file descriptor
-@extern("C", "ECHILD") public const eChild: Errno = 10   // No child processes
-@extern("C", "EDEADLK") public const eDeadlk: Errno = 11  // Resource deadlock avoided (11 was EAGAIN)
-@extern("C", "ENOMEM") public const eNomem: Errno = 12   // Cannot allocate memory
-@extern("C", "EACCES") public const eAccess: Errno = 13   // Permission denied
-@extern("C", "EFAULT") public const eFault: Errno = 14   // Bad address
-@extern("C", "ENOTBLK") public const eNotblk: Errno = 15  // Block device required
-@extern("C", "EBUSY") public const eBusy: Errno = 16    // Device / Resource busy
-@extern("C", "EEXIST") public const eExist: Errno = 17   // File exists
-@extern("C", "EXDEV") public const eXdev: Errno = 18    // Cross-device link
-@extern("C", "ENODEV") public const eNodev: Errno = 19   // Operation not supported by device
-@extern("C", "ENOTDIR") public const eNotdir: Errno = 20  // Not a directory
-@extern("C", "EISDIR") public const eIsdir: Errno = 21   // Is a directory
-@extern("C", "EINVAL") public const eInval: Errno = 22   // Invalid argument
-@extern("C", "ENFILE") public const eNfile: Errno = 23   // Too many open files in system
-@extern("C", "EMFILE") public const eMfile: Errno = 24   // Too many open files
-@extern("C", "ENOTTY") public const eNotty: Errno = 25   // Inappropriate ioctl for device
-@extern("C", "ETXTBSY") public const eTxtbsy: Errno = 26  // Text file busy
-@extern("C", "EFBIG") public const eFbig: Errno = 27    // File too large
-@extern("C", "ENOSPC") public const eNospc: Errno = 28   // No space left on device
-@extern("C", "ESPIPE") public const eSpipe: Errno = 29   // Illegal seek
-@extern("C", "EROFS") public const eRofs: Errno = 30    // Read-only file system
-@extern("C", "EMLINK") public const eMlink: Errno = 31   // Too many links
-@extern("C", "EPIPE") public const ePipe: Errno = 32    // Broken pipe
-@extern("C", "EDOM") public const eDom: Errno = 33     // Numerical argument out of domain
-@extern("C", "ERANGE") public const eRange: Errno = 34   // Result too large
+@alias("EPERM", backend="c11") public const ePerm: Errno = 1     // Operation not permitted
+@alias("ENOENT", backend="c11") public const eNoent: Errno = 2    // No such file or directory
+@alias("ESRCH", backend="c11") public const eSrch: Errno = 3     // No such process
+@alias("EINTR", backend="c11") public const eIntr: Errno = 4     // Interrupted system call
+@alias("EIO", backend="c11") public const eIo: Errno = 5       // Input/output error
+@alias("ENXIO", backend="c11") public const eNxio: Errno = 6     // Device not configured
+@alias("E2BIG", backend="c11") public const e2Big: Errno = 7     // Argument list too long
+@alias("ENOEXEC", backend="c11") public const eNoexec: Errno = 8   // Exec format error
+@alias("EBADF", backend="c11") public const eBadf: Errno = 9     // Bad file descriptor
+@alias("ECHILD", backend="c11") public const eChild: Errno = 10   // No child processes
+@alias("EDEADLK", backend="c11") public const eDeadlk: Errno = 11  // Resource deadlock avoided (11 was EAGAIN)
+@alias("ENOMEM", backend="c11") public const eNomem: Errno = 12   // Cannot allocate memory
+@alias("EACCES", backend="c11") public const eAccess: Errno = 13   // Permission denied
+@alias("EFAULT", backend="c11") public const eFault: Errno = 14   // Bad address
+@alias("ENOTBLK", backend="c11") public const eNotblk: Errno = 15  // Block device required
+@alias("EBUSY", backend="c11") public const eBusy: Errno = 16    // Device / Resource busy
+@alias("EEXIST", backend="c11") public const eExist: Errno = 17   // File exists
+@alias("EXDEV", backend="c11") public const eXdev: Errno = 18    // Cross-device link
+@alias("ENODEV", backend="c11") public const eNodev: Errno = 19   // Operation not supported by device
+@alias("ENOTDIR", backend="c11") public const eNotdir: Errno = 20  // Not a directory
+@alias("EISDIR", backend="c11") public const eIsdir: Errno = 21   // Is a directory
+@alias("EINVAL", backend="c11") public const eInval: Errno = 22   // Invalid argument
+@alias("ENFILE", backend="c11") public const eNfile: Errno = 23   // Too many open files in system
+@alias("EMFILE", backend="c11") public const eMfile: Errno = 24   // Too many open files
+@alias("ENOTTY", backend="c11") public const eNotty: Errno = 25   // Inappropriate ioctl for device
+@alias("ETXTBSY", backend="c11") public const eTxtbsy: Errno = 26  // Text file busy
+@alias("EFBIG", backend="c11") public const eFbig: Errno = 27    // File too large
+@alias("ENOSPC", backend="c11") public const eNospc: Errno = 28   // No space left on device
+@alias("ESPIPE", backend="c11") public const eSpipe: Errno = 29   // Illegal seek
+@alias("EROFS", backend="c11") public const eRofs: Errno = 30    // Read-only file system
+@alias("EMLINK", backend="c11") public const eMlink: Errno = 31   // Too many links
+@alias("EPIPE", backend="c11") public const ePipe: Errno = 32    // Broken pipe
+@alias("EDOM", backend="c11") public const eDom: Errno = 33     // Numerical argument out of domain
+@alias("ERANGE", backend="c11") public const eRange: Errno = 34   // Result too large
 
 /* non-blocking and interrupt i/o */
-@extern("C", "EAGAIN") public const eAgain: Errno = 35           // Resource temporarily unavailable
-@extern("C", "EWOULDBLOCK") public const eWouldblock: Errno = eAgain  // Operation would block
-@extern("C", "EINPROGRESS") public const eInprogress: Errno = 36      // Operation now in progress
-@extern("C", "EALREADY") public const eAlready: Errno = 37         // Operation already in progress
+@alias("EAGAIN", backend="c11") public const eAgain: Errno = 35           // Resource temporarily unavailable
+@alias("EWOULDBLOCK", backend="c11") public const eWouldblock: Errno = eAgain  // Operation would block
+@alias("EINPROGRESS", backend="c11") public const eInprogress: Errno = 36      // Operation now in progress
+@alias("EALREADY", backend="c11") public const eAlready: Errno = 37         // Operation already in progress
 
 /* ipc/network software -- argument errors */
-@extern("C", "ENOTSOCK") public const eNotsock: Errno = 38         // Socket operation on non-socket
-@extern("C", "EDESTADDRREQ") public const eDestaddrreq: Errno = 39     // Destination address required
-@extern("C", "EMSGSIZE") public const eMsgsize: Errno = 40         // Message too long
-@extern("C", "EPROTOTYPE") public const ePrototype: Errno = 41       // Protocol wrong type for socket
-@extern("C", "ENOPROTOOPT") public const eNoprotoopt: Errno = 42      // Protocol not available
-@extern("C", "EPROTONOSUPPORT") public const eProtonosupport: Errno = 43  // Protocol not supported
-@extern("C", "ESOCKTNOSUPPORT") public const eSocktnosupport: Errno = 44  // Socket type not supported
-@extern("C", "ENOTSUP") public const eNotsup: Errno = 45          // Operation not supported
-@extern("C", "EPFNOSUPPORT") public const ePfnosupport: Errno = 46     // Protocol family not supported
-@extern("C", "EAFNOSUPPORT") public const eAfnosupport: Errno = 47     // Address family not supported by protocol family
-@extern("C", "EADDRINUSE") public const eAddrinuse: Errno = 48       // Address already in use
-@extern("C", "EADDRNOTAVAIL") public const eAddrnotavail: Errno = 49    // Can't assign requested address
+@alias("ENOTSOCK", backend="c11") public const eNotsock: Errno = 38         // Socket operation on non-socket
+@alias("EDESTADDRREQ", backend="c11") public const eDestaddrreq: Errno = 39     // Destination address required
+@alias("EMSGSIZE", backend="c11") public const eMsgsize: Errno = 40         // Message too long
+@alias("EPROTOTYPE", backend="c11") public const ePrototype: Errno = 41       // Protocol wrong type for socket
+@alias("ENOPROTOOPT", backend="c11") public const eNoprotoopt: Errno = 42      // Protocol not available
+@alias("EPROTONOSUPPORT", backend="c11") public const eProtonosupport: Errno = 43  // Protocol not supported
+@alias("ESOCKTNOSUPPORT", backend="c11") public const eSocktnosupport: Errno = 44  // Socket type not supported
+@alias("ENOTSUP", backend="c11") public const eNotsup: Errno = 45          // Operation not supported
+@alias("EPFNOSUPPORT", backend="c11") public const ePfnosupport: Errno = 46     // Protocol family not supported
+@alias("EAFNOSUPPORT", backend="c11") public const eAfnosupport: Errno = 47     // Address family not supported by protocol family
+@alias("EADDRINUSE", backend="c11") public const eAddrinuse: Errno = 48       // Address already in use
+@alias("EADDRNOTAVAIL", backend="c11") public const eAddrnotavail: Errno = 49    // Can't assign requested address
 
 /* ipc/network software -- operational errors */
-@extern("C", "ENETDOWN") public const eNetdown: Errno = 50         // Network is down
-@extern("C", "ENETUNREACH") public const eNetunreach: Errno = 51      // Network is unreachable
-@extern("C", "ENETRESET") public const eNetreset: Errno = 52        // Network dropped connection on reset
-@extern("C", "ECONNABORTED") public const eConnaborted: Errno = 53     // Software caused connection abort
-@extern("C", "ECONNRESET") public const eConnreset: Errno = 54       // Connection reset by peer
-@extern("C", "ENOBUFS") public const eNobufs: Errno = 55          // No buffer space available
-@extern("C", "EISCONN") public const eIsconn: Errno = 56          // Socket is already connected
-@extern("C", "ENOTCONN") public const eNotconn: Errno = 57         // Socket is not connected
-@extern("C", "ESHUTDOWN") public const eShutdown: Errno = 58        // Can't send after socket shutdown
-@extern("C", "ETOOMANYREFS") public const eToomanyrefs: Errno = 59     // Too many references: can't splice
-@extern("C", "ETIMEDOUT") public const eTimedout: Errno = 60        // Operation timed out
-@extern("C", "ECONNREFUSED") public const eConnrefused: Errno = 61     // Connection refused
-@extern("C", "ELOOP") public const eLoop: Errno = 62            // Too many levels of symbolic links
-@extern("C", "ENAMETOOLONG") public const eNametoolong: Errno = 63     // File name too long
+@alias("ENETDOWN", backend="c11") public const eNetdown: Errno = 50         // Network is down
+@alias("ENETUNREACH", backend="c11") public const eNetunreach: Errno = 51      // Network is unreachable
+@alias("ENETRESET", backend="c11") public const eNetreset: Errno = 52        // Network dropped connection on reset
+@alias("ECONNABORTED", backend="c11") public const eConnaborted: Errno = 53     // Software caused connection abort
+@alias("ECONNRESET", backend="c11") public const eConnreset: Errno = 54       // Connection reset by peer
+@alias("ENOBUFS", backend="c11") public const eNobufs: Errno = 55          // No buffer space available
+@alias("EISCONN", backend="c11") public const eIsconn: Errno = 56          // Socket is already connected
+@alias("ENOTCONN", backend="c11") public const eNotconn: Errno = 57         // Socket is not connected
+@alias("ESHUTDOWN", backend="c11") public const eShutdown: Errno = 58        // Can't send after socket shutdown
+@alias("ETOOMANYREFS", backend="c11") public const eToomanyrefs: Errno = 59     // Too many references: can't splice
+@alias("ETIMEDOUT", backend="c11") public const eTimedout: Errno = 60        // Operation timed out
+@alias("ECONNREFUSED", backend="c11") public const eConnrefused: Errno = 61     // Connection refused
+@alias("ELOOP", backend="c11") public const eLoop: Errno = 62            // Too many levels of symbolic links
+@alias("ENAMETOOLONG", backend="c11") public const eNametoolong: Errno = 63     // File name too long
 
 /* should be rearranged */
-@extern("C", "EHOSTDOWN") public const eHostdown: Errno = 64        // Host is down
-@extern("C", "EHOSTUNREACH") public const eHostunreach: Errno = 65     // No route to host
-@extern("C", "ENOTEMPTY") public const eNotempty: Errno = 66        // Directory not empty
+@alias("EHOSTDOWN", backend="c11") public const eHostdown: Errno = 64        // Host is down
+@alias("EHOSTUNREACH", backend="c11") public const eHostunreach: Errno = 65     // No route to host
+@alias("ENOTEMPTY", backend="c11") public const eNotempty: Errno = 66        // Directory not empty
 
 /* quotas & mush */
 //public const eProclim: Errno = 67  // Too many processes
 //public const eUsers: Errno = 68    // Too many users
-@extern("C", "EDQUOT") public const eDquot: Errno = 69           // Disc quota exceeded
+@alias("EDQUOT", backend="c11") public const eDquot: Errno = 69           // Disc quota exceeded
 
 /* Network File System */
-@extern("C", "ESTALE") public const eStale: Errno = 70           // Stale NFS file handle
+@alias("ESTALE", backend="c11") public const eStale: Errno = 70           // Stale NFS file handle
 //public const eRemote: Errno = 71  // Too many levels of remote in path
 //public const eBadrpc: Errno = 72  // RPC struct is bad
 //public const eRpcmismatch: Errno = 73   // RPC version wrong
@@ -108,8 +108,8 @@ public func set (value: Int32) -> Unit { *errno_abi.__errno_location() = value }
 //public const eProgmismatch: Errno = 75  // Program version wrong
 //public const eProcunavail: Errno = 76   // Bad procedure for program
 
-@extern("C", "ENOLCK") public const eNolck: Errno = 77           // No locks available
-@extern("C", "ENOSYS") public const eNosys: Errno = 78           // Function not implemented
+@alias("ENOLCK", backend="c11") public const eNolck: Errno = 77           // No locks available
+@alias("ENOSYS", backend="c11") public const eNosys: Errno = 78           // Function not implemented
 
 //public const eFtype: Errno = 79     // Inappropriate file type or format
 //public const eAuth: Errno = 80      // Authentication error
@@ -119,7 +119,7 @@ public func set (value: Int32) -> Unit { *errno_abi.__errno_location() = value }
 //public const ePwroff: Errno = 82  // Device power is off
 //public const eDeverr: Errno = 83  // Device error, e.g. paper out
 
-@extern("C", "EOVERFLOW") public const eOverflow: Errno = 84        // Value too large to be stored in data type
+@alias("EOVERFLOW", backend="c11") public const eOverflow: Errno = 84        // Value too large to be stored in data type
 
 /* Program loading errors */
 //public const eBadexec: Errno = 85    // Bad executable
@@ -127,26 +127,26 @@ public func set (value: Int32) -> Unit { *errno_abi.__errno_location() = value }
 //public const eShlibvers: Errno = 87  // Shared library version mismatch
 //public const eBadmacho: Errno = 88   // Malformed Macho file
 
-@extern("C", "ECANCELED") public const eCanceled: Errno = 89        // Operation canceled
+@alias("ECANCELED", backend="c11") public const eCanceled: Errno = 89        // Operation canceled
 
-@extern("C", "EIDRM") public const eIdrm: Errno = 90            // Identifier removed
-@extern("C", "ENOMSG") public const eNomsg: Errno = 91           // No message of desired type
-@extern("C", "EILSEQ") public const eIlseq: Errno = 92           // Illegal byte sequence
+@alias("EIDRM", backend="c11") public const eIdrm: Errno = 90            // Identifier removed
+@alias("ENOMSG", backend="c11") public const eNomsg: Errno = 91           // No message of desired type
+@alias("EILSEQ", backend="c11") public const eIlseq: Errno = 92           // Illegal byte sequence
 
 //public const eNoattr: Errno = 93  // Attribute not found
 
-@extern("C", "EBADMSG") public const eBadmsg: Errno = 94          // Bad message
-@extern("C", "EMULTIHOP") public const eMultihop: Errno = 95        // Reserved
-@extern("C", "ENODATA") public const eNodata: Errno = 96          // No message available on STREAM
-@extern("C", "ENOLINK") public const eNolink: Errno = 97          // Reserved
-@extern("C", "ENOSR") public const eNosr: Errno = 98            // No STREAM resources
-@extern("C", "ENOSTR") public const eNostr: Errno = 99           // Not a STREAM
-@extern("C", "EPROTO") public const eProto: Errno = 100          // Protocol error
-@extern("C", "ETIME") public const eTime: Errno = 101           // STREAM ioctl timeout
-@extern("C", "EOPNOTSUPP") public const eOpnotsupp: Errno = 102      // Operation not supported on socket
-@extern("C", "ENOPOLICY") public const eNopolicy: Errno = 103       // No such policy registered
+@alias("EBADMSG", backend="c11") public const eBadmsg: Errno = 94          // Bad message
+@alias("EMULTIHOP", backend="c11") public const eMultihop: Errno = 95        // Reserved
+@alias("ENODATA", backend="c11") public const eNodata: Errno = 96          // No message available on STREAM
+@alias("ENOLINK", backend="c11") public const eNolink: Errno = 97          // Reserved
+@alias("ENOSR", backend="c11") public const eNosr: Errno = 98            // No STREAM resources
+@alias("ENOSTR", backend="c11") public const eNostr: Errno = 99           // Not a STREAM
+@alias("EPROTO", backend="c11") public const eProto: Errno = 100          // Protocol error
+@alias("ETIME", backend="c11") public const eTime: Errno = 101           // STREAM ioctl timeout
+@alias("EOPNOTSUPP", backend="c11") public const eOpnotsupp: Errno = 102      // Operation not supported on socket
+@alias("ENOPOLICY", backend="c11") public const eNopolicy: Errno = 103       // No such policy registered
 
 /* pseudo-errors returned inside kernel to modify return to process */
-@extern("C", "ERESTART") public const eRestart: Errno = -1         // restart syscall
-@extern("C", "EJUSTRETURN") public const eJustreturn: Errno = -2      // don't modify regs, just return
+@alias("ERESTART", backend="c11") public const eRestart: Errno = -1         // restart syscall
+@alias("EJUSTRETURN", backend="c11") public const eJustreturn: Errno = -2      // don't modify regs, just return
 

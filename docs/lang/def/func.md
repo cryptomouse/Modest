@@ -12,8 +12,10 @@ func <#identifier#> (<#parameters#>) -> <#return_type#> {
 ```
 
 The return type is mandatory; use `Unit` for functions returning nothing.
-A definition without a body is a *declaration* — it names an external
-function and is normally combined with `@extern`.
+A definition without a body is a *declaration* — it names a function
+defined elsewhere, and is marked `@extern` when it is a symbol outside the
+module (see [annotations](../annotation.md)).  `@alias`, which renames a
+function in the output, needs a body.
 
 The opening `{` may be written right after the signature or alone on the
 next line — a single newline between them is allowed:
@@ -53,7 +55,7 @@ Parameters are [fields](../fields.md): `name: Type`. Additionally:
 ```modest
 func greet (name: *Str8 = "World") -> Unit { ... }
 
-@extern("C")
+@extern
 public func printf (format: *Str8, ...) -> @unused Int
 ```
 

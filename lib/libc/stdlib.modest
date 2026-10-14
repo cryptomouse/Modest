@@ -7,9 +7,9 @@ pragma c_include "stdlib.h"
 include "ctypes64"
 
 
-@extern("C", "EXIT_SUCCESS")
+@alias("EXIT_SUCCESS", backend="c11")
 public const exitSuccess: Int = 0
-@extern("C", "EXIT_FAILURE")
+@alias("EXIT_FAILURE", backend="c11")
 public const exitFailure: Int = 1
 
 

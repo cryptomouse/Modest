@@ -77,7 +77,8 @@ Tests: `tests/lang/access_modifiers/private_in_public*.modest`.
 
 Consequences in output: `public` symbols of module `m` are emitted with
 the prefix `m_`; `private` symbols keep their name (and become `static`
-in C). `@extern` suppresses the prefix entirely
+in C). An `@extern` declaration never gets the prefix — it names a symbol
+defined outside the module
 (see [import](./import.md), [annotations](./annotation.md)).
 
 ## Examples

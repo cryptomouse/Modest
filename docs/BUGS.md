@@ -1270,7 +1270,7 @@ and compiling that output fails with `annotation 'nonstatic' not defined`.
 
 - `@nonstatic` is turned into an attribute only for a global `var`
   (`def_var_common`, `src/semantic.py`).  The definition loop that handles
-  annotations common to all definitions maps only `extern`, `alias`,
+  annotations common to all definitions maps only `extern`, `alias`, `c_no_print`,
   `used`, `unused` and reports everything else, so on a `func`, `const` or
   `type` it is an error.
 - The compiler itself sets the attribute on `main` (`def_func2`), and the
@@ -1510,3 +1510,55 @@ func take (u: Unit) -> Unit {}    // accepted
   out before they come back.
 - Coverage: `tests/lang/type/unit/reject_storage.modest`, marked
   `EXPECTED-FAIL`.
+
+## BUG#104: Bodies of functions in an included module are not emitted
+
+```modest
+// bind.modest — pragma do_not_include, pragma prefix ""
+public func twice (x: Int32) -> Int32 { return x * 2 }
+
+// main.modest
+include "./bind"
+twice(21)      // C: undeclared function 'twice'; LLVM: undefined symbol _twice
+```
+
+- An `include`d module is never printed by the C backend (`do_cfile`
+  marks its definitions as already defined, and a `do_not_include`
+  module has no header), and the LLVM backend prints its functions with
+  `print_decl_func` only (`print_included`, `src/backend/llvm.py`).  A
+  body there is compiled by the front end and then dropped.
+- Library bindings get away with it while C has the same name: a
+  function-like macro under `@alias("...", backend="c11")` — `sIsdir`/`S_ISDIR` and
+  the rest in `lib/libc/stat.modest` — or a libc function that also
+  exists as a symbol (`htons` in `lib/libc/arpa/inet.modest`, which LLVM
+  then links against libc instead of the body).  The macro case does not
+  link in LLVM: `include "libc/stat"` + `sIsdir(m)` gives `undefined
+  symbol _sIsdir`.  So the `@alias("...", backend="c11")` + body idiom for macros
+  works in the C backend only.
+- A function with no C twin (`assert` in `lib/std.modest`, any helper
+  written in Modest) does not link in either backend.
+- Coverage: `tests/lang/import/include_func_body.modest`, marked
+  `EXPECTED-FAIL`.
+
+## BUG#105: A type defined in two included modules is emitted twice in LLVM
+
+```modest
+include "libc/ctypes64"   // public type UIDT = Nat32
+include "libc/stat"       // public type UIDT = Nat32 — again
+```
+
+- `lib/libc/stat.modest` includes `libc/ctypes64` and defines `UIDT`
+  and `GIDT` once more.  The front end accepts the second definition
+  without a word (the included symbol is simply replaced), and the LLVM
+  backend prints the type for each module: `%UIDT = type %Nat32` twice,
+  which LLVM refuses with `redefinition of type`.  Any program that
+  includes `libc/stat` fails in LLVM, whatever it uses.
+- The C backend is not affected only because it never prints included
+  types — which has its own cost: a binding type with no
+  `@alias("...", backend="c11")` (`UIDT`, `DevT`, `ModeT`, ...) is never given a C
+  name, and using it in the program gives `unknown type name 'UIDT'`.
+- Either reject (or at least warn about) a redefinition that arrives
+  through `include`, or have the LLVM backend print a type once by its
+  output name; and drop the duplicates from `stat.modest`.
+- Coverage: `tests/lang/import/include_same_type.modest`, marked
+  `EXPECTED-FAIL(llvm)`.
