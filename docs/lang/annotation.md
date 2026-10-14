@@ -58,6 +58,10 @@ Annotations are written before a definition, or inside a type expression
 > `@alias("tm_mday") day: Int`. LLVM has no field names, so there it
 > changes nothing.
 >
+> On a `type` without a right side `@extern` declares an opaque type
+> defined in C — `@extern("FILE") public type File` — usable only behind a
+> pointer; the name must be a typedef (see [type definition](def/type.md)).
+>
 > A C macro or typedef the compiler must know the value or layout of
 > (`INT8_MIN`, `ino_t`, `struct dirent`) is a definition on the Modest
 > side: write it out and name it with `@alias("...", backend="c11")`. In
@@ -132,6 +136,9 @@ var table: [256]Word8 = []
 
 @extern
 var environ: []Ptr   // an extern global may leave the array unsized
+
+@extern("FILE")
+type CFile           // opaque: only *CFile is usable
 
 type Packet = @layout("packed") {
 	tag: Word8

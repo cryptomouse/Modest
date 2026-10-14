@@ -2324,6 +2324,19 @@ class Parser:
 		if self.is_comment():
 			self.skip1()
 
+		# `type T` with nothing after the name is a declaration
+		# of a type defined elsewhere (see @extern)
+		if self.look_sep() or self.is_end():
+			return {
+				'isa': 'ast_definition',
+				'kind': 'type',
+				'id': id,
+				'type': None,
+				'is_decl': True,
+				'access_modifier': 'undefined',
+				'ti': ti
+			}
+
 		self.need("=")
 
 		t = None
@@ -2342,6 +2355,7 @@ class Parser:
 			'kind': 'type',
 			'id': id,
 			'type': t,
+			'is_decl': False,
 			'access_modifier': 'undefined',
 			'ti': ti
 		}

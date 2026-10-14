@@ -3,15 +3,15 @@
 pragma prefix ""
 
 
-@alias("DIR", backend="c11")
-public type Dir = {}
+@extern("DIR")
+public type Dir
 
 @alias("int", backend="c11")
-type Int = Int32
+public type Int = Int32
 @alias("ino_t", backend="c11")
-type InoT = Nat32
+public type InoT = Nat32
 @alias("off_t", backend="c11")
-type OffT = Nat32
+public type OffT = Nat32
 
 @alias("struct dirent", backend="c11")
 public type Dirent = @public {

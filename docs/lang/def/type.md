@@ -6,6 +6,7 @@ Binds an [identifier](../identifier.md) to a [type](../type/README.md).
 
 ```
 type <#identifier#> = <#type_expression#>
+@extern type <#identifier#>
 ```
 
 ## Semantics
@@ -34,6 +35,32 @@ type <#identifier#> = <#type_expression#>
 - Layout and qualifiers are controlled with annotations on the right-hand
   side: `@layout("packed" | "union" | "exact")`, `@alignment(N)`,
   `@volatile`, `@const` (see [annotations](../annotation.md)).
+
+## Extern types
+
+A `type` with no right side is a declaration of a type defined outside the
+module — an opaque C type such as `FILE` or `SDL_Window`. It needs
+[`@extern`](../annotation.md); the optional name is the C typedef
+(`@extern("FILE")`), without it the Modest name is used as is.
+
+```modest
+@extern("SDL_Window")
+public type Window
+
+@extern("SDL_CreateWindow")
+func createWindow: (title: *Str8, w: Int32, h: Int32, flags: Word32) -> *Window
+```
+
+- Only the name is known — no size, no fields — so the type is used behind
+  a pointer: `*Window`. A value of it (a `var`, `const`, field, parameter,
+  return value), an array of it, a dereference, `sizeof` and `alignof` are
+  errors.
+- An extern type is nominal: two of them are different types even under the
+  same C name; convert between their pointers through `Ptr`. An alias
+  (`type Handle = Window`) is the same type.
+- The name must be a typedef, not a `struct tag`. Nothing is printed for it
+  in C output (the header has it); LLVM output declares `%Name = type opaque`.
+- Only at the top level: a type declared inside a function body is an error.
 
 ## Examples
 

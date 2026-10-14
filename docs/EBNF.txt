@@ -39,7 +39,7 @@ access_modifier ::= 'public' | 'private'
 
 def ::= annotation* [access_modifier] (def_type | def_const | def_var | def_func)
 
-def_type  ::= 'type' Id '=' type_expr
+def_type  ::= 'type' Id ['=' type_expr]   (* without '=': @extern declaration *)
 def_const ::= 'const' field_decl
 def_var   ::= 'var'   field_decl (',' field_decl)*
 def_func  ::= 'func'  id ':' type_expr [block]

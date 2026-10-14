@@ -795,6 +795,9 @@ def str_stmt_type(x):
 	#if atts != []:
 	#	return "type %s = %s %s" % (get_id_str(x), ' '.join(atts), str_type(x.original_type))
 
+	if x.hasAttribute('extern'):
+		return "type %s" % get_id_str(x)
+
 	return "type %s = %s" % (get_id_str(x), str_type(x.original_type))
 
 

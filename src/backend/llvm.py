@@ -1096,6 +1096,11 @@ def str_type(t):
 	if t.is_integer():
 		return str_int_type_for(t.width)
 
+	# псевдоним @extern типа - тот же тип: в LLVM разные именованные
+	# opaque типы несовместимы, поэтому везде пишем исходное имя
+	if t.is_opaque():
+		return get_type_id(t.origin)
+
 	id_str = get_type_id(t)
 	if id_str != None:
 		return id_str
@@ -3024,11 +3029,27 @@ def print_def_func(x):
 #	out("\n%%%s = type opaque" % get_id_str(x))
 
 
+# имена напечатанных opaque типов: несколько @extern типов могут
+# называть один и тот же внешний тип (@extern("FILE")), а LLVM не
+# разрешает определять его дважды
+printed_opaque = []
+
 def print_def_type(x):
 	xtype = x.original_type
+	if xtype.is_opaque():
+		# псевдоним @extern типа, см. str_type
+		if x.type.origin is not x.type:
+			return
+		id_str = get_id_str(x.type)
+		if id_str in printed_opaque:
+			return
+		printed_opaque.append(id_str)
 	out("\n%%%s = type " % get_id_str(x.type))
 	tt = None
-	if xtype.is_record():
+	if xtype.is_opaque():
+		# @extern type: устройство неизвестно
+		tt = "opaque"
+	elif xtype.is_record():
 		# не печатаем имя а печатаем саму структуру
 		# тк LLVM дает ошибку на запись вида
 		# %Struct1 = type %Struct2; Error, wtf?

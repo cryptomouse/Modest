@@ -1,6 +1,7 @@
 # src/semantic.py
 
 import os
+import re
 import copy
 import decimal
 import pathlib
@@ -466,7 +467,9 @@ def create_builtin_module():
 def do_field(x, ctx, default_access_level=HLIR_ACCESS_LEVEL_PRIVATE):
 	id = do_id(x['id'])
 	field_type, init_value = process_field_common(x, ctx=ctx)
-	if field_type.is_forbidden_field():
+	if field_type.is_opaque():
+		error_extern_type_value(field_type, x['ti'])
+	elif field_type.is_forbidden_field():
 		error("unsuitable type", x['ti'])
 
 	if field_type.is_incompleted():
@@ -612,6 +615,8 @@ def do_type_array(x, anno, ctx):
 
 	if of.is_incompleted():
 		error("using of an incompleted type", x['of']['ti'])
+	elif of.is_opaque():
+		error("array of an extern type, use a pointer", x['of']['ti'])
 
 	volume = do_rvalue_integral(x['size'], ctx=ctx)
 
@@ -715,7 +720,8 @@ def do_type_func(x, anno, func_id="_", *, ctx):
 	params = []
 	for _param in x['params']:
 		param = do_field(_param, ctx=ctx)
-		if param.type.is_forbidden_param():
+		# @extern type уже отловил do_field
+		if param.type.is_forbidden_param() and not param.type.is_opaque():
 			error("forbidden param type", param.ti)
 		if param != None:
 			params.append(param)
@@ -725,7 +731,9 @@ def do_type_func(x, anno, func_id="_", *, ctx):
 	if to.is_incompleted():
 		error("using of an incompleted type", x['to']['ti'])
 
-	if to.is_forbidden_retval():
+	if to.is_opaque():
+		error_extern_type_value(to, x['to']['ti'])
+	elif to.is_forbidden_retval():
 		error("forbidden retval type", x['to']['ti'])
 
 	return TypeFunc(params, to, x['arghack'], ti=x['ti'])
@@ -1294,6 +1302,9 @@ def do_value_deref(x, ctx):
 	is_free_ptr = to.is_free_pointer()
 	is_unsized_array_ptr = to.is_unsized_array()
 	is_vla = to.is_vla()
+	if to.is_opaque():
+		error("cannot dereference a pointer to an extern type", v.ti)
+		return ValueBad(ti=x['ti'])
 	if is_func_ptr or is_free_ptr or is_unsized_array_ptr:# or is_vla:
 		error("cannot dereference the pointer", v.ti)
 		return ValueBad(ti=x['ti'])
@@ -2044,6 +2055,8 @@ def do_value_sizeof_type(x, ctx):
 	t = do_type(x['type'], ctx=ctx)
 	if t.is_func():
 		error("sizeof(<#type_function#>) are forbidden", x['type']['ti'])
+	elif t.is_opaque():
+		error("sizeof of an extern type: its size is unknown", x['type']['ti'])
 	return ValueSizeofType(t, ti=x['ti'])
 
 
@@ -2051,12 +2064,16 @@ def do_value_sizeof_value(x, ctx):
 	v = do_value(x['value'], ctx=ctx)
 	if v.type.is_func():
 		error("sizeof(<#value_function#>) are forbidden", v.ti)
+	elif v.type.is_opaque():
+		error("sizeof of an extern type: its size is unknown", v.ti)
 	return ValueSizeofValue(v, ti=x['ti'])
 
 
 
 def do_value_alignof_type(x, ctx):
 	of = do_type(x['type'], ctx=ctx)
+	if of.is_opaque():
+		error("alignof of an extern type: its alignment is unknown", x['type']['ti'])
 	return ValueAlignofType(of, ti=x['ti'])
 
 
@@ -2310,6 +2327,10 @@ def do_stmt_return(x):
 
 def do_stmt_type(x):
 	global csymtab
+
+	if x['is_decl']:
+		error("type declaration is allowed only at the top level, with @extern", x['ti'])
+		return StmtBad(x['ti'])
 
 	nt = Type(x['ti'])
 	definition = new_def_type(x, nt)
@@ -2663,8 +2684,40 @@ def def_type_global(x, annos):
 	if not nt.is_incompleted():
 		error("type redefinition", x['ti'])
 		return StmtBad(x['ti'])
+	if x['is_decl']:
+		return def_type_extern(x, nt, annos)
 	df = def_type_common(x, nt)
 	return df
+
+
+# Значение @extern типа завести нельзя: размер его неизвестен
+def error_extern_type_value(t, ti):
+	error("value of extern type '%s', use a pointer" % t.to_str(), ti)
+
+
+# `@extern type T` - тип определен снаружи: известно только имя.
+# Сам @extern (выходное имя) разбирает def_add_annotation_extern
+def def_type_extern(x, nt, annos):
+	if not any(a['kind'] == 'extern' for a in annos):
+		error("type declaration without @extern, expected '='", x['ti'])
+		return StmtBad(x['ti'])
+
+	# имя уходит в C как есть: только typedef, не `struct tag`
+	for a in annos:
+		if a['kind'] != 'extern' or a['args'] == []:
+			continue
+		v = a['args'][0]['value']
+		if v['kind'] == 'string' and not re.fullmatch(r'[A-Za-z_][A-Za-z_0-9]*', v['str']):
+			error("@extern on a type takes a typedef name, like \"FILE\"", v['ti'])
+
+	definition = nt.definition
+	nt.update(TypeOpaque(x['ti']))
+	nt.origin = nt
+	nt.definition = definition
+	nt.module = cmodule
+	nt.ti_def = definition.id.ti
+	definition.original_type = nt
+	return definition
 
 
 def process_field_common(x, allow_cons_default=False, *, ctx):
@@ -2780,7 +2833,9 @@ def def_const_common(x, annos):
 		# осознанно пропускаем ошибку, чтобы не плодить кучу ошибок дальше; это ок
 		pass
 
-	if const_type.is_forbidden_const():
+	if const_type.is_opaque():
+		error_extern_type_value(const_type, x['ti'])
+	elif const_type.is_forbidden_const():
 		error("unsuitable type", x['ti'])
 
 	if definition.access_level == HLIR_ACCESS_LEVEL_PUBLIC:
@@ -2840,7 +2895,9 @@ def def_var_common(x, annos):
 			if pi != None:
 				error_private_in_public("variable", id.str, pi)
 
-	if var_type.is_forbidden_var():
+	if var_type.is_opaque():
+		error_extern_type_value(var_type, x['ti'])
+	elif var_type.is_forbidden_var():
 		error("unsuitable type", x['ti'])
 
 	# аннотации навешиваются уже после def_var_common, поэтому смотрим в AST;
@@ -3597,6 +3654,8 @@ def def_has_body(df, x):
 		return df.stmt != None
 	if df.is_stmt_def_var() or df.is_stmt_def_const():
 		return x['init_value']['kind'] != 'undefined'
+	if df.is_stmt_def_type():
+		return not x['is_decl']
 	return True
 
 

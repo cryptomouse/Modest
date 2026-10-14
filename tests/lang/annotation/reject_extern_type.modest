@@ -1,0 +1,59 @@
+// TEST: reject
+// BACKENDS: c11
+// EXPECT-ERROR: @extern on a type takes a typedef name
+// EXPECT-ERROR: type declaration without @extern
+// EXPECT-ERROR: type declaration without @extern
+// EXPECT-ERROR: value of extern type 'Window', use a pointer
+// EXPECT-ERROR: value of extern type 'Window', use a pointer
+// EXPECT-ERROR: value of extern type 'Window', use a pointer
+// EXPECT-ERROR: value of extern type 'Window', use a pointer
+// EXPECT-ERROR: value of extern type 'Window', use a pointer
+// EXPECT-ERROR: array of an extern type
+// EXPECT-ERROR-COUNT: 9
+//
+// An extern type (`@extern type T`, no right side) has only a name: no
+// size, no fields.  What a pointer to it does not allow is checked by
+// `reject_extern_type_use.modest`.  In order:
+// - the name goes to C as is, so it must be a typedef, not `struct tag`;
+// - a type without a right side is a declaration and needs @extern —
+//   @alias renames a definition and does not make one;
+// - no value of it: field, global var, const, param, return value;
+// - no array of it, not even behind a pointer.
+
+include "libc/ctypes64"
+
+
+@extern("SDL_Window")
+type Window
+
+@extern("struct dirent")
+type Dirent
+
+type NoExtern
+
+@alias("X")
+type AliasDecl
+
+type Holder = {
+	w: Window
+}
+
+var gw: Window
+
+@extern
+const cw: Window
+
+@extern
+func byValue (w: Window) -> Unit
+
+@extern
+func returnsValue () -> Window
+
+@extern
+func arr (p: *[2]Window) -> Unit
+
+
+func main () -> Int {
+	return 0
+}
+

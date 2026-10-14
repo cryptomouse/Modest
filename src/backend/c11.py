@@ -2072,6 +2072,10 @@ def do_def_type(x):
 	if x in defined:
 		return []
 
+	# @extern type: определен в C-заголовке, печатать нечего
+	if x.hasAttribute('extern'):
+		return []
+
 	do_deps(x.deps)
 
 	id_str = get_id_str(x.type)

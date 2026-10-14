@@ -7,8 +7,8 @@ pragma c_include "stdio.h"
 include "libc/ctypes64"
 
 
-@alias("FILE", backend="c11")
-public type File = {}
+@extern("FILE")
+public type File
 
 @alias("fpos_t", backend="c11")
 public type FposT = Nat8

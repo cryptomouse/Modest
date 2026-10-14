@@ -598,7 +598,17 @@ Unit value                         // discard a value (suppress warnings)
 >
 > @alias("INT8_MIN", backend="c11")
 > const int8MinValue: Int8 = -128           // definition: C code says INT8_MIN
+>
+> @extern("SDL_Window")
+> public type Window                        // opaque C type: no right side
 > ```
+>
+> **Extern type** — `@extern type T` (no `=`) declares an opaque C type: only
+> `*T` is usable. A value of `T` (var/const/field/param/return), `[N]T`,
+> `*p`, `sizeof(T)` and `alignof(T)` are errors. The name must be a C
+> typedef (`"FILE"`, not `"struct dirent"`); two extern types are distinct
+> even under one C name (go through `Ptr`), an alias `type U = T` is the
+> same type. Top level only.
 >
 > A C macro or a typedef is a definition on the Modest side: the compiler
 > needs its value or layout, so it is written out and named with `@alias`.

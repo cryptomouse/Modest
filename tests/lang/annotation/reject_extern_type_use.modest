@@ -1,0 +1,51 @@
+// TEST: reject
+// BACKENDS: c11
+// EXPECT-ERROR: cannot dereference a pointer to an extern type
+// EXPECT-ERROR: sizeof of an extern type
+// EXPECT-ERROR: alignof of an extern type
+// EXPECT-ERROR: type mismatch *Renderer & *Window
+// EXPECT-ERROR: type declaration is allowed only at the top level
+// EXPECT-ERROR-COUNT: 5
+//
+// What a pointer to an extern type does not allow (the declaration and
+// values of the type are checked by `reject_extern_type.modest`).  In
+// order:
+// - no dereference, sizeof or alignof: the size is unknown;
+// - two extern types are distinct even when their pointers look alike;
+// - a local type cannot be extern.
+
+include "libc/ctypes64"
+
+
+@extern("SDL_Window")
+type Window
+
+@extern
+type Renderer
+
+
+func deref (w: *Window) -> Unit {
+	let x = *w
+}
+
+func size () -> Unit {
+	let n = sizeof(Window)
+}
+
+func align () -> Unit {
+	let a = alignof(Window)
+}
+
+func mismatch (w: *Window) -> Unit {
+	let r: *Renderer = w
+}
+
+func local () -> Unit {
+	type L
+}
+
+
+func main () -> Int {
+	return 0
+}
+

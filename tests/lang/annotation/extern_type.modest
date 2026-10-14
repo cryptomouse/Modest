@@ -1,0 +1,60 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: extern_type
+//
+// `@extern type T` declares a type defined outside the module: only its
+// name is known, so it lives behind a pointer.  `File` from libc/stdio is
+// one (`@extern("FILE")`); here a pointer to it comes from fopen, goes
+// through a local alias and, via `Ptr`, through a second extern type
+// under the same C name, and back to fclose.
+//
+// The C output prints no typedef of its own (FILE comes from stdio.h);
+// the LLVM output declares `%FILE = type opaque`.  An alias of an extern
+// type is the same type — under LLVM it is spelled by the original name,
+// otherwise `*Stream` and `*File` would be two unrelated pointer types
+// there and the call to `writeTo` would not type-check.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Stream = File
+
+@extern("FILE")
+type CFile
+
+
+func writeTo (s: *Stream, str: *Str8) -> Int {
+	return fputs(str, s)
+}
+
+func main () -> Int {
+	let f = fopen("/dev/null", "w")
+	if f == nil {
+		printf("fopen(\"/dev/null\") = nil\n")
+		printf("failed: extern_type\n")
+		return exitFailure
+	}
+
+	if writeTo(f, "hello\n") < 0 {
+		printf("fputs to /dev/null failed\n")
+		printf("failed: extern_type\n")
+		return exitFailure
+	}
+
+	let c = *CFile Ptr f
+	let back = *File Ptr c
+	if back != f {
+		printf("*File -> *CFile -> *File changed the pointer\n")
+		printf("failed: extern_type\n")
+		return exitFailure
+	}
+
+	fclose(back)
+
+	printf("passed: extern_type\n")
+	return exitSuccess
+}
+

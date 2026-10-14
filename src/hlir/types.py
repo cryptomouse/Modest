@@ -835,6 +835,9 @@ class Type(Entity):
 	def is_va_list(self):
 		return isinstance(self, TypeVaList)
 
+	def is_opaque(self):
+		return isinstance(self, TypeOpaque)
+
 
 	def is_generic_int(self):
 		return self.is_int() and self.is_generic()
@@ -1128,6 +1131,7 @@ class Type(Entity):
 		elif a.is_variant(): return Type.eq_variant(a, b, opt)
 		elif a.is_string(): return True
 		elif a.is_va_list(): return True
+		elif a.is_opaque(): return a.origin is b.origin
 		else: assert(False)
 		return False
 
@@ -1164,6 +1168,7 @@ class Type(Entity):
 
 	def is_forbidden_any(self):
 		if self.is_func(): return True
+		if self.is_opaque(): return True
 		#if self.is_unit(): return True
 		return False
 
@@ -1171,6 +1176,7 @@ class Type(Entity):
 	# cannot create field with type
 	def is_forbidden_field(self):
 		if self.is_func(): return True
+		if self.is_opaque(): return True
 		#if self.is_unit(): return True
 		if self.is_unsized_array(): return True
 		return False
@@ -1183,6 +1189,8 @@ class Type(Entity):
 
 	def is_forbidden_retval(self):
 		if self.is_func():
+			return True
+		if self.is_opaque():
 			return True
 		if self.is_array():
 			if self.of.is_forbidden_any(): return True
@@ -1711,6 +1719,20 @@ class TypeVaList(Type):
 
 	def create_zero_literal(self, ti=None):
 		return ValueUndefined(self)
+
+
+# Тип, определенный снаружи (`@extern type T`): известно только имя,
+# ни размера, ни полей - доступен лишь через указатель.
+# origin - сам исходный тип: псевдоним (type A = T) копирует его через
+# update(), и по origin они узнают друг друга в Type.eq
+class TypeOpaque(Type):
+	def __init__(self, ti=None):
+		super().__init__(width=0, ti=ti)
+		self.incomplete = False
+		self.origin = self
+
+	def create_zero_literal(self, ti=None):
+		return ValueUndefined(self, ti=ti)
 
 
 class TypeVariant(Type):

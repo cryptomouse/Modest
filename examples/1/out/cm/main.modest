@@ -3,6 +3,11 @@ include "libc/stdio"
 
 //include "./lib"
 
+
+@extern
+type Window
+
+
 var cmd: [7]*Str8 = ["abc", "def", "zyx", "123", "456", "780", "0"]
 
 @nonstatic
