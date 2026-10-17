@@ -37,10 +37,10 @@ C:
 
 
 Modest:
-	modest -o out/cm/main -funsafe -mbackend=modest src/main.modest
-	modest -o out/cm/avr -funsafe -mbackend=modest src/avr/avr.modest
-	modest -o out/cm/m328p -funsafe -mbackend=modest src/avr/m328p.modest
-	modest -o out/cm/delay -funsafe -mbackend=modest src/avr/delay.modest
+	modest -o out/modest/main -funsafe -mbackend=modest src/main.modest
+	modest -o out/modest/avr -funsafe -mbackend=modest src/avr/avr.modest
+	modest -o out/modest/m328p -funsafe -mbackend=modest src/avr/m328p.modest
+	modest -o out/modest/delay -funsafe -mbackend=modest src/avr/delay.modest
 
 
 PORT = /dev/tty.usbmodem11301
