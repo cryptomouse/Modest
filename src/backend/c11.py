@@ -273,13 +273,9 @@ def do_ctype_variant(t, specs):
 
 
 def do_def_type_variant(t):
+	# Подтипы union'а должны быть полными - но порядок обеспечивает
+	# flush_anons: вариант не выйдет раньше того, что он держит по значению
 	result = []
-
-	# Emit full definitions of named sub-types before the variant struct.
-	# Union members require complete types in C, so a forward declaration is not enough.
-	for vtype in t.variants:
-		if vtype.definition is not None:
-			result.extend(do_def_type(vtype.definition))
 
 	union_fields = []
 	for i, vtype in enumerate(t.variants):
@@ -2423,7 +2419,13 @@ def do_header(module):
 
 	#xdefs.append(CRawText("\n"))
 
+	global pending_anons
+	pending_anons = public_anons(module)
+	xdefs.extend(flush_anons(module))
+
 	for x in defs:
+		xdefs.extend(flush_anons(module))
+
 		if is_private(x):
 			continue
 
@@ -2450,6 +2452,9 @@ def do_header(module):
 		elif x.is_stmt_comment():
 			xdefs.extend(do_stmt_comment(x))
 
+	# последнее определение тоже могло кого-то дождаться
+	xdefs.extend(flush_anons(module))
+
 	dv = CConditionalRegion(pairs=[("!defined(%s)" % guardsymbol, xdefs)])
 	return (dv,)
 
@@ -2465,6 +2470,128 @@ def extt(module):
 		extt(m)
 	for d in module.defs:
 		was_defined(d)
+
+
+# Анонимные записи и варианты (BUG#48).
+# Своего места в module.defs у них нет, а struct, держащий другой по
+# значению, в C должен идти после него. Поэтому каждый анонимный тип
+# выводим, как только выведено всё, что он держит по значению: в начале
+# файла и затем после каждого определения - топологическая сортировка
+# "по готовности". Указатели не в счет: им хватает неполного типа.
+# Те, что видны в публичном интерфейсе, уходят в заголовок, остальные -
+# в .c (он заголовок и так включает)
+pending_anons = []
+anons_done = []
+
+
+def type_children(t):
+	if t.is_record():
+		return [f.type for f in t.fields]
+	if t.is_variant():
+		return list(t.variants)
+	if t.is_pointer():
+		return [t.to]
+	if t.is_array():
+		return [t.of]
+	if t.is_func():
+		return [t.to] + [p.type for p in t.params]
+	return []
+
+
+# Анонимные типы, видимые снаружи модуля: в полях публичных типов, в
+# сигнатурах публичных функций, в типах публичных переменных и констант
+def public_anons(module):
+	anons = module.anon_recs + module.anon_vars
+	found = []
+
+	def walk(t):
+		if t in anons:
+			if t in found:
+				return
+			found.append(t)
+		elif getattr(t, 'definition', None) != None:
+			# именованный тип - публичный обойдется по своему определению
+			return
+		for c in type_children(t):
+			walk(c)
+
+	for x in module.defs:
+		if is_private(x) or x.hasAttribute('c_no_print') or x.hasAttribute('no_print'):
+			continue
+		if x.is_stmt_def_type():
+			t = x.type
+		elif x.is_stmt_def_func() or x.is_stmt_def_var() or x.is_stmt_def_const():
+			t = x.value.type
+		else:
+			continue
+		# сам тип определения - тоже именованный, смотрим сразу внутрь
+		for c in type_children(t):
+			walk(c)
+
+	return found
+
+
+# Типы, которые должны быть определены раньше t:
+# - всё, что t держит по значению (массив - не отдельный тип в C, смотрим сквозь него);
+# - за указателем - только typedef'ы (Err), записи там довольно неполной -
+#   иначе {next: *Node} внутри самой Node ждал бы её вечно
+def value_deps(t):
+	if t.is_record():
+		subs = [f.type for f in t.fields]
+	elif t.is_variant():
+		subs = list(t.variants)
+	else:
+		return []
+
+	deps = []
+	for s in subs:
+		collect_deps(s, True, deps)
+	return deps
+
+
+def collect_deps(t, by_value, deps):
+	if getattr(t, 'definition', None) != None:
+		if by_value or not t.is_record():
+			deps.append(t)
+	elif t.is_array():
+		collect_deps(t.of, by_value, deps)
+	elif t.is_pointer():
+		collect_deps(t.to, False, deps)
+	elif t.is_func():
+		collect_deps(t.to, False, deps)
+		for p in t.params:
+			collect_deps(p.type, False, deps)
+	elif t.is_record() or t.is_variant():
+		if by_value:
+			deps.append(t)
+
+
+def anon_ready(t, module):
+	for d in value_deps(t):
+		if d in pending_anons:
+			return False
+		definition = getattr(d, 'definition', None)
+		# тип чужого модуля приходит через его заголовок
+		if definition in module.defs and not definition in defined:
+			return False
+	return True
+
+
+def flush_anons(module):
+	result = []
+	progress = True
+	while progress:
+		progress = False
+		for t in list(pending_anons):
+			if anon_ready(t, module):
+				pending_anons.remove(t)
+				anons_done.append(t)
+				if t.is_variant():
+					result.extend(do_def_type_variant(t))
+				else:
+					result.extend(do_def_type_record(t))
+				progress = True
+	return result
 
 
 
@@ -2511,18 +2638,15 @@ def do_cfile(module):
 			xdefs.extend(c_helpers[use]())
 
 
-	if len(module.anon_recs) > 0:
-		#out("\n\n/* anonymous records */")
-		for t in module.anon_recs:
-			xdefs.extend(do_def_type_record(t))
-
-	if len(module.anon_vars) > 0:
-		for t in module.anon_vars:
-			xdefs.extend(do_def_type_variant(t))
-
 	xdefs.extend(do_helpers(module))
 
+	global pending_anons
+	pending_anons = [t for t in module.anon_recs + module.anon_vars if not t in anons_done]
+	xdefs.extend(flush_anons(module))
+
 	for x in defs:
+		xdefs.extend(flush_anons(module))
+
 		if x.hasAttribute('c_no_print') or x.hasAttribute('no_print'):
 			continue
 
@@ -2615,6 +2739,9 @@ def run(module, _outname):
 
 	if module.hasAttribute('c_no_print'):
 		return
+
+	global anons_done
+	anons_done = []
 
 	hpath = _outname
 	if 'include_dir' in csettings:

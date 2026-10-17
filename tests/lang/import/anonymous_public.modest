@@ -1,0 +1,77 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// LINK: ./_anonymous_public/shape.modest
+// LINK: ./_anonymous_public/shift.modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: an anonymous result from another module
+// EXPECT-OUT: passed: an anonymous field of an imported record
+// EXPECT-OUT: passed: anonymous records across modules
+//
+// Anonymous records that stand in the public interface of a module: the
+// result of a public function, a field of a public record.
+//
+// In C the importer needs their complete definitions, so they go into
+// `shape.h`, after the named types they hold — and only they do: the
+// private one stays in `shape.c`.
+//
+// Each module is compiled on its own, and `shape` is compiled once more
+// inside this one, when it is imported.  The C name of an anonymous record
+// must come out the same both times.  It used to be numbered by a counter
+// shared by the whole run, so the anonymous records of `shift`, met here
+// before `shape`, moved the numbers `shape`'s records got in this module.
+// Now each is numbered within its own module.
+//
+// Guards BUG#48 (fixed 2026-10-17): the headers part of it.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+include "./_anonymous_public/shift"
+import "./_anonymous_public/shape"
+
+
+func testResult () -> Bool {
+	let o = shape.origin(3)
+	if o.p.x != 1 or o.p.y != 2 or o.id != 3 {
+		printf("origin() = {{%d, %d}, %u}, expected {{1, 2}, 3}\n", o.p.x, o.p.y, o.id)
+		return false
+	}
+
+	printf("passed: an anonymous result from another module\n")
+	return true
+}
+
+
+func testField () -> Bool {
+	var w = shape.world()
+	if w.name != 5 or w.body.pos.y != 7 or w.body.id != 8 {
+		printf("world() = {%d, {{.., %d}, %u}}, expected {5, {{.., 7}, 8}}\n", w.name, w.body.pos.y, w.body.id)
+		return false
+	}
+
+	// written through the anonymous field, here and not in `shape`
+	w.body.pos.x = 60
+	if w.body.pos.x != 60 {
+		printf("w.body.pos.x = %d, expected 60\n", w.body.pos.x)
+		return false
+	}
+
+	printf("passed: an anonymous field of an imported record\n")
+	return true
+}
+
+
+func main () -> Int {
+	var p: Pair
+	p.v.a = 1
+	p.w.c = 2
+
+	if not testResult() or not testField() or p.v.a + p.w.c != 3 {
+		printf("failed: anonymous records across modules\n")
+		return exitFailure
+	}
+
+	printf("passed: anonymous records across modules\n")
+	return exitSuccess
+}
+

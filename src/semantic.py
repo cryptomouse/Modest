@@ -781,16 +781,24 @@ def do_type(x, ctx):
 		# тк t.add_atts вызывается здесь и создает НОВЫЙ тип то в таблице cmodule.anon_recs
 		# оказывается оригинальная структура, а при поиске для удаления ее оттуда ищется новая (обернутая)
 		# поэтому этот костыль тут а не в do_type_record где ему казалось бы - место
-		anon_tag = '__anonymous_struct_%d' % t.uid
-		t.c_anon_id = anon_tag
+		t.c_anon_id = anon_c_tag('struct')
 		cmodule.anon_recs.append(t)
 
 	if k == 'variant':
-		anon_tag = '__anonymous_variant_%d' % t.uid
-		t.c_anon_id = anon_tag
+		t.c_anon_id = anon_c_tag('variant')
 		cmodule.anon_vars.append(t)
 
 	return t
+
+
+# C-имя анонимного типа. Не uid: тот сквозной на весь процесс, и модуль,
+# разобранный при импорте, получил бы другие номера, чем при собственной
+# сборке - а имя должно совпасть в его .h и в .c импортирующего.
+# Отсюда префикс модуля и счетчик внутри него
+def anon_c_tag(kind):
+	n = cmodule.anon_count
+	cmodule.anon_count += 1
+	return '%s_anonymous_%s_%d' % (global_prefix, kind, n)
 
 
 def append_common_type_annos(t, annos):

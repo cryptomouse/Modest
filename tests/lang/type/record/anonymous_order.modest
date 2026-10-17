@@ -1,0 +1,119 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: an anonymous result over a named record
+// EXPECT-OUT: passed: anonymous records nested by value
+// EXPECT-OUT: passed: an anonymous field pointing back at its record
+// EXPECT-OUT: passed: anonymous record order
+//
+// The places an anonymous record can stand, each with something the C
+// backend has to emit before it:
+//
+// - the result of a function, holding a named record by value — the
+//   shape that broke `bar` (`-> {afp: *File, ah: ArchiveHeader}`);
+// - anonymous records nested in each other, the inner one holding an
+//   array of a named record: the inner struct goes before the outer one;
+// - a field of a named record pointing back at that record, next to a
+//   pointer to a typedef: a struct behind a pointer may stay incomplete,
+//   a typedef name may not.  Waiting for `struct node` here would never
+//   end, since `struct node` itself holds the anonymous record.
+//
+// `anonymous_field.modest` holds the plain case.
+//
+// Guards BUG#48 (fixed 2026-10-17).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Id = Nat32
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+type Node = {
+	link: {
+		next: *Node
+		id: *Id
+	}
+	value: Int32
+}
+
+type Deep = {
+	outer: {
+		inner: {
+			pt: Point
+			pts: [2]Point
+		}
+		n: Int32
+	}
+}
+
+
+func origin (id: Id) -> {p: Point, id: Id} {
+	return {p = {x = 1, y = 2}, id = id}
+}
+
+
+func testAnonymousResult () -> Bool {
+	let o = origin(3)
+	if o.p.x != 1 or o.p.y != 2 or o.id != 3 {
+		printf("origin() = {{%d, %d}, %u}, expected {{1, 2}, 3}\n", o.p.x, o.p.y, o.id)
+		return false
+	}
+
+	printf("passed: an anonymous result over a named record\n")
+	return true
+}
+
+
+func testNested () -> Bool {
+	var d: Deep
+	d.outer.inner.pt = {x = 7, y = 8}
+	d.outer.inner.pts[1] = {x = 9, y = 10}
+	d.outer.n = 11
+
+	if d.outer.inner.pt.y != 8 or d.outer.inner.pts[1].x != 9 or d.outer.n != 11 {
+		printf("d = {%d, %d, %d}, expected {8, 9, 11}\n", d.outer.inner.pt.y, d.outer.inner.pts[1].x, d.outer.n)
+		return false
+	}
+
+	printf("passed: anonymous records nested by value\n")
+	return true
+}
+
+
+func testBackPointer () -> Bool {
+	var id: Id = 42
+	var a: Node
+	var b: Node
+	a.value = 1
+	a.link.next = &b
+	a.link.id = &id
+	b.value = 2
+	b.link.next = nil
+	b.link.id = &id
+
+	if a.link.next.value != 2 or *a.link.id != 42 or b.link.next != nil {
+		printf("a.link.next.value = %d, *a.link.id = %u, expected 2 and 42\n", a.link.next.value, *a.link.id)
+		return false
+	}
+
+	printf("passed: an anonymous field pointing back at its record\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testAnonymousResult() or not testNested() or not testBackPointer() {
+		printf("failed: anonymous record order\n")
+		return exitFailure
+	}
+
+	printf("passed: anonymous record order\n")
+	return exitSuccess
+}
+

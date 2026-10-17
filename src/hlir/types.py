@@ -199,6 +199,7 @@ class Module:
 		self.strings = []   # for LLVM backend
 		self.anon_recs = [] # anonymous records for C backend
 		self.anon_vars = [] # anonymous variant types for C backend
+		self.anon_count = 0 # numbers them for their C names
 		self.imports = {}   # '<import_id>' => {'isa': 'module'}
 		self.included_modules = []
 		self.symtab = symtab

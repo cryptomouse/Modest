@@ -397,35 +397,6 @@ struct vec2 w = RAWCAST(struct vec2, struct point, (struct point){.x = 5, .y = 6
 - Coverage: `tests/lang/type/record/structural_literal.modest`, marked
   `EXPECTED-FAIL(c11)`.
 
-## BUG#48: C backend emits an anonymous record before the type it contains
-
-```modest
-type Point = {x: Int32, y: Int32}
-
-type World = {
-	name: Int32
-	body: {pos: Point, speed: Int32}
-}
-```
-
-```c
-struct __anonymous_struct_3 {
-	struct point pos;      // error: field has incomplete type
-	int32_t speed;
-};
-struct point { ... };
-```
-
-- A struct holding another by value has to be emitted after it. Named
-  records are ordered by their dependencies; anonymous ones are all
-  written out first, ahead of every named type, including the ones their
-  fields name.
-- Only by-value fields matter: an anonymous record of scalars, or one
-  holding a *pointer* to a named record, compiles.
-- The LLVM backend orders both kinds correctly and is unaffected.
-- Coverage: `tests/lang/type/record/anonymous_field.modest`, marked
-  `EXPECTED-FAIL(c11)`.
-
 ## BUG#49: LLVM backend keeps the literal's type for an array of records with a pointer
 
 ```modest
@@ -555,18 +526,28 @@ var r: Int32 or Err = divide(10, 2)
 ```
 
 ```c
-struct __anonymous_variant_0 {uint8_t tag; union {int32_t _0; Err _1;} value;};
-struct __anonymous_variant_1 {uint8_t tag; union {int32_t _0; Err _1;} value;};
+struct main__anonymous_variant_0 {uint8_t tag; union {int32_t _0; Err _1;} value;};
+struct main__anonymous_variant_1 {uint8_t tag; union {int32_t _0; Err _1;} value;};
 ...
-struct __anonymous_variant_1 r = divide(10, 2);
-// error: initializing 'struct __anonymous_variant_1' with an expression
-//        of incompatible type 'struct __anonymous_variant_0'
+struct main__anonymous_variant_1 r = divide(10, 2);
+// error: initializing 'struct main__anonymous_variant_1' with an expression
+//        of incompatible type 'struct main__anonymous_variant_0'
 ```
 
 - Every occurrence of the same variant type is emitted as a fresh
   anonymous struct, so two spellings of one type do not match in C. The
   language has structural types; the C output makes them nominal, and
   identical variants stop being the same type.
+- The same across modules: a public function of `geo` returning
+  `Point or Id` gives `struct geo__anonymous_variant_N`, and an importer
+  that writes `var r: geo.Point or geo.Id = geo.pick(...)` gets its own
+  `struct main__anonymous_variant_M` for it — the same error.
+- Anonymous *records* have the same two-structs shape and get away with
+  it: an assignment between structurally equal records goes through
+  `RAWCAST` (`do_cvalue_cast_raw`).  Variants have no such conversion — either
+  give them one, or emit one struct per distinct variant (a name derived
+  from the members, defined under an `#ifndef` so that two headers can
+  both carry it).
 - The natural way to write this — name the type once and use the name —
   is BUG#56, so both spellings of a shared variant type are currently
   unusable and only a value inferred from the call (`let r = divide(...)`)

@@ -68,7 +68,7 @@ For a function returning `Int or Error`, the C11 backend emits an anonymous
 struct:
 
 ```c
-struct __anonymous_variant_0 {
+struct main__anonymous_variant_0 {
     uint8_t tag;
     union {
         intptr_t _0;   // Int
@@ -80,7 +80,7 @@ struct __anonymous_variant_0 {
 Wrapping an `Int` value produces:
 
 ```c
-(struct __anonymous_variant_0){.tag = 0, .value = {._0 = v}}
+(struct main__anonymous_variant_0){.tag = 0, .value = {._0 = v}}
 ```
 
 </details>

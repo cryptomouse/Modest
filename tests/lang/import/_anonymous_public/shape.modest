@@ -1,0 +1,37 @@
+// Part of `anonymous_public.modest`: anonymous records in the public
+// interface of a module, each holding a public named type by value.
+
+include "libc/ctypes64"
+
+
+public type Id = Nat32
+
+public type Point = {
+	public x: Int32
+	public y: Int32
+}
+
+public type World = {
+	public name: Int32
+	public body: {
+		pos: Point
+		id: Id
+	}
+}
+
+
+public func origin (id: Id) -> {p: Point, id: Id} {
+	return {p = {x = 1, y = 2}, id = id}
+}
+
+
+public func world () -> World {
+	return {name = 5, body = {pos = {x = 6, y = 7}, id = 8}}
+}
+
+
+// Private: its anonymous record stays in `shape.c`.
+func unused () -> {q: Point} {
+	return {q = {x = 0, y = 0}}
+}
+

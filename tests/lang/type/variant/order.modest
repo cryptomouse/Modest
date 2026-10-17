@@ -1,0 +1,40 @@
+// TEST: build
+// BACKENDS: c11
+//
+// A variant over a named record and a typedef.  The variant is a union
+// of its members, so in C every one of them has to be complete before
+// the variant's struct: it is emitted only once the `Err` typedef and
+// `struct point` are, and not ahead of every named type.
+//
+// The anonymous types go out in the order the fix of BUG#48 set; before it
+// this one case was handled by pulling the members' definitions up
+// ahead of the variant, out of place.
+//
+// c11 only, and nothing to read back at run time: see `basic.modest`.
+
+include "libc/ctypes64"
+include "libc/stdlib"
+
+
+type Err = @branded Nat32
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+
+func locate (ok: Bool) -> Point or Err {
+	if not ok {
+		return Err 1
+	}
+	return Point {x = 1, y = 2}
+}
+
+
+func main () -> Int {
+	let found = locate(true)
+	let lost = locate(false)
+	return exitSuccess
+}
+

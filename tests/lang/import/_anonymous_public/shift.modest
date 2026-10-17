@@ -1,0 +1,11 @@
+// Part of `anonymous_public.modest`: anonymous records that the test
+// meets before it imports `shape`.
+
+include "libc/ctypes64"
+
+
+public type Pair = {
+	public v: {a: Int32, b: Int32}
+	public w: {c: Int32}
+}
+

@@ -3,20 +3,20 @@
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: an anonymous field over a named record
 // EXPECT-OUT: passed: anonymous field dependencies
-// EXPECTED-FAIL(c11): BUG#48 an anonymous record is emitted before what it contains
 //
 // An anonymous record type written as a field, whose own fields name
 // another record type: `body: {pos: Point, speed: Int32}`.
 //
 // The C backend emits one `struct` per record type, and a struct that
-// holds another by value has to come after it.  Anonymous records are
-// emitted first, ahead of every named one — including the `struct point`
-// this one holds — so the field lands on an incomplete type and clang
-// stops.  The order is what is wrong, not the type: an anonymous record
-// of scalars, or one holding a *pointer* to a named record, compiles.
+// holds another by value has to come after it.  An anonymous record has
+// no place of its own among the definitions, so it is emitted as soon as
+// everything it holds is: after `struct point`, before `struct world`.
 //
 // Anonymous fields as such are tested in `nested.modest`, which keeps to
-// the shapes the backends order correctly.
+// the shapes the backends order correctly; the other places an anonymous
+// type can stand are in `anonymous_order.modest`.
+//
+// Guards BUG#48 (fixed 2026-10-17).
 
 include "libc/ctypes64"
 include "libc/stdio"
