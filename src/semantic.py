@@ -1831,6 +1831,8 @@ def do_value_access(x, ctx):
 		return nv
 
 	left = do_value(x['left'], ctx=ctx)
+	if left.is_bad():
+		return ValueBad(ti=x['right']['ti'])
 	return acc(left, x['right'], ti=x['ti'])
 
 
