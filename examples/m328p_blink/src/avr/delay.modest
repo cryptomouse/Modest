@@ -8,9 +8,9 @@ public func ms (x: Nat32) -> Unit {
 	while t > 0 {
 		var delayCounter: @volatile Nat32 =  0
 		while delayCounter < 380 {
-			++delayCounter
+			delayCounter += 1
 		}
-		--t
+		t -= 1
 	}
 }
 

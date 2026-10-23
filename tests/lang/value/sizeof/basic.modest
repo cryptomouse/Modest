@@ -178,7 +178,7 @@ func testMixing () -> Bool {
 	while i < lengthof(arr) {
 		arr[i] = Int32 i
 		sum = sum + arr[i]
-		++i
+		i += 1
 	}
 
 	if sum != 10 {

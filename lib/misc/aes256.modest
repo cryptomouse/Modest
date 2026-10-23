@@ -137,7 +137,7 @@ func subBytes (block: *Block) -> {} {
 	var i = Nat8 0
 	while i < lengthof(Block) {
 		block[i] = rj_sbox(block[i])
-		++i
+		i += 1
 	}
 }
 
@@ -146,7 +146,7 @@ func subBytesInv (block: *Block) -> {} {
 	var i = Nat8 0
 	while i < lengthof(Block) {
 		block[i] = rj_sboxInv(block[i])
-		++i
+		i += 1
 	}
 }
 
@@ -155,7 +155,7 @@ func addRoundKey (block: *Block, k: *[16]Byte) -> {} {
 	var i = Nat8 0
 	while i < lengthof(Block) {
 		block[i] = block[i] ^ k[i]
-		++i
+		i += 1
 	}
 }
 
@@ -167,7 +167,7 @@ func addRoundKeyCpy (block: *Block, key: *Key, cpk: *Key) -> {} {
 		cpk[i] = yy
 		block[i] = block[i] ^ yy
 		cpk[16 + i] = key[16 + i]
-		++i
+		i += 1
 	}
 }
 
@@ -349,7 +349,7 @@ public func init (ctx: *Context, key: *Key) -> @unused Result {
 	var i: Nat8 = 0
 	while i < 7 {
 		expandEncKey(&ctx.deckey, &rcon)
-		++i
+		i += 1
 	}
 
 	return resultSuccess
@@ -366,7 +366,7 @@ public func encrypt_ecb (ctx: *Context, block: *Block) -> @unused Result {
 
 	var i: Nat8 = 0
 	while i < 13 {
-		++i
+		i += 1
 		subBytes(block)
 		shiftRows(block)
 		mixColumns(block)
@@ -409,7 +409,7 @@ public func decrypt_ecb (ctx: *Context, block: *Block) -> @unused Result {
 		mixColumnsInv(block)
 		shiftRowsInv(block)
 		subBytesInv(block)
-		--i
+		i -= 1
 	}
 
 	addRoundKey(block, &ctx.key[0:16])

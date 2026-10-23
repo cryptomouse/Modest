@@ -30,7 +30,7 @@ var counter: Nat32
 
 func tick () -> Nat32 {
 	let n = counter
-	++counter
+	counter += 1
 	return n
 }
 

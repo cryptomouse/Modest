@@ -87,7 +87,7 @@ func read32 (data: *[]Word8, offset: SizeT) -> Word64 {
 	var i = SizeT 0
 	while i < 4 {
 		v = v | (Word64 data[offset + i] << (i * 8))
-		++i
+		i += 1
 	}
 	return v
 }
@@ -99,7 +99,7 @@ func read64 (data: *[]Word8, offset: SizeT) -> Word64 {
 	var i = SizeT 0
 	while i < 8 {
 		v = v | (Word64 data[offset + i] << (i * 8))
-		++i
+		i += 1
 	}
 	return v
 }
@@ -208,8 +208,8 @@ func xxh64 (input: *[]Word8, length: SizeT, seed: Word64) -> Word64 {
 		hash = rotl64(hash, 11)
 		hash = mul(hash, prime64_1)
 
-		++offset
-		--remaining
+		offset += 1
+		remaining -= 1
 	}
 
 	return avalanche(hash)
@@ -239,7 +239,7 @@ func lo32 (w: Word64) -> Nat32 {
 func testSequence (data: *[]Word8, length: SizeT, seed: Word64, expected: Word64) -> Bool {
 	let result = xxh64(data, length, seed)
 
-	++testNum
+	testNum += 1
 
 	if result != expected {
 		printf("test #%d failed: expected 0x%08X%08X, got 0x%08X%08X\n",
@@ -263,7 +263,7 @@ func main () -> Int {
 	while i < testDataSize {
 		testData[i] = Word8 (byteGen >> 24)
 		byteGen = Word32 (Nat32 byteGen * Nat32 byteGen)
-		++i
+		i += 1
 	}
 
 	let data = *[]Word8 &testData

@@ -35,7 +35,7 @@ void fsm_task(struct fsm_fsm *self) {
 
 void fsm_tick(struct fsm_fsm *self) {
 	if (self->timer > 0) {
-		--self->timer;
+		self->timer -= 1;
 		if (self->timer == 0) {
 			self->timer_expired = true;
 		}

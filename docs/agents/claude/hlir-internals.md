@@ -190,6 +190,7 @@ Stmt
   ├─ StmtBlock         .stmts(list)
   ├─ StmtValueExpression .value
   ├─ StmtAssign        .left .right
+  ├─ StmtAssignOp      .op .left .right .value   # left op= right; .value is `left op right`, its .left is the same node
   ├─ StmtIf            .cond .then .els(optional)
   ├─ StmtWhile         .cond .stmt
   ├─ StmtReturn        .value(optional)

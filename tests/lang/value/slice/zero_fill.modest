@@ -43,9 +43,9 @@ func zeros (a: *[8]Nat32) -> Nat32 {
 	var i = Nat32 0
 	while i < 8 {
 		if a[i] == 0 {
-			++c
+			c += 1
 		}
-		++i
+		i += 1
 	}
 	return c
 }
@@ -115,12 +115,12 @@ func testPointer () -> Bool {
 	var k = Nat32 0
 	while k < 16 {
 		ctx.data[k] = 0xFF
-		++k
+		k += 1
 	}
 	k = 0
 	while k < 8 {
 		ctx.words[k] = 9
-		++k
+		k += 1
 	}
 
 	let p = &ctx

@@ -93,7 +93,7 @@ func testIndexing () -> Bool {
 	var k: Nat32 = 0
 	while k < lengthof(a) {
 		sum = sum + a[k]
-		++k
+		k += 1
 	}
 	if sum != 150 {
 		printf("sum = %d, expected 150\n", sum)

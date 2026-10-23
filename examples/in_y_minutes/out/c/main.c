@@ -41,7 +41,7 @@ static int32_t sum(int32_t n) {
 	int32_t i = 0;
 	while (i < n) {
 		total = total + i;
-		++i;
+		i += 1;
 	}
 	return total;
 }
@@ -74,7 +74,7 @@ int main(void) {
 	uint32_t i = 0;
 	while (i < LENGTHOF(arr)) {
 		printf("%d ", arr[i]);
-		++i;
+		i += 1;
 	}
 	printf("\n");
 	const struct point origin = (struct point){.x = 0.0, .y = 0.0};
@@ -93,7 +93,7 @@ int main(void) {
 	printf("u | v = %x\n", u | v);
 	int32_t k = 0;
 	while (k < 5) {
-		++k;
+		k += 1;
 		if (k == 3) {
 			continue;
 		}
@@ -105,7 +105,7 @@ int main(void) {
 			break;
 		}
 		printf("j = %d\n", j);
-		++j;
+		j += 1;
 	}
 	if (i32 > 0 && !(counter < 0)) {
 		printf("logic works\n");

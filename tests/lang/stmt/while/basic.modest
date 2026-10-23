@@ -20,7 +20,7 @@ func sumTo (n: Int32) -> Int32 {
 	var i: Int32 = 0
 	while i < n {
 		total = total + i
-		++i
+		i += 1
 	}
 	return total
 }
@@ -50,7 +50,7 @@ func firstSquareOver (limit: Int32) -> Int32 {
 		if i * i > limit {
 			break
 		}
-		++i
+		i += 1
 	}
 	return i
 }
@@ -73,7 +73,7 @@ func sumOdd (n: Int32) -> Int32 {
 	var i: Int32 = 0
 	while i < n {
 		let cur = i
-		++i  // step before `again`, or the loop never advances
+		i += 1  // step before `again`, or the loop never advances
 		if cur % 2 == 0 {
 			again
 		}

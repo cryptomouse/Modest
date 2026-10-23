@@ -1601,7 +1601,15 @@ def do_cvalue_offsetof(x, ctx):
 	)
 
 
+# Значения, уже вычисленные в C-выражение на месте: `left op= right` с
+# хелпером справа читает lvalue через указатель, взятый один раз (см.
+# do_cstmt_assign_op), и сам узел lvalue внутри `left op right` печатается
+# этим указателем. Ключ - id() узла HLIR
+cvalue_override = {}
+
+
 def do_cvalue(x, ctx=[]):
+	if id(x) in cvalue_override: return cvalue_override[id(x)]
 	if x.is_cons(): return do_cvalue_cons(x, ctx)
 	elif x.is_literal(): return do_cvalue_literal_with_type(x, x.type, ctx)
 	elif x.is_const(): return do_cvalue_const(x, ctx)
@@ -1989,16 +1997,68 @@ def do_cstmt(x):
 	elif x.is_stmt_asm(): return do_stmt_asm(x)
 	elif x.is_stmt_def_type(): return do_def_type(x)
 	elif x.is_stmt_def_func(): return CRawText("") #do_def_func(x)
-	elif x.is_stmt_increment(): return do_cstmt_increment(x)
-	elif x.is_stmt_decrement(): return do_cstmt_decrement(x)
+	elif x.is_stmt_assign_op(): return do_cstmt_assign_op(x)
 	1/0
 
 
-def do_cstmt_increment(x):
-	return CStmtIncrement(do_cvalue(x.value))
+# `op=` в C по стандарту и есть `left = left op right` с одним вычислением
+# left, а Modest-операторы печатаются в C как есть (do_cvalue_bin_expr,
+# do_cvalue_shl/shr: приведения там только у generic-левого, а слева тут
+# всегда lvalue), так что `x op= y` переходит в C тем же `x op= y`
+c_assign_op_token = {
+	HLIR_VALUE_OP_ADD: '+=',
+	HLIR_VALUE_OP_SUB: '-=',
+	HLIR_VALUE_OP_MUL: '*=',
+	HLIR_VALUE_OP_DIV: '/=',
+	HLIR_VALUE_OP_REM: '%=',
+	HLIR_VALUE_OP_BITWISE_AND: '&=',
+	HLIR_VALUE_OP_BITWISE_OR: '|=',
+	HLIR_VALUE_OP_BITWISE_XOR: '^=',
+	HLIR_VALUE_OP_SHL: '<<=',
+	HLIR_VALUE_OP_SHR: '>>=',
+}
 
-def do_cstmt_decrement(x):
-	return CStmtDecrement(do_cvalue(x.value))
+
+def do_cstmt_assign_op(x):
+	value = x.value
+
+	# у FixedX '*' и '/' - вызов хелпера (do_cvalue_fixed_bin), а не
+	# оператор C, и `op=` его не выразит
+	if not (value.type.is_fixed() and x.op in [HLIR_VALUE_OP_MUL, HLIR_VALUE_OP_DIV]):
+		return CStmtCompoundAssignment(do_cvalue(x.left), c_assign_op_token[x.op], do_cvalue(x.right))
+
+	# lvalue без вызовов можно написать дважды: `q = __fixed32_mul(q, r, 16)`
+	if value_is_reevaluable(x.left):
+		return CStmtAssignment(do_cvalue(x.left), do_cvalue(value))
+
+	# иначе адрес берется один раз:
+	# `{ T *__p = &a[f()]; *__p = __fixed32_mul(*__p, r, 16); }`
+	p = CValueDereference(CValueIdentifier('__p'))
+	decl = CStmtDefVar('__p', CTypePointer(do_ctype(x.left.type)), initializer=CValueReference(do_cvalue(x.left)))
+	cvalue_override[id(x.left)] = p
+	try:
+		rv = do_cvalue(value)
+	finally:
+		del cvalue_override[id(x.left)]
+	return CStmtBlock([decl, CStmtAssignment(p, rv)])
+
+
+# Повторное вычисление значения ничего не меняет в программе: в нем нет
+# вызовов и ничего, кроме чтений
+def value_is_reevaluable(v):
+	if v.is_var() or v.is_const() or v.is_literal():
+		return True
+	if v.is_access_record():
+		return value_is_reevaluable(v.left)
+	if v.is_index():
+		return value_is_reevaluable(v.left) and value_is_reevaluable(v.index)
+	if v.is_deref() or v.is_subexpr() or v.is_cons() or v.is_access_module():
+		return value_is_reevaluable(v.value)
+	if v.is_bin() or v.is_shl() or v.is_shr():
+		return value_is_reevaluable(v.left) and value_is_reevaluable(v.right)
+	if v.is_neg() or v.is_pos() or v.is_not():
+		return value_is_reevaluable(v.value)
+	return False
 
 
 def do_decl_func(x):

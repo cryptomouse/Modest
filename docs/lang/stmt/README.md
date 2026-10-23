@@ -10,7 +10,7 @@ inside function bodies and are executed sequentially.
 | Local type definition | `type T = ...` | [def/type](../def/type.md) |
 | Nested function | `func f (...) -> T {}` | [def/func](../def/func.md) |
 | Assignment | `lvalue = v` | [assign](./assign.md) |
-| Increment / decrement | `++x`, `--x` | [assign](./assign.md) |
+| Compound assignment | `lvalue += v`, `-=`, `<<=`, ... | [assign](./assign.md#compound-assignment) |
 | Conditional | `if c {} else {}` | [if](./if.md) |
 | Loop | `while c {}` | [while](./while.md) |
 | Loop control | `break`, `again` | [break / again](./break_again.md) |
@@ -36,7 +36,7 @@ everywhere — see [style](../../STYLE.md#semicolons).
 
 ## Notes
 
-- Statements are not expressions: assignment, `++`/`--` and definitions
-  produce no value and cannot appear inside expressions.
+- Statements are not expressions: assignment, compound assignment and
+  definitions produce no value and cannot appear inside expressions.
 - A bare `{ ... }` is **not** a statement; braces delimit the bodies of
   `func`, `if` and `while` only (see [block](./block.md)).

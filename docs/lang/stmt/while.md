@@ -26,7 +26,7 @@ while <#condition#> {
 var i: Nat32 = 0
 while i < 10 {
 	printf("%u\n", i)
-	++i
+	i += 1
 }
 ```
 

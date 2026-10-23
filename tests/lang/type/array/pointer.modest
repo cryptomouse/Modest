@@ -32,7 +32,7 @@ func fill (v: *[]Int32, n: Nat32, x: Int32) -> Unit {
 	var k: Nat32 = 0
 	while k < n {
 		v[k] = x
-		++k
+		k += 1
 	}
 }
 
@@ -42,7 +42,7 @@ func sum (v: *[]Int32, n: Nat32) -> Int32 {
 	var k: Nat32 = 0
 	while k < n {
 		s = s + v[k]
-		++k
+		k += 1
 	}
 	return s
 }
@@ -53,7 +53,7 @@ func doubleAll (v: *[4]Int32) -> Unit {
 	var k: Nat32 = 0
 	while k < 4 {
 		v[k] = v[k] * 2
-		++k
+		k += 1
 	}
 }
 
@@ -65,9 +65,9 @@ func sumMatrix (m: *[2][3]Int32) -> Int32 {
 		var j: Nat32 = 0
 		while j < 3 {
 			s = s + m[i][j]
-			++j
+			j += 1
 		}
-		++i
+		i += 1
 	}
 	return s
 }

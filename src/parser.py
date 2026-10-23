@@ -63,6 +63,20 @@ bitwise_kind_of_token = {
 comparison_ops = EQ_OPS + RELATIONAL_OPS
 comparison_tokens = ['==', '!=', '<', '>', '<=', '>=']
 
+# `x op= y` is `x = x op y` with `x` evaluated once
+assign_op_of_token = {
+	'+=': HLIR_VALUE_OP_ADD,
+	'-=': HLIR_VALUE_OP_SUB,
+	'*=': HLIR_VALUE_OP_MUL,
+	'/=': HLIR_VALUE_OP_DIV,
+	'%=': HLIR_VALUE_OP_REM,
+	'&=': HLIR_VALUE_OP_BITWISE_AND,
+	'|=': HLIR_VALUE_OP_BITWISE_OR,
+	'^=': HLIR_VALUE_OP_BITWISE_XOR,
+	'<<=': HLIR_VALUE_OP_SHL,
+	'>>=': HLIR_VALUE_OP_SHR,
+}
+
 def isUpperIdentifierToken(token):
 	# skip _ before letters
 	while len(token) > 0 and token[0] == '_':
@@ -1894,29 +1908,40 @@ class Parser:
 		}
 
 
-	def stmt_inc(self):
+	# `++x` / `--x` are gone, `x += 1` / `x -= 1` took their place. The
+	# tokens are still lexed only to say so: without them `--x` reads as
+	# `-(-x)`, a value statement that compiles and silently does nothing.
+	# The statement is then parsed as the `op=` it stands for, so nothing
+	# after it reports again.
+	def stmt_incdec_removed(self):
 		ti_start = self.tokenInfo()
-		self.skip("++")
+		token = self.ctok()
+		self.skip1()
 		v = self.expr_value()
-		return {
-			'isa': 'ast_stmt',
-			'kind': 'inc',
-			'value': v,
+		ti = TextInfo(start=ti_start, mid=ti_start, end=v['ti'].end)
+
+		if token == '++':
+			error("`++` was removed, write `x += 1`", ti)
+			op = HLIR_VALUE_OP_ADD
+		else:
+			error("`--` was removed, write `x -= 1`", ti)
+			op = HLIR_VALUE_OP_SUB
+
+		one = {
+			'isa': 'ast_value',
+			'kind': 'number',
+			'str': '1',
 			'anno': [],
-			'ti': TextInfo(start=ti_start, mid=ti_start, end=v['ti'].end),
+			'ti': ti,
 		}
-
-
-	def stmt_dec(self):
-		ti_start = self.tokenInfo()
-		self.skip("--")
-		v = self.expr_value()
 		return {
 			'isa': 'ast_stmt',
-			'kind': 'dec',
-			'value': v,
+			'kind': 'assign_op',
+			'op': op,
+			'left': v,
+			'right': one,
 			'anno': [],
-			'ti': TextInfo(start=ti_start, mid=ti_start, end=v['ti'].end),
+			'ti': ti,
 		}
 
 
@@ -1949,6 +1974,20 @@ class Parser:
 				'anno': [],
 				'ti': assign_ti
 			}
+
+		for token, op in assign_op_of_token.items():
+			if self.match(token):
+				self.skip_continuation()
+				r = self.expr_value()
+				return {
+					'isa': 'ast_stmt',
+					'kind': 'assign_op',
+					'op': op,
+					'left': v,
+					'right': r,
+					'anno': [],
+					'ti': assign_ti
+				}
 
 		return {
 			'isa': 'ast_stmt',
@@ -2052,10 +2091,8 @@ class Parser:
 				s = self.parse_def_type()
 			elif self.look('const'):
 				s = self.stmt_const()
-			elif self.look('++'):
-				s = self.stmt_inc()
-			elif self.look('--'):
-				s = self.stmt_dec()
+			elif self.look('++') or self.look('--'):
+				s = self.stmt_incdec_removed()
 			elif self.look('func'):
 				s = self.parse_def_func()
 			elif self.look('__asm'):

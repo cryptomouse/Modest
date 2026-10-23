@@ -70,13 +70,13 @@ func main () -> Int {
 
 		if node == nil {
 			printf("node %i not exist\n", i)
-			--i
+			i -= 1
 			again
 		}
 
 		let px = *Nat32 list.node_data_get(node)
 		printf("list(%i) = %i\n", i, *px)
-		--i
+		i -= 1
 	}
 
 	printf("-----------------------------------------\n")
@@ -87,13 +87,13 @@ func main () -> Int {
 
 		if node == nil {
 			printf("node %i not exist\n", i)
-			++i
+			i += 1
 			again
 		}
 
 		let px = *Nat32 list.node_data_get(node)
 		printf("list(%i) = %i\n", i, *px)
-		++i
+		i += 1
 	}
 
 	printf("-----------------------------------------\n")

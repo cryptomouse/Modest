@@ -1436,7 +1436,7 @@ row[at(1, 2)] = value(2, 7);     // clang: value() runs first
   order. The LLVM backend emits each part as its own instruction and
   gets these right.
 - Fix: when two or more parts of one expression or assignment can have a
-  side effect (a call, `++`, an assignment), evaluate them into
+  side effect (a call, an assignment), evaluate them into
   temporaries in order first. Expressions without side effects stay as
   they are, so the common `f(x, y + 1)` and `a[i] = x` keep their plain C.
 - Coverage: `tests/lang/value/eval_order/assign.modest` and

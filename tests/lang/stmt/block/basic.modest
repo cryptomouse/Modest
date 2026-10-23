@@ -20,11 +20,11 @@ func testOrder () -> Bool {
 	var n: Int32 = 0
 
 	log[n] = 1
-	++n
+	n += 1
 	log[n] = 2
-	++n
+	n += 1
 	log[n] = 3
-	++n
+	n += 1
 
 	if n != 3 {
 		printf("n = %d, expected 3\n", n)
@@ -58,7 +58,7 @@ func testScope () -> Bool {
 	while i < 3 {
 		let inLoop = i * 2      // fresh binding on every iteration
 		total = total + inLoop
-		++i
+		i += 1
 	}
 
 	// 10 + (0 + 2 + 4)

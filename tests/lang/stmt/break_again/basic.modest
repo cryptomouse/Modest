@@ -19,7 +19,7 @@ func testBreakExits () -> Bool {
 	// `while true` is only escapable by `break`.
 	var i: Int32 = 0
 	while true {
-		++i
+		i += 1
 		if i == 3 {
 			break
 		}
@@ -60,7 +60,7 @@ func testAgainRestarts () -> Bool {
 
 	while i < 6 {
 		let cur = i
-		++i
+		i += 1
 		if cur < 3 {
 			skipped = skipped + 1
 			again
@@ -92,14 +92,14 @@ func testInnermost () -> Bool {
 	while i < 3 {
 		var j: Int32 = 0
 		while j < 5 {
-			++visits
+			visits += 1
 			if j == 1 {
 				break        // leaves the inner loop only
 			}
-			++j
+			j += 1
 		}
 		outerRounds = outerRounds + 1
-		++i
+		i += 1
 	}
 
 	if outerRounds != 3 {
@@ -118,14 +118,14 @@ func testInnermost () -> Bool {
 	while i < 2 {
 		var j: Int32 = 0
 		while j < 4 {
-			++j
+			j += 1
 			if j == 2 {
 				again        // restarts the inner loop
 			}
-			++inner
+			inner += 1
 		}
-		++outer
-		++i
+		outer += 1
+		i += 1
 	}
 
 	if outer != 2 {

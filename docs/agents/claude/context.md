@@ -32,6 +32,9 @@ Quick orientation for working on this codebase without re-reading everything.
 3. Parse in `src/parser.py` (find `parse_binary` or similar)
 4. Translate in `src/semantic.py` → return `ValueBin(type, op, left, right, ti)`
 5. Emit in both backends
+6. For an `op=` form: lex the token (`src/lexer.py`), map it in
+   `assign_op_of_token` (`src/parser.py`) and `c_assign_op_token`
+   (`src/backend/c11.py`); `do_stmt_assign_op` and the LLVM backend need nothing
 
 ### Add a new builtin type
 1. Add `type_xxx_create(width)` in `src/hlir/defs.py`

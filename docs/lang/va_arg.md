@@ -45,7 +45,7 @@ func sum (count: Int32, ...) -> Int32 {
 	var i: Int32 = 0
 	while i < count {
 		total = total + __va_arg(va, Int32)
-		++i
+		i += 1
 	}
 
 	__va_end(va)

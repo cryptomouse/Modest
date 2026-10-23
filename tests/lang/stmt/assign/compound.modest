@@ -1,0 +1,285 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: arithmetic
+// EXPECT-OUT: passed: bitwise
+// EXPECT-OUT: passed: fractional
+// EXPECT-OUT: passed: lvalue forms
+// EXPECT-OUT: passed: single evaluation
+// EXPECT-OUT: passed: continuation
+// EXPECT-OUT: passed: compound assign
+//
+// Compound assignment `x op= y` is `x = x op y` with `x` evaluated once:
+// the same operator, the same type rules, one read and one write of the
+// same place. It is a statement, like `=`.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+type Box = {
+	pt: Point
+	arr: [4]Int32
+}
+
+var calls: Int32 = 0
+
+
+func nextIndex () -> Int32 {
+	calls += 1
+	return 2
+}
+
+
+func testArithmetic () -> Bool {
+	var x: Int32 = 10
+
+	x += 5
+	if x != 15 {
+		printf("x = %d, expected 15 after += 5\n", x)
+		return false
+	}
+
+	x -= 20
+	if x != -5 {
+		printf("x = %d, expected -5 after -= 20\n", x)
+		return false
+	}
+
+	x *= -3
+	if x != 15 {
+		printf("x = %d, expected 15 after *= -3\n", x)
+		return false
+	}
+
+	x /= 4
+	if x != 3 {
+		printf("x = %d, expected 3 after /= 4\n", x)
+		return false
+	}
+
+	x %= 2
+	if x != 1 {
+		printf("x = %d, expected 1 after %%= 2\n", x)
+		return false
+	}
+
+	// The right-hand side is a whole expression, not just its first term.
+	var y: Int32 = 2
+	x += y * 3
+	if x != 7 {
+		printf("x = %d, expected 7 after += y * 3\n", x)
+		return false
+	}
+
+	var n: Nat8 = 200
+	n += 55
+	if n != 255 {
+		printf("n = %u, expected 255 after += 55\n", Nat32 n)
+		return false
+	}
+
+	printf("passed: arithmetic\n")
+	return true
+}
+
+
+func testBitwise () -> Bool {
+	var w: Word8 = 0x0F
+
+	w |= 0xF0
+	if w != 0xFF {
+		printf("w = 0x%02X, expected 0xFF after |= 0xF0\n", Nat32 w)
+		return false
+	}
+
+	w &= 0x3C
+	if w != 0x3C {
+		printf("w = 0x%02X, expected 0x3C after &= 0x3C\n", Nat32 w)
+		return false
+	}
+
+	w ^= 0xFF
+	if w != 0xC3 {
+		printf("w = 0x%02X, expected 0xC3 after ^= 0xFF\n", Nat32 w)
+		return false
+	}
+
+	w >>= 4
+	if w != 0x0C {
+		printf("w = 0x%02X, expected 0x0C after >>= 4\n", Nat32 w)
+		return false
+	}
+
+	var count: Nat8 = 4
+	w <<= count
+	if w != 0xC0 {
+		printf("w = 0x%02X, expected 0xC0 after <<= 4\n", Nat32 w)
+		return false
+	}
+
+	// The result keeps the width of the left side: the high bit leaves.
+	w <<= 1
+	if w != 0x80 {
+		printf("w = 0x%02X, expected 0x80 after <<= 1\n", Nat32 w)
+		return false
+	}
+
+	printf("passed: bitwise\n")
+	return true
+}
+
+
+func testFractional () -> Bool {
+	var f: Float64 = 1.5
+	f *= 2.0
+	f += 0.25
+	if f != 3.25 {
+		printf("f = %f, expected 3.25\n", f)
+		return false
+	}
+
+	// FixedX `*` and `/` rescale the product: `*=` must do the same.
+	var q: Fixed32 = 1.5
+	q *= 2.5
+	if q != 3.75 {
+		printf("q = %f, expected 3.75 after *= 2.5\n", Float64 q)
+		return false
+	}
+
+	q /= 0.5
+	if q != 7.5 {
+		printf("q = %f, expected 7.5 after /= 0.5\n", Float64 q)
+		return false
+	}
+
+	q -= 0.5
+	if q != 7.0 {
+		printf("q = %f, expected 7.0 after -= 0.5\n", Float64 q)
+		return false
+	}
+
+	printf("passed: fractional\n")
+	return true
+}
+
+
+func testLvalueForms () -> Bool {
+	var arr: [4]Int32 = [1, 2, 3, 4]
+	var i: Int32 = 3
+	arr[i] -= 1
+	arr[0] *= 10
+	if arr[0] != 10 or arr[3] != 3 {
+		printf("arr = [%d, _, _, %d], expected [10, _, _, 3]\n", arr[0], arr[3])
+		return false
+	}
+
+	var pt = Point {x = 1, y = 2}
+	pt.x += 10
+	if pt.x != 11 {
+		printf("pt.x = %d, expected 11\n", pt.x)
+		return false
+	}
+
+	// Through a pointer the field is reached with `.`, as in plain assign.
+	let p = &pt
+	p.y *= 5
+	if pt.y != 10 {
+		printf("pt.y = %d, expected 10 after write through pointer\n", pt.y)
+		return false
+	}
+
+	var n: Int32 = 7
+	let pn = &n
+	*pn -= 2
+	if n != 5 {
+		printf("n = %d, expected 5 after *pn -= 2\n", n)
+		return false
+	}
+
+	var box: Box
+	box.pt.y += 4
+	box.arr[1] += 9
+	if box.pt.y != 4 or box.arr[1] != 9 {
+		printf("box = {pt.y = %d, arr[1] = %d}, expected {4, 9}\n", box.pt.y, box.arr[1])
+		return false
+	}
+
+	printf("passed: lvalue forms\n")
+	return true
+}
+
+
+func testSingleEvaluation () -> Bool {
+	var arr: [4]Int32 = [0, 0, 5, 0]
+	calls = 0
+
+	// `arr[nextIndex()] = arr[nextIndex()] + 10` would call it twice.
+	arr[nextIndex()] += 10
+	if calls != 1 {
+		printf("nextIndex() called %d times, expected 1\n", calls)
+		return false
+	}
+	if arr[2] != 15 {
+		printf("arr[2] = %d, expected 15\n", arr[2])
+		return false
+	}
+
+	// FixedX `*=` is a helper call, not an operator: still one call here.
+	var fx: [4]Fixed32 = [0.0, 0.0, 1.5, 0.0]
+	calls = 0
+	fx[nextIndex()] *= 3.0
+	if calls != 1 {
+		printf("nextIndex() called %d times for Fixed32 *=, expected 1\n", calls)
+		return false
+	}
+	if fx[2] != 4.5 {
+		printf("fx[2] = %f, expected 4.5\n", Float64 fx[2])
+		return false
+	}
+
+	printf("passed: single evaluation\n")
+	return true
+}
+
+
+func testContinuation () -> Bool {
+	var x: Int32 = 1
+
+	// Like `=`, an operator at the end of the line continues the statement.
+	x +=
+		41
+	if x != 42 {
+		printf("x = %d, expected 42\n", x)
+		return false
+	}
+
+	printf("passed: continuation\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testArithmetic() and result
+	result = testBitwise() and result
+	result = testFractional() and result
+	result = testLvalueForms() and result
+	result = testSingleEvaluation() and result
+	result = testContinuation() and result
+
+	if not result {
+		printf("failed: compound assign\n")
+		return exitFailure
+	}
+
+	printf("passed: compound assign\n")
+	return exitSuccess
+}
+

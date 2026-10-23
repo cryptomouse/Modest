@@ -1,0 +1,30 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: `++` was removed, write `x += 1`
+// EXPECT-ERROR: ++i
+// EXPECT-ERROR: `--` was removed, write `x -= 1`
+// EXPECT-ERROR: --p.x
+// EXPECT-ERROR-COUNT: 2
+//
+// Modest has no `++` / `--`: counting is `x += 1`. The tokens stay in the
+// lexer only to say so — without them `--x` would read as `-(-x)`, a value
+// statement that compiles and silently does nothing.
+
+include "libc/ctypes64"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+
+func main () -> Int {
+	var i: Int32 = 0
+	++i
+
+	var p = Point {x = 1, y = 2}
+	--p.x
+	return 0
+}
+

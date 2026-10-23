@@ -9,9 +9,6 @@ expression — it produces no value and cannot be chained.
 <#lvalue#> = <#value_expression#>
 ```
 
-There are **no compound assignment operators** (`+=`, `-=`, ...); write
-`x = x + 1`, or use `++x` / `--x` for increment and decrement.
-
 ## Lvalues
 
 ```modest
@@ -28,16 +25,37 @@ lvalue's type; incompatible types are an error.
 The target is evaluated before the value: in `a[i()] = f()`, `i()` runs
 first (see [evaluation order](../value/README.md#evaluation-order)).
 
-## Increment / decrement
+## Compound assignment
 
-`++x` and `--x` are statements (prefix only):
+```
+<#lvalue#> <#op#>= <#value_expression#>
+```
+
+`op` is one of `+ - * / % & | ^ << >>`. `x op= y` means `x = x op y`, with
+`x` evaluated **once**:
 
 ```modest
 var i: Nat32 = 0
 while i < n {
-	++i
+	i += 1               // there is no `++` / `--`
 }
+
+w |= 0x80                // w: Word8
+arr[next()] += 10        // next() is called once
 ```
+
+- The operator follows its own rules unchanged — both sides one type
+  (a literal adopts the type of the lvalue), `& | ^ << >>` on `Word*` only,
+  a shift count `NatX` or a non-negative literal — and reports the same
+  errors as the long form.
+- The result keeps the lvalue's type: `w <<= 1` on a `Word8` drops the
+  high bit.
+- An array is not a target: `+` on arrays is a compile-time concat.
+- Like `=`, an operator at the end of the line continues the statement
+  onto the next one.
+
+`++x` and `--x` are no longer part of the language; the compiler rejects
+them with `` `++` was removed, write `x += 1` ``.
 
 ## Notes
 

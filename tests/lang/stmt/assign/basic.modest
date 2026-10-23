@@ -6,12 +6,10 @@
 // EXPECT-OUT: passed: slice assign
 // EXPECT-OUT: passed: field assign
 // EXPECT-OUT: passed: deref assign
-// EXPECT-OUT: passed: increment
 // EXPECT-OUT: passed: assign
 //
-// Covers every lvalue form of the assignment statement, plus `++` / `--`.
-// Modest has no compound assignment (`+=`), so counting is written as
-// `x = x + 1`; increment and decrement are statements, not expressions.
+// Covers every lvalue form of the assignment statement. Compound
+// assignment (`x += 1`) has its own test, compound.modest.
 
 include "libc/ctypes64"
 include "libc/stdio"
@@ -32,7 +30,7 @@ func testVariable () -> Bool {
 		return false
 	}
 
-	// No `+=`: the long form is the only form.
+	// The long form of `x += 5`: the right side reads the left one.
 	x = x + 5
 	if x != 15 {
 		printf("x = %d, expected 15\n", x)
@@ -140,27 +138,6 @@ func testDeref () -> Bool {
 }
 
 
-func testIncrement () -> Bool {
-	var i: Int32 = 5
-
-	++i
-	if i != 6 {
-		printf("i = %d, expected 6 after ++i\n", i)
-		return false
-	}
-
-	--i
-	--i
-	if i != 4 {
-		printf("i = %d, expected 4 after two --i\n", i)
-		return false
-	}
-
-	printf("passed: increment\n")
-	return true
-}
-
-
 func main () -> Int {
 	var result = true
 	result = testVariable() and result
@@ -168,7 +145,6 @@ func main () -> Int {
 	result = testSlice() and result
 	result = testField() and result
 	result = testDeref() and result
-	result = testIncrement() and result
 
 	if not result {
 		printf("failed: assign\n")

@@ -46,7 +46,7 @@ var a: [5]Int32 = []
 var i: Nat32 = 0
 while i < lengthof(a) {
 	a[i] = Int32 i
-	++i
+	i += 1
 }
 
 var small: Nat8 = sizeof(Buf)           // fits, no construction needed

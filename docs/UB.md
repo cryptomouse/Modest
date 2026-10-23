@@ -76,7 +76,7 @@ p[7] = 0            // `*[]T` has no length to check against
 - Why undefined: the same trade as UB#1 — a bounds check would put a
   comparison and a trap path on every run-time index, and the language
   does not pay for it implicitly.  An index is a place, so reading it,
-  writing it and `++` on it are all affected alike.
+  writing it and `+=` on it are all affected alike.
 - When the index is a constant the compiler does check it: a negative one
   is `array index must be non-negative`, and one that reaches a known
   length is `array index out of bounds` — for a variable, a field, an

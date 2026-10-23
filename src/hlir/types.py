@@ -366,11 +366,8 @@ class Stmt(Entity):
 	def is_stmt_import(self):
 		return isinstance(self, StmtImport)
 
-	def is_stmt_increment(self):
-		return isinstance(self, StmtIncrement)
-
-	def is_stmt_decrement(self):
-		return isinstance(self, StmtDecrement)
+	def is_stmt_assign_op(self):
+		return isinstance(self, StmtAssignOp)
 
 
 
@@ -479,15 +476,17 @@ class StmtAssign(Stmt):
 		self.right = right
 
 
-class StmtIncrement(Stmt):
-	def __init__(self, value, ti=None, nl=1):
+# `left op= right`: `left = left op right` with `left` evaluated once.
+# `value` is that `left op right`, checked and typed like any binary
+# value; its own `left` is the same node as `left` here, so a backend
+# that reads the place it is about to write takes it from there instead
+# of evaluating the lvalue a second time.
+class StmtAssignOp(Stmt):
+	def __init__(self, op, left, right, value, ti=None, nl=1):
 		super().__init__(ti, nl)
-		self.value = value
-
-
-class StmtDecrement(Stmt):
-	def __init__(self, value, ti=None, nl=1):
-		super().__init__(ti, nl)
+		self.op = op
+		self.left = left
+		self.right = right
 		self.value = value
 
 

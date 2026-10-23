@@ -337,19 +337,26 @@ ptr.field = 5                     // auto-deref field write
 ```
 
 > Not assignable: `let` bindings, `const`, and function parameters
-> (see [Functions](#functions)). There are no compound assignments
-> (`+=`, `-=`, ...) — write `x = x + 1`, or `++x` / `--x`.
+> (see [Functions](#functions)).
+
+### Compound Assignment
+```modest
+i += 1                            // there is no ++ / --: this is how you count
+x -= y; x *= y; x /= y; x %= y
+w &= m; w |= m; w ^= m            // WordX only, like the operators themselves
+w <<= n; w >>= n
+arr[f()] += 1                     // f() is called once
+```
+
+> `x op= y` is `x = x op y` with `x` evaluated once: the same operator and
+> the same type rules (both sides one type, bitwise only on `Word*`, a shift
+> count `NatX`). It is a statement, like `=` — not an expression.
+> `++x` / `--x` were removed; the compiler names the replacement.
 
 ### Return
 ```modest
 return value
 return                             // for Unit functions
-```
-
-### Increment/Decrement
-```modest
-++i   // prefix only — it is a statement, not an expression
---j
 ```
 
 ### Inline Assembly
@@ -785,7 +792,7 @@ var slice = arr[1:3]  // sub-array [2, 3]
 var i: Int32 = 0
 while i < 5 {
 	printf("%d\n", arr[i])
-	++i
+	i += 1
 }
 ```
 
@@ -795,8 +802,8 @@ func sum (n: Int32) -> Int32 {
 	var total: Int32 = 0
 	var i: Int32 = 0
 	while i < n {
-		total = total + i
-		++i
+		total += i
+		i += 1
 	}
 	return total
 }
@@ -906,6 +913,7 @@ public func myPrint (s: Str8) -> Unit  // emitted as: printf
 | Logical ops      | `&&`, `\|\|`, `!`              | `and`, `or`, `not`                        |
 | Bitwise ops      | any integer type               | only `Word*` types (`&` `\|` `^` `~` `<<` `>>`) |
 | Continue         | `continue`                     | `again`                                   |
+| Increment        | `i++`, `++i` (expressions)     | `i += 1` (statement; no `++` / `--`)      |
 | Type system      | implicit/weak                  | strict, explicit                          |
 | Namespaces       | none                           | `import "mod"` → `mod.name`               |
 

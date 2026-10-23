@@ -59,7 +59,7 @@ int main(void) {
 			timecnt = 0;
 			fsm_tick(&fsm0);
 		} else {
-			++timecnt;
+			timecnt += 1;
 		}
 		fsm_task(&fsm0);
 	}

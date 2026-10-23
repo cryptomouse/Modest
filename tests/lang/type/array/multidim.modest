@@ -40,9 +40,9 @@ func sumOf (m: [2][3]Int32) -> Int32 {
 		var j: Nat32 = 0
 		while j < lengthof(m[0]) {
 			s = s + m[i][j]
-			++j
+			j += 1
 		}
-		++i
+		i += 1
 	}
 	return s
 }

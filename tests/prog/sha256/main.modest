@@ -69,7 +69,7 @@ func doTest (test: *SHA256_TestCase) -> Bool {
 	var i: Nat32 = 0
 	while i < sha256.hashSize {
 		printf("%02X", testHash[i])
-		++i
+		i += 1
 	}
 
 	printf("\n")
@@ -96,7 +96,7 @@ func main () -> Int {
 
 		printf("test #%i: %s\n", i, res)
 
-		++i
+		i += 1
 	}
 
 	printf("test SHA256 ")

@@ -30,7 +30,7 @@ func main () -> Int {
 	var n: Int32 = 0
 	while i < 3 {
 		n = n + classify(i)
-		++i
+		i += 1
 	}
 	if n != 2 {
 		printf("n = %d, expected 2\n", n)

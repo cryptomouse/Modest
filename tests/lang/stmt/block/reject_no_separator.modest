@@ -7,7 +7,7 @@
 // EXPECT-ERROR: expected newline or ';'
 // EXPECT-ERROR: x = 2
 // EXPECT-ERROR: expected newline or ';'
-// EXPECT-ERROR: ++x
+// EXPECT-ERROR: x = 3 x += 1
 // EXPECT-ERROR-COUNT: 4
 //
 // Two statements on one line need a newline or a ';' between them — at
@@ -25,7 +25,7 @@ type Pair = {a: Int32 b: Int32}
 
 func main () -> Int {
 	var x: Int32 = 1 x = 2
-	x = 3 ++x
+	x = 3 x += 1
 	return 0
 }
 

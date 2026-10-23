@@ -23,7 +23,7 @@ void table_print(table_Table *table) {
 			if (len > sz[i]) {
 				sz[i] = len;
 			}
-			++i;
+			i += 1;
 		}
 	}
 	i = 0;
@@ -34,14 +34,14 @@ void table_print(table_Table *table) {
 			if (len > sz[j]) {
 				sz[j] = len;
 			}
-			++j;
+			j += 1;
 		}
-		++i;
+		i += 1;
 	}
 	i = 0;
 	while (i < table->nCols) {
 		sz[i] = sz[i] + 2;
-		++i;
+		i += 1;
 	}
 	separator(sz, table->nCols);
 	if (table->header != NULL) {
@@ -54,7 +54,7 @@ void table_print(table_Table *table) {
 		if (table->separate && i < table->nRows - 1) {
 			separator(sz, table->nCols);
 		}
-		++i;
+		i += 1;
 	}
 	separator(sz, table->nCols);
 }
@@ -73,9 +73,9 @@ static void printRow(char **raw_row, uint32_t *sz, uint32_t nCols) {
 		uint32_t k = 0;
 		while (k < (sz[j] - len)) {
 			printf(" ");
-			++k;
+			k += 1;
 		}
-		++j;
+		j += 1;
 	}
 	printf("|\n");
 }
@@ -87,9 +87,9 @@ static void separator(uint32_t *sz, uint32_t n) {
 		uint32_t j = 0;
 		while (j < sz[i]) {
 			printf("-");
-			++j;
+			j += 1;
 		}
-		++i;
+		i += 1;
 	}
 	printf("+\n");
 }

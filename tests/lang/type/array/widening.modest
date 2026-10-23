@@ -48,7 +48,7 @@ func checkWide (r: [20]Nat32, what: *Str8) -> Bool {
 			printf("%s: r[%u] = %u, expected %u\n", what, i, r[i], expected)
 			return false
 		}
-		++i
+		i += 1
 	}
 	return true
 }
@@ -136,7 +136,7 @@ func testLoop () -> Bool {
 	while i < 200000 {
 		let r = [256]Nat32 a
 		sum = sum + r[0] + r[255]
-		++i
+		i += 1
 	}
 	if sum != 200000 {
 		printf("loop sum = %u, expected 200000\n", sum)

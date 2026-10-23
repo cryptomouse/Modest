@@ -71,7 +71,7 @@ func main () -> Int {
 	var i: Int32 = 0
 	while i < 5
 	{
-		++i
+		i += 1
 	}
 	if i == 5 {
 		printf("passed: while brace next line\n")
@@ -88,7 +88,7 @@ func main () -> Int {
 		{
 			n = n + 1
 		}
-		++i
+		i += 1
 	}
 	if n == 2 {
 		printf("passed: nested brace next line\n")

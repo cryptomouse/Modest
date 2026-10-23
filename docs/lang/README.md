@@ -62,10 +62,10 @@ func crc32 (data: *[]Byte, len: Size) -> Word32 {
 			} else {
 				crc = crc >> 1
 			}
-			++bit
+			bit += 1
 		}
 
-		++i
+		i += 1
 	}
 
 	return crc ^ 0xFFFFFFFF

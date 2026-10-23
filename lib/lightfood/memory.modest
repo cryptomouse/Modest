@@ -29,7 +29,7 @@ public func zero (mem: Ptr, len: Nat64) -> Unit {
 	var i = Nat64 0
 	while i < z {
 		dst_byte0[i] = 0
-		++i
+		i += 1
 	}
 
 	// word operation
@@ -40,7 +40,7 @@ public func zero (mem: Ptr, len: Nat64) -> Unit {
 	i = 0
 	while i < len_words {
 		dst_word[i] = 0
-		++i
+		i += 1
 	}
 
 	// byte operation
@@ -51,7 +51,7 @@ public func zero (mem: Ptr, len: Nat64) -> Unit {
 	i = 0
 	while i < len_bytes {
 		dst_byte1[i] = 0
-		++i
+		i += 1
 	}
 }
 
@@ -64,7 +64,7 @@ public func copy (dst: Ptr, src: Ptr, len: Nat64) -> Unit {
 	var i = Nat64 0
 	while i < len_words {
 		dst_w[i] = src_w[i]
-		++i
+		i += 1
 	}
 
 	let len_bytes = len % sizeof(Word)
@@ -74,7 +74,7 @@ public func copy (dst: Ptr, src: Ptr, len: Nat64) -> Unit {
 	i = 0
 	while i < len_bytes {
 		dst_b[i] = src_b[i]
-		++i
+		i += 1
 	}
 }
 
@@ -89,7 +89,7 @@ public func eq (mem0: Ptr, mem1: Ptr, len: Nat64) -> Bool {
 		if mem0_w[i] != mem1_w[i] {
 			return false
 		}
-		++i
+		i += 1
 	}
 
 	let len_bytes = len % sizeof(Word)
@@ -101,7 +101,7 @@ public func eq (mem0: Ptr, mem1: Ptr, len: Nat64) -> Bool {
 		if mem0_b[i] != mem1_b[i] {
 			return false
 		}
-		++i
+		i += 1
 	}
 
 	return true

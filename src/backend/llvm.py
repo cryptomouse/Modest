@@ -2333,8 +2333,18 @@ def do_eval_sizeof_type(x):
 
 
 
+# Значения, уже вычисленные на месте: у `left op= right` адрес lvalue
+# берется один раз (print_stmt_assign_op), и узел lvalue внутри
+# `left op right` отдает этот адрес, а не вычисляется заново. Ключ - id()
+# узла HLIR
+eval_override = {}
+
+
 def do_eval(x):
 	assert(isinstance(x, Value))
+
+	if id(x) in eval_override:
+		return eval_override[id(x)]
 
 	y = None
 	if x.is_undefined(): y = llvm_value_undef(x)
@@ -2720,23 +2730,23 @@ def print_stmt(x):
 	elif x.is_stmt_asm(): print_stmt_asm(x)
 	elif x.is_stmt_def_type(): pass
 	elif x.is_stmt_def_func(): pass
-	elif x.is_stmt_increment(): return print_stmt_increment(x)
-	elif x.is_stmt_decrement(): return print_stmt_decrement(x)
+	elif x.is_stmt_assign_op(): return print_stmt_assign_op(x)
 	else: lo("<stmt %s>" % str(x))
 
 
 
-def print_stmt_increment(x):
-	v = do_eval(x.value)
-	one = llvm_value_num(v['type'], 1)
-	rv = llvm_eval_binary('add', llvm_dold(v), one)
-	llvm_store(v, rv)
-
-def print_stmt_decrement(x):
-	v = do_eval(x.value)
-	one = llvm_value_num(v['type'], 1)
-	rv = llvm_eval_binary('sub', llvm_dold(v), one)
-	llvm_store(v, rv)
+# `left op= right`: адрес left вычисляется один раз, а `left op right`
+# считается обычным do_eval - со всеми его особенностями (FixedX, знак,
+# сдвиги), только left внутри него уже не вычисляется, а читается по
+# этому адресу
+def print_stmt_assign_op(x):
+	adr = do_eval(x.left)
+	eval_override[id(x.left)] = adr
+	try:
+		rv = do_reval(x.value)
+	finally:
+		del eval_override[id(x.left)]
+	llvm_store(adr, rv)
 
 
 def str_func_params(ftype, only_types=False, with_attributes=True):

@@ -57,7 +57,7 @@ func sum (v: *[]Int32, n: Nat32) -> Int32 {
 	var i: Nat32 = 0
 	while i < n {
 		total = total + v[i]
-		++i
+		i += 1
 	}
 	return total
 }
@@ -88,8 +88,8 @@ func testPlace () -> Bool {
 	}
 
 	// The increment operators take a place, so an element is one of them.
-	++a[i]
-	--a[0]
+	a[i] += 1
+	a[0] -= 1
 	if a[i] != 35 or a[0] != 9 {
 		printf("a[2] = %d and a[0] = %d, expected 35 and 9\n", a[i], a[0])
 		return false

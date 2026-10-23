@@ -58,7 +58,7 @@ func sum (n: Int32) -> Int32 {
 	var i: Int32 = 0
 	while i < n {
 		total = total + i
-		++i
+		i += 1
 	}
 	return total
 }
@@ -101,7 +101,7 @@ func main () -> Int {
 	var i: Nat32 = 0
 	while i < lengthof(arr) {
 		printf("%d ", arr[i])
-		++i
+		i += 1
 	}
 	printf("\n")
 
@@ -129,7 +129,7 @@ func main () -> Int {
 	// while / again (= continue)
 	var k = 0
 	while k < 5 {
-		++k
+		k += 1
 		if k == 3 {
 			again  // skip the print for k == 3
 		}
@@ -143,7 +143,7 @@ func main () -> Int {
 			break
 		}
 		printf("j = %d\n", j)
-		++j
+		j += 1
 	}
 
 	// logical ops: and / or / not (no &&, ||, !)

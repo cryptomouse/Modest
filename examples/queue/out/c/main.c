@@ -19,8 +19,8 @@ static void fill(uint32_t n) {
 		}
 		printf("bq.put(%d)\n", ii);
 		queueWord8_put(&bq0, (uint8_t)ii);
-		++i;
-		++ii;
+		i += 1;
+		ii += 1;
 	}
 }
 
@@ -34,7 +34,7 @@ static void fetch(uint32_t n) {
 		uint8_t x = 0x0;
 		const bool res = queueWord8_get(&bq0, &x);
 		printf("bq.get = %d, res = %d\n", (int)x, (int)(uint32_t)(uint8_t)res);
-		++i;
+		i += 1;
 	}
 }
 #define QSIZE 10

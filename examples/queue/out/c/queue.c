@@ -44,7 +44,7 @@ uint32_t queue_getPutPosition(struct queue_queue *q) {
 	const uint32_t pos = q->p;
 	q->p = next(q->capacity, q->p);
 	if (q->size < q->capacity) {
-		++q->size;
+		q->size += 1;
 	}
 	return pos;
 }
@@ -53,7 +53,7 @@ uint32_t queue_getGetPosition(struct queue_queue *q) {
 	const uint32_t pos = q->g;
 	q->g = next(q->capacity, q->g);
 	if (q->size > 0) {
-		--q->size;
+		q->size -= 1;
 	}
 	return pos;
 }

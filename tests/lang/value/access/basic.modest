@@ -102,8 +102,8 @@ func testPlace () -> Bool {
 	}
 
 	// The increment operators take a place, so a field is one of them.
-	++pt.x
-	--pt.y
+	pt.x += 1
+	pt.y -= 1
 	if pt.x != 13 or pt.y != 1 {
 		printf("pt = {%d, %d}, expected {13, 1}\n", pt.x, pt.y)
 		return false

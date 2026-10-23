@@ -841,34 +841,37 @@ def do_value_shift(x, ctx):
 	op = x['kind']  # HLIR_VALUE_OP_SHL | HLIR_VALUE_OP_SHR
 	left = do_rvalue(x['left'], ctx=ctx)
 	right = do_rvalue(x['right'], ctx=ctx)
+	return do_value_shift_op(op, left, right, x['ti'])
 
+
+def do_value_shift_op(op, left, right, ti):
 	# Слева может быть только word (!) - или hex-литерал: у него есть
 	# ширина записи, и в ней он и сдвигается (0x01 << 4 это 0x10, а
 	# 0x01 << 8 - уже 0). Десятичный литерал такой ширины не имеет,
 	# ему сперва нужен тип: Word32 1 << n
 	if not (left.type.is_word() or is_spelled(left.type)):
-		error("expected word value", x['left']['ti'])
-		return ValueBad(ti=x['ti'])
+		error("expected word value", left.ti)
+		return ValueBad(ti=ti)
 
 	if not (right.type.is_nat() or (right.type.is_integer() and right.asset >= 0)):
-		error("expected natural or non-negative integer value", x['right']['ti'])
-		return ValueBad(ti=x['ti'])
+		error("expected natural or non-negative integer value", right.ti)
+		return ValueBad(ti=ti)
 
 	if left.type.is_integer():
 		# у литерала нет типа времени исполнения, так что и сдвиг
 		# свертывается сразу - на сколько, надо знать уже сейчас
 		if not right.is_immediate():
-			error("a literal can only be shifted by a compile-time count", x['right']['ti'])
-			info("give the literal a type first, e.g. `Word32 0x01 << n`", x['left']['ti'])
-			return ValueBad(ti=x['ti'])
+			error("a literal can only be shifted by a compile-time count", right.ti)
+			info("give the literal a type first, e.g. `Word32 0x01 << n`", left.ti)
+			return ValueBad(ti=ti)
 		if left.asset == None or right.asset == None:  # ValueUndefined
-			return ValueBad(type=left.type, ti=x['ti'])
+			return ValueBad(type=left.type, ti=ti)
 		mask = (1 << left.type.width) - 1
 		if op == HLIR_VALUE_OP_SHL:
 			num = (left.asset << right.asset) & mask
 		else:
 			num = left.asset >> right.asset
-		return value_integer_bits(num, left, ti=x['ti'])
+		return value_integer_bits(num, left, ti=ti)
 
 	nv = None
 	asset = None
@@ -882,7 +885,7 @@ def do_value_shift(x, ctx):
 			if left.asset != None and right.asset != None:
 				asset = int(left.asset << right.asset)
 
-		nv = ValueShl(type, left, right, ti=x['ti'])
+		nv = ValueShl(type, left, right, ti=ti)
 		nv.set_asset(asset)
 		nv.stage = stage
 		return nv
@@ -894,7 +897,7 @@ def do_value_shift(x, ctx):
 			if left.asset != None and right.asset != None:
 				asset = int(left.asset >> right.asset)
 
-		nv = ValueShr(type, left, right, ti=x['ti'])
+		nv = ValueShr(type, left, right, ti=ti)
 
 		nv.set_asset(asset)
 		nv.stage = stage
@@ -2416,28 +2419,50 @@ def do_stmt_assign(x):
 
 
 
-def do_stmt_incdec(x, op):
-	v = do_value(x['value'], ctx=None)
+# `x op= y` is checked as `x = x op y`, with the diagnostics of both: the
+# left side has to be assignable, and the operator has to take both sides.
+# The `x op y` stays in the statement, and its left operand is the lvalue
+# itself - backends read the place they write through it, once
+def do_stmt_assign_op(x):
+	op = x['op']
+	l = do_value(x['left'], ctx=None)
+	r = do_rvalue(x['right'], ctx=None)
+
+	if l.is_bad() or r.is_bad():
+		return StmtBad(x['ti'])
+
+	if not l.isLvalue():
+		error("expected lvalue", l.ti)
+		return StmtBad(x['ti'])
+
+	if l.is_immutable():
+		error("expected mutable value", l.ti)
+		return StmtBad(x['ti'])
+
+	if not l.is_initialized:
+		error("attempt to use an uninitialized value", l.ti)
+		return StmtBad(x['ti'])
+
+	# `+` on arrays is a compile-time concat: nothing to accumulate in place
+	if l.type.is_array():
+		error("unsuitable value type '%s' for '%s' operation" % (l.type.to_str(), op), l.ti)
+		return StmtBad(x['ti'])
+
+	if op in [HLIR_VALUE_OP_SHL, HLIR_VALUE_OP_SHR]:
+		v = do_value_shift_op(op, l, r, x['ti'])
+	else:
+		v = do_value_bin_op(op, l, r, x['ti'], ctx=None)
 
 	if v.is_bad():
 		return StmtBad(x['ti'])
 
-	if v.is_immutable():
-		error("expected mutable value", v.ti)
+	# the operator has to leave the left side as it is: no construction
+	# around it, and a result of its own type
+	if v.left is not l or not Type.eq(v.type, l.type, []):
+		error("cannot assign '%s' to '%s'" % (v.type.to_str(), l.type.to_str()), x['ti'])
 		return StmtBad(x['ti'])
 
-	if not (v.type.is_int() or v.type.is_nat()):
-		error("expected value with integer type", v.ti)
-		return StmtBad(x['ti'])
-
-	#one = value_integer_create(1, ti=x['ti'])
-	#nv = do_value_bin_op(op, v, one, x['ti'])
-	#stmt = StmtAssign(v, nv, ti=x['ti'])
-
-	if op == HLIR_VALUE_OP_ADD:
-		return StmtIncrement(v, x['ti'])
-	if op == HLIR_VALUE_OP_SUB:
-		return StmtDecrement(v, x['ti'])
+	return StmtAssignOp(op, l, v.right, v, ti=x['ti'])
 
 
 
@@ -2529,6 +2554,7 @@ def do_stmt(x):
 	k = x['kind']
 	if k == 'value': s = do_stmt_value(x)
 	elif k == 'assign': s = do_stmt_assign(x)
+	elif k == 'assign_op': s = do_stmt_assign_op(x)
 	elif k == 'let': s = do_stmt_let(x, annos=annos)
 	elif k == 'var': s = do_stmt_var(x, annos=annos)
 	elif k == 'block': s = do_stmt_block(x)
@@ -2539,13 +2565,13 @@ def do_stmt(x):
 	elif k == 'comment-block': s = do_stmt_comment_block(x)
 	elif k == 'again': s = do_stmt_again(x)
 	elif k == 'break': s = do_stmt_break(x)
-	elif k == 'inc': s = do_stmt_incdec(x, HLIR_VALUE_OP_ADD)
-	elif k == 'dec': s = do_stmt_incdec(x, HLIR_VALUE_OP_SUB)
 	elif k == 'type': s = do_stmt_type(x)
 	elif k == 'func': s = do_stmt_func(x)
 	elif k == 'const': s = do_stmt_const(x, annos=annos)
 	elif k == 'asm': s = do_stmt_asm(x)
-	else: s = StmtBad(x['ti'])
+	# a kind the parser makes and nobody handles here would otherwise
+	# vanish from the program without a word
+	else: assert False, "unhandled statement kind '%s'" % k
 
 	if annos != []:
 		for a in annos:

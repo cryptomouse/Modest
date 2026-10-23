@@ -54,7 +54,7 @@ func sum (n: Int32) -> Int32 {
 	var i: Int32 = 0
 	while i < n {
 		total = total + i
-		++i
+		i += 1
 	}
 	return total
 }
@@ -88,7 +88,7 @@ func main () -> Int {
 	var i: Nat32 = 0
 	while i < lengthof(arr) {
 		printf("%d ", arr[i])
-		++i
+		i += 1
 	}
 	printf("\n")
 	let origin = Point {x = 0.0, y = 0.0}
@@ -108,7 +108,7 @@ func main () -> Int {
 	printf("u | v = %x\n", u | v)
 	var k: Int32 = 0
 	while k < 5 {
-		++k
+		k += 1
 		if k == 3 {
 			again
 		}
@@ -120,7 +120,7 @@ func main () -> Int {
 			break
 		}
 		printf("j = %d\n", j)
-		++j
+		j += 1
 	}
 	if i32 > 0 and not (counter < 0) {
 		printf("logic works\n")

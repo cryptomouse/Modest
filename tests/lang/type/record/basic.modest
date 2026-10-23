@@ -123,9 +123,9 @@ func testFieldAccess () -> Bool {
 	}
 
 	// ... and it works with the operators that need a place.
-	++p.y
+	p.y += 1
 	if p.y != 3 {
-		printf("p.y = %d after ++p.y, expected 3\n", p.y)
+		printf("p.y = %d after p.y += 1, expected 3\n", p.y)
 		return false
 	}
 

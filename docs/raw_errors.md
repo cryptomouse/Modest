@@ -1,3 +1,4 @@
+<!-- {% raw %} -->
 # Raw errors — обзор сообщений компилятора
 
 Автоматически собранный список всех вызовов `error()`, `fatal()`, `warning()`, `note()`, `info()` из `src/` (кроме самого `src/error.py`). Сообщение приведено как Python-выражение из исходника (f-строки / `%`-форматирование как есть). Закомментированные вызовы не включены.
@@ -7,7 +8,7 @@
 | Уровень | Кол-во |
 |---|---|
 | fatal | 10 |
-| error | 157 |
+| error | 162 |
 | warning | 8 |
 | note | 1 |
 | info | 14 |
@@ -123,8 +124,13 @@
 | [semantic.py:2282](../src/semantic.py#L2282) | error | `do_stmt_return` | `"expected return value"` |
 | [semantic.py:2329](../src/semantic.py#L2329) | error | `do_stmt_assign` | `"expected lvalue"` |
 | [semantic.py:2333](../src/semantic.py#L2333) | error | `do_stmt_assign` | `"expected mutable value"` |
-| [semantic.py:2371](../src/semantic.py#L2371) | error | `do_stmt_incdec` | `"expected mutable value"` |
-| [semantic.py:2375](../src/semantic.py#L2375) | error | `do_stmt_incdec` | `"expected value with integer type"` |
+| [semantic.py:2435](../src/semantic.py#L2435) | error | `do_stmt_assign_op` | `"expected lvalue"` |
+| [semantic.py:2439](../src/semantic.py#L2439) | error | `do_stmt_assign_op` | `"expected mutable value"` |
+| [semantic.py:2443](../src/semantic.py#L2443) | error | `do_stmt_assign_op` | `"attempt to use an uninitialized value"` |
+| [semantic.py:2448](../src/semantic.py#L2448) | error | `do_stmt_assign_op` | `"unsuitable value type '%s' for '%s' operation" % (l.type.to_str(), op)` |
+| [semantic.py:2462](../src/semantic.py#L2462) | error | `do_stmt_assign_op` | `"cannot assign '%s' to '%s'" % (v.type.to_str(), l.type.to_str())` |
+| [parser.py:1924](../src/parser.py#L1924) | error | `stmt_incdec_removed` | `` "`++` was removed, write `x += 1`" `` |
+| [parser.py:1927](../src/parser.py#L1927) | error | `stmt_incdec_removed` | `` "`--` was removed, write `x -= 1`" `` |
 | [semantic.py:2497](../src/semantic.py#L2497) | error | `do_stmt` | `"annotation '%s' not defined2\n" % a['kind']` |
 | [semantic.py:2543](../src/semantic.py#L2543) | error | `def_type_common` | `"expected type expr"` |
 | [semantic.py:2577](../src/semantic.py#L2577) | error | `def_type_common` | `"using a private type in a public context"` |
@@ -350,3 +356,5 @@
 - [src/backend/llvm.py:2254](../src/backend/llvm.py#L2254)
 - [src/hlir/types.py:1419](../src/hlir/types.py#L1419)
 - [src/semantic.py:3313](../src/semantic.py#L3313)
+
+<!-- {% endraw %} -->

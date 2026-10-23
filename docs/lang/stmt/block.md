@@ -32,7 +32,7 @@ a [function](../def/func.md), [`if`](./if.md) branch or
 ```modest
 while i < 10
 {
-	++i
+	i += 1
 }
 
 if a > b

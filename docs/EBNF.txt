@@ -67,8 +67,6 @@ statement ::=
     | stmt_return
     | stmt_break
     | stmt_again
-    | stmt_inc
-    | stmt_dec
     | stmt_asm
     | stmt_assign_or_expr
 
@@ -78,11 +76,11 @@ stmt_while ::= 'while'  value_expr block
 stmt_return::= 'return' [value_expr]
 stmt_break ::= 'break'
 stmt_again ::= 'again'
-stmt_inc   ::= '++' value_expr          (* prefix only *)
-stmt_dec   ::= '--' value_expr          (* prefix only *)
 stmt_asm   ::= '__asm' '(' value_expr (',' value_expr)* ')'
 
-stmt_assign_or_expr ::= value_expr ['=' value_expr]
+stmt_assign_or_expr ::= value_expr [assign_op value_expr]
+assign_op  ::= '=' | '+=' | '-=' | '*=' | '/=' | '%='
+             | '&=' | '|=' | '^=' | '<<=' | '>>='
 
 
 (* ─── Type expressions ─── *)

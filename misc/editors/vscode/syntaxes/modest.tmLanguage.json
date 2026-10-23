@@ -143,6 +143,10 @@
 					"match": "\\.\\.\\."
 				},
 				{
+					"name": "keyword.operator.assignment.compound.modest",
+					"match": "(<<=|>>=|\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=)"
+				},
+				{
 					"name": "keyword.operator.assignment.modest",
 					"match": "=(?![=>])"
 				},
@@ -160,7 +164,7 @@
 				},
 				{
 					"name": "keyword.operator.arithmetic.modest",
-					"match": "(\\+\\+|--|\\+|-|\\*|/|%)"
+					"match": "(\\+|-|\\*|/|%)"
 				}
 			]
 		}

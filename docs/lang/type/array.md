@@ -72,7 +72,7 @@ let c = s[0]              // Char8 'H'
 func sum (v: *[]Int32, n: Nat32) -> Int32 {   // explicit by-reference
 	var s: Int32 = 0
 	var k: Nat32 = 0
-	while k < n { s = s + v[k]; ++k }
+	while k < n { s += v[k]; k += 1 }
 	return s
 }
 
@@ -81,7 +81,7 @@ func maxOf (v: [5]Int32) -> Int32 {           // parameter by value
 	var k: Nat32 = 1
 	while k < lengthof(v) {
 		if v[k] > m { m = v[k] }
-		++k
+		k += 1
 	}
 	return m
 }

@@ -1,0 +1,51 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: expected lvalue
+// EXPECT-ERROR: n -= 1
+// EXPECT-ERROR: expected lvalue
+// EXPECT-ERROR: k += 1
+// EXPECT-ERROR: unsuitable value type 'Int32' for 'bitwise-or' operation
+// EXPECT-ERROR: i |= 2
+// EXPECT-ERROR: different types 'Int32' & 'Int64' in operation
+// EXPECT-ERROR: i += l
+// EXPECT-ERROR: division by zero
+// EXPECT-ERROR: i /= 0
+// EXPECT-ERROR: unsuitable value type '*Str8' for 'add' operation
+// EXPECT-ERROR: s += "b"
+// EXPECT-ERROR: unsuitable value type '[2]Int32' for 'add' operation
+// EXPECT-ERROR: a += a
+// EXPECT-ERROR-COUNT: 7
+//
+// `x op= y` is checked as `x = x op y`: the left side has to be assignable,
+// and the operator has to accept both sides — with the same diagnostics.
+// An array is refused outright: `+` on arrays is a compile-time concat,
+// and there is nothing to accumulate in place.
+
+include "libc/ctypes64"
+
+
+func f (n: Int32) -> Unit {
+	n -= 1
+}
+
+
+func main () -> Int {
+	let k: Int32 = 1
+	k += 1
+
+	var i: Int32 = 1
+	i |= 2
+
+	var l: Int64 = 1
+	i += l
+
+	i /= 0
+
+	var s: *Str8 = "a"
+	s += "b"
+
+	var a: [2]Int32
+	a += a
+	return 0
+}
+

@@ -1,3 +1,4 @@
+<!-- {% raw %} -->
 # Классы ошибок компилятора
 
 Разбор сообщений из [raw_errors.md](raw_errors.md) (190 вызовов `error/fatal/warning/note/info`) по смысловым классам. Несколько сообщений попадают в два класса (например, `module '%s' not found` — и «неизвестное имя», и «импорт»), такие продублированы.
@@ -38,7 +39,7 @@
 - неполный тип: `incompleted type` (×4), `incomplete value`, `is_incompleted`;
 - переполнение: `integer overflow`, `word overflow`, `float overflow`, `fixed point overflow`, `fixed point (%d.%d) overflow`;
 - конструирование: `cannot implicitly construct`, `cannot construct '%s' from '%s' value`, `cannot implicitly cons to common type`, `attempt to construct`, `Cannot cons pointer!!`;
-- ожидание категории: `expected value with array type` vs `expected array type`, `expected value with signed type` vs `expected value with integer type` vs `expected integral value`;
+- ожидание категории: `expected value with array type` vs `expected array type`, `expected value with signed type` vs `expected integral value`;
 - кавычки вокруг имён: то `'%s'`, то `` `%s` ``, то без кавычек (`module %s not found` рядом с `module '%s' not found`).
 
 **Уровни сообщений.**
@@ -204,7 +205,6 @@
 | [semantic.py:1176](../src/semantic.py#L1176) | error | `"expected value with signed type"` |
 | [semantic.py:1571](../src/semantic.py#L1571) | error | `"expected integral value"` |
 | [semantic.py:1581](../src/semantic.py#L1581) | error | `"expected value with Bool type"` |
-| [semantic.py:2375](../src/semantic.py#L2375) | error | `"expected value with integer type"` |
 | [semantic.py:1260](../src/semantic.py#L1260) | error | `"expected pointer value"` |
 | [semantic.py:1273](../src/semantic.py#L1273) | error | `"cannot dereference the pointer"` |
 | [semantic.py:1291](../src/semantic.py#L1291) | error | `"expected value with array type"` |
@@ -385,3 +385,5 @@
 | [semantic.py:3541](../src/semantic.py#L3541) | fatal | `"Object %s has not attribute %s" % (str(x), step)` |
 | [semantic.py:1540](../src/semantic.py#L1540) | warning | `"compile time call not implemented, will returned zero value!"` |
 
+
+<!-- {% endraw %} -->

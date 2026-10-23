@@ -33,10 +33,10 @@ public func init () -> Unit {
 				crc = crc >> 1
 			}
 
-			++j
+			j += 1
 		}
 		table[i] = crc
-		++i
+		i += 1
 	}
 }
 
@@ -52,7 +52,7 @@ public func run (buf: *[]Word8, len: Nat32) -> Word32 {
 		// 2
 		let yy = unsafe(Nat8 y)
 		crc = table[yy] ^ (crc >> 8)
-		++i
+		i += 1
 	}
 
 	return crc ^ 0xFFFFFFFF

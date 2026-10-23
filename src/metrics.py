@@ -142,8 +142,7 @@ def stmt_kind(s):
 	if isinstance(s, StmtBlock): return 'block'
 	if isinstance(s, StmtValueExpression): return 'expression'
 	if isinstance(s, StmtAssign): return 'assign'
-	if isinstance(s, StmtIncrement): return 'increment'
-	if isinstance(s, StmtDecrement): return 'decrement'
+	if isinstance(s, StmtAssignOp): return 'assign_op'
 	if isinstance(s, StmtIf): return 'if'
 	if isinstance(s, StmtWhile): return 'while'
 	if isinstance(s, StmtAgain): return 'again'
@@ -361,7 +360,7 @@ class Metrics:
 				self.walk_value(io.get('value') if isinstance(io, dict) else getattr(io, 'value', None))
 			return
 
-		# StmtValueExpression / StmtReturn / StmtIncrement / StmtDecrement
+		# StmtValueExpression / StmtReturn / StmtAssignOp (its .value holds both sides)
 		self.walk_value(getattr(s, 'value', None))
 
 
