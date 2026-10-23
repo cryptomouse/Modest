@@ -2218,6 +2218,27 @@ def create_default_value(t, ti):
 	return ValueLiteral(t, asset=0, ti=ti)
 
 
+# `[N]T a`, где `a` - более короткий массив, известный только во время
+# исполнения: в хвост результата идут значения по умолчанию.  Известный
+# при компиляции источник фронтенд раскладывает сам (value_array_cons),
+# бэкендам остается только этот случай
+def is_array_widening(x):
+	if not x.is_cons() or x.asset != None:
+		return False
+
+	t = x.type
+	from_type = x.value.type
+	if from_type.is_string():
+		return False
+	if not (t.is_sized_array() and from_type.is_sized_array()):
+		return False
+	if t.is_vla() or from_type.is_vla():
+		return False
+	if not Type.eq(t.of, from_type.of):
+		return False
+
+	return from_type.volume.asset < t.volume.asset
+
 
 
 class ValueCons(Value):

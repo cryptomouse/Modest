@@ -46,7 +46,7 @@ Per-target rules (`X`, `Y` — widths; verified against the compiler):
 | `CharX` | length-1 `String`; generic char | + `Integer`, `WordY` Y≤X | any numeric |
 | `Bool` | `Bool` | — (use `x != 0`) | — |
 | `*T` | `nil`; `*[N]T`→`*[]T`; `String`→`*[]CharX` | `*Unit`→`*T`, `*T`→`*Unit` | `*U` (other pointee); integer sources |
-| `[N]T` | generic array, same length | generic array, shorter (zero-fills tail) | — |
+| `[N]T` | generic array, same length | generic array, shorter (zero-fills tail); `[M]T` M≤N (tail takes the element default) | — |
 | record | generic record, same fields | generic record, missing fields zero-fill | — |
 | `Unit` | — | any (discards the value) | — |
 | `@branded T` | nothing implicit | parent `T` and back | — |
@@ -68,6 +68,11 @@ Key behaviors:
   do carry a number and still guard their narrowing. Only the written
   construction narrows: an initializer, an argument or a return never
   truncates on its own.
+- `[N]T a` out of a shorter `a: [M]T` copies `a` into the head and fills
+  the tail with the element type's default (zero, or a record's field
+  defaults). Only the written construction widens — `var b: [N]T = a` is
+  a type error; the element type must match exactly (`[N]Nat32` out of
+  `[M]Nat8` is rejected); and it never shortens — take a slice `a[0:n]`.
 - `FloatY ↔ WordX` reinterprets bits (like `memcpy`), never converts
   numerically. The bits move between equal widths, and the width then
   changes on the `WordX` side, as in `WordY → WordX`: `Word64` of a

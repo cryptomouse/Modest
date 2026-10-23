@@ -38,6 +38,10 @@ there is **no array decay**.
 - Generic array literals convert implicitly at equal length; explicit
   construction to a longer array zero-fills the tail; `= []` zero-fills
   entirely (see [generic](./generic.md)).
+- A typed array widens the same way, by explicit construction only:
+  `[20]Nat32 a` with `a: [4]Nat32` keeps `a` in the head, the tail takes
+  the element default. The element type must match, and it never
+  shortens — use a slice `a[0:n]` (see [cons](../value/cons.md)).
 
 ## Strings
 

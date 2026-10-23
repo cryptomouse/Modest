@@ -1713,7 +1713,33 @@ def eval_cons_array(x):
 			return do_eval_literal(x.value)
 		return do_eval_literal(x)
 
+	if is_array_widening(x):
+		return eval_array_widening(x)
+
 	return cons_composite_from_composite(x.type, x.value, x.ti)
+
+
+# `[N]T a` из более короткого `a: [M]T`: bitcast+load всего [N x T] из
+# адреса `a` прочитал бы память за его концом.  Собираем результат в
+# регистре: значения по умолчанию, а поверх них - элементы `a`.  Через
+# временный alloca нельзя: его не выносят в начало функции, и в цикле
+# стек рос бы на каждой итерации
+def eval_array_widening(x):
+	src = llvm_dold(do_eval(x.value))
+
+	default = create_default_value(x.type, x.ti)
+	if default.is_zero():
+		acc = llvm_value_zero(x.type)
+	else:
+		acc = llvm_dold(do_eval(default))
+
+	i = 0
+	while i < x.value.type.volume.asset:
+		item = extractvalue(src, x.type.of, i)
+		acc = insertvalue(acc, item, i)
+		i += 1
+
+	return acc
 
 
 

@@ -66,7 +66,7 @@ def value_array_can(to, from_type, method, ti):
 		return False
 
 	if not from_type.is_generic():
-		return False
+		return _array_widening_can(to, from_type, method)
 
 	if from_type.is_empty_array():
 		return True
@@ -102,6 +102,26 @@ def value_array_can(to, from_type, method, ti):
 		return False
 
 	return True
+
+
+# `[N]T a` из `[M]T a` при M <= N: хвост заполняется значениями по умолчанию.
+# Только явной записью и только при том же типе элемента - поэлементное
+# конструирование (`[N]Nat32` из `[M]Nat8`) это отдельная история.
+# Укорачивать массив нельзя: для этого есть срез `a[0:n]`
+def _array_widening_can(to, from_type, method):
+	if method == 'implicit':
+		return False
+
+	if not (to.is_sized_array() and from_type.is_sized_array()):
+		return False
+
+	if not (to.volume.is_immediate() and from_type.volume.is_immediate()):
+		return False
+
+	if not Type.eq(to.of, from_type.of):
+		return False
+
+	return from_type.volume.asset <= to.volume.asset
 
 
 

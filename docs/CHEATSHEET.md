@@ -542,7 +542,7 @@ Unit value                         // discard a value (suppress warnings)
 | `*T` | `nil`, `*[N]T→*[]T`, `*Unit`, `String→*[]CharX`, `*[]T→*[N]T` | `*U`, `WordY`, `IntY` | `*[]T→*[N]T` safe only if element types match; otherwise full reinterpret = unsafe |
 | `CharX` | `Integer`(≤X), `WordY`(Y≤X), `String`(len=1) | any numeric | `String→CharX` compile-time only; string must be exactly 1 character |
 | `Bool` | `Bool` | — | no construction from other types; use `==` / `!=` to produce Bool |
-| `[N]T` | `GenericArray` (len≤N) | — | missing elements are zero-filled |
+| `[N]T` | `GenericArray` (len≤N), `[M]T` (M≤N, same `T`) | — | missing elements take the element default (zero / record field defaults); `[M]T` source only by explicit construction, never shortens (use a slice) |
 | `RecordT` | `GenericRecord` | — | omitted fields take their default: the type's default value (`0`/`false`/`nil`/...) or the field's explicit `= value` |
 | `Unit` | any | — | discards the value; suppresses unused-value warning |
 

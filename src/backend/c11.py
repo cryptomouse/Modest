@@ -662,6 +662,16 @@ def do_cvalue_cons_array(x, ctx):
 	value = x.value
 	from_type = value.type
 
+	if is_c_array_widening(x):
+		return do_cvalue_array_widening(x, ctx)
+
+	# `[N]T a` из более короткого `a: [M]T`, известного при компиляции:
+	# фронтенд уже разложил результат с хвостом по умолчанию в asset
+	if x.asset != None and from_type.is_sized_array() and not from_type.is_generic():
+		if from_type.volume.asset < to_type.volume.asset:
+			citems = do_array_literal_from_citems(x.asset, ctx=ctx).items
+			return do_cvalue_literal_array_from_citems(citems, cast_to_ctype=do_ctype(to_type))
+
 	if from_type.is_generic_array() or from_type.is_string():
 		if from_type.is_string() and value.is_bin() and value.op == HLIR_VALUE_OP_STRCAT:
 			return do_cvalue(x.value)
@@ -691,6 +701,25 @@ def do_cvalue_cons_array(x, ctx):
 	cv = do_cvalue_cast(to_type, x.value, ctx)
 	return cv
 
+
+
+# Литерал `[x, y]` C достраивает до полной длины сам: `(T [N]){x, y}`
+def is_c_array_widening(x):
+	return is_array_widening(x) and not x.value.is_array()
+
+
+# `[N]T a` из более короткого `a: [M]T`: копируем `a` в голову составного
+# литерала со значениями по умолчанию.  memcpy отдает dst, так что выражение
+# - указатель на результат, ровно как у вызова, возвращающего массив
+# (do_cvalue_call): годится в аргумент, в индексацию, в return
+def do_cvalue_array_widening(x, ctx):
+	default = create_default_value(x.type, x.ti)
+	citems = []
+	if not default.is_zero():
+		citems = do_array_literal_from_citems(default.asset, ctx=ctx).items
+	dst = CValueReference(do_cvalue_literal_array_from_citems(citems, cast_to_ctype=do_ctype(x.type)))
+	cv = cvalue_memcpy(dst, do_cvalue_ptr_to_x(x.value), cvalue_sizeof_type(x.value.type))
+	return CValueCast(do_ctype(TypePointer(x.type), is_param=True), cv)
 
 
 def do_cvalue_cons_record(x, ctx):
@@ -2772,6 +2801,8 @@ def run(module, _outname):
 # возвращает корневое значение из цепочки ValueCons & ValueSubexpr
 # Костыль конечно, но пока C backend не разделен на два слоя, это хоть как то помогает
 def get_root_value(x):
+	if is_c_array_widening(x):
+		return x
 	if x.is_cons():
 		return get_root_value(x.value)
 	if x.is_subexpr():
@@ -2829,7 +2860,7 @@ def do_cvalue_ptr_to_x(x, parr_relax=False):
 	if x.is_deref():
 		return do_cvalue(x.value)  # Если это разыменовывание - просто вернем его аргумент (это указатель)
 
-	if x.is_call():
+	if x.is_call() or is_c_array_widening(x):
 		if x.type.is_sized_array():
 			return do_cvalue(x)
 

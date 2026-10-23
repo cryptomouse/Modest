@@ -1,0 +1,161 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: array widening
+//
+// `[N]T a` builds a longer array out of a shorter `a: [M]T`: the first M
+// elements are a's, the tail takes the element type's default — zero, or
+// the field defaults of a record.  The source must not be read past its
+// end, also when it is only known at run time (a parameter, a literal of
+// run-time values held in a `let`).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Cell = {
+	n: Int32 = 7
+	k: Int32
+}
+
+
+func widenParam (a: [4]Nat32) -> [20]Nat32 {
+	return [20]Nat32 a
+}
+
+
+// the shape from the original request: a compile-time source
+func widenConst () -> [20]Nat32 {
+	let a = []Nat32 [1, 2, 3, 4]
+	return [20]Nat32 a
+}
+
+
+func takeSix (a: [6]Int32) -> Int32 {
+	return a[0] + a[2] + a[5]
+}
+
+
+func checkWide (r: [20]Nat32, what: *Str8) -> Bool {
+	var i: Nat32 = 0
+	while i < 20 {
+		var expected: Nat32 = 0
+		if i < 4 {
+			expected = i + 1
+		}
+		if r[i] != expected {
+			printf("%s: r[%u] = %u, expected %u\n", what, i, r[i], expected)
+			return false
+		}
+		++i
+	}
+	return true
+}
+
+
+func testParam () -> Bool {
+	return checkWide(widenParam([1, 2, 3, 4]), "param")
+}
+
+
+func testConst () -> Bool {
+	return checkWide(widenConst(), "const")
+}
+
+
+func testRuntimeLiteral () -> Bool {
+	var x: Int32 = 5
+	let a = [x, x, x]
+	let r = [6]Int32 a
+	if r != [5, 5, 5, 0, 0, 0] {
+		printf("[6]Int32 [x, x, x] = [%d, %d, %d, %d, %d, %d]\n", r[0], r[1], r[2], r[3], r[4], r[5])
+		return false
+	}
+	return true
+}
+
+
+func testPositions () -> Bool {
+	var a: [3]Int32 = [1, 2, 3]
+
+	// as an argument, indexed in place, assigned over an existing array
+	if takeSix([6]Int32 a) != 4 {
+		printf("takeSix([6]Int32 a) = %d, expected 4\n", takeSix([6]Int32 a))
+		return false
+	}
+
+	if ([6]Int32 a)[2] != 3 or ([6]Int32 a)[5] != 0 {
+		printf("([6]Int32 a)[2], [5] = %d, %d\n", ([6]Int32 a)[2], ([6]Int32 a)[5])
+		return false
+	}
+
+	var b: [6]Int32 = [9, 9, 9, 9, 9, 9]
+	b = [6]Int32 a
+	if b != [1, 2, 3, 0, 0, 0] {
+		printf("b = [6]Int32 a: b[3] = %d, expected 0\n", b[3])
+		return false
+	}
+
+	return true
+}
+
+
+func testRecordDefaults () -> Bool {
+	var a: [2]Cell = [{n = 1, k = 2}, {n = 3, k = 4}]
+	let r = [4]Cell a
+	if r[1].n != 3 or r[1].k != 4 {
+		printf("r[1] = {%d, %d}, expected {3, 4}\n", r[1].n, r[1].k)
+		return false
+	}
+	if r[3].n != 7 or r[3].k != 0 {
+		printf("r[3] = {%d, %d}, expected the defaults {7, 0}\n", r[3].n, r[3].k)
+		return false
+	}
+	return true
+}
+
+
+func testMultidim () -> Bool {
+	var a: [1][2]Int32 = [[1, 2]]
+	let r = [3][2]Int32 a
+	if r != [[1, 2], [0, 0], [0, 0]] {
+		printf("[3][2]Int32 a: r[0][1] = %d, r[2][1] = %d\n", r[0][1], r[2][1])
+		return false
+	}
+	return true
+}
+
+
+// many iterations: a temporary that is not reclaimed per iteration
+// would run out of stack here
+func testLoop () -> Bool {
+	var a: [4]Nat32 = [1, 1, 1, 1]
+	var sum: Nat32 = 0
+	var i: Nat32 = 0
+	while i < 200000 {
+		let r = [256]Nat32 a
+		sum = sum + r[0] + r[255]
+		++i
+	}
+	if sum != 200000 {
+		printf("loop sum = %u, expected 200000\n", sum)
+		return false
+	}
+	return true
+}
+
+
+func main () -> Int {
+	if not testParam() { return exitFailure }
+	if not testConst() { return exitFailure }
+	if not testRuntimeLiteral() { return exitFailure }
+	if not testPositions() { return exitFailure }
+	if not testRecordDefaults() { return exitFailure }
+	if not testMultidim() { return exitFailure }
+	if not testLoop() { return exitFailure }
+	printf("passed: array widening\n")
+	return exitSuccess
+}
+
+

@@ -1,0 +1,26 @@
+// TEST: reject
+// EXPECT-ERROR: type mismatch [20]Nat32 & [4]Nat32
+// EXPECT-ERROR: cannot construct '[2]Nat32' from '[4]Nat32' value
+// EXPECT-ERROR: cannot construct '[20]Nat32' from '[4]Nat8' value
+// EXPECT-ERROR-COUNT: 3
+//
+// Widening an array is something one asks for: an initializer never
+// grows an array on its own.  It never shortens one either — a slice
+// `a[0:2]` says that data is dropped.  And the element type stays as is:
+// `[N]Nat32` out of `[M]Nat8` would be construction of every element.
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	var a: [4]Nat32 = [1, 2, 3, 4]
+	var b: [4]Nat8 = [1, 2, 3, 4]
+
+	var implicit: [20]Nat32 = a
+	let narrow = [2]Nat32 a
+	let other = [20]Nat32 b
+
+	return 0
+}
+
+
