@@ -5,7 +5,7 @@ Comments are for the reader — they do not affect compilation.
 ## Form
 
 ```
-// <#text — to end of line#>
+// <#any text — to end of line#>
 /* <#any text#> */
 ```
 
@@ -29,7 +29,8 @@ Comments are for the reader — they do not affect compilation.
 func main () -> Int {
 	/* block
 	   comment */
-	return 0  // inline comment
+	// line comment
+	return 0
 }
 ```
 
