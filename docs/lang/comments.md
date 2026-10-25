@@ -29,7 +29,7 @@ Comments are for the reader — they do not affect compilation.
 func main () -> Int {
 	/* block
 	   comment */
-	return 0  // inline comment — two spaces before //
+	return 0  // inline comment
 }
 ```
 
