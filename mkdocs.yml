@@ -1,0 +1,132 @@
+site_name: Modest
+site_description: Swift/Go-like language for medium-level system programming and embedded development
+site_url: https://cryptomouse.github.io/Modest/
+repo_url: https://github.com/cryptomouse/Modest
+edit_uri: edit/dev/docs/
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.indexes
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+
+markdown_extensions:
+  - tables
+  - toc:
+      permalink: true
+      # GitHub-style anchors, so `file.md#heading` links work on github.com too
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      use_pygments: false
+  - pymdownx.inlinehilite
+
+# Pygments has no Modest lexer: code blocks are highlighted client-side
+extra_javascript:
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/llvm.min.js
+  - js/modest-hljs.js
+extra_css:
+  - css/modest-hljs.css
+
+hooks:
+  - misc/mkdocs/repo_links.py
+
+# pages left out of nav (agents/, raw_errors.md, ...) are still built and linkable
+nav:
+  - Home: README.md
+  - Install: INSTALL.md
+  - Usage: USAGE.md
+  - Cheat sheet: CHEATSHEET.md
+  - Style guide: STYLE.md
+  - Language reference:
+    - lang/README.md
+    - Lexical:
+      - lang/comments.md
+      - lang/identifier.md
+      - lang/value/literal.md
+    - Module:
+      - lang/import.md
+      - lang/directive.md
+      - lang/access_modifiers.md
+      - lang/builtin_constants.md
+    - Definitions:
+      - lang/def/README.md
+      - lang/def/type.md
+      - lang/def/const.md
+      - lang/def/var.md
+      - lang/def/func.md
+    - Statements:
+      - lang/stmt/README.md
+      - lang/stmt/var.md
+      - lang/stmt/let.md
+      - lang/stmt/assign.md
+      - lang/stmt/if.md
+      - lang/stmt/while.md
+      - lang/stmt/break_again.md
+      - lang/stmt/return.md
+      - lang/stmt/eval.md
+      - lang/stmt/asm_inline.md
+      - lang/stmt/block.md
+    - Types:
+      - lang/type/README.md
+      - lang/type/base.md
+      - lang/type/generic.md
+      - lang/type/array.md
+      - lang/type/record.md
+      - lang/type/pointer.md
+      - lang/type/func.md
+      - lang/type/branded.md
+      - lang/type/variant.md
+    - Values:
+      - lang/value/README.md
+      - lang/value/cons.md
+      - lang/value/binary.md
+      - lang/value/unary.md
+      - lang/value/access.md
+      - lang/value/_index.md
+      - lang/value/slice.md
+      - lang/value/call.md
+      - lang/value/sizeof.md
+    - Misc:
+      - lang/fields.md
+      - lang/annotation.md
+      - lang/va_arg.md
+      - Undefined behavior: UB.md
+    - Open questions: lang/QUESTIONS.md
+  - Grammar (EBNF): EBNF.txt
+  - Compiler:
+    - compiler/README.md
+    - compiler/usage.md
+    - compiler/overview.md
+    - compiler/STRUCTURE.md
+    - compiler/modules.md
+    - Error classes: error_classes.md
+  - Project status:
+    - Bugs: BUGS.md
+    - Doubts: DOUBTS.md
+    - Design TODO: todo/TODO.md
+    - todo/c_output_analyse.md

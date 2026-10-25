@@ -18,13 +18,13 @@ You can contact me by telegram: t.me/@alexbalan.
 
 | Where | What |
 | :-- | :-- |
-| `lang/` | [Language reference](https://lexbalan.github.io/Modest/lang/) — one page per construct: Form, Semantics, Examples |
-| `CHEATSHEET.md` | [Cheat sheet](https://lexbalan.github.io/Modest/CHEATSHEET.html) — the whole language on one page |
-| `EBNF.txt` | [the grammar](https://lexbalan.github.io/Modest/EBNF.txt), kept in step with the parser |
-| `INSTALL.md` | [Installation](https://lexbalan.github.io/Modest/INSTALL.html) — Python 3.11, Clang, environment |
-| `USAGE.md` | [Usage](https://lexbalan.github.io/Modest/USAGE.html) — invoking `modest`, flags, backends, config |
-| `compiler/` | [How the compiler works](https://lexbalan.github.io/Modest/compiler/) — pipeline, module map, where to make a change |
-| `todo/` | [Design TODO](https://lexbalan.github.io/Modest/todo/TODO.html) — planned work, not yet decided in code |
+| `lang/` | [Language reference](lang/README.md) — one page per construct: Form, Semantics, Examples |
+| `CHEATSHEET.md` | [Cheat sheet](CHEATSHEET.md) — the whole language on one page |
+| `EBNF.txt` | [the grammar](EBNF.txt), kept in step with the parser |
+| `INSTALL.md` | [Installation](INSTALL.md) — Python 3.11, Clang, environment |
+| `USAGE.md` | [Usage](USAGE.md) — invoking `modest`, flags, backends, config |
+| `compiler/` | [How the compiler works](compiler/README.md) — pipeline, module map, where to make a change |
+| `todo/` | [Design TODO](todo/TODO.md) — planned work, not yet decided in code |
 | `agents/claude/` | notes for AI assistants: task index and HLIR internals |
 
 ### What is not settled yet
@@ -34,8 +34,8 @@ each entry carries a tag you can copy into a search:
 
 | Where | What | Tag |
 | :-- | :-- | :-- |
-| [`BUGS.md`](https://lexbalan.github.io/Modest/BUGS.html) | the compiler does not do what the language says | `BUG#20` |
-| [`lang/QUESTIONS.md`](https://lexbalan.github.io/Modest/lang/QUESTIONS.html) | the language has not decided, so there is nothing to be wrong about yet | `QUESTION#4` |
-| [`DOUBTS.md`](https://lexbalan.github.io/Modest/DOUBTS.html) | it works, but the shape inside is wrong | `DOUBT#2` |
+| [`BUGS.md`](BUGS.md) | the compiler does not do what the language says | `BUG#20` |
+| [`lang/QUESTIONS.md`](lang/QUESTIONS.md) | the language has not decided, so there is nothing to be wrong about yet | `QUESTION#4` |
+| [`DOUBTS.md`](DOUBTS.md) | it works, but the shape inside is wrong | `DOUBT#2` |
 
 

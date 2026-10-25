@@ -21,8 +21,8 @@ You can contact me by telegram: t.me/@alexbalan.
 
 [Language documentation](./docs/lang/README.md)
 
-[Installation](https://lexbalan.github.io/Modest/INSTALL.html)
+[Installation](./docs/INSTALL.md)
 
-[Usage](https://lexbalan.github.io/Modest/USAGE.html)
+[Usage](./docs/USAGE.md)
 
 [Examples](./examples/README.md)

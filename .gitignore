@@ -11,3 +11,6 @@ a.out
 tests/**/out/**
 !tests/**/out/**/
 !tests/**/out/**/.gitkeep
+
+# MkDocs output
+site/
