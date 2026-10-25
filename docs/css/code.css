@@ -1,3 +1,6 @@
 /* let windmill's own <pre> background (#fff on a #f8f8f8 page) show through
    instead of the hljs theme's tinted one */
 pre code.hljs { background: transparent; }
+
+/* code blocks keep their tabs (superfences preserve_tabs); show them 4 wide */
+pre, code { tab-size: 4; -moz-tab-size: 4; }

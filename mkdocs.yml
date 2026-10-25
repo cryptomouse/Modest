@@ -20,7 +20,9 @@ markdown_extensions:
           case: lower
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  # keep tabs in code blocks (shown 4 wide via docs/css/code.css)
+  - pymdownx.superfences:
+      preserve_tabs: true
   - pymdownx.highlight:
       use_pygments: false
   - pymdownx.inlinehilite

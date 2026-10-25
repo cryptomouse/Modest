@@ -36,11 +36,11 @@ pageCounter = pageCounter + 1;
 ```c
 // 3.multiply_table/out/c/main.c
 int main(void) {
-    #define n (2 * 2)
-    printf("multiply table for %d\n", (int32_t)n);
-    mtab(n);
-    return 0;
-    #undef n   // мёртвый код — после return
+	#define n (2 * 2)
+	printf("multiply table for %d\n", (int32_t)n);
+	mtab(n);
+	return 0;
+	#undef n   // мёртвый код — после return
 }
 ```
 
@@ -110,8 +110,8 @@ self->state = (fsm_ComplexState){.state = initState, .stage = (fsm_StageId)0};
 ```c
 // 7.binary_file/out/c/main.c
 struct chunk chunk = (struct chunk){
-    .id = {'i', 'd'},
-    .data = {'d', 'a', 't', 'a'}
+	.id = {'i', 'd'},
+	.data = {'d', 'a', 't', 'a'}
 };
 ```
 

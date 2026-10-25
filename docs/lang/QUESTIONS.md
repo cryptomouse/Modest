@@ -64,17 +64,17 @@ decided:
 
   ```modest
   func sign (a: Int32) -> Int32 {
-      if a > 0 {
-          return 1
-      } else {
-          return 0
-      }
+  	if a > 0 {
+  		return 1
+  	} else {
+  		return 0
+  	}
   }                          // warning, though no path falls through
 
   func spin () -> Int32 {
-      while true {
-          return 1
-      }
+  	while true {
+  		return 1
+  	}
   }                          // warning, though the body cannot be left
   ```
 
@@ -85,14 +85,14 @@ decided:
 
   ```modest
   type Marked = {
-      tag: Int32 = 7
-      n: Int32
+  	tag: Int32 = 7
+  	n: Int32
   }
 
   func makeMarked (a: Int32) -> Marked {
-      if a > 0 {
-          return Marked {tag = 1, n = 2}
-      }
+  	if a > 0 {
+  		return Marked {tag = 1, n = 2}
+  	}
   }                          // falls through to Marked {} = {7, 0}
   ```
 

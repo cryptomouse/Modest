@@ -1,0 +1,12 @@
+root = true
+
+# tabs for indentation, shown 4 wide (also used by github.com)
+[*]
+indent_style = tab
+indent_size = 4
+tab_width = 4
+
+# YAML forbids tabs
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2

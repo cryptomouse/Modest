@@ -50,14 +50,14 @@ const errorNone = Error 0
 const errorSome = Error 1
 
 func divide (a: Int, b: Int) -> Int or Error {
-    if b == 0 { return errorSome }   // Error wraps implicitly
-    return Int a / b                 // Int wraps implicitly
+	if b == 0 { return errorSome }   // Error wraps implicitly
+	return Int a / b                 // Int wraps implicitly
 }
 
 func main () -> Int {
-    var r = divide(10, 2)   // r : Int or Error
-    // inspection via `when` is not yet available
-    return 0
+	var r = divide(10, 2)   // r : Int or Error
+	// inspection via `when` is not yet available
+	return 0
 }
 ```
 
@@ -69,11 +69,11 @@ struct:
 
 ```c
 struct main__anonymous_variant_0 {
-    uint8_t tag;
-    union {
-        intptr_t _0;   // Int
-        uint32_t _1;   // Error
-    } value;
+	uint8_t tag;
+	union {
+		intptr_t _0;   // Int
+		uint32_t _1;   // Error
+	} value;
 };
 ```
 
