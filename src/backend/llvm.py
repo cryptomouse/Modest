@@ -3065,10 +3065,14 @@ def print_def_func(x):
 #	out("\n%%%s = type opaque" % get_id_str(x))
 
 
-# имена напечатанных opaque типов: несколько @extern типов могут
-# называть один и тот же внешний тип (@extern("FILE")), а LLVM не
-# разрешает определять его дважды
-printed_opaque = []
+# напечатанные определения типов: имя -> тело. LLVM не разрешает
+# определять тип дважды, а одно и то же имя приходит несколько раз:
+# несколько @extern типов называют один внешний тип (@extern("FILE")),
+# а один и тот же тип определяют два включенных модуля (BUG#105:
+# `UIDT` в libc/ctypes64 и libc/stat). Совпадающее определение
+# печатаем один раз; несовпадающее печатаем как есть - пусть LLVM
+# сообщит о конфликте
+printed_types = {}
 
 def print_def_type(x):
 	xtype = x.original_type
@@ -3076,11 +3080,7 @@ def print_def_type(x):
 		# псевдоним @extern типа, см. str_type
 		if x.type.origin is not x.type:
 			return
-		id_str = get_id_str(x.type)
-		if id_str in printed_opaque:
-			return
-		printed_opaque.append(id_str)
-	out("\n%%%s = type " % get_id_str(x.type))
+	id_str = get_id_str(x.type)
 	tt = None
 	if xtype.is_opaque():
 		# @extern type: устройство неизвестно
@@ -3096,6 +3096,11 @@ def print_def_type(x):
 	if xtype.is_record():
 		tt += "\n"
 
+	if printed_types.get(id_str) == tt:
+		return
+	printed_types[id_str] = tt
+
+	out("\n%%%s = type " % id_str)
 	out(tt)
 
 

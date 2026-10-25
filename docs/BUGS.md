@@ -1521,25 +1521,32 @@ twice(21)      // C: undeclared function 'twice'; LLVM: undefined symbol _twice
 - Coverage: `tests/lang/import/include_func_body.modest`, marked
   `EXPECTED-FAIL`.
 
-## BUG#105: A type defined in two included modules is emitted twice in LLVM
+## BUG#106: A binding type with no C alias has no name in the C backend
 
 ```modest
-include "libc/ctypes64"   // public type UIDT = Nat32
-include "libc/stat"       // public type UIDT = Nat32 — again
+include "libc/stat"    // public type DevT = Nat32 — no @alias
+let d: DevT = st.st_dev    // c11: unknown type name 'DevT'
 ```
 
-- `lib/libc/stat.modest` includes `libc/ctypes64` and defines `UIDT`
-  and `GIDT` once more.  The front end accepts the second definition
-  without a word (the included symbol is simply replaced), and the LLVM
-  backend prints the type for each module: `%UIDT = type %Nat32` twice,
-  which LLVM refuses with `redefinition of type`.  Any program that
-  includes `libc/stat` fails in LLVM, whatever it uses.
-- The C backend is not affected only because it never prints included
-  types — which has its own cost: a binding type with no
-  `@alias("...", backend="c11")` (`UIDT`, `DevT`, `ModeT`, ...) is never given a C
-  name, and using it in the program gives `unknown type name 'UIDT'`.
-- Either reject (or at least warn about) a redefinition that arrives
-  through `include`, or have the LLVM backend print a type once by its
-  output name; and drop the duplicates from `stat.modest`.
-- Coverage: `tests/lang/import/include_same_type.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
+- An `include`d module is never printed by the C backend, so its types
+  reach C only by their `@alias("...", backend="c11")` name.  A type with
+  no alias (`DevT`, `NLinkT`, ... in `lib/libc/stat.modest`; `ModeT`
+  has one) is printed by its Modest name, which nothing defines.  The LLVM backend is
+  not affected.
+- Works as long as the program never names the type: `st.st_mode &
+  sIfmt == sIfdir` compiles, `let d: DevT = st.st_dev` does not.
+- Either give every binding type its C name or print the alias-less
+  ones as `typedef`s.
+
+## BUG#107: `libc/errno` does not link on macOS
+
+```modest
+import "libc/errno"
+errno.get()    // Undefined symbols: ___errno_location
+```
+
+- `lib/libc/errno_abi.modest` binds `__errno_location`, which is glibc's
+  name; Darwin's libc has `__error` instead.  Both backends fail to link.
+- `lib/libc/stat.modest` is Darwin-only already (its `struct stat`
+  layout), so the library has no single target it works on as a whole.
+- `lib/fs.modest` binds `__error` itself until this is fixed.

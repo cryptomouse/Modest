@@ -1,0 +1,113 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: fs kind
+// EXPECT-OUT: passed: fs mkdirAll
+// LINK: fs.modest
+//
+// lib/fs on objects every Darwin system has, then on a directory tree it
+// builds itself under /tmp (named by pid: the backends run in parallel).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+include "libc/unistd"
+
+import "fs"
+
+
+func check (name: *Str8, path: *Str8, got: fs.Kind, expected: fs.Kind) -> Bool {
+	if got != expected {
+		printf("%s(\"%s\") = %d, expected %d\n", name, path, got, expected)
+		return false
+	}
+	return true
+}
+
+
+func testKind () -> Bool {
+	var ok = true
+	ok = check("kind", "/", fs.kind("/"), fs.kindDir) and ok
+	ok = check("kind", "/etc/hosts", fs.kind("/etc/hosts"), fs.kindFile) and ok
+	ok = check("kind", "/dev/null", fs.kind("/dev/null"), fs.kindCharDevice) and ok
+	ok = check("kind", "/nonexistent", fs.kind("/nonexistent"), fs.kindNone) and ok
+	// ENOTDIR: a component of the path is a file
+	ok = check("kind", "/etc/hosts/x", fs.kind("/etc/hosts/x"), fs.kindNone) and ok
+	// /tmp is a symbolic link to /private/tmp on Darwin
+	ok = check("kind", "/tmp", fs.kind("/tmp"), fs.kindDir) and ok
+	ok = check("kindNoFollow", "/tmp", fs.kindNoFollow("/tmp"), fs.kindLink) and ok
+
+	if not fs.exists("/") or fs.exists("/nonexistent") {
+		printf("exists is wrong\n")
+		ok = false
+	}
+	if not fs.isFile("/etc/hosts") or fs.isFile("/") {
+		printf("isFile is wrong\n")
+		ok = false
+	}
+	if not fs.isDir("/") or fs.isDir("/etc/hosts") {
+		printf("isDir is wrong\n")
+		ok = false
+	}
+	return ok
+}
+
+
+func testMkdirAll () -> Bool {
+	var base: [128]Char8
+	var deep: [128]Char8
+	var mid: [128]Char8
+	snprintf(&base, 128, "/tmp/modest_fs_test_%d", getpid())
+	snprintf(&mid, 128, "%s/a", &base)
+	snprintf(&deep, 128, "%s/a/b/c", &base)
+
+	var ok = true
+	if not fs.mkdirAll(&deep, 0x1ED) {
+		printf("mkdirAll(\"%s\") failed\n", &deep)
+		ok = false
+	}
+	ok = check("kind", &deep, fs.kind(&deep), fs.kindDir) and ok
+
+	// everything is there already
+	if not fs.mkdirAll(&deep, 0x1ED) {
+		printf("mkdirAll(\"%s\") failed the second time\n", &deep)
+		ok = false
+	}
+
+	// a file in the way
+	var file: [128]Char8
+	snprintf(&file, 128, "%s/f", &mid)
+	let fp = fopen(&file, "w")
+	fclose(fp)
+	var under: [128]Char8
+	snprintf(&under, 128, "%s/f/x", &mid)
+	if fs.mkdirAll(&under, 0x1ED) {
+		printf("mkdirAll(\"%s\") succeeded through a file\n", &under)
+		ok = false
+	}
+
+	unlink(&file)
+	rmdir(&deep)
+	snprintf(&deep, 128, "%s/a/b", &base)
+	rmdir(&deep)
+	rmdir(&mid)
+	rmdir(&base)
+	return ok
+}
+
+
+func main () -> Int {
+	if not testKind() {
+		printf("failed: fs kind\n")
+		return exitFailure
+	}
+	printf("passed: fs kind\n")
+
+	if not testMkdirAll() {
+		printf("failed: fs mkdirAll\n")
+		return exitFailure
+	}
+	printf("passed: fs mkdirAll\n")
+	return exitSuccess
+}
+

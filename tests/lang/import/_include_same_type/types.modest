@@ -1,0 +1,11 @@
+// A binding module that includes `libc/ctypes64` and then defines `UIDT`
+// once more, the same way.  Used by `include_same_type.modest`.
+
+pragma do_not_include
+pragma prefix ""
+
+include "libc/ctypes64"
+
+
+public type UIDT = Nat32
+

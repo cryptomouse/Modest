@@ -1,0 +1,128 @@
+// fs.modest
+//
+// What is at a path: a file, a directory, nothing, ... - without
+// struct stat and the S_IS* macros.  Darwin only, like libc/stat.
+
+include "libc/ctypes64"
+include "libc/stat"
+
+
+// kind of a file system object
+public type Kind = @branded Nat8
+public const kindNone = Kind 0          // nothing at the path
+public const kindFile = Kind 1          // regular file
+public const kindDir = Kind 2           // directory
+public const kindLink = Kind 3          // symbolic link (kindNoFollow only)
+public const kindCharDevice = Kind 4
+public const kindBlockDevice = Kind 5
+public const kindFifo = Kind 6
+public const kindSocket = Kind 7
+public const kindOther = Kind 8         // a kind not listed above
+public const kindError = Kind 255       // cannot tell: no permission, etc.
+
+// longest path mkdirAll accepts, including the terminating '\0' (PATH_MAX)
+public const pathMax = Nat32 1024
+
+// errno values (Darwin) that mean "there is nothing at the path"
+const errNoent = Int32 2   // ENOENT: no such file or directory
+const errNotdir = Int32 20 // ENOTDIR: a path component is not a directory
+
+// errno location on Darwin; libc/errno binds the glibc one (BUG#107)
+@extern("__error")
+func errnoLocation () -> *Int32
+
+
+// kind of what stat/lstat returned r for
+func kindOfStat (r: Int, st: *Stat) -> Kind {
+	if r != 0 {
+		let e = *errnoLocation()
+		if e == errNoent or e == errNotdir {
+			return kindNone
+		}
+		return kindError
+	}
+
+	let t = st.st_mode & sIfmt
+	if t == sIfreg {
+		return kindFile
+	} else if t == sIfdir {
+		return kindDir
+	} else if t == sIflnk {
+		return kindLink
+	} else if t == sIfchr {
+		return kindCharDevice
+	} else if t == sIfblk {
+		return kindBlockDevice
+	} else if t == sIfifo {
+		return kindFifo
+	} else if t == sIfsock {
+		return kindSocket
+	}
+	return kindOther
+}
+
+
+// kind of the object at path; a symbolic link is followed to its target
+public func kind (path: *Str8) -> Kind {
+	var st: Stat
+	let r = stat(path, &st)
+	return kindOfStat(r, &st)
+}
+
+
+// kind of the object at path; a symbolic link is reported as kindLink
+public func kindNoFollow (path: *Str8) -> Kind {
+	var st: Stat
+	let r = lstat(path, &st)
+	return kindOfStat(r, &st)
+}
+
+
+// is there anything at path (a dangling symbolic link is not)
+public func exists (path: *Str8) -> Bool {
+	let k = kind(path)
+	return k != kindNone and k != kindError
+}
+
+
+// is path a regular file (or a symbolic link to one)
+public func isFile (path: *Str8) -> Bool {
+	return kind(path) == kindFile
+}
+
+
+// is path a directory (or a symbolic link to one)
+public func isDir (path: *Str8) -> Bool {
+	return kind(path) == kindDir
+}
+
+
+// create directory path along with all missing parents, like mkdir -p;
+// true if path is a directory afterwards
+public func mkdirAll (path: *Str8, mode: Word16) -> Bool {
+	var buf: [pathMax]Char8
+	var i = Nat32 0
+	while true {
+		let c = path[i]
+		// a prefix ends at each '/' (except the root one) and at the end
+		if (c == "/" and i > 0) or c == "\x00" {
+			buf[i] = "\x00"
+			if not isDir(&buf) {
+				if mkdir(&buf, mode) != 0 and not isDir(&buf) {
+					return false
+				}
+			}
+		}
+		if c == "\x00" {
+			return true
+		}
+		if i + 1 >= pathMax {
+			return false
+		}
+		buf[i] = c
+		i += 1
+	}
+	return false
+}
+
+

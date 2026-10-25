@@ -10,10 +10,9 @@ include "libc/time"
 
 public type DevT = Nat32
 public type InoT = Nat64
+@alias("mode_t", backend="c11")
 public type ModeT = Word16
 public type NLinkT = Nat16
-public type UIDT = Nat32
-public type GIDT = Nat32
 public type BlkSizeT = Nat32
 public type BlkCntT = Nat64
 
@@ -78,6 +77,13 @@ public type Stat = @public {
 // 01_stat for MACOS
 @extern("\\01_stat", backend="llvm")
 public func stat (path: *[]ConstChar, stat: *Stat) -> Int
+
+// as stat, but a symbolic link is described itself, not its target
+@extern("\\01_lstat", backend="llvm")
+public func lstat (path: *[]ConstChar, stat: *Stat) -> Int
+
+// mkdir - make a directory file
+public func mkdir (path: *[]ConstChar, mode: ModeT) -> Int
 
 
 /*
