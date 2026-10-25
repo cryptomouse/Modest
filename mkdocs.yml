@@ -32,6 +32,7 @@ extra_javascript:
   - js/modest-hljs.js
 extra_css:
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/docco.min.css
+  - css/code.css
 
 hooks:
   - misc/mkdocs/repo_links.py

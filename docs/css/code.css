@@ -1,0 +1,3 @@
+/* let windmill's own <pre> background (#fff on a #f8f8f8 page) show through
+   instead of the hljs theme's tinted one */
+pre code.hljs { background: transparent; }
