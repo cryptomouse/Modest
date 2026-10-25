@@ -8,26 +8,7 @@ docs_dir: docs
 site_dir: site
 
 theme:
-  name: material
-  palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      toggle:
-        icon: material/weather-night
-        name: Dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      toggle:
-        icon: material/weather-sunny
-        name: Light mode
-  features:
-    - navigation.indexes
-    - navigation.sections
-    - navigation.top
-    - navigation.footer
-    - search.highlight
-    - content.code.copy
-    - content.action.edit
+  name: windmill
 
 markdown_extensions:
   - tables
@@ -50,7 +31,7 @@ extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/llvm.min.js
   - js/modest-hljs.js
 extra_css:
-  - css/modest-hljs.css
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css
 
 hooks:
   - misc/mkdocs/repo_links.py

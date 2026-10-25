@@ -28,7 +28,9 @@ hljs.registerLanguage('modest', function (hljs) {
 });
 
 function highlightCode() {
-  document.querySelectorAll('pre code[class*="language-"]:not(.hljs)').forEach(function (el) {
+  // data-highlighted is set by hljs 11 only: blocks a theme's bundled older
+  // hljs already coloured (without the Modest grammar) are redone here
+  document.querySelectorAll('pre code[class*="language-"]:not([data-highlighted])').forEach(function (el) {
     hljs.highlightElement(el);
   });
 }
