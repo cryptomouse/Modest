@@ -18,7 +18,8 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  # queue deploys instead of cancelling: a cancelled run leaves the old site up
+  cancel-in-progress: false
 
 jobs:
   build:
