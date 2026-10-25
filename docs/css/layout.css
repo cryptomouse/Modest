@@ -1,0 +1,2 @@
+/* windmill caps the article at 700px; widen it by 20% */
+.wm-page-content { max-width: 840px; }

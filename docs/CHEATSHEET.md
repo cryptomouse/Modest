@@ -701,7 +701,7 @@ type Vec2 = @public {
 
 type Color = @layout("union") {
 	rgba: Word32
-	r: Word8
+	component: [4]Word8
 }
 ```
 

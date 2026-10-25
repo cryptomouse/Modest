@@ -35,6 +35,7 @@ extra_javascript:
 extra_css:
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/docco.min.css
   - css/code.css
+  - css/layout.css
 
 hooks:
   - misc/mkdocs/repo_links.py
