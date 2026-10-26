@@ -24,6 +24,10 @@ it says so.
   follow each other line by line.
 - A comment or annotation that belongs to a definition sits right above
   it, with no empty line between; the empty lines go above the comment.
+- When a function ends and the next function is preceded by comments or
+  annotations, they are separated by **exactly one empty line** (not one
+  or two, as between bare function definitions) — the comment block
+  already sets the next function apart.
 - At the end of a file — **two empty lines**, whatever the last line is:
   the last line is followed by exactly one more newline (`}\n\n`), which an
   editor shows as two empty lines.
@@ -49,6 +53,12 @@ func distance (a: Point, b: Point) -> Float64 {
 	let dx = a.x - b.x  // x delta
 	let dy = a.y - b.y  // y delta
 	return sqrt(dx*dx + dy*dy)
+}
+
+// true if p lies at the origin
+@inline
+func isOrigin (p: Point) -> Bool {
+	return p.x == 0.0 and p.y == 0.0
 }
 ```
 

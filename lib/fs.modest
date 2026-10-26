@@ -3,8 +3,12 @@
 // What is at a path: a file, a directory, nothing, ... - without
 // struct stat and the S_IS* macros.  Darwin only, like libc/stat.
 
+pragma c_include "dirent.h"
+
 include "libc/ctypes64"
 include "libc/stat"
+include "libc/stdio"
+include "libc/unistd"
 
 
 // kind of a file system object
@@ -30,6 +34,28 @@ const errNotdir = Int32 20 // ENOTDIR: a path component is not a directory
 // errno location on Darwin; libc/errno binds the glibc one (BUG#107)
 @extern("__error")
 func errnoLocation () -> *Int32
+
+// directory stream (Darwin, 64-bit inodes); lib/dirent has the glibc layout
+@extern("DIR")
+type Dir
+
+@alias("struct dirent", backend="c11")
+@c_no_print
+type Dirent = {
+	@alias("d_ino") ino: Nat64
+	@alias("d_seekoff") seekoff: Nat64
+	@alias("d_reclen") reclen: Nat16
+	@alias("d_namlen") namlen: Nat16
+	@alias("d_type") type: Nat8
+	@alias("d_name") name: [1024]Char8
+}
+
+@extern @c_no_print
+func opendir (path: *Str8) -> *Dir
+@extern @c_no_print
+func readdir (dir: *Dir) -> *Dirent
+@extern @c_no_print
+func closedir (dir: *Dir) -> @unused Int
 
 
 // kind of what stat/lstat returned r for
@@ -125,4 +151,61 @@ public func mkdirAll (path: *Str8, mode: Word16) -> Bool {
 	return false
 }
 
+
+// is name "." or ".."
+func isDotName (name: *Str8) -> Bool {
+	if name[0] != "." {
+		return false
+	}
+	return name[1] == "\x00" or (name[1] == "." and name[2] == "\x00")
+}
+
+
+// remove everything inside directory path; false on the first failure
+func removeEntries (path: *Str8) -> Bool {
+	var buf: [pathMax]Char8
+	// a pass may miss entries when the directory changes under readdir,
+	// so pass again until one finds nothing left
+	while true {
+		let dir = opendir(path)
+		if dir == nil {
+			return false
+		}
+		var removed = Nat32 0
+		var e = readdir(dir)
+		while e != nil {
+			if not isDotName(&e.name) {
+				let n = snprintf(&buf, SizeT pathMax, "%s/%s", path, &e.name)
+				if n < 0 or Nat32 n >= pathMax or not removeAll(&buf) {
+					closedir(dir)
+					return false
+				}
+				removed += 1
+			}
+			e = readdir(dir)
+		}
+		closedir(dir)
+		if removed == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+
+// remove path with everything under it, like rm -rf; a symbolic link is
+// removed itself, never followed; true if nothing is at path afterwards
+public func removeAll (path: *Str8) -> Bool {
+	let k = kindNoFollow(path)
+	if k == kindNone {
+		return true
+	}
+	if k == kindDir {
+		if not removeEntries(path) {
+			return false
+		}
+		return rmdir(path) == 0
+	}
+	return unlink(path) == 0
+}
 

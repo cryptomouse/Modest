@@ -1,0 +1,135 @@
+// tmp.modest
+//
+// Temporary directories.  A directory gets a unique random name and is
+// created atomically, accessible to its owner only (0700) - so the names
+// inside it are free: nobody else can race for them, put anything there
+// under any name.  Removing the directory removes everything in it.
+// Darwin only, like lib/fs.
+
+include "libc/ctypes64"
+include "libc/stdlib"
+
+import "fs"
+
+
+// a temporary directory; the default value (all zero) is no directory
+public type Dir = {
+	path: [fs.pathMax]Char8
+}
+
+
+@extern
+func mkdtemp (template: *Str8) -> *Str8
+
+
+// create a temporary directory in base(); see createIn
+public func create (dir: *Dir, prefix: *Str8) -> Bool {
+	return createIn(dir, base(), prefix)
+}
+
+// put the path of name inside the directory into buf; false if there is
+// no directory or the path does not fit (buf is then "")
+public func join (dir: *Dir, name: *Str8, buf: *[fs.pathMax]Char8) -> Bool {
+	buf[0] = "\x00"
+	if dir.path[0] == "\x00" {
+		return false
+	}
+	var i = put(buf, 0, &dir.path)
+	i = put(buf, i, "/")
+	i = put(buf, i, name)
+	if i == fs.pathMax {
+		buf[0] = "\x00"
+		return false
+	}
+	return true
+}
+
+
+// remove the directory with everything in it; true if it is gone (or
+// there was none), and dir is then no directory
+public func remove (dir: *Dir) -> Bool {
+	if dir.path[0] == "\x00" {
+		return true
+	}
+	if not fs.removeAll(&dir.path) {
+		return false
+	}
+	dir.path[0] = "\x00"
+	return true
+}
+
+//
+//
+//
+
+// where temporary directories go by default: $TMPDIR, or /tmp
+public func base () -> *Str8 {
+	let env = getenv("TMPDIR")
+	if env != nil and env[0] != "\x00" {
+		return env
+	}
+	return "/tmp"
+}
+
+// path of the directory; "" if there is none
+public func path (dir: *Dir) -> *Str8 {
+	return &dir.path
+}
+
+// create a temporary directory in parent, named prefix + 6 random
+// characters; false if it cannot be created (dir is then no directory).
+// The prefix is part of a name, so it may not contain '/'
+public func createIn (dir: *Dir, parent: *Str8, prefix: *Str8) -> Bool {
+	dir.path[0] = "\x00"
+	if parent[0] == "\x00" {
+		return false
+	}
+	var k = Nat32 0
+	while prefix[k] != "\x00" {
+		if prefix[k] == "/" {
+			return false
+		}
+		k += 1
+	}
+
+	var i = put(&dir.path, 0, parent)
+	if i == fs.pathMax {
+		dir.path[0] = "\x00"
+		return false
+	}
+	// exactly one '/' between parent and the name, however parent ends
+	while i > 1 and dir.path[i - 1] == "/" {
+		i -= 1
+	}
+	if dir.path[i - 1] != "/" {
+		i = put(&dir.path, i, "/")
+	}
+	i = put(&dir.path, i, prefix)
+	i = put(&dir.path, i, "XXXXXX")  // mkdtemp replaces these
+	if i == fs.pathMax or mkdtemp(&dir.path) == nil {
+		dir.path[0] = "\x00"
+		return false
+	}
+	return true
+}
+
+// copy s into buf from position i on, with the terminating '\0';
+// position of that '\0', or fs.pathMax if it does not fit
+func put (buf: *[fs.pathMax]Char8, i: Nat32, s: *Str8) -> Nat32 {
+	if i >= fs.pathMax {
+		return fs.pathMax
+	}
+	var j = i
+	var k = Nat32 0
+	while s[k] != "\x00" {
+		if j + 1 >= fs.pathMax {
+			return fs.pathMax
+		}
+		buf[j] = s[k]
+		j += 1
+		k += 1
+	}
+	buf[j] = "\x00"
+	return j
+}
+

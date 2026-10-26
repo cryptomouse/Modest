@@ -29,6 +29,7 @@ markdown_extensions:
 
 # Pygments has no Modest lexer: code blocks are highlighted client-side
 extra_javascript:
+  - js/hljs-theme-off.js
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/llvm.min.js
   - js/modest-hljs.js

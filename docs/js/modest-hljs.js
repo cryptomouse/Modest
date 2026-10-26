@@ -1,6 +1,7 @@
 // Syntax highlighting for code blocks (highlight.js + custom Modest grammar).
 // Pygments has no Modest lexer, so highlighting is done client-side for every
-// language; colours come from Material's --md-code-hl-* variables (modest-hljs.css).
+// language; colours come from the docco theme (mkdocs.yml extra_css).
+// The theme's own old hljs is switched off by hljs-theme-off.js.
 
 hljs.registerLanguage('modest', function (hljs) {
   return {
@@ -28,8 +29,8 @@ hljs.registerLanguage('modest', function (hljs) {
 });
 
 function highlightCode() {
-  // data-highlighted is set by hljs 11 only: blocks a theme's bundled older
-  // hljs already coloured (without the Modest grammar) are redone here
+  // data-highlighted (set by hljs 11) skips blocks already done on an
+  // earlier instant-navigation pass
   document.querySelectorAll('pre code[class*="language-"]:not([data-highlighted])').forEach(function (el) {
     hljs.highlightElement(el);
   });

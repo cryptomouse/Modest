@@ -1,0 +1,310 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: tmp create
+// EXPECT-OUT: passed: tmp remove
+// EXPECT-OUT: passed: tmp createIn
+// EXPECT-OUT: passed: tmp refuse
+// LINK: fs.modest
+// LINK: tmp.modest
+//
+// lib/tmp: directories it creates in $TMPDIR or /tmp, filled with files,
+// subdirectories and symbolic links, then removed with all of it.
+
+include "libc/ctypes64"
+include "libc/stat"
+include "libc/stdio"
+include "libc/stdlib"
+include "libc/string"
+include "libc/unistd"
+
+import "fs"
+import "tmp"
+
+
+// create a file at path holding text
+func writeFile (path: *Str8, text: *Str8) -> Bool {
+	let fp = fopen(path, "w")
+	if fp == nil {
+		printf("cannot create \"%s\"\n", path)
+		return false
+	}
+	fputs(text, fp)
+	fclose(fp)
+	return true
+}
+
+
+// is prefix the beginning of s
+func startsWith (s: *Str8, prefix: *Str8) -> Bool {
+	return strncmp(s, prefix, strlen(prefix)) == 0
+}
+
+
+// does path end with name and 6 more characters, not the "XXXXXX" of
+// the template
+func hasRandomName (path: *Str8, name: *Str8) -> Bool {
+	let n = strlen(path)
+	let m = strlen(name)
+	if n < m + 6 {
+		return false
+	}
+	var i = SizeT 0
+	while i < m {
+		if path[n - 6 - m + i] != name[i] {
+			return false
+		}
+		i += 1
+	}
+	return strcmp(&path[n - 6:n], "XXXXXX") != 0
+}
+
+
+func testCreate () -> Bool {
+	var d: tmp.Dir
+	if not tmp.create(&d, "modest_tmp_test_") {
+		printf("create failed in \"%s\"\n", tmp.base())
+		return false
+	}
+	let p = tmp.path(&d)
+
+	var ok = true
+	if not startsWith(p, tmp.base()) {
+		printf("\"%s\" is not in \"%s\"\n", p, tmp.base())
+		ok = false
+	}
+	if not hasRandomName(p, "/modest_tmp_test_") {
+		printf("bad name \"%s\"\n", p)
+		ok = false
+	}
+	if not fs.isDir(p) {
+		printf("\"%s\" is not a directory\n", p)
+		ok = false
+	}
+
+	// accessible to the owner only
+	var st: Stat
+	stat(p, &st)
+	if st.st_mode & 0x01FF != 0x01C0 {
+		printf("mode of \"%s\" is %o, expected 700\n", p, Nat32 st.st_mode)
+		ok = false
+	}
+
+	// a second one gets another name
+	var e: tmp.Dir
+	if not tmp.create(&e, "modest_tmp_test_") {
+		printf("second create failed\n")
+		ok = false
+	} else if strcmp(tmp.path(&e), p) == 0 {
+		printf("both are \"%s\"\n", p)
+		ok = false
+	}
+
+	var file: [fs.pathMax]Char8
+	if not tmp.join(&d, "out.c", &file) {
+		printf("join failed\n")
+		ok = false
+	}
+	var expected: [fs.pathMax]Char8
+	snprintf(&expected, SizeT fs.pathMax, "%s/out.c", p)
+	if strcmp(&file, &expected) != 0 {
+		printf("join = \"%s\", expected \"%s\"\n", &file, &expected)
+		ok = false
+	}
+	ok = writeFile(&file, "int x;\n") and ok
+	ok = fs.isFile(&file) and ok
+
+	ok = tmp.remove(&d) and ok
+	ok = tmp.remove(&e) and ok
+	return ok
+}
+
+
+func testRemove () -> Bool {
+	var d: tmp.Dir
+	if not tmp.create(&d, "modest_tmp_test_") {
+		printf("create failed\n")
+		return false
+	}
+	var ok = true
+	var buf: [fs.pathMax]Char8
+
+	// a tree: files, nested directories, an empty one
+	tmp.join(&d, "a/b/c", &buf)
+	ok = fs.mkdirAll(&buf, 0x01ED) and ok
+	tmp.join(&d, "empty", &buf)
+	ok = fs.mkdirAll(&buf, 0x01ED) and ok
+	tmp.join(&d, "a/b/c/deep.txt", &buf)
+	ok = writeFile(&buf, "deep\n") and ok
+	tmp.join(&d, "a/top.txt", &buf)
+	ok = writeFile(&buf, "top\n") and ok
+
+	// enough entries in one directory for readdir to take several reads
+	var name: [64]Char8
+	var i = 0
+	while i < 300 {
+		snprintf(&name, 64, "a/many_%d", i)
+		tmp.join(&d, &name, &buf)
+		ok = writeFile(&buf, "") and ok
+		i += 1
+	}
+
+	// symbolic links are removed themselves, never followed
+	var outside: tmp.Dir
+	if not tmp.create(&outside, "modest_tmp_test_out_") {
+		printf("create failed\n")
+		return false
+	}
+	var keep: [fs.pathMax]Char8
+	tmp.join(&outside, "keep.txt", &keep)
+	ok = writeFile(&keep, "keep\n") and ok
+	tmp.join(&d, "linkToFile", &buf)
+	ok = symlink(&keep, &buf) == 0 and ok
+	tmp.join(&d, "linkToDir", &buf)
+	ok = symlink(tmp.path(&outside), &buf) == 0 and ok
+	tmp.join(&d, "dangling", &buf)
+	ok = symlink("/nonexistent", &buf) == 0 and ok
+	if not ok {
+		printf("cannot build the tree\n")
+	}
+
+	var where: [fs.pathMax]Char8
+	strcpy(&where, tmp.path(&d))
+	if not tmp.remove(&d) {
+		printf("remove(\"%s\") failed\n", &where)
+		ok = false
+	}
+	if fs.kindNoFollow(&where) != fs.kindNone {
+		printf("\"%s\" is still there\n", &where)
+		ok = false
+	}
+	if tmp.path(&d)[0] != "\x00" {
+		printf("path after remove is \"%s\"\n", tmp.path(&d))
+		ok = false
+	}
+	if not fs.isFile(&keep) {
+		printf("\"%s\" was removed through a link\n", &keep)
+		ok = false
+	}
+
+	// nothing to remove any more
+	if not tmp.remove(&d) {
+		printf("second remove failed\n")
+		ok = false
+	}
+	ok = tmp.remove(&outside) and ok
+	return ok
+}
+
+
+func testCreateIn () -> Bool {
+	var parent: tmp.Dir
+	if not tmp.create(&parent, "modest_tmp_test_") {
+		printf("create failed\n")
+		return false
+	}
+	var ok = true
+
+	// trailing slashes of the parent do not double
+	var slashed: [fs.pathMax]Char8
+	snprintf(&slashed, SizeT fs.pathMax, "%s//", tmp.path(&parent))
+	var d: tmp.Dir
+	if not tmp.createIn(&d, &slashed, "inner_") {
+		printf("createIn(\"%s\") failed\n", &slashed)
+		ok = false
+	}
+	var expected: [fs.pathMax]Char8
+	snprintf(&expected, SizeT fs.pathMax, "%s/inner_", tmp.path(&parent))
+	if not startsWith(tmp.path(&d), &expected) or strlen(tmp.path(&d)) != strlen(&expected) + 6 {
+		printf("createIn made \"%s\"\n", tmp.path(&d))
+		ok = false
+	}
+	ok = fs.isDir(tmp.path(&d)) and ok
+
+	// removing the parent takes the inner one along
+	ok = tmp.remove(&parent) and ok
+	ok = not fs.exists(tmp.path(&d)) and ok
+	return ok
+}
+
+
+func testRefuse () -> Bool {
+	var ok = true
+	var d: tmp.Dir
+
+	if tmp.create(&d, "sub/name_") {
+		printf("a prefix with '/' was accepted: \"%s\"\n", tmp.path(&d))
+		tmp.remove(&d)
+		ok = false
+	}
+	if tmp.createIn(&d, "", "x_") {
+		printf("an empty parent was accepted\n")
+		tmp.remove(&d)
+		ok = false
+	}
+	if tmp.createIn(&d, "/nonexistent", "x_") {
+		printf("a missing parent was accepted\n")
+		ok = false
+	}
+
+	// a name that does not fit into a path
+	var tooLong: [fs.pathMax + 16]Char8
+	memset(&tooLong, 0x61, SizeT fs.pathMax + 15)
+	if tmp.create(&d, &tooLong) {
+		printf("a too long prefix was accepted\n")
+		tmp.remove(&d)
+		ok = false
+	}
+	if tmp.path(&d)[0] != "\x00" {
+		printf("path after a failure is \"%s\"\n", tmp.path(&d))
+		ok = false
+	}
+
+	// no directory: nothing to join, nothing to remove
+	var buf: [fs.pathMax]Char8
+	if tmp.join(&d, "x", &buf) {
+		printf("join without a directory gave \"%s\"\n", &buf)
+		ok = false
+	}
+	ok = tmp.remove(&d) and ok
+
+	if not tmp.create(&d, "modest_tmp_test_") {
+		printf("create failed\n")
+		return false
+	}
+	if tmp.join(&d, &tooLong, &buf) or buf[0] != "\x00" {
+		printf("join of a too long name succeeded\n")
+		ok = false
+	}
+	ok = tmp.remove(&d) and ok
+	return ok
+}
+
+
+func main () -> Int {
+	if not testCreate() {
+		printf("failed: tmp create\n")
+		return exitFailure
+	}
+	printf("passed: tmp create\n")
+
+	if not testRemove() {
+		printf("failed: tmp remove\n")
+		return exitFailure
+	}
+	printf("passed: tmp remove\n")
+
+	if not testCreateIn() {
+		printf("failed: tmp createIn\n")
+		return exitFailure
+	}
+	printf("passed: tmp createIn\n")
+
+	if not testRefuse() {
+		printf("failed: tmp refuse\n")
+		return exitFailure
+	}
+	printf("passed: tmp refuse\n")
+	return exitSuccess
+}
+
