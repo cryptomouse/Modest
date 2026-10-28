@@ -156,13 +156,13 @@ func xxh64 (input: *[]Word8, length: SizeT, seed: Word64) -> Word64 {
 
 		while remaining >= 32 {
 			acc1 = round(acc1, read64(input, offset))
-			offset = offset + 8
+			offset += 8
 			acc2 = round(acc2, read64(input, offset))
-			offset = offset + 8
+			offset += 8
 			acc3 = round(acc3, read64(input, offset))
-			offset = offset + 8
+			offset += 8
 			acc4 = round(acc4, read64(input, offset))
-			offset = offset + 8
+			offset += 8
 
 			remaining = remaining - 32
 		}
@@ -187,7 +187,7 @@ func xxh64 (input: *[]Word8, length: SizeT, seed: Word64) -> Word64 {
 		hash = mul(hash, prime64_1)
 		hash = add(hash, prime64_4)
 
-		offset = offset + 8
+		offset += 8
 		remaining = remaining - 8
 	}
 

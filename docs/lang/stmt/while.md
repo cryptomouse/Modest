@@ -34,7 +34,7 @@ while i < 10 {
 // loop with early exit
 while true {
 	let c = getchar()
-	if c == EOF {
+	if c == eof {
 		break
 	}
 	putchar(c)

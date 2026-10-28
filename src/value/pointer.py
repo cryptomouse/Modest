@@ -12,13 +12,8 @@ def array_can2(a, b):
 
 	return Type.eq(a, b)
 
-def value_pointer_can(to, from_type, method, ti):
-	res = value_pointer_can2(to, from_type, method, ti)
-	if res == False:
-		info("Cannot cons pointer!! from %s to %s" % (from_type, to), ti)
-	return res
 
-def value_pointer_can2(to, from_type, method, ti):
+def value_pointer_can(to, from_type, method, ti):
 	assert(to.is_pointer())
 
 	# implicit region

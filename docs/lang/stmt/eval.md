@@ -18,9 +18,16 @@ Evaluates an expression for its side effects; the result is discarded.
 ## Examples
 
 ```modest
-printf("Hi there!\n")     // result of printf discarded
+func hi () -> Unit {
+	printf("Hi there!\n")     // result of printf discarded
+}
+
+func foo () -> Unit {
+	2 + 2  // explicitly discard expression result
+}
 
 func handler (payload: Ptr) -> Unit {
 	Unit payload          // explicitly discard unused parameter
 }
+
 ```

@@ -21,8 +21,11 @@ The type of a function: its parameter list and return type.
   only a *pointer to function*.
 - `&f` yields a pointer to function `f`; the pointer is called with the
   ordinary call syntax.
-- Parameter names are part of the notation but not of compatibility;
-  default values and `...` are allowed as in
+- Parameter names are part of the type, as record field names are: two
+  function types are compatible only if their parameters match in order,
+  name and type, and their return types match. `&f` with a parameter
+  `payload` does not convert to `*(data: Ptr) -> Unit`.
+- Default values and `...` are allowed as in
   [function definitions](../def/func.md).
 
 ## Examples

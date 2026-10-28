@@ -22,7 +22,7 @@ Operation classes:
 | equ | `==` `!=` |
 | ord | `<` `>` `<=` `>=` |
 | logic | `and` `or` `not` (Bool only) |
-| bitwise | `&` `\|` `^` `~` `<<` `>>` (Word only) |
+| bitwise | `&` `|` `^` `~` `<<` `>>` (Word only) |
 | math | `+` `-` `*` `/`, unary `-` |
 | rem | `%` |
 
