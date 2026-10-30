@@ -245,41 +245,6 @@ a == b        // llvm: false      c11: true
   `EXPECTED-FAIL(llvm)`. It passes under c11 on purpose — if that backend
   ever stops emitting a compound literal, the test reports it.
 
-## BUG#30: C backend does narrow `Word` operations at `int` width
-
-```modest
-var b: Word8 = 0x81
-b << 1        // c11: 0x102     llvm: 0x02
-
-var f: Word8 = 0xF0
-~f            // c11: 0xFFFFFF0F llvm: 0x0F
-```
-
-- `docs/lang/value/binary.md` gives the result of a bitwise or shift
-  operation the operand's own type, and `docs/lang/value/unary.md` does the
-  same for `~`. A `Word8` result cannot hold 0x102.
-- The C backend emits the expression as C and lets C's integer promotions
-  apply: `uint8_t` becomes `int`, the operation happens at 32 bits, and the
-  bits that left the type are still there. The LLVM backend does the
-  operation at `i8` and truncates by construction, so the two disagree.
-- Affects `<<` and `~`/`not` on `Word8` and `Word16` — every operation that
-  can produce a bit outside the operand width. `&`, `|`, `^` and `>>`
-  cannot, and agree.
-- Hidden by assignment: `var r: Word8 = b << 1` is 0x02 under both
-  backends, because C truncates on the store. It shows where the
-  expression is used directly — in a comparison, as a call argument, as an
-  operand of a wider construction.
-- The same promotion applies to `Int8`/`Int16` arithmetic, where the result
-  is a signed overflow rather than an extra bit: `Int8 100 * 2` is 200 in C
-  and -56 in LLVM IR. What Modest wants there is a separate question — the
-  language has not said whether signed overflow wraps — so this entry
-  covers the `Word` case, where wrapping is the whole meaning of the type.
-- Fix: cast the result of a narrow `Word` operation back to its own type in
-  `cvalue_binary` / the unary path — `(uint8_t)(b << 1)` — or hoist it into
-  a temporary of the operand type.
-- Coverage: `tests/lang/value/binary/narrow_width.modest`, marked
-  `EXPECTED-FAIL(c11)`.
-
 ## BUG#35: Backends disagree about `!=` on a NaN
 
 ```modest

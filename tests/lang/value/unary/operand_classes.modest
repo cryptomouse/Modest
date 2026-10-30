@@ -14,7 +14,7 @@
 // particular the compile-time folding each path does on its own.
 //
 // Run-time `~` is at Word32 and run-time `-` on an integer only: `~` on a
-// narrow Word under C (BUG#30) and `-` on a float under LLVM (BUG#34) have
+// narrow Word (once BUG#30 under C) and `-` on a float under LLVM (BUG#34) have
 // their own files, and would only hide what this one checks.
 //
 // Guards BUG#64 (fixed 2026-09-29).

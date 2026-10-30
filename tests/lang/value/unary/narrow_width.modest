@@ -5,7 +5,6 @@
 // EXPECT-OUT: passed: word16
 // EXPECT-OUT: passed: stored
 // EXPECT-OUT: passed: narrow width
-// EXPECTED-FAIL(c11): BUG#30 narrow Word operations are done at int width
 //
 // `~` on a Word8 or a Word16.
 //
@@ -13,10 +12,11 @@
 // docs/lang/value/unary.md — so `~` on a Word8 is a Word8, and the answer
 // is eight bits wide.  The complement of `0xF0` is `0x0F` and nothing else.
 //
-// The C backend hands the expression to C, where a `uint8_t` is promoted to
-// `int` before the operator sees it: `~0xF0` comes back `0xFFFFFF0F`, with
-// twenty-four bits that belong to no Modest type.  The LLVM backend does
-// the operation at `i8` and truncates by construction, so the two disagree.
+// The C backend used to hand the expression to C as is, where a `uint8_t`
+// is promoted to `int` before the operator sees it: `~0xF0` came back
+// `0xFFFFFF0F`, with twenty-four bits that belong to no Modest type.  The
+// LLVM backend does the operation at `i8` and truncates by construction, so
+// the two disagreed.
 //
 // Storing the result into a variable of the operand type hides it — C
 // truncates on the store — so every check below uses the expression
@@ -27,6 +27,8 @@
 // The same promotion is what binary/narrow_width.modest reports for `<<`;
 // this is the unary half of one bug.  bitwise.modest stays at Word32 and
 // Word64 for exactly this reason.
+//
+// Guards BUG#30 (fixed 2026-10-30).
 
 include "libc/ctypes64"
 include "libc/stdio"

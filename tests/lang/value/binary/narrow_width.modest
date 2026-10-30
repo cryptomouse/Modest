@@ -2,7 +2,6 @@
 // BACKENDS: c11, llvm, modest
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: narrow width
-// EXPECTED-FAIL(c11): BUG#30 narrow Word operations are done at int width
 //
 // An operation on WordX gives a WordX — the operand's own width, says
 // docs/lang/value/binary.md, and nothing wider.  Every check below is a
@@ -10,12 +9,15 @@
 // operation truncates back into it: a bit shifted off the top of a Word8,
 // or the complement of one.
 //
-// The LLVM backend does the operation at the operand's width and agrees.
-// The C backend hands the expression to C, where a `uint8_t` is promoted to
-// `int` first, and the extra bits survive: `0x81 << 1` comes back 0x102 and
-// `~0xF0` comes back 0xFFFFFF0F.  Storing the result into a variable of the
-// type hides it — C truncates on assignment — so the difference only shows
-// where the expression is used directly, which is what this file does.
+// The LLVM backend does the operation at the operand's width.  The C
+// backend used to hand the expression to C as is, where a `uint8_t` is
+// promoted to `int` first, and the extra bits survived: `0x81 << 1` came
+// back 0x102 and `~0xF0` came back 0xFFFFFF0F.  Storing the result into a
+// variable of the type hides it — C truncates on assignment — so the
+// difference only shows where the expression is used directly, which is
+// what this file does.
+//
+// Guards BUG#30 (fixed 2026-10-30).
 
 include "libc/ctypes64"
 include "libc/stdio"

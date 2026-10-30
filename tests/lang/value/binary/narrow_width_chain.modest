@@ -1,0 +1,111 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: narrow width chain
+//
+// A narrow Word result used as the operand of the next operation.
+//
+// narrow_width.modest compares `b << 1` and `~b` with a literal — the bits
+// that leave the type are caught there by `!=`.  Here they are caught by
+// what comes after: a right shift pulls them back down into the type, and
+// a wider construction keeps them in the value.  `(Word8 0x81 << 4) >> 4`
+// is 0x01 — the 0x8 shifted off the top is gone, there is nothing to shift
+// back.  Done at `int` width it is 0x81.
+//
+// This is the case the C backend's fix has to hold for: the narrow result
+// is cast back to its own type where it is made, so whatever consumes it
+// sees eight bits, not thirty-two.  Word32 is in the last check to show
+// that a type as wide as `int` is left alone.
+//
+// Guards BUG#30 (fixed 2026-10-30).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func testShiftThenShiftBack () -> Bool {
+	var b: Word8 = 0x81
+	if (b << 4) >> 4 != 0x01 {
+		printf("(Word8 0x81 << 4) >> 4 = 0x%x, expected 0x01\n", Word32((b << 4) >> 4))
+		return false
+	}
+
+	var h: Word16 = 0x8001
+	if (h << 8) >> 8 != 0x0001 {
+		printf("(Word16 0x8001 << 8) >> 8 = 0x%x, expected 0x0001\n", Word32((h << 8) >> 8))
+		return false
+	}
+
+	return true
+}
+
+
+func testComplementThenShift () -> Bool {
+	var b: Word8 = 0x0F
+	if ~b >> 4 != 0x0F {
+		printf("~(Word8 0x0F) >> 4 = 0x%x, expected 0x0F\n", Word32(~b >> 4))
+		return false
+	}
+
+	// `~` over a shift: both operations leave the type, one after the other.
+	var c: Word8 = 0xC0
+	if ~(c << 1) != 0x7F {
+		printf("~(Word8 0xC0 << 1) = 0x%x, expected 0x7F\n", Word32 ~(c << 1))
+		return false
+	}
+
+	return true
+}
+
+
+func testWiderConstruction () -> Bool {
+	var b: Word8 = 0x81
+	var w = Word32(b << 1)
+	if w != 0x02 {
+		printf("Word32(Word8 0x81 << 1) = 0x%x, expected 0x02\n", w)
+		return false
+	}
+
+	var f: Word16 = 0xF000
+	var v = Word32 ~f
+	if v != 0x0FFF {
+		printf("Word32 ~(Word16 0xF000) = 0x%x, expected 0x0FFF\n", v)
+		return false
+	}
+
+	return true
+}
+
+
+func testWord32Unchanged () -> Bool {
+	var w: Word32 = 0x80000001
+	if (w << 1) >> 1 != 0x00000001 {
+		printf("(Word32 0x80000001 << 1) >> 1 = 0x%x, expected 0x1\n", (w << 1) >> 1)
+		return false
+	}
+
+	if ~w != 0x7FFFFFFE {
+		printf("~(Word32 0x80000001) = 0x%x, expected 0x7FFFFFFE\n", ~w)
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testShiftThenShiftBack() and result
+	result = testComplementThenShift() and result
+	result = testWiderConstruction() and result
+	result = testWord32Unchanged() and result
+
+	if not result {
+		printf("failed: narrow width chain\n")
+		return exitFailure
+	}
+
+	printf("passed: narrow width chain\n")
+	return exitSuccess
+}

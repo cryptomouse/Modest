@@ -1325,6 +1325,17 @@ def do_cvalue_shl(x, ctx):
 
 	right = do_cvalue(x.right)
 	cv = CValueShiftLeft(left, right)
+	return cvalue_narrow_word(x, cv)
+
+
+# (!) C продвигает uint8_t/uint16_t до int раньше операции, и биты, ушедшие
+# за ширину WordX, остаются в результате: '(uint8_t)0x81 << 1' это 0x102,
+# '~(uint8_t)0xF0' это 0xFFFFFF0F. У нас результат имеет тип операнда,
+# поэтому возвращаем его в эту ширину сами. Присваивание прятало это (C
+# обрезает при записи), а в сравнении или аргументе вызова - нет
+def cvalue_narrow_word(x, cv):
+	if x.type.is_word() and x.type.width < 32:
+		return CValueCast(do_ctype(x.type), cv)
 	return cv
 
 
@@ -1383,7 +1394,7 @@ def do_cvalue_not(x, ctx):
 	v = do_cvalue(x.value)
 	if x.value.type.is_bool():
 		return CValueLogicalNot(v)
-	return CValueBitwiseNot(v)
+	return cvalue_narrow_word(x, CValueBitwiseNot(v))
 
 
 def do_cvalue_neg(x, ctx):
@@ -1711,7 +1722,7 @@ def do_cvalue_bin_expr(x, ctx):
 	if x.op == HLIR_VALUE_OP_MUL: return CValueMul(left, right)
 	if x.op == HLIR_VALUE_OP_DIV: return CValueDiv(left, right)
 	if x.op == HLIR_VALUE_OP_REM: return CValueMod(left, right)
-	if x.op == HLIR_VALUE_OP_SHL: return CValueShiftLeft(left, right)
+	if x.op == HLIR_VALUE_OP_SHL: return cvalue_narrow_word(x, CValueShiftLeft(left, right))
 	if x.op == HLIR_VALUE_OP_SHR: return CValueShiftRight(left, right)
 	if x.op == HLIR_VALUE_OP_LE: return CValueLE(left, right)
 	if x.op == HLIR_VALUE_OP_GE: return CValueGE(left, right)
