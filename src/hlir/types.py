@@ -1222,34 +1222,6 @@ class Type(Entity):
 
 
 
-
-	# получает на вход два типа GenericRecord
-	# и создает третий тип который является общим для двух входных
-	# (тк в случае записей ни один из двух может не подходить как общий)
-	@staticmethod
-	def select_common_record_type(a, b, ti):
-		#print("select_common_record_type")
-		if len(a.fields) != len(b.fields):
-			return None
-
-		fields = []
-		for fieldA, fieldB in zip(a.fields, b.fields):
-			if fieldA.id.str != fieldB.id.str:
-				return None
-
-			fieldId = fieldA.id
-			fieldType = Type.select_common_type(fieldA.type, fieldB.type, ti)
-			if fieldType == None:
-				return TypeBad(ti=ti)
-
-			newField = Field(fieldId, fieldType, init_value=ValueUndefined(fieldType), ti=fieldId.ti)
-			fields.append(newField)
-
-		newRecord = TypeRecord(fields, ti=a.ti)
-		newRecord.generic = True
-		return newRecord
-
-
 	# выбирает общий тип для двух входных
 	# CAN RETURN NONE!
 	@staticmethod
@@ -1283,25 +1255,9 @@ class Type(Entity):
 		if a.__class__.__name__ == b.__class__.__name__:
 			if a.is_generic() and b.is_generic():
 				if a.is_record():
-					return Type.select_common_record_type(a, b, ti)
+					return Type.select_common_type_record(a, b, ti)
 				elif a.is_array():
-					# TODO: тут все плохо, нужно поправить, тк все может однажды навернуться!
-					if a.volume.asset == b.volume.asset:
-						if a.of.is_generic():
-							return b
-						if b.of.is_generic():
-							return a
-					elif a.volume.asset < b.volume.asset:
-						return b
-
-					return a
-
-	#			elif a.is_rational():
-	#				if b.is_integer():
-	#					return a
-	#			elif b.is_rational():
-	#				if a.is_integer():
-	#					return b
+					return Type.select_common_type_array(a, b, ti)
 
 				else:
 					if a.width > b.width:
@@ -1419,6 +1375,46 @@ class Type(Entity):
 		from error import error
 		info("cannot select common type (`%s` & `%s`)" % (a.to_str(), b.to_str()), ti)
 		return None
+
+
+		# получает на вход два типа GenericRecord
+	# и создает третий тип который является общим для двух входных
+	# (тк в случае записей ни один из двух может не подходить как общий)
+	@staticmethod
+	def select_common_type_record(a, b, ti):
+		#from error import info
+		#info("select_common_type_record", ti)
+
+		fields = []
+		for fieldA, fieldB in zip(a.fields, b.fields):
+			if fieldA.id.str != fieldB.id.str:
+				return None
+
+			fieldId = fieldA.id
+			fieldType = Type.select_common_type(fieldA.type, fieldB.type, ti)
+			if fieldType == None:
+				return TypeBad(ti=ti)
+
+			newField = Field(fieldId, fieldType, init_value=ValueUndefined(fieldType), ti=fieldId.ti)
+			fields.append(newField)
+
+		newRecord = TypeRecord(fields, ti=a.ti)
+		newRecord.generic = True
+		return newRecord
+
+
+	def select_common_type_array(a, b, ti):
+		# TODO: тут все плохо, нужно поправить, тк все может однажды навернуться!
+		if a.volume.asset == b.volume.asset:
+			if a.of.is_generic():
+				return b
+			if b.of.is_generic():
+				return a
+		elif a.volume.asset < b.volume.asset:
+			return b
+
+		return a
+
 
 
 	def create_zero_literal(self, ti=None):

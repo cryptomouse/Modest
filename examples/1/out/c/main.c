@@ -3,13 +3,15 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include "fixed.h"
 //include "./lib"
-static char *cmd[7] = {"abc", "def", "zyx", "123", "456", "780", "0"};
+struct r {__fixed32 a; __fixed32 b;};
+static struct r t[2] = {
+	(struct r){.a = FIXED32(1.0, 16)},
+	(struct r){.a = FIXED32(1.0, 16), .b = FIXED32(0.5, 16)}
+};
 
 int32_t main(void) {
-	uint32_t i = 0;
-	char **paramline = &cmd[i];
-	printf("%s\n", paramline[0]);
 	return 0;
 }
 

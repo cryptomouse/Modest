@@ -4,19 +4,15 @@ include "libc/stdio"
 //include "./lib"
 
 
-@extern
-type Window
+type R = {a: Fixed32, b: Fixed32}
+var t: [2]R = [
+	{a = 1.0}
+	{a = 1.0, b = 0.5}
+]
 
-
-var cmd: [7]*Str8 = ["abc", "def", "zyx", "123", "456", "780", "0"]
 
 @nonstatic
 func main () -> Int32 {
-
-	var i: Nat32 = 0
-	var paramline: *[7 - i]*Str8 = &cmd[i:7]
-
-	printf("%s\n", paramline[0])
 
 	return 0
 }

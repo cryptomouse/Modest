@@ -6,21 +6,15 @@ include "libc/stdio"
 
 //include "./lib"
 
-@extern("SDL_Window")
-type Window
 
-
-var cmd: []*Str8 = ["abc", "def", "zyx", "123", "456", "780", "0"]
+type R = {a: Fixed32, b: Fixed32}
+var t: [2]R = [
+  {a = 1.0}
+  {a = 1.0, b = 0.5}
+]
 
 
 func main () -> Int32 {
-
-	var i: Nat32 = 0
-	var paramline = &cmd[i:]
-
-	printf("%s\n", paramline[0])
-
-	printf("sizeof(Window) = %d\n", sizeof(Window))
 
 	return 0
 }

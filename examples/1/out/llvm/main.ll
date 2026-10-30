@@ -46,6 +46,75 @@ declare i8* @llvm.stacksave()
 declare void @llvm.stackrestore(i8*)
 
 
+
+define internal %Fixed32 @__fixed32_mul(%Fixed32 %a, %Fixed32 %b, i8 %f) {
+	%1 = sext %Fixed32 %a to i64
+	%2 = sext %Fixed32 %b to i64
+	%3 = mul i64 %1, %2
+	%4 = zext i8 %f to i64
+	%5 = shl i64 1, %4
+	%6 = lshr i64 %5, 1
+	%7 = icmp slt i64 %3, 0
+	%8 = sub i64 %3, %6
+	%9 = add i64 %3, %6
+	%10 = select i1 %7, i64 %8, i64 %9
+	%11 = sdiv i64 %10, %5
+	%12 = trunc i64 %11 to %Fixed32
+	ret %Fixed32 %12
+}
+
+define internal %Fixed32 @__fixed32_div(%Fixed32 %a, %Fixed32 %b, i8 %f) {
+	%1 = sext %Fixed32 %a to i64
+	%2 = sext %Fixed32 %b to i64
+	%3 = zext i8 %f to i64
+	%4 = shl i64 1, %3
+	%5 = mul i64 %1, %4
+	%6 = sdiv i64 %2, 2
+	%7 = icmp slt i64 %1, 0
+	%8 = icmp slt i64 %2, 0
+	%9 = icmp eq i1 %7, %8
+	%10 = add i64 %5, %6
+	%11 = sub i64 %5, %6
+	%12 = select i1 %9, i64 %10, i64 %11
+	%13 = sdiv i64 %12, %2
+	%14 = trunc i64 %13 to %Fixed32
+	ret %Fixed32 %14
+}
+
+define internal %Fixed64 @__fixed64_mul(%Fixed64 %a, %Fixed64 %b, i8 %f) {
+	%1 = sext %Fixed64 %a to i128
+	%2 = sext %Fixed64 %b to i128
+	%3 = mul i128 %1, %2
+	%4 = zext i8 %f to i128
+	%5 = shl i128 1, %4
+	%6 = lshr i128 %5, 1
+	%7 = icmp slt i128 %3, 0
+	%8 = sub i128 %3, %6
+	%9 = add i128 %3, %6
+	%10 = select i1 %7, i128 %8, i128 %9
+	%11 = sdiv i128 %10, %5
+	%12 = trunc i128 %11 to %Fixed64
+	ret %Fixed64 %12
+}
+
+define internal %Fixed64 @__fixed64_div(%Fixed64 %a, %Fixed64 %b, i8 %f) {
+	%1 = sext %Fixed64 %a to i128
+	%2 = sext %Fixed64 %b to i128
+	%3 = zext i8 %f to i128
+	%4 = shl i128 1, %3
+	%5 = mul i128 %1, %4
+	%6 = sdiv i128 %2, 2
+	%7 = icmp slt i128 %1, 0
+	%8 = icmp slt i128 %2, 0
+	%9 = icmp eq i1 %7, %8
+	%10 = add i128 %5, %6
+	%11 = sub i128 %5, %6
+	%12 = select i1 %9, i128 %10, i128 %11
+	%13 = sdiv i128 %12, %2
+	%14 = trunc i128 %13 to %Fixed64
+	ret %Fixed64 %14
+}
+
 ; MODULE: main
 
 ; -- print includes --
@@ -134,47 +203,25 @@ declare void @perror(%ConstCharStr* %str)
 ; end from import "builtin"
 ; -- end print imports 'main' --
 ; -- strings --
-@.str1 = private constant [4 x i8] [i8 97, i8 98, i8 99, i8 0]
-@.str2 = private constant [4 x i8] [i8 100, i8 101, i8 102, i8 0]
-@.str3 = private constant [4 x i8] [i8 122, i8 121, i8 120, i8 0]
-@.str4 = private constant [4 x i8] [i8 49, i8 50, i8 51, i8 0]
-@.str5 = private constant [4 x i8] [i8 52, i8 53, i8 54, i8 0]
-@.str6 = private constant [4 x i8] [i8 55, i8 56, i8 48, i8 0]
-@.str7 = private constant [2 x i8] [i8 48, i8 0]
-@.str8 = private constant [4 x i8] [i8 37, i8 115, i8 10, i8 0]
 ; -- endstrings --
 
 ;include "./lib"
-%SDL_Window = type opaque;
-@cmd = internal global [7 x %Str8*] [
-	%Str8* bitcast ([4 x i8]* @.str1 to [0 x i8]*),
-	%Str8* bitcast ([4 x i8]* @.str2 to [0 x i8]*),
-	%Str8* bitcast ([4 x i8]* @.str3 to [0 x i8]*),
-	%Str8* bitcast ([4 x i8]* @.str4 to [0 x i8]*),
-	%Str8* bitcast ([4 x i8]* @.str5 to [0 x i8]*),
-	%Str8* bitcast ([4 x i8]* @.str6 to [0 x i8]*),
-	%Str8* bitcast ([2 x i8]* @.str7 to [0 x i8]*)
+%R = type {
+	%Fixed32,
+	%Fixed32
+};
+
+@t = internal global [2 x %R] [
+	%R {
+		%Fixed32 65536,
+		%Fixed32 0
+	},
+	%R {
+		%Fixed32 65536,
+		%Fixed32 32768
+	}
 ]
 define %Int32 @main() {
-	%i = alloca %Nat32, align 4
-	store %Nat32 0, %Nat32* %i
-	%1 = mul %Int32 1, 1
-	%2 = load %Nat32, %Nat32* %i
-	%3 = sub %Nat32 7, %2
-	%4 = mul %Nat32 %3, 1
-	%5 = mul %Nat32 %3, 8
-	%6 = alloca [0 x %Str8*]*, %Int32 1, align 8
-	%7 = load %Nat32, %Nat32* %i
-	%8 = bitcast %Nat32 %7 to %Nat32
-	%9 = getelementptr [7 x %Str8*], [7 x %Str8*]* @cmd, %Int32 0, %Nat32 %8
-	%10 = bitcast %Str8** %9 to [0 x %Str8*]*
-	store [0 x %Str8*]* %10, [0 x %Str8*]** %6
-	%11 = load [0 x %Str8*]*, [0 x %Str8*]** %6
-	%12 = mul %Int32 0, 1
-	%13 = add %Int32 0, %12
-	%14 = getelementptr %Str8*, [0 x %Str8*]* %11, %Int32 %13
-	%15 = load %Str8*, %Str8** %14
-	%16 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([4 x i8]* @.str8 to [0 x i8]*), %Str8* %15)
 	ret %Int32 0
 }
 
