@@ -1221,163 +1221,124 @@ class Type(Entity):
 		return self.is_forbidden_var()
 
 
-
 	# выбирает общий тип для двух входных
-	# CAN RETURN NONE!
+		# CAN RETURN NONE!
 	@staticmethod
 	def select_common_type(a, b, ti):
-		from error import info
-
 		if a.is_bad(): return b
 		if b.is_bad(): return a
 
+		if Type.eq(a, b):
+			return a
 
-		# (!) must be before Type.eq() !
-		# because String == String with any length
 		if a.is_string() and b.is_string():
 			if a.length > b.length:
 				return a
 			else:
 				return b
 
+		if a.is_generic() != b.is_generic():
+			if a.is_generic(): return b
+			if b.is_generic(): return a
 
-		if Type.eq(a, b):
-			return a
+		if a.is_undefined() != b.is_undefined():
+			if a.is_undefined(): return b
+			if b.is_undefined(): return a
+		if a.is_undefined() and b.is_undefined():
+			return None
 
-
+		# 22.0 / 7 - Rational поглощает Integer
 		if a.is_generic() and b.is_generic():
-			if a.is_rational() and b.is_integer():
-				return a
-			if b.is_rational() and a.is_integer():
-				return b
-
+			if a.is_rational() and b.is_integer(): return a
+			if b.is_rational() and a.is_integer(): return b
 
 		if a.__class__.__name__ == b.__class__.__name__:
-			if a.is_generic() and b.is_generic():
-				if a.is_record():
-					return Type.select_common_type_record(a, b, ti)
-				elif a.is_array():
-					return Type.select_common_type_array(a, b, ti)
-
-				else:
-					if a.width > b.width:
-						return a
-					else:
-						return b
-
-			elif a.is_generic() or b.is_generic():
-
-				if a.is_string():
-					if b.is_string():
-						if a.width > b.width:
-							return a
-						else:
-							return b
-
-				if a.is_rational():
-					if b.is_integer():
-						return a
-				if b.is_rational():
-					if a.is_integer():
-						return b
-
-				if a.is_generic():
-					return b
-
-				if b.is_generic():
-					return a
-
-			else:
+			# разные конкретные типы одного вида (Int32 & Int64) - общего нет
+			if not (a.is_generic() and b.is_generic()):
 				return None
 
+			if a.is_record(): return Type.select_common_type_record(a, b, ti)
+			elif a.is_array(): return Type.select_common_type_array(a, b, ti)
 
-		if a.__class__.__name__ != b.__class__.__name__:
-			# вид типа обычно должен совпадать
-			# но есть и исключения
-
-			# c == "A"
-			if a.is_char():
-				if b.is_string():
-					return a
-
-			# "A" == c
-			if b.is_char():
-				if a.is_string():
-					return b
-
-			if a.is_word():
-				if b.generic and (b.is_int() or b.is_nat()):
-					return a
-
-
-			if b.is_word():
-				if a.generic and (a.is_int() or a.is_nat()):
-					return b
-
-			# array && string | string && array
-			if a.is_array():
-				if b.is_string():
-					return a
-
-			if b.is_array():
-				if a.is_string():
-					return b
-
-
-			# array && string | string && array
-			if a.is_pointer():
-				if b.is_string():
-					return a
-
-			if b.is_pointer():
-				if a.is_string():
-					return b
-
-
-			if a.is_unit():
+			if a.width > b.width:
+				return a
+			else:
 				return b
 
-			if b.is_unit():
+		return Type.select_common_type_simple(a, b, ti)
+
+
+
+
+	def select_common_type_simple(a, b, ti):
+		# вид типа обычно должен совпадать, но есть и исключения!
+
+		if a.is_char() and b.is_string(): return a
+		if b.is_char() and a.is_string(): return b
+
+		if a.is_word():
+			if b.generic and (b.is_int() or b.is_nat()):
 				return a
 
-			if a.is_float():
-				if b.is_int() or b.is_nat():
-					return a
 
-			if b.is_float():
-				if a.is_int() or a.is_nat():
-					return b
-
-			if a.is_fixed():
-				if b.is_int() or b.is_nat():
-					return a
-
-			if b.is_fixed():
-				if a.is_int() or a.is_nat():
-					return b
-
-			if a.is_integer() or a.is_rational():
-				if b.is_int() or b.is_nat() or b.is_word() or b.is_float() or b.is_fixed():
-					return b
-
-			if a.is_int() or a.is_nat() or a.is_word() or a.is_float() or a.is_fixed():
-				if b.is_integer() or b.is_rational():
-					return a
-
-		if a.is_undefined() or b.is_undefined():
-			if a.is_undefined():
+		if b.is_word():
+			if a.generic and (a.is_int() or a.is_nat()):
 				return b
-			if b.is_undefined():
+
+		# array && string | string && array
+		if a.is_array():
+			if b.is_string():
 				return a
 
-		print("select_common_type(%s %s) not implenemted" % (a.__class__.__name__, b.__class__.__name__))
+		if b.is_array():
+			if a.is_string():
+				return b
 
-		from error import error
-		info("cannot select common type (`%s` & `%s`)" % (a.to_str(), b.to_str()), ti)
+
+		# array && string | string && array
+		if a.is_pointer():
+			if b.is_string():
+				return a
+
+		if b.is_pointer():
+			if a.is_string():
+				return b
+
+
+		if a.is_unit():
+			return b
+
+		if b.is_unit():
+			return a
+
+		if a.is_float():
+			if b.is_int() or b.is_nat():
+				return a
+
+		if b.is_float():
+			if a.is_int() or a.is_nat():
+				return b
+
+		if a.is_fixed():
+			if b.is_int() or b.is_nat():
+				return a
+
+		if b.is_fixed():
+			if a.is_int() or a.is_nat():
+				return b
+
+		if a.is_integer() or a.is_rational():
+			if b.is_int() or b.is_nat() or b.is_word() or b.is_float() or b.is_fixed():
+				return b
+
+		if a.is_int() or a.is_nat() or a.is_word() or a.is_float() or a.is_fixed():
+			if b.is_integer() or b.is_rational():
+				return a
+
 		return None
 
 
-		# получает на вход два типа GenericRecord
+	# получает на вход два типа GenericRecord
 	# и создает третий тип который является общим для двух входных
 	# (тк в случае записей ни один из двух может не подходить как общий)
 	@staticmethod
@@ -1404,6 +1365,9 @@ class Type(Entity):
 
 
 	def select_common_type_array(a, b, ti):
+		#from error import info
+		#info("select_common_type_array", ti)
+
 		# TODO: тут все плохо, нужно поправить, тк все может однажды навернуться!
 		if a.volume.asset == b.volume.asset:
 			if a.of.is_generic():

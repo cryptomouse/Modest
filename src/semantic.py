@@ -1625,7 +1625,7 @@ def do_rvalue_bool(x, ctx):
 	if rv.is_bad():
 		return rv
 	if not rv.type.is_bool():
-		error("expected value with Bool type", cond.ti)
+		error("expected value with Bool type", rv.ti)
 		return ValueBad(ti=rv.ti)
 	return rv
 
@@ -2764,7 +2764,6 @@ def process_field_common(x, allow_cons_default=False, *, ctx):
 		var_type = do_type(x['type'], ctx=ctx)
 
 	init_value = do_rvalue(x['init_value'], ctx=ctx)
-
 	if var_type != None:
 		init_value = value_cons_implicit(var_type, init_value)
 		if var_type.is_holed():
@@ -2903,7 +2902,6 @@ def def_const_common(x, annos):
 	return definition
 
 
-#mass
 def def_var_common(x, annos):
 	global csymtab, cdef
 
