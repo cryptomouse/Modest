@@ -1,0 +1,107 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: assignment and return
+// EXPECT-OUT: passed: array field
+// EXPECT-OUT: passed: nested literals
+// EXPECT-OUT: passed: structural literal commas
+//
+// More of what `structural_literal.modest` covers: a named record literal
+// converted to a structurally identical type, in the positions and shapes
+// it does not reach.  The C backend converts with its `RAWCAST` macro, so
+// every comma in the C value — between fields, between array elements,
+// inside a nested literal — must stay inside one macro argument.
+//
+// Guards BUG#46 (fixed 2026-10-30).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {
+	x: Int32
+	y: Int32
+}
+
+type Vec2 = {
+	x: Int32
+	y: Int32
+}
+
+type Triple = {
+	a: [3]Int32
+}
+
+type Trio = {
+	a: [3]Int32
+}
+
+type Line = {
+	from: Point
+	to: Point
+}
+
+type Segment = {
+	from: Point
+	to: Point
+}
+
+
+func makeVec () -> Vec2 {
+	return Point {x = 7, y = 8}
+}
+
+
+func testAssignReturn () -> Bool {
+	var w: Vec2 = {x = 0, y = 0}
+	w = Point {x = 3, y = 4}
+	if w.x != 3 or w.y != 4 {
+		printf("w = {%d, %d}, expected {3, 4}\n", w.x, w.y)
+		return false
+	}
+
+	let r = makeVec()
+	if r.x != 7 or r.y != 8 {
+		printf("makeVec() = {%d, %d}, expected {7, 8}\n", r.x, r.y)
+		return false
+	}
+
+	printf("passed: assignment and return\n")
+	return true
+}
+
+
+func testArrayField () -> Bool {
+	var t: Trio = Triple {a = [1, 2, 3]}
+	if t.a[0] != 1 or t.a[1] != 2 or t.a[2] != 3 {
+		printf("t.a = [%d, %d, %d], expected [1, 2, 3]\n", t.a[0], t.a[1], t.a[2])
+		return false
+	}
+
+	printf("passed: array field\n")
+	return true
+}
+
+
+func testNested () -> Bool {
+	var s: Segment = Line {from = Point {x = 1, y = 2}, to = Point {x = 3, y = 4}}
+	if s.from.x != 1 or s.from.y != 2 or s.to.x != 3 or s.to.y != 4 {
+		printf("s = {{%d, %d}, {%d, %d}}, expected {{1, 2}, {3, 4}}\n", s.from.x, s.from.y, s.to.x, s.to.y)
+		return false
+	}
+
+	printf("passed: nested literals\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testAssignReturn() or not testArrayField() or not testNested() {
+		printf("failed: structural literal commas\n")
+		return exitFailure
+	}
+
+	printf("passed: structural literal commas\n")
+	return exitSuccess
+}

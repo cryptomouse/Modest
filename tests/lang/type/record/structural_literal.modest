@@ -3,7 +3,6 @@
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: a named literal under the other name
 // EXPECT-OUT: passed: structural literal
-// EXPECTED-FAIL(c11): BUG#46 a named record literal breaks the RAWCAST macro
 //
 // A record literal that names its type, used where a structurally
 // identical type of another name is expected: `var v: Vec2 = Point {...}`.
@@ -12,10 +11,12 @@
 // same value written the long way round.  The C backend converts between
 // the two C structs with its `RAWCAST` macro, and hands it the compound
 // literal — whose braces carry commas, which the preprocessor reads as
-// more macro arguments.  The result does not compile.
+// more macro arguments unless the value is parenthesised.
 //
 // A literal with no type name in front of it is unaffected: it is built at
 // the target's type in the first place, with no conversion to emit.
+//
+// Guards BUG#46 (fixed 2026-10-30).
 
 include "libc/ctypes64"
 include "libc/stdio"

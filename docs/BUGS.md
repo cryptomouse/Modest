@@ -334,34 +334,6 @@ c.bytes[0]              // c11: 5    llvm: 0
 - Coverage: `tests/lang/type/record/union.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#46: C backend hands a compound literal to the `RAWCAST` macro
-
-```modest
-type Point = {x: Int32, y: Int32}
-type Vec2 = {x: Int32, y: Int32}
-
-var w: Vec2 = Point {x = 5, y = 6}
-```
-
-```c
-struct vec2 w = RAWCAST(struct vec2, struct point, (struct point){.x = 5, .y = 6});
-// error: too many arguments provided to function-like macro invocation
-```
-
-- Two record types with the same fields are one Modest type but two C
-  structs, so the backend converts between them with its `RAWCAST` macro.
-  The value it passes is a compound literal, whose braces carry commas —
-  which the preprocessor reads as further macro arguments, and the
-  translation unit does not compile.
-- Every position is affected the same way: initializer, argument, and
-  operand of `==`. A literal with no type name in front of it is built at
-  the target's type in the first place, with no conversion to emit, and
-  is fine.
-- Fix: parenthesise the value in the macro's expansion site, or emit the
-  conversion as a cast through a temporary rather than as a macro.
-- Coverage: `tests/lang/type/record/structural_literal.modest`, marked
-  `EXPECTED-FAIL(c11)`.
-
 ## BUG#49: LLVM backend keeps the literal's type for an array of records with a pointer
 
 ```modest

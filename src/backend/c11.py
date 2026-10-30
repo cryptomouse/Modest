@@ -1115,7 +1115,8 @@ def do_cvalue_cast_raw(type, value, ctx):
 		[
 			CValueIdentifier(str_type(type)),
 			CValueIdentifier(str_type(value.type)),
-			do_cvalue(value, ctx=ctx)
+			# в скобках: запятые compound literal иначе станут лишними аргументами макроса
+			CValueParen(do_cvalue(value, ctx=ctx))
 		]
 	)
 
