@@ -1,0 +1,131 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: volume of any integer type
+// EXPECT-OUT: passed: constant dimension under a run-time one
+// EXPECT-OUT: passed: size wider than the volume
+// EXPECT-OUT: passed: variable-length arrays
+//
+// A local array whose volume is known only at run time.  The volume comes
+// in the type of its own expression — `Int32`, `Nat8`, `Int64`, a literal
+// for an inner dimension — while `sizeof` and `lengthof` of the array are
+// a `Size`, and its size in bytes can be far wider than the volume's type.
+//
+// Every volume goes through an `opaque*`, so it cannot be folded away.
+//
+// Guards BUG#108 (fixed 2026-10-31).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func opaque32 (n: Int32) -> Int32 {
+	return n
+}
+
+
+func opaque64 (n: Int64) -> Int64 {
+	return n
+}
+
+
+func opaqueNat8 (n: Nat8) -> Nat8 {
+	return n
+}
+
+
+func testVolumeType () -> Bool {
+	let n32 = opaque32(4)
+	var a: [n32]Int32
+	a[3] = 7
+	if a[3] != 7 or lengthof(a) != 4 or sizeof(a) != 16 {
+		printf("[Int32 4]Int32: a[3] = %d, lengthof %zu, sizeof %zu, expected 7, 4, 16\n", a[3], lengthof(a), sizeof(a))
+		return false
+	}
+
+	let n64 = opaque64(5)
+	var b: [n64]Int32
+	b[4] = 8
+	if b[4] != 8 or lengthof(b) != 5 or sizeof(b) != 20 {
+		printf("[Int64 5]Int32: b[4] = %d, lengthof %zu, sizeof %zu, expected 8, 5, 20\n", b[4], lengthof(b), sizeof(b))
+		return false
+	}
+
+	let n8 = opaqueNat8(3)
+	var c: [n8]Int32
+	c[2] = 9
+	if c[2] != 9 or lengthof(c) != 3 or sizeof(c) != 12 {
+		printf("[Nat8 3]Int32: c[2] = %d, lengthof %zu, sizeof %zu, expected 9, 3, 12\n", c[2], lengthof(c), sizeof(c))
+		return false
+	}
+
+	printf("passed: volume of any integer type\n")
+	return true
+}
+
+
+func testInnerConstant () -> Bool {
+	let n = opaque32(4)
+	var g: [n][3]Int32
+	var i: Int32 = 0
+	while i < n {
+		g[i][0] = i * 10
+		g[i][1] = i * 10 + 1
+		g[i][2] = i * 10 + 2
+		i += 1
+	}
+
+	if g[2][1] != 21 or g[3][2] != 32 {
+		printf("g[2][1], g[3][2] = %d, %d, expected 21, 32\n", g[2][1], g[3][2])
+		return false
+	}
+
+	if lengthof(g) != 4 or lengthof(g[0]) != 3 or sizeof(g) != 48 {
+		printf("[4][3]Int32: lengthof %zu, %zu, sizeof %zu, expected 4, 3, 48\n", lengthof(g), lengthof(g[0]), sizeof(g))
+		return false
+	}
+
+	printf("passed: constant dimension under a run-time one\n")
+	return true
+}
+
+
+func testWideSize () -> Bool {
+	// 100 fits a Nat8, 400 bytes does not.
+	let n = opaqueNat8(100)
+	var a: [n]Int32
+	a[99] = 5
+	if a[99] != 5 or sizeof(a) != 400 {
+		printf("[Nat8 100]Int32: a[99] = %d, sizeof %zu, expected 5, 400\n", a[99], sizeof(a))
+		return false
+	}
+
+	// 200 bytes a row: past an i8 even for a literal.
+	let m = opaque32(2)
+	var g: [m][50]Int32
+	g[1][49] = 6
+	if g[1][49] != 6 or sizeof(g) != 400 {
+		printf("[2][50]Int32: g[1][49] = %d, sizeof %zu, expected 6, 400\n", g[1][49], sizeof(g))
+		return false
+	}
+
+	printf("passed: size wider than the volume\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testVolumeType() and result
+	result = testInnerConstant() and result
+	result = testWideSize() and result
+
+	if not result {
+		printf("failed: variable-length arrays\n")
+		return exitFailure
+	}
+
+	printf("passed: variable-length arrays\n")
+	return exitSuccess
+}

@@ -672,23 +672,6 @@ sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
 - Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#77: `lengthof` a slice with run-time bounds emits ill-typed LLVM IR
-
-```modest
-if lengthof(a[i:j]) != 5 { ... }       // i, j: Int32
-```
-
-```
-'%7' defined with type 'i32' but expected 'i64'
-```
-
-- `do_eval_lengthof_value` (`src/backend/llvm.py:2219`) returns the slice's
-  `runtimeVolume` as it is — `j - i`, computed in the type of the bounds —
-  while `lengthof` is typed `Size`. Nothing widens it. The C backend is
-  fine: C converts the operands of `!=` itself.
-- Reproducer: `tests/lang/value/slice/lengthof.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#80: A record literal with a bad field is reported again, and its type prints as a Python object
 
 ```modest
@@ -1339,30 +1322,3 @@ errno.get()    // Undefined symbols: ___errno_location
 - `lib/libc/stat.modest` is Darwin-only already (its `struct stat`
   layout), so the library has no single target it works on as a whole.
 - `lib/fs.modest` binds `__error` itself until this is fixed.
-
-## BUG#108: LLVM backend emits the volume of a constant inner dimension of a VLA as `i8`
-
-```modest
-let n = opaque(4)
-var g: [n][3]Int32
-g[2][1] = 7
-```
-
-```
-%4 = mul i8 3, 1
-%6 = mul %Int32 %3, %4    ; error: '%4' defined with type 'i8' but expected 'i32'
-```
-
-- `handleVLA` (`src/backend/llvm.py`) takes the volume of each sized array
-  in the chain as `do_reval(t.volume)`, and a literal volume comes out in
-  the narrow type of its own value (`i8` for `3`). Every other step and
-  size there is `Int32`, and nothing widens the volume to it.
-- Any VLA with a constant dimension under a run-time one hits it: a local
-  `[n][3]T`, and a slice with run-time bounds of an array of rows
-  (`g[i:j][1][2]` on a `[4][3]T`). A one-dimensional VLA is fine, since its
-  only volume is a run-time value already of the bounds' type. The C
-  backend is fine.
-- Fix, probably: construct the volume to `Int32` in `handleVLA` before the
-  `mul`.
-- Reproducer: `tests/lang/value/slice/runtime_postfix_rows.modest`, marked
-  `EXPECTED-FAIL(llvm)`.

@@ -1432,10 +1432,11 @@ def ass(left, indexes):
 		# (GEP будет оперировать с шагом sizeof(rootType))
 		# Полное смещение - смещение сразу для всех индексов (если их несколько)
 		#out("\n\t; -- INDEX VLA --")
-		full_offset = llvm_value_zero(typeInt32)
+		full_offset = llvm_value_zero(vla_size_type())
 		i = 0
 		while i < len(indexes):
-			index = indexes[i]
+			# шаги посчитаны в Size, индекс приводим к нему же (BUG#108)
+			index = vla_size(indexes[i])
 			# тип среза с run-time границами через handleVLA не проходил,
 			# и шага у его элемента может не быть (BUG#76)
 			handleVLA(lt.of)
@@ -1752,11 +1753,28 @@ def eval_cons_or(x):
 	return 1/0
 
 
+# Тип, в котором считаются размеры VLA
+def vla_size_type():
+	from semantic import typeSysSize
+	return typeSysSize
+
+
+def vla_size(v):
+	sizeType = vla_size_type()
+	if v['kind'] == 'num':
+		return llvm_value_num(sizeType, v['asset'])
+	return docast(v, sizeType)
+
+
 # Рекурсивно вычисляем itemSizeInRootElements & arraySizeInRootElements
 # для каждого типа массива (в цепочке [m][n]...)
 # Если встречаем в цепи указатель, перешагиваем и идем дальше
 # тк надо обработать все типы-массивы в цепочке
 # Ex: *[m]*[n]*[p]Int32
+#
+# Все три величины считаются в Size: объем приходит в типе своего
+# выражения (литерал - в узком Integer, граница среза - в типе границ),
+# а sizeof и lengthof и так Size (BUG#108)
 def handleVLA(t):
 	#info("calculate VLA step", t.ti)
 	# type size (in VLA chain) in root-items
@@ -1768,20 +1786,22 @@ def handleVLA(t):
 		# already handled type, skip
 		return
 
+	sizeType = vla_size_type()
+
 	if t.is_array():
 		handleVLA(t.of)
 		# Get VLA size
 		# размер массива = его объем * объем его элемента
 		if t.is_sized_array():
 			#out("\n\t; -- HANDLE VLA --")
-			volume = do_reval(t.volume)
+			volume = vla_size(do_reval(t.volume))
 			runtimeVolume = volume
 			runtimeSizeRoots = llvm_eval_binary('mul', volume, t.of.runtimeSizeRoots)
 			#out("\n\t; -- END HANDLE VLA --")
 		else:
 			# Если это unsized_array
-			runtimeSizeRoots = llvm_value_num(typeInt32, 1)
-			runtimeVolume = llvm_value_num(typeInt32, 1)
+			runtimeSizeRoots = llvm_value_num(sizeType, 1)
+			runtimeVolume = llvm_value_num(sizeType, 1)
 
 		runtimeSizeBytes = llvm_eval_binary('mul', runtimeVolume, t.of.runtimeSizeBytes)
 
@@ -1790,9 +1810,9 @@ def handleVLA(t):
 		if t.is_pointer():
 			handleVLA(t.to)
 
-		runtimeSizeBytes = llvm_value_num(typeInt32, t.get_size())
-		runtimeSizeRoots = llvm_value_num(typeInt32, 1)
-		runtimeVolume = llvm_value_num(typeInt32, 1)
+		runtimeSizeBytes = llvm_value_num(sizeType, t.get_size())
+		runtimeSizeRoots = llvm_value_num(sizeType, 1)
+		runtimeVolume = llvm_value_num(sizeType, 1)
 
 	t.runtimeSizeRoots = runtimeSizeRoots
 	t.runtimeSizeBytes = runtimeSizeBytes

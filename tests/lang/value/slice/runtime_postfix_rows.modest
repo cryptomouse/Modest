@@ -1,6 +1,5 @@
 // TEST: run
 // BACKENDS: c11, llvm, modest
-// EXPECTED-FAIL(llvm): BUG#108 the volume of a constant inner dimension of a VLA is emitted as `i8`
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: index into a run-time slice of rows
 //
@@ -11,6 +10,7 @@
 // Every bound goes through `opaque`, so it cannot be folded away.
 //
 // Guards BUG#76 (fixed 2026-10-31).
+// Guards BUG#108 (fixed 2026-10-31).
 
 include "libc/ctypes64"
 include "libc/stdio"
