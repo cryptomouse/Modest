@@ -80,12 +80,6 @@ Annotations are written before a definition, or inside a type expression
 | `@used` | keep symbol even if unreferenced |
 | `@unused` | suppress unused warnings (also on return types: `-> @unused Int`) |
 
-### Mutability
-
-| | |
-| :-- | :-- |
-| `@immutable` | `var` cannot be reassigned after initialization |
-
 ### Type layout & memory
 
 | | |
@@ -146,9 +140,6 @@ type Packet = @layout("packed") {
 }
 
 var uartByte: @volatile Word8
-
-@immutable var maxItems: Int32 = 100
-maxItems = 200  // error: expected mutable value
 ```
 
 ## See also

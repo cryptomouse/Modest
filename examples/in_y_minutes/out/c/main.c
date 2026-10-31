@@ -59,7 +59,6 @@ int main(void) {
 	int32_t counter = 10;
 	counter = 20;
 	#define fixed 30
-	int32_t locked = 40;
 	uint64_t w = (uint64_t)1 << 63;
 	int64_t asInt = (int64_t)w;
 	printf("w = %llx -> asInt = %lld\n", w, asInt);

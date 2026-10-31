@@ -2969,9 +2969,6 @@ def def_var_common(x, annos):
 
 	anno_to_attribute(definition, annos, 'nonstatic')
 
-	if pop_anno(annos, 'immutable') != None:
-		var_value.immutable = True
-
 	#nonstatic_anno = pop_anno(annos, 'nonstatic')
 	#if nonstatic_anno != None:
 	#	definition.addAttribute('nonstatic')

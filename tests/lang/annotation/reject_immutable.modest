@@ -1,0 +1,25 @@
+// TEST: reject
+// EXPECT-ERROR: annotation 'immutable' not defined
+// EXPECT-ERROR: annotation 'immutable' not defined
+// EXPECT-ERROR-COUNT: 2
+//
+// `@immutable` is gone: a global and a local `var` alike reject it.  It
+// used to forbid assignment to the name but not `&` on it, so `*p = 99`
+// wrote through anyway; an immutable runtime binding is a `let` (local) or
+// a `const` (global), and `&` on either is already refused.
+//
+// Guards BUG#65 (fixed 2026-10-31).
+
+include "libc/ctypes64"
+
+
+@immutable
+var gimm: Int32 = 3
+
+
+func main () -> Int {
+	@immutable var limm: Int32 = 4
+	var p: *Int32 = &gimm
+	*p = 99
+	return Int (gimm + limm)
+}

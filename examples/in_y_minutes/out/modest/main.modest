@@ -73,7 +73,7 @@ func main () -> Int {
 	var f64: Float64 = pi
 	var counter: Int32 = 10
 	counter = 20
-	let fixed = 30; var locked: Int32 = 40
+	let fixed = 30
 	var w: Word64 = Word64 1 << 63
 	var asInt = Int64 w
 	printf("w = %llx -> asInt = %lld\n", w, asInt)

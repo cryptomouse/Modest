@@ -1737,7 +1737,6 @@ class Value(Entity):
 		self.attributes = {}
 		self.definition = None  # *StmtDefVar, *StmtDefConst, *StmtDefFunc
 		self.is_lvalue = False
-		self.immutable = False
 		self.is_pure = False
 		self.is_initialized = True
 
@@ -1795,7 +1794,6 @@ class Value(Entity):
 		if _from.asset != None:
 			to.set_asset(_from.asset)
 
-		to.immutable = _from.immutable
 		to.stage = _from.stage
 		return
 
@@ -1820,10 +1818,8 @@ class Value(Entity):
 		return self.stage == HLIR_VALUE_STAGE_COMPILETIME
 
 	def is_immutable(self):
-		# ONLY lvalue CAN be an immutable value,
-		# BUT if immutable flag is set, it is immutable value anyway
-		#return (not self.isLvalue()) or self.is_immutable
-		return (not self.isLvalue()) or self.immutable or self.hasAttribute('immutable')
+		# ONLY lvalue CAN be a mutable value
+		return not self.isLvalue()
 
 	def is_linktime(self):
 		return self.stage == HLIR_VALUE_STAGE_LINKTIME
@@ -2051,7 +2047,6 @@ class Value(Entity):
 		print("att: " + str(x.attributes))
 
 		print('stage = ' + str(x.stage))
-		print('immutable = ' + str(x.immutable))
 
 		if x.is_immediate():
 			if x.asset != None:

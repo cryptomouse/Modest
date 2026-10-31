@@ -312,7 +312,6 @@ define %Int @main() {
 	%i32 = alloca %Int32, align 4
 	%f64 = alloca %Float64, align 8
 	%counter = alloca %Int32, align 4
-	%locked = alloca %Int32, align 4
 	%w = alloca %Word64, align 8
 	%asInt = alloca %Int64, align 8
 	%height = alloca %Meters, align 8
@@ -333,7 +332,6 @@ define %Int @main() {
 	store %Float64 3.14159, %Float64* %f64
 	store %Int32 10, %Int32* %counter
 	store %Int32 20, %Int32* %counter
-	store %Int32 40, %Int32* %locked
 	store %Word64 9223372036854775808, %Word64* %w
 	%1 = load %Word64, %Word64* %w
 	%2 = bitcast %Word64 %1 to %Int64

@@ -168,7 +168,6 @@ var x: Int32                       // no initializer: default value of the type 
 var x: Int32 = 10                  // with initial value
 var x = 10                         // type inferred from value
 var x, y, z: Int32                 // multiple vars of same type
-@immutable var x: Int32 = 10      // immutable var — cannot be reassigned after initialization
 
 const max = 100                    // module-level constant (type inferred)
 const pi: Float64 = 3.14159        // with explicit type
@@ -636,11 +635,6 @@ Unit value                         // discard a value (suppress warnings)
 > `@deprecated` is planned but not implemented yet — the compiler rejects it
 > with `annotation 'deprecated' not defined` (see `docs/todo/TODO.md`).
 
-### Mutability
-```modest
-@immutable                         // var cannot be reassigned after initialization
-```
-
 ### Type layout & memory
 ```modest
 @branded                           // newtype wrapper (nominal typing)
@@ -683,9 +677,6 @@ func myAlloc (size: Nat64) -> *Unit
 
 @used
 var table: [256]Word8  // kept even if never referenced
-
-@immutable
-var maxItems: Int32 = 100
 
 @alignment(8)
 var alignedBuf: [64]Word8

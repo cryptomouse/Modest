@@ -80,7 +80,6 @@ func main () -> Int {
 	var counter = 10                    // var: concrete type (Integer -> default Int here)
 	counter = 20                        // mutable
 	let fixed = 30                      // let: immutable, function-local only
-	@immutable var locked: Int32 = 40   // var, frozen after init
 
 	// value construction — Modest has no casts, only explicit construction
 	var w: Word64 = Word64 1 << 63
