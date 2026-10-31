@@ -7,11 +7,11 @@ include "libc/stdio"
 //include "./lib"
 
 
-type R = {a: Fixed32, b: Fixed32}
-var t: [2]R = [
-  {a = 1.0}
-  {a = 1.0, b = 0.5}
-]
+var n: Int32
+
+type Ref = {tag: Int32, p: *Int32}
+
+var rs: [2]Ref = [{tag = 1, p = &n}, {tag = 2, p = nil}]
 
 
 func main () -> Int32 {

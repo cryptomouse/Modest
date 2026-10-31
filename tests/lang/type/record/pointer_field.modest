@@ -3,20 +3,19 @@
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: an array literal of records with a pointer
 // EXPECT-OUT: passed: pointer field in an array literal
-// EXPECTED-FAIL(llvm): BUG#49 an array literal keeps the generic record's type
 //
 // An array literal whose elements are record literals, where the record
 // has a pointer field: `var ops: [2]Op = [{tag = 1, fn = &twice}, ...]`.
 //
-// A record literal is generic until it is built at a type, and for the
-// elements of an array literal the LLVM backend does that conversion only
-// when every field is a scalar.  With a pointer among them the element
-// keeps the literal's own type — `{i8, %Int32*}`, the `tag` still at the
-// literal's width — and the array of those is stored into an array of the
-// record, which is not IR clang will accept.
+// A record literal is generic until it is built at a type.  The address
+// makes the array literal a non-immediate one, and its elements still
+// have to be built at the record — not left at the literal's own type
+// `{i8, %Int32*}`, with the `tag` at the literal's width.
 //
-// One record at a time is fine, in both backends, and that is what
-// `nested.modest` covers; it is the array literal that is left out.
+// One record at a time is what `nested.modest` covers; more run-time
+// array literals are in `type/array/literal_runtime_items.modest`.
+//
+// Guards BUG#49 (fixed 2026-10-31).
 
 include "libc/ctypes64"
 include "libc/stdio"

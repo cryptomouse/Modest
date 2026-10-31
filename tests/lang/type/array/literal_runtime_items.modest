@@ -1,0 +1,136 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: array literal of run-time items
+//
+// An array literal that is not known at compile time — its items take an
+// address or read a variable — is built at the array's element type all
+// the same: each item, a record literal included, is constructed at that
+// type before the array is put together.  The record literals below have
+// a narrow field before a pointer, so the literal's own layout is never
+// the record's one.
+//
+// Guards BUG#49 (fixed 2026-10-31).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Ref = {
+	tag: Int32
+	p: *Int32
+}
+
+type Mixed = {
+	a: Int8
+	p: *Int32
+	b: Int64
+}
+
+type Outer = {
+	ref: Ref
+	k: Int16
+}
+
+
+var n: Int32 = 5
+var m: Int32 = 9
+
+var globalRefs: [2]Ref = [{tag = 7, p = &n}, {tag = 8, p = &m}]
+
+
+func checkRef (r: Ref, tag: Int32, value: Int32, what: *Str8) -> Bool {
+	if r.tag != tag or *r.p != value {
+		printf("%s: tag = %d, *p = %d, expected %d, %d\n", what, r.tag, *r.p, tag, value)
+		return false
+	}
+	return true
+}
+
+
+func sumTags (rs: [2]Ref) -> Int32 {
+	return rs[0].tag + rs[1].tag + *rs[0].p + *rs[1].p
+}
+
+
+func makeRefs () -> [2]Ref {
+	return [{tag = 3, p = &m}, {tag = 4, p = &n}]
+}
+
+
+func testGlobal () -> Bool {
+	return checkRef(globalRefs[0], 7, 5, "global[0]") and checkRef(globalRefs[1], 8, 9, "global[1]")
+}
+
+
+func testMixed () -> Bool {
+	var ms: [2]Mixed = [{a = 1, p = &n, b = 10000000000}, {a = 2, p = &m, b = 0 - 1}]
+	if ms[0].a != 1 or *ms[0].p != 5 or ms[0].b != 10000000000 {
+		printf("ms[0] = %d, %d, %lld\n", ms[0].a, *ms[0].p, ms[0].b)
+		return false
+	}
+	if ms[1].a != 2 or *ms[1].p != 9 or ms[1].b != 0 - 1 {
+		printf("ms[1] = %d, %d, %lld\n", ms[1].a, *ms[1].p, ms[1].b)
+		return false
+	}
+	return true
+}
+
+
+func testNested () -> Bool {
+	var os: [2]Outer = [{ref = {tag = 1, p = &m}, k = 11}, {ref = {tag = 2, p = &n}, k = 12}]
+	if os[0].k != 11 or os[1].k != 12 {
+		printf("k = %d, %d, expected 11 and 12\n", os[0].k, os[1].k)
+		return false
+	}
+	return checkRef(os[0].ref, 1, 9, "nested[0]") and checkRef(os[1].ref, 2, 5, "nested[1]")
+}
+
+
+func testTail () -> Bool {
+	var rs = [4]Ref [{tag = 1, p = &n}, {tag = 2, p = &m}]
+	if not (checkRef(rs[0], 1, 5, "tail[0]") and checkRef(rs[1], 2, 9, "tail[1]")) {
+		return false
+	}
+	if rs[2].tag != 0 or rs[3].tag != 0 or not (rs[2].p == nil) or not (rs[3].p == nil) {
+		printf("tail: rs[2], rs[3] are not zero\n")
+		return false
+	}
+	return true
+}
+
+
+func testArgAndReturn () -> Bool {
+	let s = sumTags([{tag = 1, p = &n}, {tag = 2, p = &m}])
+	if s != 17 {
+		printf("sumTags = %d, expected 17\n", s)
+		return false
+	}
+	let rs = makeRefs()
+	return checkRef(rs[0], 3, 9, "return[0]") and checkRef(rs[1], 4, 5, "return[1]")
+}
+
+
+// no pointer at all: a field read from a variable is enough
+func testScalarItems () -> Bool {
+	var x: Int8 = 0 - 3
+	var y: Int64 = 0 - 3
+	var ms: [2]Mixed = [{a = x, b = 1}, {a = 4, b = y}]
+	if ms[0].a != 0 - 3 or ms[0].b != 1 or ms[1].a != 4 or ms[1].b != 0 - 3 {
+		printf("ms = %d, %lld, %d, %lld, expected -3, 1, 4, -3\n", ms[0].a, ms[0].b, ms[1].a, ms[1].b)
+		return false
+	}
+	return true
+}
+
+
+func main () -> Int {
+	if not (testGlobal() and testMixed() and testNested() and testTail() and testArgAndReturn() and testScalarItems()) {
+		printf("failed: array literal of run-time items\n")
+		return exitFailure
+	}
+
+	printf("passed: array literal of run-time items\n")
+	return exitSuccess
+}

@@ -3,13 +3,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "fixed.h"
 //include "./lib"
-struct r {__fixed32 a; __fixed32 b;};
-static struct r t[2] = {
-	(struct r){.a = FIXED32(1.0, 16)},
-	(struct r){.a = FIXED32(1.0, 16), .b = FIXED32(0.5, 16)}
-};
+static int32_t n;
+struct ref {int32_t tag; int32_t *p;};
+static struct ref rs[2] = {{.tag = 1, .p = &n}, {.tag = 2, .p = NULL}};
 
 int32_t main(void) {
 	return 0;

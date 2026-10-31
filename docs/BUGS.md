@@ -334,33 +334,6 @@ c.bytes[0]              // c11: 5    llvm: 0
 - Coverage: `tests/lang/type/record/union.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#49: LLVM backend keeps the literal's type for an array of records with a pointer
-
-```modest
-type Ref = {tag: Int32, p: *Int32}
-
-var rs: [2]Ref = [{tag = 1, p = &n}, {tag = 2, p = nil}]
-```
-
-```llvm
-%10 = insertvalue {i8,%Int32*} zeroinitializer, i8 1, 0
-store [2 x %Ref] %14, [2 x %Ref]* %9   ; %14 is [2 x {i8,%Int32*}]
-; error: '%14' defined with type '[2 x { i8, ptr }]' but expected '[2 x %Ref]'
-```
-
-- The element of an array literal is a generic record literal, which has
-  to be built at the array's element type. With scalar fields only that
-  happens and the element comes out as `%Plain`; with a pointer among the
-  fields the element keeps the literal's own type — note the `tag` left
-  at the literal's `i8` as well — and the array of those does not store
-  into an array of the record.
-- One record at a time is fine in both backends; it is only the elements
-  of an array literal that are left generic.
-- The C backend is unaffected — it writes designated initializers, with
-  no element type to get wrong.
-- Coverage: `tests/lang/type/record/pointer_field.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#50: C backend emits an identifier that is a C keyword as it stands
 
 ```modest

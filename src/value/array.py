@@ -198,8 +198,12 @@ def value_array_cons(t, v, method, ti):
 	#	var a = [100]Int init_array
 	#
 
+	# элементы приводим к типу элемента массива и тогда, когда литерал не
+	# immediate (ex: `[{tag = 1, p = &n}]` - адрес известен лишь при линковке):
+	# иначе бэкенду достается generic-массив, а его элементы - generic-записи
+	# со своей раскладкой (BUG#49); так же делает value_record_cons
 	size = 0
-	if v.is_immediate():
+	if v.asset != None:
 		items = []
 
 		for item in v.asset:

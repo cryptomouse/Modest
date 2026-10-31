@@ -1708,7 +1708,9 @@ def eval_cons_record(x):
 
 
 def eval_cons_array(x):
-	if x.is_immediate():
+	# asset - уже приведенные элементы (value_array_cons), он бывает
+	# и у не-immediate литерала
+	if x.asset != None:
 		if x.type.is_vla():
 			return do_eval_literal(x.value)
 		return do_eval_literal(x)
