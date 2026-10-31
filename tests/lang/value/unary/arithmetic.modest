@@ -23,8 +23,8 @@
 // Two operand types are deliberately absent.  FloatX negation is in
 // tests/lang/type/float/negation.modest, together with the signed zero it
 // has to get right.  `- -x` written with the two signs adjacent is in
-// double_sign.modest, on its own because one backend bug (BUG#62) should
-// not mark every other operand type broken.
+// double_sign.modest, on its own because it guards a printer bug (BUG#62)
+// rather than the arithmetic.
 
 include "libc/ctypes64"
 include "libc/stdio"

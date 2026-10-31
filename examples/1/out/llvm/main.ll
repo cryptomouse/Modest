@@ -138,22 +138,14 @@ declare void @perror(%ConstCharStr* %str)
 
 ;include "./lib"
 @n = internal global %Int32 0
-%Ref = type {
-	%Int32,
-	%Int32*
-};
-
-@rs = internal global [2 x %Ref] [
-	%Ref {
-		%Int32 1,
-		%Int32* @n
-	},
-	%Ref {
-		%Int32 2,
-		%Int32* null
-	}
-]
 define %Int32 @main() {
+	%1 = load %Int32, %Int32* @n
+	%2 = sub %Int32 0, %1
+	%3 = load %Int32, %Int32* @n
+	%4 = sub %Int32 0, %3
+	%5 = sub %Int32 0, %4
+	%6 = sub i8 0, 5
+	%7 = sub i8 0, %6
 	ret %Int32 0
 }
 

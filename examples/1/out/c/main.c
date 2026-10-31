@@ -5,10 +5,15 @@
 #include <stdio.h>
 //include "./lib"
 static int32_t n;
-struct ref {int32_t tag; int32_t *p;};
-static struct ref rs[2] = {{.tag = 1, .p = &n}, {.tag = 2, .p = NULL}};
+#define K (-5)
 
 int32_t main(void) {
+	const int32_t a = -n;
+	const int32_t b = -(-n);
+	#define c (-(-5))
+	#define d (-K)
 	return 0;
+	#undef c
+	#undef d
 }
 

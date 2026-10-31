@@ -9,13 +9,13 @@ include "libc/stdio"
 
 var n: Int32
 
-type Ref = {tag: Int32, p: *Int32}
-
-var rs: [2]Ref = [{tag = 1, p = &n}, {tag = 2, p = nil}]
-
+const k = -5
 
 func main () -> Int32 {
-
+	let a = -n
+	let b = --n
+	let c = --5
+	let d = -k
 	return 0
 }
 

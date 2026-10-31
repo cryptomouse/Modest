@@ -465,47 +465,6 @@ struct main__anonymous_variant_1 r = divide(10, 2);
 - Coverage: `tests/lang/type/variant/basic.modest` holds the working shape and
   points here.
 
-
-## BUG#62: C backend runs two unary signs together into `--` / `++`
-
-```modest
-var i: Int32 = 5
-printf("%d\n", - -i)          // c11: 4, and i is now 4     llvm: 5
-printf("%d\n", + +i)          // c11: 6, and i is now 6     llvm: 5
-```
-
-```c
-printf("%d\n", --i);          // a pre-decrement, not a double negation
-printf("%d\n", ++i);
-```
-
-- The worst shape a codegen bug can take: no diagnostic, valid C, and the
-  wrong answer *plus* a variable silently mutated. Everything downstream of
-  the expression sees the changed value, so one `- -i` moves every later
-  reading of `i` by one.
-- Cause is the printer, not the backend: `CValueUnaryMinus.__str__`
-  (`~/p/cshape/cshape.py:678`) returns `'-%s' % operand` with no separator,
-  and `CValueUnaryPlus` (`:667`) does the same with `'+'`. When the operand
-  itself prints as `-i` the two signs meet and lex as one token. The other
-  three prefix printers are safe: `~~w` and `!!b` are still two tokens in C,
-  and `**p` cannot arise from `CValueDeref` alone.
-- Only *adjacent* signs collide. `-(-i)` is right, and so is a binary
-  operator meeting a unary one — `k - -m` prints with the spaces the binary
-  printer puts in. A mixed pair is safe for the same reason: `- +m` prints
-  `-+m`, which is two tokens.
-- Three in a row stops compiling rather than compiling wrong: `- - -k`
-  prints `---k`, and clang refuses it with `expression is not assignable`
-  because `--k` is not an lvalue the third `-` can take.
-- The `modest` backend prints `--i` too (`-mbackend=modest`), from the same
-  shape of code. It only has to survive codegen, so nothing fails there,
-  but the emitted source no longer says what the input said.
-- The LLVM backend is right: it builds `0 - (0 - i)` as two instructions,
-  with no text to run together.
-- Fix belongs in cshape: emit a space (or parenthesise) when the operand's
-  own text starts with the same sign character.
-- Coverage: `tests/lang/value/unary/double_sign.modest`, marked
-  `EXPECTED-FAIL(c11)`.
-
 ## BUG#65: `&` on an `@immutable var` hands out a writable pointer
 
 ```modest

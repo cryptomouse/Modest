@@ -4,16 +4,16 @@ include "libc/stdio"
 //include "./lib"
 
 
-type R = {a: Fixed32, b: Fixed32}
-var t: [2]R = [
-	{a = 1.0}
-	{a = 1.0, b = 0.5}
-]
+var n: Int32
 
+const k = -5
 
 @nonstatic
 func main () -> Int32 {
-
+	let a: Int32 = -n
+	let b: Int32 = - -n
+	let c = - -5
+	let d = -k
 	return 0
 }
 

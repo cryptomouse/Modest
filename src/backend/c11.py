@@ -528,12 +528,7 @@ def cvalue_literal_integer(asset, width=0, is_unsigned=False, as_hex=False, nsig
 		else:
 			suffix += "L"    # long int, не меньше 32 бит везде
 
-	cv = CValueInteger(asset, as_hex=as_hex, nsigns=nsigns, suffix=suffix)
-	if asset < 0:
-		# лексически это унарный минус, а не атом: без этого
-		# `-(-5)` напечатается как `--5`
-		cv.precedence = CValueUnaryMinus(cv).precedence
-	return cv
+	return CValueInteger(asset, as_hex=as_hex, nsigns=nsigns, suffix=suffix)
 
 
 

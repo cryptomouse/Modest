@@ -336,12 +336,20 @@ def str_value_not(x, ctx):
 	return 'not ' + str_value(x.value, parent_expr=x)
 
 
+def str_value_sign(sign, x):
+	s = str_value(x.value, parent_expr=x)
+	# `- -x` без пробела - это токен `--`, и он в Modest не отрицание
+	if s.startswith(sign):
+		return sign + ' ' + s
+	return sign + s
+
+
 def str_value_neg(x, ctx):
-	return '-' + str_value(x.value, parent_expr=x)
+	return str_value_sign('-', x)
 
 
 def str_value_pos(x, ctx):
-	return '+' + str_value(x.value, parent_expr=x)
+	return str_value_sign('+', x)
 
 
 def str_value_call(x, ctx):

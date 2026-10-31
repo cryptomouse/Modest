@@ -513,7 +513,6 @@ Every binary level is left-associative: `10 - 3 - 2` is `5`, and a chain of
 > `*(*pp)`. Postfix binds tighter: `&arr[0]` is `&(arr[0])`, `-p.x` is
 > `-(p.x)`. `unsafe(...)` and `new(...)` are call-shaped like `sizeof(...)` —
 > the parentheses delimit a full expression (`unsafe(Nat64 &x)`).
-> In C output `- -x` currently turns into `--x` (BUG#62) — write `-(-x)`.
 
 ## Value Construction
 
