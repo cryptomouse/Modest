@@ -672,27 +672,6 @@ sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
 - Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#76: LLVM backend crashes on an index into a slice with run-time bounds
-
-```modest
-let x = a[i:j][0]
-```
-
-```
-step = lt.of.runtimeSizeRoots
-AttributeError: 'TypeSimple' object has no attribute 'runtimeSizeRoots'
-```
-
-- The slice has a VLA type, so `ass` (`src/backend/llvm.py:1305`) takes the
-  VLA path, which computes the step of each index from
-  `lt.of.runtimeSizeRoots` — an attribute only VLA *array* types get (from
-  `handleVLA`). For a one-dimensional slice `lt.of` is the element type
-  itself and the step is simply 1.
-- The literal-bounds case (`a[1:4][0]`) works under LLVM, and both work
-  under C11.
-- Reproducer: `tests/lang/value/slice/runtime_postfix.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#77: `lengthof` a slice with run-time bounds emits ill-typed LLVM IR
 
 ```modest
@@ -1360,3 +1339,30 @@ errno.get()    // Undefined symbols: ___errno_location
 - `lib/libc/stat.modest` is Darwin-only already (its `struct stat`
   layout), so the library has no single target it works on as a whole.
 - `lib/fs.modest` binds `__error` itself until this is fixed.
+
+## BUG#108: LLVM backend emits the volume of a constant inner dimension of a VLA as `i8`
+
+```modest
+let n = opaque(4)
+var g: [n][3]Int32
+g[2][1] = 7
+```
+
+```
+%4 = mul i8 3, 1
+%6 = mul %Int32 %3, %4    ; error: '%4' defined with type 'i8' but expected 'i32'
+```
+
+- `handleVLA` (`src/backend/llvm.py`) takes the volume of each sized array
+  in the chain as `do_reval(t.volume)`, and a literal volume comes out in
+  the narrow type of its own value (`i8` for `3`). Every other step and
+  size there is `Int32`, and nothing widens the volume to it.
+- Any VLA with a constant dimension under a run-time one hits it: a local
+  `[n][3]T`, and a slice with run-time bounds of an array of rows
+  (`g[i:j][1][2]` on a `[4][3]T`). A one-dimensional VLA is fine, since its
+  only volume is a run-time value already of the bounds' type. The C
+  backend is fine.
+- Fix, probably: construct the volume to `Int32` in `handleVLA` before the
+  `mul`.
+- Reproducer: `tests/lang/value/slice/runtime_postfix_rows.modest`, marked
+  `EXPECTED-FAIL(llvm)`.

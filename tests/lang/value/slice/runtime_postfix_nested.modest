@@ -1,0 +1,93 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: run-time slice of a run-time slice
+// EXPECT-OUT: passed: run-time slice through a pointer
+// EXPECT-OUT: passed: index through a pointer to a run-time slice
+// EXPECT-OUT: passed: nested postfix after a run-time slice
+//
+// An index after a slice with run-time bounds, reached in the ways
+// runtime_postfix.modest does not: a slice of such a slice, a slice of a
+// pointer to array, and an index through a pointer to such a slice.  A
+// slice of rows, where the step of an index is a whole row, is in
+// runtime_postfix_rows.modest.
+//
+// Every bound goes through `opaque`, so it cannot be folded away.
+//
+// Guards BUG#76 (fixed 2026-10-31).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func opaque (n: Int32) -> Int32 {
+	return n
+}
+
+
+func testSliceOfSlice () -> Bool {
+	var a: [8]Int32 = [0, 1, 2, 3, 4, 5, 6, 7]
+	let i = opaque(1)
+	let j = opaque(7)
+	let k = opaque(2)
+	let l = opaque(5)
+
+	// a[1:7] is [1..6]; its [2:5] is [3, 4, 5].
+	if a[i:j][k:l][0] != 3 or a[i:j][k:l][2] != 5 {
+		printf("a[1:7][2:5][0], a[1:7][2:5][2] = %d, %d, expected 3, 5\n", a[i:j][k:l][0], a[i:j][k:l][2])
+		return false
+	}
+
+	printf("passed: run-time slice of a run-time slice\n")
+	return true
+}
+
+
+func testPointerToArray () -> Bool {
+	var a: [6]Int32 = [10, 20, 30, 40, 50, 60]
+	let p = &a
+	let i = opaque(2)
+	let j = opaque(5)
+
+	if p[i:j][1] != 40 {
+		printf("p[2:5][1] = %d, expected 40\n", p[i:j][1])
+		return false
+	}
+
+	printf("passed: run-time slice through a pointer\n")
+	return true
+}
+
+
+func testPointerToSlice () -> Bool {
+	var a: [6]Int32 = [10, 20, 30, 40, 50, 60]
+	let i = opaque(2)
+	let j = opaque(5)
+	let s = &a[i:j]
+	let k = opaque(2)
+
+	if s[k] != 50 {
+		printf("(&a[2:5])[2] = %d, expected 50\n", s[k])
+		return false
+	}
+
+	printf("passed: index through a pointer to a run-time slice\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testSliceOfSlice() and result
+	result = testPointerToArray() and result
+	result = testPointerToSlice() and result
+
+	if not result {
+		printf("failed: nested postfix after a run-time slice\n")
+		return exitFailure
+	}
+
+	printf("passed: nested postfix after a run-time slice\n")
+	return exitSuccess
+}

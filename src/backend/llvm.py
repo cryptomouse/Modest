@@ -1436,6 +1436,9 @@ def ass(left, indexes):
 		i = 0
 		while i < len(indexes):
 			index = indexes[i]
+			# тип среза с run-time границами через handleVLA не проходил,
+			# и шага у его элемента может не быть (BUG#76)
+			handleVLA(lt.of)
 			step = lt.of.runtimeSizeRoots
 			offset = llvm_eval_binary('mul', index, step)
 			full_offset = llvm_eval_binary('add', full_offset, offset)

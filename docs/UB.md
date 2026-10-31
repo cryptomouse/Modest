@@ -54,8 +54,9 @@ let o = a[2:j + 9]  // past the end
   - `to < from` — with signed bounds the size is negative: UB; with `NatX`
     bounds `j - i` wraps to a huge size: stack overflow in practice.
   - `to > len` — the `memcpy` reads past the end of `a`.
-- LLVM: run-time-bounded slices are not usable yet regardless of the
-  bounds — see BUG#75, BUG#76, BUG#77.
+- LLVM: a run-time-bounded slice can be indexed, but not yet copied as a
+  value or measured with `lengthof`, regardless of the bounds — see BUG#75,
+  BUG#77.
 - Avoid: check the bounds before slicing, or take a pointer instead of a
   copy (`&a[i:j]` emits `&a[i]` and allocates nothing).
 - Could be caught by: a run-time bounds check under an opt-in flag.

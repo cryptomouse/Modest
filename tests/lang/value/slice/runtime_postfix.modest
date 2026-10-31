@@ -1,6 +1,5 @@
 // TEST: run
 // BACKENDS: c11, llvm, modest
-// EXPECTED-FAIL(llvm): BUG#76 index into a slice with run-time bounds crashes the backend
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: index after a run-time slice
 // EXPECT-OUT: passed: slice after a run-time slice
@@ -11,6 +10,7 @@
 // run-time `N` has no such array type to index through.
 //
 // Guards BUG#7 (fixed 2026-09-28).
+// Guards BUG#76 (fixed 2026-10-31).
 
 include "libc/ctypes64"
 include "libc/stdio"
