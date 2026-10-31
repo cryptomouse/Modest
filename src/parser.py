@@ -1908,43 +1908,6 @@ class Parser:
 		}
 
 
-	# `++x` / `--x` are gone, `x += 1` / `x -= 1` took their place. The
-	# tokens are still lexed only to say so: without them `--x` reads as
-	# `-(-x)`, a value statement that compiles and silently does nothing.
-	# The statement is then parsed as the `op=` it stands for, so nothing
-	# after it reports again.
-	def stmt_incdec_removed(self):
-		ti_start = self.tokenInfo()
-		token = self.ctok()
-		self.skip1()
-		v = self.expr_value()
-		ti = TextInfo(start=ti_start, mid=ti_start, end=v['ti'].end)
-
-		if token == '++':
-			error("`++` was removed, write `x += 1`", ti)
-			op = HLIR_VALUE_OP_ADD
-		else:
-			error("`--` was removed, write `x -= 1`", ti)
-			op = HLIR_VALUE_OP_SUB
-
-		one = {
-			'isa': 'ast_value',
-			'kind': 'number',
-			'str': '1',
-			'anno': [],
-			'ti': ti,
-		}
-		return {
-			'isa': 'ast_stmt',
-			'kind': 'assign_op',
-			'op': op,
-			'left': v,
-			'right': one,
-			'anno': [],
-			'ti': ti,
-		}
-
-
 	def stmt_asm(self):
 		ti_start = self.tokenInfo()
 		v = self.expr_value()
@@ -2091,8 +2054,6 @@ class Parser:
 				s = self.parse_def_type()
 			elif self.look('const'):
 				s = self.stmt_const()
-			elif self.look('++') or self.look('--'):
-				s = self.stmt_incdec_removed()
 			elif self.look('func'):
 				s = self.parse_def_func()
 			elif self.look('__asm'):

@@ -54,8 +54,8 @@ arr[next()] += 10        // next() is called once
 - Like `=`, an operator at the end of the line continues the statement
   onto the next one.
 
-`++x` and `--x` are no longer part of the language; the compiler rejects
-them with `` `++` was removed, write `x += 1` ``.
+There is no `++` / `--`. `--x` lexes as two unary minuses, `-(-x)`, and
+`++x` as `+(+x)`: both are plain values that leave `x` unchanged.
 
 ## Notes
 

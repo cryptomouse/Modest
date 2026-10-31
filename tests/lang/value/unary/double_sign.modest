@@ -13,7 +13,7 @@
 //
 // A printer that writes the sign straight in front of the operand's text
 // turns `- -i` into `--i` and `+ +i` into `++i` — a decrement and an
-// increment in C, and the removed `--`/`++` tokens in Modest.  In C that
+// increment in C.  In C that
 // is the worst kind of wrong: valid code, the expression off by one *and*
 // the operand modified, so every later reading of the variable is wrong
 // too.  The C backend parenthesises the inner sign, `-(-i)`; the modest
@@ -73,6 +73,16 @@ func main () -> Int {
 	if - +m != -5 or + -m != -5 or m != 5 {
 		printf("- +m = %d, + -m = %d, m = %d, expected -5/-5/5\n",
 			- +m, + -m, m)
+		return exitFailure
+	}
+
+	// Written together.  Modest has no `--` / `++`, so `--q` is still two
+	// minuses and `++q` two pluses — the source spelling the C printer
+	// must not reproduce.
+	var q: Int32 = 5
+	if --q != 5 or ++q != 5 or q != 5 {
+		printf("--q = %d, ++q = %d, q = %d, expected 5/5/5\n",
+			--q, ++q, q)
 		return exitFailure
 	}
 

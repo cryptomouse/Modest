@@ -351,7 +351,7 @@ arr[f()] += 1                     // f() is called once
 > `x op= y` is `x = x op y` with `x` evaluated once: the same operator and
 > the same type rules (both sides one type, bitwise only on `Word*`, a shift
 > count `NatX`). It is a statement, like `=` — not an expression.
-> `++x` / `--x` were removed; the compiler names the replacement.
+> There is no `++` / `--`: `--x` is two unary minuses, `-(-x)`.
 
 ### Return
 ```modest
