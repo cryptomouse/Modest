@@ -2,13 +2,13 @@
 // BACKENDS: c11, llvm, modest
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: pointer from a word expression
-// EXPECTED-FAIL(llvm): BUG#81 a pointer built from a compile-time address comes out as null
 //
 // The same fixed-address pointer as in pointer_address.modest, with the
 // address computed from a base and an offset, the way a register map
 // writes it (`examples/m328p_blink`: `Word16 (sfrOffset + Nat16 0x03)`).
 // The address is still known at compile time, only it is no longer a
 // literal.
+// Guards BUG#81 (fixed 2026-11-01).
 
 pragma unsafe
 

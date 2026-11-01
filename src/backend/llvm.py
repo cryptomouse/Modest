@@ -615,7 +615,7 @@ def llvm_print_value_num(x):
 			out("null")
 		else:
 			v = llvm_value_num(typeNat64, num)
-			llvm_inline_cast('inttoptr', x['type'])
+			llvm_inline_cast('inttoptr', x['type'], v)
 		return
 
 	if x['type'].is_rational() or x['type'].is_float():
@@ -632,7 +632,11 @@ def llvm_print_value_inline_cast(x):
 
 	if v['kind'] in ['num']:
 		if t.is_pointer():
-			out("null")
+			# null - только для нуля, любой другой адрес - через inttoptr
+			if v['asset'] == 0:
+				out("null")
+			else:
+				llvm_inline_cast('inttoptr', t, v)
 		elif t.is_rational() or t.is_float():
 			print_rational(v)
 		else:

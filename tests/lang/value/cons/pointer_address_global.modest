@@ -1,0 +1,49 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: pointer to a fixed address in a global
+//
+// The fixed-address pointer of pointer_address_expr.modest, stored into
+// global variables: there it is printed as a global initializer, not as a
+// call argument, which is a separate path in the LLVM backend.  A nonzero
+// address must stay itself, and a zero one must still come out as null.
+// Guards BUG#81 (fixed 2026-11-01).
+
+pragma unsafe
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type GPIO = {
+	dir: Word8
+	out: Word8
+}
+
+const sfrOffset = Nat16 0x20
+const port = unsafe(*GPIO Word16 (sfrOffset + Nat16 0x03))
+const zero = unsafe(*GPIO Word16 (sfrOffset - sfrOffset))
+
+var gport: *GPIO = port
+var gzero: *GPIO = zero
+
+
+func main () -> Int {
+	let a = unsafe(Word64 gport)
+	if a != 0x23 {
+		printf("gport = 0x%llx, expected 0x23\n", Nat64 a)
+		printf("failed: pointer to a fixed address in a global\n")
+		return exitFailure
+	}
+
+	let z = unsafe(Word64 gzero)
+	if z != 0 {
+		printf("gzero = 0x%llx, expected 0x0\n", Nat64 z)
+		printf("failed: pointer to a fixed address in a global\n")
+		return exitFailure
+	}
+
+	printf("passed: pointer to a fixed address in a global\n")
+	return exitSuccess
+}

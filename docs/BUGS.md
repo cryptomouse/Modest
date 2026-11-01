@@ -672,32 +672,6 @@ sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
 - Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#81: LLVM backend turns a pointer to a compile-time address into `null`
-
-```modest
-pragma unsafe
-
-const sfrOffset = Nat16 0x20
-const port = unsafe(*GPIO Word16 (sfrOffset + Nat16 0x03))
-```
-
-```llvm
-%1 = getelementptr %m328p_GPIO, %m328p_GPIO* null, %Int32 0, %Int32 1
-```
-
-- Every use of `port` gets `null` instead of `0x23`.  The IR is valid, so
-  `llc` and clang accept it and the program silently goes to the wrong
-  address: in `examples/m328p_blink`, `avr.portB.dir = 0xff` stores to
-  address 1 instead of 0x24.
-- `llvm_print_value_inline_cast` (`src/backend/llvm.py`) prints any `num`
-  value cast to a pointer as `null`, without looking at the number.  Only
-  zero may print as `null`; any other address needs `inttoptr`.
-- Only the LLVM backend.  C gives `((m328p_GPIO *)(M328P_SFR_OFFSET + 3))`.
-- `tests/lang/value/cons/pointer_address_expr.modest` reproduces it: it
-  passes the pointer through a function and reads it back as a word at run
-  time.
-
-
 ## BUG#82: LLVM backend builds a pointer from a `WordX` literal as a `bitcast` of a register
 
 ```modest
@@ -711,9 +685,9 @@ const port = unsafe(*GPIO Word16 0x23)
 %2 = call %Word64 @addr(%GPIO* bitcast (%Word16 %1 to %GPIO*))
 ```
 
-- clang stops at `invalid use of function-local name`.  It is the literal
-  form of the address from BUG#81, and it goes wrong differently, with two
-  faults stacked:
+- clang stops at `invalid use of function-local name`.  The same address
+  computed from an expression (`Word16 (sfrOffset + Nat16 0x03)`) works;
+  only the literal form goes wrong, with two faults stacked:
 - The inner `Word16 0x23` is immediate, but the `type.is_word()` branch at
   the top of `do_eval_cons` sends it to `docast`, which emits a run-time
   `zext` into a register.  The outer pointer cons sees an immediate operand
