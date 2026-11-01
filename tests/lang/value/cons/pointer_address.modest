@@ -2,13 +2,13 @@
 // BACKENDS: c11, llvm, modest
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: pointer from a word literal
-// EXPECTED-FAIL(llvm): BUG#82 a pointer built from a WordX literal is a bitcast of a register
 //
 // `*T WordX n` builds a pointer to a fixed address — the memory-mapped
 // register idiom (`const port = unsafe(*GPIO Word16 0x23)`).  Nothing is
 // dereferenced here, so any address will do: the pointer goes through a
 // function, which turns it back into a word at run time, where no constant
 // folding can hide what the address came out as.
+// Guards BUG#82 (fixed 2026-11-01).
 
 pragma unsafe
 

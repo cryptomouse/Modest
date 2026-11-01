@@ -1586,9 +1586,6 @@ def select_cast_operator(a, b):
 	# do_eval_from_fixed, перехватывая их до docast()
 	if a.is_integer() or a.is_int() or a.is_nat() or a.is_char() or a.is_word() or a.is_fixed():
 
-		if b.is_pointer():
-			return 'bitcast'
-
 		if b.is_integer() or b.is_rational() or b.is_int() or b.is_nat() or b.is_char() or b.is_bool() or b.is_word() or b.is_fixed():
 			signed = b.is_signed()
 
@@ -2000,6 +1997,10 @@ def do_eval_cons(x):
 	# required: (uint64_t)((uint32)int32_value)
 	if type.is_word():
 		if from_type.is_int() or from_type.is_integer():
+			# свернутая константа остается константой: zext в регистр
+			# нельзя вставить в константное выражение (*T WordX 0x23)
+			if x.is_immediate() and x.asset != None:
+				return do_eval_literal(x)
 			v = do_reval(value)
 			return docast(v, type)
 

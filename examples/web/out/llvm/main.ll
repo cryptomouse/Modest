@@ -322,22 +322,21 @@ then_0:
 endif_0:
 	%9 = trunc %SSizeT %5 to %Nat32
 	%10 = getelementptr [1024 x %Word8], [1024 x %Word8]* %buffer, %Int32 0, %Nat32 %9
-	%11 = bitcast i8 0 to %Word8
-	store %Word8 %11, %Word8* %10
-	%12 = bitcast [1024 x %Word8]* %buffer to %Str8*
-	%13 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([22 x i8]* @.str3 to [0 x i8]*), %Str8* %12)
-	%14 = zext i16 1024 to %Nat32
-	%15 = mul %Nat32 %14, 1
-	%16 = bitcast [1024 x %Char8]* %response to i8*
-	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %16, i8 0, %Nat32 %15, i1 0)
-	%17 = bitcast [1024 x %Char8]* %response to %CharStr*
-	%18 = load %Nat32, %Nat32* @pageCounter
-	%19 = call %Int (%CharStr*, %ConstCharStr*, ...) @sprintf(%CharStr* %17, %ConstCharStr* bitcast ([56 x i8]* @.str4 to [0 x i8]*), %Str8* bitcast ([64 x i8]* @.str1 to [0 x i8]*), %Nat32 %18)
-	%20 = bitcast [1024 x %Char8]* %response to i8*
-	%21 = bitcast [1024 x %Char8]* %response to [0 x %ConstChar]*
-	%22 = call %SizeT @strlen([0 x %ConstChar]* %21)
-	%23 = call %SSizeT @write(%Int32 %clientSocket, i8* %20, %SizeT %22)
-	%24 = call %Int @close(%Int32 %clientSocket)
+	store %Word8 0, %Word8* %10
+	%11 = bitcast [1024 x %Word8]* %buffer to %Str8*
+	%12 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([22 x i8]* @.str3 to [0 x i8]*), %Str8* %11)
+	%13 = zext i16 1024 to %Nat32
+	%14 = mul %Nat32 %13, 1
+	%15 = bitcast [1024 x %Char8]* %response to i8*
+	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %15, i8 0, %Nat32 %14, i1 0)
+	%16 = bitcast [1024 x %Char8]* %response to %CharStr*
+	%17 = load %Nat32, %Nat32* @pageCounter
+	%18 = call %Int (%CharStr*, %ConstCharStr*, ...) @sprintf(%CharStr* %16, %ConstCharStr* bitcast ([56 x i8]* @.str4 to [0 x i8]*), %Str8* bitcast ([64 x i8]* @.str1 to [0 x i8]*), %Nat32 %17)
+	%19 = bitcast [1024 x %Char8]* %response to i8*
+	%20 = bitcast [1024 x %Char8]* %response to [0 x %ConstChar]*
+	%21 = call %SizeT @strlen([0 x %ConstChar]* %20)
+	%22 = call %SSizeT @write(%Int32 %clientSocket, i8* %19, %SizeT %21)
+	%23 = call %Int @close(%Int32 %clientSocket)
 	ret void
 }
 
@@ -356,61 +355,60 @@ then_0:
 	br label %endif_0
 endif_0:
 	%3 = insertvalue %SockAddrIn zeroinitializer, %AddressFamily 2, 1
-	%4 = bitcast i16 8080 to %Word16
-	%5 = call %Word16 @htons(%Word16 %4)
-	%6 = bitcast %Word16 %5 to %UnsignedShort
-	%7 = insertvalue %SockAddrIn %3, %UnsignedShort %6, 2
-	store %SockAddrIn %7, %SockAddrIn* %serverAddr
-	%8 = bitcast %SockAddrIn* %serverAddr to %SockAddr*
-	%9 = call %Int @bind(%Int %1, %SockAddr* %8, %SocklenT 16)
-	store %Int %9, %Int* %rc
+	%4 = call %Word16 @htons(%Word16 8080)
+	%5 = bitcast %Word16 %4 to %UnsignedShort
+	%6 = insertvalue %SockAddrIn %3, %UnsignedShort %5, 2
+	store %SockAddrIn %6, %SockAddrIn* %serverAddr
+	%7 = bitcast %SockAddrIn* %serverAddr to %SockAddr*
+	%8 = call %Int @bind(%Int %1, %SockAddr* %7, %SocklenT 16)
+	store %Int %8, %Int* %rc
 ; if_1
-	%10 = load %Int, %Int* %rc
-	%11 = icmp slt %Int %10, 0
-	br %Bool %11 , label %then_1, label %endif_1
+	%9 = load %Int, %Int* %rc
+	%10 = icmp slt %Int %9, 0
+	br %Bool %10 , label %then_1, label %endif_1
 then_1:
 	call void @perror(%ConstCharStr* bitcast ([19 x i8]* @.str6 to [0 x i8]*))
-	%12 = call %Int @close(%Int %1)
+	%11 = call %Int @close(%Int %1)
 	call void @exit(%Int 1)
 	br label %endif_1
 endif_1:
-	%13 = call %Int @listen(%Int %1, %Int 5)
-	store %Int %13, %Int* %rc
+	%12 = call %Int @listen(%Int %1, %Int 5)
+	store %Int %12, %Int* %rc
 ; if_2
-	%14 = load %Int, %Int* %rc
-	%15 = icmp slt %Int %14, 0
-	br %Bool %15 , label %then_2, label %endif_2
+	%13 = load %Int, %Int* %rc
+	%14 = icmp slt %Int %13, 0
+	br %Bool %14 , label %then_2, label %endif_2
 then_2:
 	call void @perror(%ConstCharStr* bitcast ([21 x i8]* @.str7 to [0 x i8]*))
-	%16 = call %Int @close(%Int %1)
+	%15 = call %Int @close(%Int %1)
 	call void @exit(%Int 1)
 	br label %endif_2
 endif_2:
-	%17 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([32 x i8]* @.str8 to [0 x i8]*), %Nat32 8080)
+	%16 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([32 x i8]* @.str8 to [0 x i8]*), %Nat32 8080)
 ; while_1
 	br label %again_1
 again_1:
 	br %Bool 1 , label %body_1, label %break_1
 body_1:
 	store %SockAddrIn zeroinitializer, %SockAddrIn* %clientAddr
-	%18 = bitcast %SockAddrIn* %clientAddr to %SockAddr*
+	%17 = bitcast %SockAddrIn* %clientAddr to %SockAddr*
 	store %SocklenT 16, %SocklenT* %clientAdrLen
-	%19 = call %Int @accept(%Int %1, %SockAddr* %18, %SocklenT* %clientAdrLen)
+	%18 = call %Int @accept(%Int %1, %SockAddr* %17, %SocklenT* %clientAdrLen)
 ; if_3
-	%20 = icmp slt %Int %19, 0
-	br %Bool %20 , label %then_3, label %endif_3
+	%19 = icmp slt %Int %18, 0
+	br %Bool %19 , label %then_3, label %endif_3
 then_3:
 	call void @perror(%ConstCharStr* bitcast ([25 x i8]* @.str9 to [0 x i8]*))
 	br label %again_1
 	br label %endif_3
 endif_3:
-	call void @handleRequest(%Int %19)
-	%22 = load %Nat32, %Nat32* @pageCounter
-	%23 = add %Nat32 %22, 1
-	store %Nat32 %23, %Nat32* @pageCounter
+	call void @handleRequest(%Int %18)
+	%21 = load %Nat32, %Nat32* @pageCounter
+	%22 = add %Nat32 %21, 1
+	store %Nat32 %22, %Nat32* @pageCounter
 	br label %again_1
 break_1:
-	%24 = call %Int @close(%Int %1)
+	%23 = call %Int @close(%Int %1)
 	ret %Int32 0
 }
 

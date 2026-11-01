@@ -672,35 +672,6 @@ sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
 - Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#82: LLVM backend builds a pointer from a `WordX` literal as a `bitcast` of a register
-
-```modest
-pragma unsafe
-
-const port = unsafe(*GPIO Word16 0x23)
-```
-
-```llvm
-%1 = zext i8 35 to %Word16
-%2 = call %Word64 @addr(%GPIO* bitcast (%Word16 %1 to %GPIO*))
-```
-
-- clang stops at `invalid use of function-local name`.  The same address
-  computed from an expression (`Word16 (sfrOffset + Nat16 0x03)`) works;
-  only the literal form goes wrong, with two faults stacked:
-- The inner `Word16 0x23` is immediate, but the `type.is_word()` branch at
-  the top of `do_eval_cons` sends it to `docast`, which emits a run-time
-  `zext` into a register.  The outer pointer cons sees an immediate operand
-  and prints an inline constant expression around that register, which a
-  constant expression cannot contain.
-- `select_cast_operator` answers `bitcast` for integer → pointer: its
-  `if b.is_pointer(): return 'bitcast'` comes before the `inttoptr` branch,
-  so that branch is dead.  Even with a proper constant operand the cast
-  would be rejected.
-- Only the LLVM backend.  C gives `((struct gpio *)(uint16_t)0x23)`.
-- `tests/lang/value/cons/pointer_address.modest` reproduces it.
-
-
 ## BUG#83: LLVM backend drops `@volatile` from loads and stores
 
 ```modest

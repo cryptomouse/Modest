@@ -402,35 +402,33 @@ then_0:
 	%45 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str10 to [0 x i8]*))
 	br label %endif_0
 endif_0:
-	%46 = zext i8 15 to %Word32
-	store %Word32 %46, %Word32* %u
-	%47 = zext i8 51 to %Word32
-	store %Word32 %47, %Word32* %v
-	%48 = load %Word32, %Word32* %u
-	%49 = load %Word32, %Word32* %v
-	%50 = or %Word32 %48, %49
-	%51 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([12 x i8]* @.str11 to [0 x i8]*), %Word32 %50)
+	store %Word32 15, %Word32* %u
+	store %Word32 51, %Word32* %v
+	%46 = load %Word32, %Word32* %u
+	%47 = load %Word32, %Word32* %v
+	%48 = or %Word32 %46, %47
+	%49 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([12 x i8]* @.str11 to [0 x i8]*), %Word32 %48)
 	store %Int32 0, %Int32* %k
 ; while_2
 	br label %again_2
 again_2:
-	%52 = load %Int32, %Int32* %k
-	%53 = icmp slt %Int32 %52, 5
-	br %Bool %53 , label %body_2, label %break_2
+	%50 = load %Int32, %Int32* %k
+	%51 = icmp slt %Int32 %50, 5
+	br %Bool %51 , label %body_2, label %break_2
 body_2:
-	%54 = load %Int32, %Int32* %k
-	%55 = add %Int32 %54, 1
-	store %Int32 %55, %Int32* %k
+	%52 = load %Int32, %Int32* %k
+	%53 = add %Int32 %52, 1
+	store %Int32 %53, %Int32* %k
 ; if_1
-	%56 = load %Int32, %Int32* %k
-	%57 = icmp eq %Int32 %56, 3
-	br %Bool %57 , label %then_1, label %endif_1
+	%54 = load %Int32, %Int32* %k
+	%55 = icmp eq %Int32 %54, 3
+	br %Bool %55 , label %then_1, label %endif_1
 then_1:
 	br label %again_2
 	br label %endif_1
 endif_1:
-	%59 = load %Int32, %Int32* %k
-	%60 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str12 to [0 x i8]*), %Int32 %59)
+	%57 = load %Int32, %Int32* %k
+	%58 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str12 to [0 x i8]*), %Int32 %57)
 	br label %again_2
 break_2:
 	store %Int32 0, %Int32* %j
@@ -440,38 +438,38 @@ again_3:
 	br %Bool 1 , label %body_3, label %break_3
 body_3:
 ; if_2
-	%61 = load %Int32, %Int32* %j
-	%62 = icmp eq %Int32 %61, 2
-	br %Bool %62 , label %then_2, label %endif_2
+	%59 = load %Int32, %Int32* %j
+	%60 = icmp eq %Int32 %59, 2
+	br %Bool %60 , label %then_2, label %endif_2
 then_2:
 	br label %break_3
 	br label %endif_2
 endif_2:
+	%62 = load %Int32, %Int32* %j
+	%63 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str13 to [0 x i8]*), %Int32 %62)
 	%64 = load %Int32, %Int32* %j
-	%65 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([8 x i8]* @.str13 to [0 x i8]*), %Int32 %64)
-	%66 = load %Int32, %Int32* %j
-	%67 = add %Int32 %66, 1
-	store %Int32 %67, %Int32* %j
+	%65 = add %Int32 %64, 1
+	store %Int32 %65, %Int32* %j
 	br label %again_3
 break_3:
 ; if_3
-	%68 = load %Int32, %Int32* %i32
-	%69 = icmp sgt %Int32 %68, 0
-	%70 = load %Int32, %Int32* %counter
-	%71 = icmp slt %Int32 %70, 0
-	%72 = xor %Bool %71, 1
-	%73 = and %Bool %69, %72
-	br %Bool %73 , label %then_3, label %endif_3
+	%66 = load %Int32, %Int32* %i32
+	%67 = icmp sgt %Int32 %66, 0
+	%68 = load %Int32, %Int32* %counter
+	%69 = icmp slt %Int32 %68, 0
+	%70 = xor %Bool %69, 1
+	%71 = and %Bool %67, %70
+	br %Bool %71 , label %then_3, label %endif_3
 then_3:
-	%74 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str14 to [0 x i8]*))
+	%72 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str14 to [0 x i8]*))
 	br label %endif_3
 endif_3:
 	store %Action* @announce, %Action** %cb
-	%75 = load %Action*, %Action** %cb
-	call void %75()
-	%76 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str15 to [0 x i8]*), %Size 16)
-	%77 = call %Int32 @sum(%Int32 5)
-	%78 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str16 to [0 x i8]*), %Int32 %77)
+	%73 = load %Action*, %Action** %cb
+	call void %73()
+	%74 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str15 to [0 x i8]*), %Size 16)
+	%75 = call %Int32 @sum(%Int32 5)
+	%76 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str16 to [0 x i8]*), %Int32 %75)
 	ret %Int 0
 }
 
