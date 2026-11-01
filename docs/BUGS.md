@@ -805,21 +805,6 @@ public type Opaque = record {
 - Only the C backend; LLVM has no headers.  Reproducer:
   `tests/lang/access_modifiers/private_in_public.modest`.
 
-## BUG#89: Explicit construction from the same type crashes on a debug `print`
-
-```modest
-type Hidden = Int32
-func f (v: Int32) -> Hidden {
-	return Hidden v      // AttributeError: 'TypeSimple' object has no attribute 'layout'
-}
-```
-
-- `value_cons_explicit` (`src/value/cons.py`) has a leftover
-  `print("t.layout: ...")` in the "explicit cons from the same type" branch;
-  only records have `layout`, so any non-record type reaching it crashes
-  the compiler instead of getting the `info`.
-- Fix: delete the `print`.  No test covers it.
-
 ## BUG#90: C backend drops a construction on the right of an assignment
 
 ```modest

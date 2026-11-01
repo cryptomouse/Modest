@@ -1,0 +1,120 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: alias
+// EXPECT-OUT: passed: scalars
+// EXPECT-OUT: passed: record
+// EXPECT-OUT: passed: same type
+//
+// An explicit construction from a value of the same type is a no-op: the
+// front end returns the value unchanged and reports it with an `info`.
+// That branch once printed `t.layout`, which only a record has, so every
+// non-record type reaching it crashed the compiler.  A plain alias is the
+// same type as the one it names (docs/lang/def/type.md), so it takes the
+// same branch.
+// Guards BUG#89 (fixed 2026-10-08).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Hidden = Int32
+
+type Point = {x: Int32, y: Int32}
+
+
+func hide (v: Int32) -> Hidden {
+	return Hidden v
+}
+
+
+func testAlias () -> Bool {
+	let h = hide(-7)
+	if h != -7 {
+		printf("Hidden -7 = %d, expected -7\n", h)
+		return false
+	}
+
+	return true
+}
+
+
+func testScalars () -> Bool {
+	var i: Int32 = -5
+	var n: Nat64 = 5000000000
+	var w: Word32 = 0xDEADBEEF
+	var b = true
+
+	let i2 = Int32 i
+	if i2 != -5 {
+		printf("Int32 -5 = %d, expected -5\n", i2)
+		return false
+	}
+
+	let n2 = Nat64 n
+	if n2 != 5000000000 {
+		printf("Nat64 5000000000 = %llu, expected 5000000000\n", n2)
+		return false
+	}
+
+	let w2 = Word32 w
+	if w2 != 0xDEADBEEF {
+		printf("Word32 0xDEADBEEF = 0x%X, expected 0xDEADBEEF\n", w2)
+		return false
+	}
+
+	let b2 = Bool b
+	if not b2 {
+		printf("Bool true = false, expected true\n")
+		return false
+	}
+
+	return true
+}
+
+
+func testRecord () -> Bool {
+	var p: Point = {x = 3, y = -4}
+
+	let p2 = Point p
+	if p2.x != 3 or p2.y != -4 {
+		printf("Point {3, -4} = {%d, %d}, expected {3, -4}\n", p2.x, p2.y)
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	if testAlias() {
+		printf("passed: alias\n")
+	} else {
+		ok = false
+	}
+
+	if testScalars() {
+		printf("passed: scalars\n")
+	} else {
+		ok = false
+	}
+
+	if testRecord() {
+		printf("passed: record\n")
+	} else {
+		ok = false
+	}
+
+	if not ok {
+		printf("failed: same type\n")
+		return exitFailure
+	}
+
+	printf("passed: same type\n")
+	return exitSuccess
+}
+
+
