@@ -672,38 +672,6 @@ sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
 - Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#80: A record literal with a bad field is reported again, and its type prints as a Python object
-
-```modest
-func take (a: Int32, b: Int32 = 0) -> Int32 { return a }
-
-let x = take({x = )}, 2)
-```
-
-```
-error: unexpected token ')'
-error: cannot implicitly construct `Int32` from `{x: <hlir.types.TypeBad object at 0x109f65940>}`
-```
-
-- The first diagnostic is the real one.  The second is a cascade: the field
-  value that failed to parse became a `ValueBad` of `TypeBad`, the record
-  literal around it got the type `{x: TypeBad}`, and implicit construction
-  into the parameter type fails on it.  `value_cons_implicit`
-  (`src/value/cons.py`) skips a value that is bad itself (`v.is_bad()`),
-  but not a composite value with a bad part, so the error is raised in
-  `value_cons_implicit_check`.
-- The type is printed by `str_type2` (`src/backend/modest.py`), which has a
-  branch for every kind of type except a bad one; `TypeBad` falls through to
-  `str(t)`, the default Python `repr`.
-- Two fixes, independent: treat a type with a bad part as bad for the
-  purpose of reporting (so the cascade is not reported at all), and give
-  `str_type2` an `is_bad()` branch so a bad type can never print as an
-  object address anywhere.
-- No reproducer: `EXPECT-ERROR` can require a diagnostic but not its
-  absence, so the suite cannot state "reported once".  The leak itself can
-  be checked by eye with the example above.
-
-
 ## BUG#81: LLVM backend turns a pointer to a compile-time address into `null`
 
 ```modest

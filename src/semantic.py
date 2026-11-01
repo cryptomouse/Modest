@@ -1979,6 +1979,12 @@ def do_value_array(x, ctx):
 			item_value = do_rvalue(item['value'], ctx=ctx)
 			item_value.nl = item['nl']
 			items.append(item_value)
+
+	# Плохой элемент отравляет весь литерал, иначе ошибка
+	# в нем всплывет повторно при конструировании (BUG#80)
+	if any(item.is_bad() for item in items):
+		return ValueBad(ti=x['ti'])
+
 	v = value_array_create(t=None, items=items, ti=x['ti'])
 	return v
 
@@ -2002,6 +2008,10 @@ def do_value_record(x, ctx):
 				nl=item['nl']
 			)
 			initializers.append(p)
+
+	# Плохое поле отравляет весь литерал (см. do_value_array)
+	if any(p.value.is_bad() for p in initializers):
+		return ValueBad(ti=x['ti'])
 
 	v = value_record_create(t=None, initializers=initializers, ti=x['ti'])
 	return v

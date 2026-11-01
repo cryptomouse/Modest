@@ -263,6 +263,7 @@ def str_type2(t):
 	elif t.is_integer(): return "Integer(%d)" % t.width
 	elif t.is_rational(): return "Rational"
 	elif t.is_undefined(): return "Undefined"
+	elif t.is_bad(): return "<bad>"
 	return str(t)
 
 

@@ -1,0 +1,28 @@
+// TEST: reject
+// EXPECT-ERROR: unexpected token ')'
+// EXPECT-ERROR: let r = take({x = )}, 2)
+// EXPECT-ERROR: unexpected token ')'
+// EXPECT-ERROR: let a = take([1, )], 2)
+// EXPECT-ERROR: unexpected token ')'
+// EXPECT-ERROR: let w = {a = 1, b = [1, )]}
+// EXPECT-ERROR-COUNT: 3
+//
+// A record or array literal with an item that failed is bad as a whole,
+// and the error in the item is reported once.  The literal used to keep a
+// type with the bad part inside, `{x: TypeBad}` or an array of whatever
+// the other items were, and constructing it into the parameter type
+// raised a second error - for a record, with the bad type printed as a
+// Python object.  The poison also reaches a later use of a variable
+// initialised with such a literal (`w`).
+// Guards BUG#80 (fixed 2026-11-01).
+
+func take (a: Int32, b: Int32 = 0) -> Int32 {
+	return a
+}
+
+func f () -> Unit {
+	let r = take({x = )}, 2)
+	let a = take([1, )], 2)
+	let w = {a = 1, b = [1, )]}
+	let v = take(w, 1)
+}
