@@ -1,0 +1,108 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: volatile
+// EXPECT-CODE(llvm): store volatile %Word8 17
+// EXPECT-CODE(llvm): load volatile %Word8
+// EXPECT-CODE(llvm): load volatile %GPIO*, %GPIO** @through
+// EXPECT-CODE(llvm): store %Word8 34
+// EXPECT-CODE(llvm): store volatile %Word8 51
+// EXPECT-CODE(llvm): store volatile %Word8 68
+// EXPECT-CODE(llvm): load volatile %Nat32, %Nat32* @counter
+// EXPECT-CODE(llvm): store volatile %Nat32
+// EXPECT-CODE(llvm): store %Word8 85
+//
+// A running program cannot tell a volatile access from a plain one, so
+// the LLVM side is checked in the IR (EXPECT-CODE).  `@volatile` belongs
+// to the type it is written on: on the data in `*@volatile GPIO`, on the
+// pointer itself in `@volatile *GPIO`.  A field or an item of a volatile
+// aggregate is volatile, the way a member of a volatile struct is in C;
+// what a volatile pointer points to is not.  The functions are in the
+// order of the expectations above, each with a constant of its own.
+// Guards BUG#83 (fixed 2026-11-01).
+
+pragma unsafe
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type GPIO = {
+	dir: Word8
+	out: Word8
+}
+
+var counter: @volatile Nat32 = 0
+var regs: @volatile GPIO
+var plainRegs: GPIO
+var through: @volatile *GPIO = &plainRegs
+
+
+// the data is volatile: the field is too
+func setViaPointer (p: *@volatile GPIO) -> Unit {
+	p.dir = 0x11
+}
+
+func getViaPointer (p: *@volatile GPIO) -> Word8 {
+	return p.out
+}
+
+// the pointer is volatile: loading it is, the store into its data is not
+func setViaVolatilePointer () -> Unit {
+	through.dir = 0x22
+}
+
+func setRecordVar () -> Unit {
+	regs.dir = 0x33
+}
+
+func setItem (a: *@volatile [4]Word8) -> Unit {
+	a[2] = 0x44
+}
+
+func bump () -> Unit {
+	counter = counter + 1
+}
+
+func setPlain (p: *GPIO) -> Unit {
+	p.dir = 0x55
+}
+
+
+func main () -> Int {
+	var ok = true
+	var gpio: GPIO
+	var items: [4]Word8
+
+	setViaPointer(unsafe(*@volatile GPIO &gpio))
+	ok = gpio.dir == 0x11 and ok
+
+	gpio.out = 0x12
+	ok = getViaPointer(unsafe(*@volatile GPIO &gpio)) == 0x12 and ok
+
+	setViaVolatilePointer()
+	ok = plainRegs.dir == 0x22 and ok
+
+	setRecordVar()
+	ok = regs.dir == 0x33 and ok
+
+	setItem(unsafe(*@volatile [4]Word8 &items))
+	ok = items[2] == 0x44 and ok
+
+	bump()
+	bump()
+	ok = counter == 2 and ok
+
+	setPlain(&gpio)
+	ok = gpio.dir == 0x55 and ok
+
+	if not ok {
+		printf("failed: volatile\n")
+		return exitFailure
+	}
+
+	printf("passed: volatile\n")
+	return exitSuccess
+}
+

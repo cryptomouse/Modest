@@ -79,6 +79,7 @@ class Test:
 	expect_out: list = field(default_factory=list)
 	expect_error: list = field(default_factory=list)  # diagnostics a `reject` test must produce
 	expect_error_count: int = None        # exact number of errors, None = any
+	expect_code: dict = field(default_factory=dict)  # backend (or '*') -> substrings of the generated source
 	link: list = field(default_factory=list)   # extra sources to link in, resolved
 	flags: list = field(default_factory=list)  # extra modest flags
 	xfail: dict = field(default_factory=dict)  # backend (or '*') -> reason
@@ -165,6 +166,9 @@ def apply_directive(t, key, scope, value, name):
 		t.expect_out.append(value)
 	elif key == 'EXPECT-ERROR':
 		t.expect_error.append(value)
+	elif key == 'EXPECT-CODE':
+		for b in (scope or ['*']):
+			t.expect_code.setdefault(b, []).append(value)
 	elif key == 'EXPECT-ERROR-COUNT':
 		t.expect_error_count = int(value)
 	elif key == 'LINK':
@@ -347,6 +351,20 @@ def do_case(t, backend, workdir):
 			return result(FAIL, 'modest produced no %s' % ext, last_output(out), out)
 		generated.append(prefix + ext)
 
+	# What a running program cannot show (a `volatile` access looks like any
+	# other) is checked in the source the backend generated for the test
+	# itself, not for the modules it links.
+	want = t.expect_code.get(backend, []) + t.expect_code.get('*', [])
+	if want:
+		with open(generated[0], encoding='utf-8') as f:
+			code_text = f.read()
+		missing = find_in_order(code_text, want)
+		if missing is not None:
+			n, line = missing
+			where = ['matched %d of %d expectations, stopped before this one'
+			         % (n, len(want)), 'in ' + generated[0]]
+			return result(FAIL, 'generated code missing %r' % line, where)
+
 	if backend in GENERATE_ONLY:
 		# Nothing to link or run — reaching here means the backend accepted
 		# the module.  (A round-trip check belongs here later.)
@@ -376,16 +394,26 @@ def do_case(t, backend, workdir):
 		return result(FAIL, 'exit %d, expected %d' % (code, t.expect_exit),
 		              last_output(out), out)
 
-	rest = out
-	for n, want in enumerate(t.expect_out):
-		i = rest.find(want)
-		if i < 0:
-			where = ['matched %d of %d expectations, stopped before this one'
-			         % (n, len(t.expect_out))]
-			return result(FAIL, 'output missing %r' % want, where + last_output(out), out)
-		rest = rest[i + len(want):]
+	missing = find_in_order(out, t.expect_out)
+	if missing is not None:
+		n, want = missing
+		where = ['matched %d of %d expectations, stopped before this one'
+		         % (n, len(t.expect_out))]
+		return result(FAIL, 'output missing %r' % want, where + last_output(out), out)
 
 	return result(PASS)
+
+
+def find_in_order(text, wanted):
+	"""None if every string of `wanted` is in `text`, one after another;
+	otherwise (how many were found, the first one that was not)."""
+	rest = text
+	for n, want in enumerate(wanted):
+		i = rest.find(want)
+		if i < 0:
+			return n, want
+		rest = rest[i + len(want):]
+	return None
 
 
 

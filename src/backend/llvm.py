@@ -794,11 +794,16 @@ def llvm_2cast(kind, from_type, to_type, value):
 	return rv
 
 
+def llvm_is_volatile(x):
+	return x.get('volatile', False) or x['type'].hasAttribute('volatile')
+
+
 def llvm_load(x):
 	assert(x['isa'] == 'll_value')
 
 	if x['is_adr']:
-		rv = ll_reg_operation('load', x['type'])
+		op = 'load volatile' if llvm_is_volatile(x) else 'load'
+		rv = ll_reg_operation(op, x['type'])
 		print_type(x['type'])
 		out(", ")
 		llvm_print_type_value(x)
@@ -820,7 +825,7 @@ def llvm_store(dst, src):
 
 
 def llvm_store_simple(dst, src):
-	lo("store ")
+	lo("store volatile " if llvm_is_volatile(dst) else "store ")
 	llvm_print_type_value(src)
 	out(", ")
 	llvm_print_type_value(dst)
@@ -2370,6 +2375,24 @@ def do_eval_sizeof_type(x):
 eval_override = {}
 
 
+
+# Место (lvalue) volatile, если volatile его собственный тип или тип
+# агрегата, в котором оно лежит (как в C: поле volatile-структуры само
+# volatile). Через указатель смотрим только на тип ДАННЫХ: @volatile *T -
+# volatile сам указатель, а не то, на что он указывает
+def is_volatile_place(x):
+	if x.type.hasAttribute('volatile'):
+		return True
+
+	if x.is_access_record() or x.is_index():
+		container = x.left
+		if container.type.is_pointer():
+			return container.type.to.hasAttribute('volatile')
+		return is_volatile_place(container)
+
+	return False
+
+
 def do_eval(x):
 	assert(isinstance(x, Value))
 
@@ -2425,6 +2448,8 @@ def do_eval(x):
 	y['proto'] = x
 	y['type'] = x.type
 	y['ti'] = x.ti
+	if y['is_adr'] and (x.is_access_record() or x.is_index()):
+		y['volatile'] = is_volatile_place(x)
 
 	return y
 

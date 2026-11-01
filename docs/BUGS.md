@@ -672,32 +672,6 @@ sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
 - Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#83: LLVM backend drops `@volatile` from loads and stores
-
-```modest
-var delayCounter: @volatile Nat32 = 0     // examples/m328p_blink/src/avr/delay.modest
-const port = unsafe(* @volatile GPIO Word16 0x23)
-port.dir = 0xff
-```
-
-```llvm
-store %Nat32 0, %Nat32* %4
-%5 = load %Nat32, %Nat32* %4
-```
-
-- No `load volatile` / `store volatile` is ever emitted: `volatile` occurs
-  in `src/backend/llvm.py` only as the flag of the `memcpy`/`memset`
-  intrinsics, and that flag is always false.  This covers both volatile
-  variables and places reached through a pointer to a volatile type.
-- At `-O0` it goes unnoticed.  With optimization, the busy-wait loop in
-  `delay_ms` can be deleted and repeated register writes merged, which are
-  exactly the two things `@volatile` exists to prevent.
-- C keeps the qualifier (`volatile uint32_t delayCounter`,
-  `(volatile m328p_GPIO *)`).
-- No reproducer: a running test cannot tell a volatile access from a plain
-  one, and the suite does not check emitted IR.
-
-
 ## BUG#84: LLVM backend sign-extends a `WordX`/`NatX` widened to a signed type
 
 ```modest

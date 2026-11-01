@@ -47,3 +47,4 @@ func main () -> Int {
 	printf("passed: pointer to a fixed address in a global\n")
 	return exitSuccess
 }
+
