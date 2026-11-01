@@ -188,71 +188,78 @@ define void @table_print(%table_Table* %table) {
 	store i8* %2, i8** %1
 	store %Nat32 0, %Nat32* %i
 	store %Nat32 0, %Nat32* %j
-	%3 = mul %Int32 1, 1
+	%3 = mul %Size 1, 1
 	%4 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
 	%5 = load %Nat32, %Nat32* %4
-	%6 = mul %Nat32 %5, 1
-	%7 = mul %Nat32 %5, 8
-	%8 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 2
-	%9 = load %Nat32, %Nat32* %8
-	%10 = mul %Nat32 %9, %6
-	%11 = mul %Nat32 %9, %7
-	%12 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 1
-	%13 = load [0 x %table_Row]*, [0 x %table_Row]** %12
-	%14 = bitcast [0 x %table_Row]* %13 to [0 x [0 x %Str8*]]*
-	%15 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%16 = load %Nat32, %Nat32* %15
-	%17 = mul %Nat32 %16, 1
-	%18 = mul %Nat32 %16, 4
-	%19 = alloca %Nat32, %Nat32 %17, align 4
-	%20 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%21 = load %Nat32, %Nat32* %20
-	%22 = mul %Nat32 %21, 4
-	%23 = bitcast %Nat32* %19 to i8*
-	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %23, i8 0, %Nat32 %22, i1 0)
+	%6 = zext %Nat32 %5 to %Size
+	%7 = mul %Size %6, 1
+	%8 = mul %Size %6, 8
+	%9 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 2
+	%10 = load %Nat32, %Nat32* %9
+	%11 = zext %Nat32 %10 to %Size
+	%12 = mul %Size %11, %7
+	%13 = mul %Size %11, %8
+	%14 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 1
+	%15 = load [0 x %table_Row]*, [0 x %table_Row]** %14
+	%16 = bitcast [0 x %table_Row]* %15 to [0 x [0 x %Str8*]]*
+	%17 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%18 = load %Nat32, %Nat32* %17
+	%19 = zext %Nat32 %18 to %Size
+	%20 = mul %Size %19, 1
+	%21 = mul %Size %19, 4
+	%22 = alloca %Nat32, %Size %20, align 4
+	%23 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%24 = load %Nat32, %Nat32* %23
+	%25 = mul %Nat32 %24, 4
+	%26 = bitcast %Nat32* %22 to i8*
+	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %26, i8 0, %Nat32 %25, i1 0)
 ; if_0
-	%24 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
-	%25 = load %table_Row*, %table_Row** %24
-	%26 = icmp ne %table_Row* %25, null
-	br %Bool %26 , label %then_0, label %endif_0
+	%27 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
+	%28 = load %table_Row*, %table_Row** %27
+	%29 = icmp ne %table_Row* %28, null
+	br %Bool %29 , label %then_0, label %endif_0
 then_0:
 	store %Nat32 0, %Nat32* %i
 ; while_1
 	br label %again_1
 again_1:
-	%27 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%28 = load %Nat32, %Nat32* %i
-	%29 = load %Nat32, %Nat32* %27
-	%30 = icmp ult %Nat32 %28, %29
-	br %Bool %30 , label %body_1, label %break_1
+	%30 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%31 = load %Nat32, %Nat32* %i
+	%32 = load %Nat32, %Nat32* %30
+	%33 = icmp ult %Nat32 %31, %32
+	br %Bool %33 , label %body_1, label %break_1
 body_1:
-	%31 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
-	%32 = load %table_Row*, %table_Row** %31
-	%33 = load %Nat32, %Nat32* %i
-	%34 = bitcast %Nat32 %33 to %Nat32
-	%35 = getelementptr %table_Row, %table_Row* %32, %Int32 0, %Nat32 %34
-	%36 = load %Str8*, %Str8** %35
-	%37 = call %SizeT @strlen(%Str8* %36)
-	%38 = trunc %SizeT %37 to %Nat32
+	%34 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
+	%35 = load %table_Row*, %table_Row** %34
+	%36 = load %Nat32, %Nat32* %i
+	%37 = bitcast %Nat32 %36 to %Nat32
+	%38 = getelementptr %table_Row, %table_Row* %35, %Int32 0, %Nat32 %37
+	%39 = load %Str8*, %Str8** %38
+	%40 = call %SizeT @strlen(%Str8* %39)
+	%41 = trunc %SizeT %40 to %Nat32
 ; if_1
-	%39 = load %Nat32, %Nat32* %i
-	%40 = mul %Nat32 %39, 1
-	%41 = add %Int32 0, %40
-	%42 = getelementptr %Nat32, [0 x %Nat32]* %19, %Int32 %41
-	%43 = load %Nat32, %Nat32* %42
-	%44 = icmp ugt %Nat32 %38, %43
-	br %Bool %44 , label %then_1, label %endif_1
+	%42 = load %Nat32, %Nat32* %i
+	%43 = zext %Nat32 %42 to %Size
+	%44 = mul %Size %43, 1
+	%45 = add %Size 0, %44
+	%46 = trunc %Size %45 to %Nat32
+	%47 = getelementptr %Nat32, [0 x %Nat32]* %22, %Nat32 %46
+	%48 = load %Nat32, %Nat32* %47
+	%49 = icmp ugt %Nat32 %41, %48
+	br %Bool %49 , label %then_1, label %endif_1
 then_1:
-	%45 = load %Nat32, %Nat32* %i
-	%46 = mul %Nat32 %45, 1
-	%47 = add %Int32 0, %46
-	%48 = getelementptr %Nat32, [0 x %Nat32]* %19, %Int32 %47
-	store %Nat32 %38, %Nat32* %48
+	%50 = load %Nat32, %Nat32* %i
+	%51 = zext %Nat32 %50 to %Size
+	%52 = mul %Size %51, 1
+	%53 = add %Size 0, %52
+	%54 = trunc %Size %53 to %Nat32
+	%55 = getelementptr %Nat32, [0 x %Nat32]* %22, %Nat32 %54
+	store %Nat32 %41, %Nat32* %55
 	br label %endif_1
 endif_1:
-	%49 = load %Nat32, %Nat32* %i
-	%50 = add %Nat32 %49, 1
-	store %Nat32 %50, %Nat32* %i
+	%56 = load %Nat32, %Nat32* %i
+	%57 = add %Nat32 %56, 1
+	store %Nat32 %57, %Nat32* %i
 	br label %again_1
 break_1:
 	br label %endif_0
@@ -261,153 +268,166 @@ endif_0:
 ; while_2
 	br label %again_2
 again_2:
-	%51 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 2
-	%52 = load %Nat32, %Nat32* %i
-	%53 = load %Nat32, %Nat32* %51
-	%54 = icmp ult %Nat32 %52, %53
-	br %Bool %54 , label %body_2, label %break_2
+	%58 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 2
+	%59 = load %Nat32, %Nat32* %i
+	%60 = load %Nat32, %Nat32* %58
+	%61 = icmp ult %Nat32 %59, %60
+	br %Bool %61 , label %body_2, label %break_2
 body_2:
 	store %Nat32 0, %Nat32* %j
 ; while_3
 	br label %again_3
 again_3:
-	%55 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%56 = load %Nat32, %Nat32* %j
-	%57 = load %Nat32, %Nat32* %55
-	%58 = icmp ult %Nat32 %56, %57
-	br %Bool %58 , label %body_3, label %break_3
+	%62 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%63 = load %Nat32, %Nat32* %j
+	%64 = load %Nat32, %Nat32* %62
+	%65 = icmp ult %Nat32 %63, %64
+	br %Bool %65 , label %body_3, label %break_3
 body_3:
-	%59 = load %Nat32, %Nat32* %i
-	%60 = load %Nat32, %Nat32* %j
-	%61 = mul %Nat32 %59, %6
-	%62 = add %Int32 0, %61
-	%63 = mul %Nat32 %60, 1
-	%64 = add %Int32 %62, %63
-	%65 = getelementptr %Str8*, [0 x [0 x %Str8*]]* %14, %Int32 %64
-	%66 = load %Str8*, %Str8** %65
-	%67 = call %SizeT @strlen(%Str8* %66)
-	%68 = trunc %SizeT %67 to %Nat32
+	%66 = load %Nat32, %Nat32* %i
+	%67 = load %Nat32, %Nat32* %j
+	%68 = zext %Nat32 %66 to %Size
+	%69 = mul %Size %68, %7
+	%70 = add %Size 0, %69
+	%71 = zext %Nat32 %67 to %Size
+	%72 = mul %Size %71, 1
+	%73 = add %Size %70, %72
+	%74 = trunc %Size %73 to %Nat32
+	%75 = getelementptr %Str8*, [0 x [0 x %Str8*]]* %16, %Nat32 %74
+	%76 = load %Str8*, %Str8** %75
+	%77 = call %SizeT @strlen(%Str8* %76)
+	%78 = trunc %SizeT %77 to %Nat32
 ; if_2
-	%69 = load %Nat32, %Nat32* %j
-	%70 = mul %Nat32 %69, 1
-	%71 = add %Int32 0, %70
-	%72 = getelementptr %Nat32, [0 x %Nat32]* %19, %Int32 %71
-	%73 = load %Nat32, %Nat32* %72
-	%74 = icmp ugt %Nat32 %68, %73
-	br %Bool %74 , label %then_2, label %endif_2
+	%79 = load %Nat32, %Nat32* %j
+	%80 = zext %Nat32 %79 to %Size
+	%81 = mul %Size %80, 1
+	%82 = add %Size 0, %81
+	%83 = trunc %Size %82 to %Nat32
+	%84 = getelementptr %Nat32, [0 x %Nat32]* %22, %Nat32 %83
+	%85 = load %Nat32, %Nat32* %84
+	%86 = icmp ugt %Nat32 %78, %85
+	br %Bool %86 , label %then_2, label %endif_2
 then_2:
-	%75 = load %Nat32, %Nat32* %j
-	%76 = mul %Nat32 %75, 1
-	%77 = add %Int32 0, %76
-	%78 = getelementptr %Nat32, [0 x %Nat32]* %19, %Int32 %77
-	store %Nat32 %68, %Nat32* %78
+	%87 = load %Nat32, %Nat32* %j
+	%88 = zext %Nat32 %87 to %Size
+	%89 = mul %Size %88, 1
+	%90 = add %Size 0, %89
+	%91 = trunc %Size %90 to %Nat32
+	%92 = getelementptr %Nat32, [0 x %Nat32]* %22, %Nat32 %91
+	store %Nat32 %78, %Nat32* %92
 	br label %endif_2
 endif_2:
-	%79 = load %Nat32, %Nat32* %j
-	%80 = add %Nat32 %79, 1
-	store %Nat32 %80, %Nat32* %j
+	%93 = load %Nat32, %Nat32* %j
+	%94 = add %Nat32 %93, 1
+	store %Nat32 %94, %Nat32* %j
 	br label %again_3
 break_3:
-	%81 = load %Nat32, %Nat32* %i
-	%82 = add %Nat32 %81, 1
-	store %Nat32 %82, %Nat32* %i
+	%95 = load %Nat32, %Nat32* %i
+	%96 = add %Nat32 %95, 1
+	store %Nat32 %96, %Nat32* %i
 	br label %again_2
 break_2:
 	store %Nat32 0, %Nat32* %i
 ; while_4
 	br label %again_4
 again_4:
-	%83 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%84 = load %Nat32, %Nat32* %i
-	%85 = load %Nat32, %Nat32* %83
-	%86 = icmp ult %Nat32 %84, %85
-	br %Bool %86 , label %body_4, label %break_4
+	%97 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%98 = load %Nat32, %Nat32* %i
+	%99 = load %Nat32, %Nat32* %97
+	%100 = icmp ult %Nat32 %98, %99
+	br %Bool %100 , label %body_4, label %break_4
 body_4:
-	%87 = load %Nat32, %Nat32* %i
-	%88 = mul %Nat32 %87, 1
-	%89 = add %Int32 0, %88
-	%90 = getelementptr %Nat32, [0 x %Nat32]* %19, %Int32 %89
-	%91 = load %Nat32, %Nat32* %i
-	%92 = mul %Nat32 %91, 1
-	%93 = add %Int32 0, %92
-	%94 = getelementptr %Nat32, [0 x %Nat32]* %19, %Int32 %93
-	%95 = load %Nat32, %Nat32* %94
-	%96 = add %Nat32 %95, 2
-	store %Nat32 %96, %Nat32* %90
-	%97 = load %Nat32, %Nat32* %i
-	%98 = add %Nat32 %97, 1
-	store %Nat32 %98, %Nat32* %i
+	%101 = load %Nat32, %Nat32* %i
+	%102 = zext %Nat32 %101 to %Size
+	%103 = mul %Size %102, 1
+	%104 = add %Size 0, %103
+	%105 = trunc %Size %104 to %Nat32
+	%106 = getelementptr %Nat32, [0 x %Nat32]* %22, %Nat32 %105
+	%107 = load %Nat32, %Nat32* %i
+	%108 = zext %Nat32 %107 to %Size
+	%109 = mul %Size %108, 1
+	%110 = add %Size 0, %109
+	%111 = trunc %Size %110 to %Nat32
+	%112 = getelementptr %Nat32, [0 x %Nat32]* %22, %Nat32 %111
+	%113 = load %Nat32, %Nat32* %112
+	%114 = add %Nat32 %113, 2
+	store %Nat32 %114, %Nat32* %106
+	%115 = load %Nat32, %Nat32* %i
+	%116 = add %Nat32 %115, 1
+	store %Nat32 %116, %Nat32* %i
 	br label %again_4
 break_4:
-	%99 = bitcast [0 x %Nat32]* %19 to [0 x %Nat32]*
-	%100 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%101 = load %Nat32, %Nat32* %100
-	call void @separator([0 x %Nat32]* %99, %Nat32 %101)
+	%117 = bitcast [0 x %Nat32]* %22 to [0 x %Nat32]*
+	%118 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%119 = load %Nat32, %Nat32* %118
+	call void @separator([0 x %Nat32]* %117, %Nat32 %119)
 ; if_3
-	%102 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
-	%103 = load %table_Row*, %table_Row** %102
-	%104 = icmp ne %table_Row* %103, null
-	br %Bool %104 , label %then_3, label %endif_3
+	%120 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
+	%121 = load %table_Row*, %table_Row** %120
+	%122 = icmp ne %table_Row* %121, null
+	br %Bool %122 , label %then_3, label %endif_3
 then_3:
-	%105 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
-	%106 = load %table_Row*, %table_Row** %105
-	%107 = bitcast [0 x %Nat32]* %19 to [0 x %Nat32]*
-	%108 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%109 = load %Nat32, %Nat32* %108
-	call void @printRow(%table_Row* %106, [0 x %Nat32]* %107, %Nat32 %109)
-	%110 = bitcast [0 x %Nat32]* %19 to [0 x %Nat32]*
-	%111 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%112 = load %Nat32, %Nat32* %111
-	call void @separator([0 x %Nat32]* %110, %Nat32 %112)
+	%123 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
+	%124 = load %table_Row*, %table_Row** %123
+	%125 = bitcast [0 x %Nat32]* %22 to [0 x %Nat32]*
+	%126 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%127 = load %Nat32, %Nat32* %126
+	call void @printRow(%table_Row* %124, [0 x %Nat32]* %125, %Nat32 %127)
+	%128 = bitcast [0 x %Nat32]* %22 to [0 x %Nat32]*
+	%129 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%130 = load %Nat32, %Nat32* %129
+	call void @separator([0 x %Nat32]* %128, %Nat32 %130)
 	br label %endif_3
 endif_3:
 	store %Nat32 0, %Nat32* %i
 ; while_5
 	br label %again_5
 again_5:
-	%113 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 2
-	%114 = load %Nat32, %Nat32* %i
-	%115 = load %Nat32, %Nat32* %113
-	%116 = icmp ult %Nat32 %114, %115
-	br %Bool %116 , label %body_5, label %break_5
+	%131 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 2
+	%132 = load %Nat32, %Nat32* %i
+	%133 = load %Nat32, %Nat32* %131
+	%134 = icmp ult %Nat32 %132, %133
+	br %Bool %134 , label %body_5, label %break_5
 body_5:
-	%117 = load %Nat32, %Nat32* %i
-	%118 = mul %Nat32 %117, %6
-	%119 = add %Int32 0, %118
-	%120 = getelementptr %Str8*, [0 x [0 x %Str8*]]* %14, %Int32 %119
-	%121 = bitcast [0 x %Str8*]* %120 to [0 x %Str8*]*
-	%122 = bitcast [0 x %Nat32]* %19 to [0 x %Nat32]*
-	%123 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%124 = load %Nat32, %Nat32* %123
-	call void @printRow([0 x %Str8*]* %121, [0 x %Nat32]* %122, %Nat32 %124)
+	%135 = load %Nat32, %Nat32* %i
+	%136 = zext %Nat32 %135 to %Size
+	%137 = mul %Size %136, %7
+	%138 = add %Size 0, %137
+	%139 = trunc %Size %138 to %Nat32
+	%140 = getelementptr %Str8*, [0 x [0 x %Str8*]]* %16, %Nat32 %139
+	%141 = bitcast [0 x %Str8*]* %140 to [0 x %Str8*]*
+	%142 = bitcast [0 x %Nat32]* %22 to [0 x %Nat32]*
+	%143 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%144 = load %Nat32, %Nat32* %143
+	call void @printRow([0 x %Str8*]* %141, [0 x %Nat32]* %142, %Nat32 %144)
 ; if_4
-	%125 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 4
-	%126 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 2
-	%127 = load %Nat32, %Nat32* %126
-	%128 = sub %Nat32 %127, 1
-	%129 = load %Nat32, %Nat32* %i
-	%130 = icmp ult %Nat32 %129, %128
-	%131 = load %Bool, %Bool* %125
-	%132 = and %Bool %131, %130
-	br %Bool %132 , label %then_4, label %endif_4
+	%145 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 4
+	%146 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 2
+	%147 = load %Nat32, %Nat32* %146
+	%148 = sub %Nat32 %147, 1
+	%149 = load %Nat32, %Nat32* %i
+	%150 = icmp ult %Nat32 %149, %148
+	%151 = load %Bool, %Bool* %145
+	%152 = and %Bool %151, %150
+	br %Bool %152 , label %then_4, label %endif_4
 then_4:
-	%133 = bitcast [0 x %Nat32]* %19 to [0 x %Nat32]*
-	%134 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%135 = load %Nat32, %Nat32* %134
-	call void @separator([0 x %Nat32]* %133, %Nat32 %135)
+	%153 = bitcast [0 x %Nat32]* %22 to [0 x %Nat32]*
+	%154 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%155 = load %Nat32, %Nat32* %154
+	call void @separator([0 x %Nat32]* %153, %Nat32 %155)
 	br label %endif_4
 endif_4:
-	%136 = load %Nat32, %Nat32* %i
-	%137 = add %Nat32 %136, 1
-	store %Nat32 %137, %Nat32* %i
+	%156 = load %Nat32, %Nat32* %i
+	%157 = add %Nat32 %156, 1
+	store %Nat32 %157, %Nat32* %i
 	br label %again_5
 break_5:
-	%138 = bitcast [0 x %Nat32]* %19 to [0 x %Nat32]*
-	%139 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
-	%140 = load %Nat32, %Nat32* %139
-	call void @separator([0 x %Nat32]* %138, %Nat32 %140)
-	%141 = load i8*, i8** %1
-	call void @llvm.stackrestore(i8* %141)
+	%158 = bitcast [0 x %Nat32]* %22 to [0 x %Nat32]*
+	%159 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
+	%160 = load %Nat32, %Nat32* %159
+	call void @separator([0 x %Nat32]* %158, %Nat32 %160)
+	%161 = load i8*, i8** %1
+	call void @llvm.stackrestore(i8* %161)
 	ret void
 }
 
@@ -418,66 +438,69 @@ define internal void @printRow([0 x %Str8*]* %raw_row, [0 x %Nat32]* %sz, %Nat32
 	%1 = alloca i8*
 	%2 = call i8* @llvm.stacksave() 
 	store i8* %2, i8** %1
-	%3 = mul %Nat32 %nCols, 1
-	%4 = mul %Nat32 %nCols, 8
-	%5 = bitcast [0 x %Str8*]* %raw_row to [0 x %Str8*]*
+	%3 = zext %Nat32 %nCols to %Size
+	%4 = mul %Size %3, 1
+	%5 = mul %Size %3, 8
+	%6 = bitcast [0 x %Str8*]* %raw_row to [0 x %Str8*]*
 	store %Nat32 0, %Nat32* %j
 ; while_1
 	br label %again_1
 again_1:
-	%6 = load %Nat32, %Nat32* %j
-	%7 = icmp ult %Nat32 %6, %nCols
-	br %Bool %7 , label %body_1, label %break_1
+	%7 = load %Nat32, %Nat32* %j
+	%8 = icmp ult %Nat32 %7, %nCols
+	br %Bool %8 , label %body_1, label %break_1
 body_1:
-	%8 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str1 to [0 x i8]*))
-	%9 = load %Nat32, %Nat32* %j
-	%10 = mul %Nat32 %9, 1
-	%11 = add %Int32 0, %10
-	%12 = getelementptr %Str8*, [0 x %Str8*]* %5, %Int32 %11
-	%13 = load %Str8*, %Str8** %12
-	%14 = call %SizeT @strlen(%Str8* %13)
-	%15 = trunc %SizeT %14 to %Nat32
-	store %Nat32 %15, %Nat32* %len
+	%9 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str1 to [0 x i8]*))
+	%10 = load %Nat32, %Nat32* %j
+	%11 = zext %Nat32 %10 to %Size
+	%12 = mul %Size %11, 1
+	%13 = add %Size 0, %12
+	%14 = trunc %Size %13 to %Nat32
+	%15 = getelementptr %Str8*, [0 x %Str8*]* %6, %Nat32 %14
+	%16 = load %Str8*, %Str8** %15
+	%17 = call %SizeT @strlen(%Str8* %16)
+	%18 = trunc %SizeT %17 to %Nat32
+	store %Nat32 %18, %Nat32* %len
 ; if_0
-	%16 = getelementptr %Str8, %Str8* %13, %Int32 0, %Int32 0
-	%17 = load %Char8, %Char8* %16
-	%18 = icmp ne %Char8 %17, 0
-	br %Bool %18 , label %then_0, label %endif_0
+	%19 = getelementptr %Str8, %Str8* %16, %Int32 0, %Int32 0
+	%20 = load %Char8, %Char8* %19
+	%21 = icmp ne %Char8 %20, 0
+	br %Bool %21 , label %then_0, label %endif_0
 then_0:
-	%19 = load %Nat32, %Nat32* %len
-	%20 = add %Nat32 %19, 1
-	store %Nat32 %20, %Nat32* %len
-	%21 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([4 x i8]* @.str2 to [0 x i8]*), %Str8* %13)
+	%22 = load %Nat32, %Nat32* %len
+	%23 = add %Nat32 %22, 1
+	store %Nat32 %23, %Nat32* %len
+	%24 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([4 x i8]* @.str2 to [0 x i8]*), %Str8* %16)
 	br label %endif_0
 endif_0:
 	store %Nat32 0, %Nat32* %k
 ; while_2
 	br label %again_2
 again_2:
-	%22 = load %Nat32, %Nat32* %j
-	%23 = bitcast %Nat32 %22 to %Nat32
-	%24 = getelementptr [0 x %Nat32], [0 x %Nat32]* %sz, %Int32 0, %Nat32 %23
-	%25 = load %Nat32, %Nat32* %24
-	%26 = load %Nat32, %Nat32* %len
-	%27 = sub %Nat32 %25, %26
-	%28 = load %Nat32, %Nat32* %k
-	%29 = icmp ult %Nat32 %28, %27
-	br %Bool %29 , label %body_2, label %break_2
-body_2:
-	%30 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str3 to [0 x i8]*))
+	%25 = load %Nat32, %Nat32* %j
+	%26 = bitcast %Nat32 %25 to %Nat32
+	%27 = getelementptr [0 x %Nat32], [0 x %Nat32]* %sz, %Int32 0, %Nat32 %26
+	%28 = load %Nat32, %Nat32* %27
+	%29 = load %Nat32, %Nat32* %len
+	%30 = sub %Nat32 %28, %29
 	%31 = load %Nat32, %Nat32* %k
-	%32 = add %Nat32 %31, 1
-	store %Nat32 %32, %Nat32* %k
+	%32 = icmp ult %Nat32 %31, %30
+	br %Bool %32 , label %body_2, label %break_2
+body_2:
+	%33 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str3 to [0 x i8]*))
+	%34 = load %Nat32, %Nat32* %k
+	%35 = add %Nat32 %34, 1
+	store %Nat32 %35, %Nat32* %k
 	br label %again_2
 break_2:
-	%33 = load %Nat32, %Nat32* %j
-	%34 = add %Nat32 %33, 1
-	store %Nat32 %34, %Nat32* %j
+	%36 = load %Nat32, %Nat32* %j
+	%37 = add %Nat32 %36, 1
+	store %Nat32 %37, %Nat32* %j
 	br label %again_1
 break_1:
-	%35 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([3 x i8]* @.str4 to [0 x i8]*))
-	%36 = load i8*, i8** %1
-	call void @llvm.stackrestore(i8* %36)
+	%38 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([3 x i8]* @.str4 to [0 x i8]*))
+	%39 = load i8*, i8** %1
+	call void @llvm.stackrestore(i8* %39)
 	ret void
 }
 

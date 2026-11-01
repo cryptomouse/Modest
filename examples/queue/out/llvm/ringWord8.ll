@@ -106,22 +106,23 @@ define void @ringWord8_deinit(%ringWord8_RingWord8* %q) {
 	store i8* %2, i8** %1
 	%3 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
 	%4 = call %Nat32 @queue_capacity(%queue_Queue* %3)
-	%5 = mul %Nat32 %4, 1
-	%6 = mul %Nat32 %4, 1
-	%7 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 1
-	%8 = load [0 x %Word8]*, [0 x %Word8]** %7
-	%9 = bitcast [0 x %Word8]* %8 to [0 x %Word8]*
-	%10 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
-	%11 = call %Nat32 @queue_capacity(%queue_Queue* %10)
-	%12 = mul %Nat32 %11, 1
-	%13 = bitcast [0 x %Word8]* %9 to i8*
-	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %13, i8 0, %Nat32 %12, i1 0)
-	%14 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
-	call void @queue_deinit(%queue_Queue* %14)
-	%15 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 1
-	store [0 x %Word8]* null, [0 x %Word8]** %15
-	%16 = load i8*, i8** %1
-	call void @llvm.stackrestore(i8* %16)
+	%5 = zext %Nat32 %4 to %Size
+	%6 = mul %Size %5, 1
+	%7 = mul %Size %5, 1
+	%8 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 1
+	%9 = load [0 x %Word8]*, [0 x %Word8]** %8
+	%10 = bitcast [0 x %Word8]* %9 to [0 x %Word8]*
+	%11 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
+	%12 = call %Nat32 @queue_capacity(%queue_Queue* %11)
+	%13 = mul %Nat32 %12, 1
+	%14 = bitcast [0 x %Word8]* %10 to i8*
+	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %14, i8 0, %Nat32 %13, i1 0)
+	%15 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
+	call void @queue_deinit(%queue_Queue* %15)
+	%16 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 1
+	store [0 x %Word8]* null, [0 x %Word8]** %16
+	%17 = load i8*, i8** %1
+	call void @llvm.stackrestore(i8* %17)
 	ret void
 }
 
@@ -131,20 +132,21 @@ define void @ringWord8_clear(%ringWord8_RingWord8* %q) {
 	store i8* %2, i8** %1
 	%3 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
 	%4 = call %Nat32 @queue_capacity(%queue_Queue* %3)
-	%5 = mul %Nat32 %4, 1
-	%6 = mul %Nat32 %4, 1
-	%7 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 1
-	%8 = load [0 x %Word8]*, [0 x %Word8]** %7
-	%9 = bitcast [0 x %Word8]* %8 to [0 x %Word8]*
-	%10 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
-	%11 = call %Nat32 @queue_capacity(%queue_Queue* %10)
-	%12 = mul %Nat32 %11, 1
-	%13 = bitcast [0 x %Word8]* %9 to i8*
-	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %13, i8 0, %Nat32 %12, i1 0)
-	%14 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
-	call void @queue_clear(%queue_Queue* %14)
-	%15 = load i8*, i8** %1
-	call void @llvm.stackrestore(i8* %15)
+	%5 = zext %Nat32 %4 to %Size
+	%6 = mul %Size %5, 1
+	%7 = mul %Size %5, 1
+	%8 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 1
+	%9 = load [0 x %Word8]*, [0 x %Word8]** %8
+	%10 = bitcast [0 x %Word8]* %9 to [0 x %Word8]*
+	%11 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
+	%12 = call %Nat32 @queue_capacity(%queue_Queue* %11)
+	%13 = mul %Nat32 %12, 1
+	%14 = bitcast [0 x %Word8]* %10 to i8*
+	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %14, i8 0, %Nat32 %13, i1 0)
+	%15 = getelementptr %ringWord8_RingWord8, %ringWord8_RingWord8* %q, %Int32 0, %Int32 0
+	call void @queue_clear(%queue_Queue* %15)
+	%16 = load i8*, i8** %1
+	call void @llvm.stackrestore(i8* %16)
 	ret void
 }
 
