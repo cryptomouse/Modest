@@ -1,18 +1,23 @@
 // TEST: run
 // BACKENDS: c11, llvm, modest
 // EXPECT-EXIT: 0
-// EXPECT-OUT: passed: same local type name in sibling blocks
-// EXPECTED-FAIL(llvm): BUG#113 both types print as one %main.T
+// EXPECT-OUT: passed: sibling blocks
+// EXPECT-OUT: passed: nested block
+// EXPECT-OUT: passed: records
+// EXPECT-OUT: passed: same local type name in different blocks
 //
-// A local type is visible only in its block, so two sibling blocks may
-// each define their own `T`, and each one means its own type.
+// A local type is visible only in its block, so two blocks of one
+// function may each define their own `T`, and each one means its own
+// type — in sibling blocks, or an inner one hiding the outer one.
+//
+// Guards BUG#113 (fixed 2026-11-02).
 
 include "libc/ctypes64"
 include "libc/stdio"
 include "libc/stdlib"
 
 
-func main () -> Int {
+func testSiblings () -> Bool {
 	var first: Size = 0
 	if true {
 		type T = Int32
@@ -27,13 +32,83 @@ func main () -> Int {
 		second = sizeof(y)
 	}
 
-	if first != 4 or second != 8 {
-		printf("sizeof %zu, %zu, expected 4, 8\n", first, second)
-		printf("failed: same local type name in sibling blocks\n")
+	var third: Size = 0
+	if true {
+		type T = [3]Int16
+		var z: T
+		third = sizeof(z)
+	}
+
+	if first != 4 or second != 8 or third != 6 {
+		printf("sizeof %zu, %zu, %zu, expected 4, 8, 6\n", first, second, third)
+		return false
+	}
+
+	printf("passed: sibling blocks\n")
+	return true
+}
+
+
+func testNested () -> Bool {
+	type T = Int64
+	var outer: T = 1
+
+	var inner: Size = 0
+	if true {
+		type T = Int8
+		var x: T = 2
+		let p = &x
+		inner = sizeof(*p)
+	}
+
+	var after: T = 3
+	if inner != 1 or sizeof(outer) != 8 or sizeof(after) != 8 {
+		printf("sizeof %zu inside, %zu, %zu outside, expected 1, 8, 8\n", inner, sizeof(outer), sizeof(after))
+		return false
+	}
+
+	printf("passed: nested block\n")
+	return true
+}
+
+
+func testRecords () -> Bool {
+	var first: Int32 = 0
+	if true {
+		type R = {a: Int32, b: Int32}
+		var r: R = {a = 1, b = 2}
+		first = r.a + r.b
+	}
+
+	var second: Int32 = 0
+	if true {
+		type R = {a: Int8, b: Int16, c: Int32}
+		var r: R = {a = 3, b = 4, c = 5}
+		second = Int32 r.a + Int32 r.b + r.c
+	}
+
+	if first != 3 or second != 12 {
+		printf("sums %d, %d, expected 3, 12\n", first, second)
+		return false
+	}
+
+	printf("passed: records\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testSiblings() and result
+	result = testNested() and result
+	result = testRecords() and result
+
+	if not result {
+		printf("failed: same local type name in different blocks\n")
 		return exitFailure
 	}
 
-	printf("passed: same local type name in sibling blocks\n")
+	printf("passed: same local type name in different blocks\n")
 	return exitSuccess
 }
 

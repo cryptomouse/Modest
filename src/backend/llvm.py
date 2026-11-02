@@ -3048,7 +3048,13 @@ def print_def_func(x):
 		return print_decl_func(x)
 
 	# print local typedefs
+	# Они печатаются на уровне модуля как %<func>.<name>, и одноименные
+	# типы из разных блоков функции различаем суффиксом, как и слоты:
+	# main.T, main.T.2, ... Имя хранит id, общий у определения и самого
+	# типа, так что его подхватят и все упоминания типа (BUG#113)
+	taken = set()
 	for typedef in fn.typedefs:
+		typedef.id.llvm = unique_slot_name(typedef.id.llvm, taken)
 		print_def_type(typedef)
 
 	for funcdef in fn.funcs:
