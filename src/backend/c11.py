@@ -1737,20 +1737,15 @@ def do_cvalue_bin_expr(x, ctx):
 	assert(False)
 
 
-def do_cinitializer(type, value, ctx):
+def do_cinitializer(type, value, ctx, is_macro=False):
 	if value.is_cons():
-		return do_cinitializer_cons(type, value, ctx)
+		return do_cinitializer_cons(type, value, is_macro, ctx)
 	return do_cvalue(value, ctx=ctx)
 
 
-def do_cinitializer_cons(type, value, ctx):
+def do_cinitializer_cons(_type, value, is_macro, ctx):
 	v = value.value
 	to = value.type
-	if Type.eq(to, value.type):
-		if to.brand == v.type.brand:
-			# у FixedX приведение несет в себе масштаб, снимать его нельзя
-			if v.type.is_integer() and not to.is_fixed():
-				value = value.value
 
 	# ⚠️ C не позволяет приводить литерал массива к типу массива в инициализаторах
 	# Вот все можно приводить, все ок, а массив - нет.
@@ -1772,10 +1767,17 @@ def do_cinitializer_cons(type, value, ctx):
 				cv_chars.append(cv)
 			return do_cvalue_literal_array_from_citems(citems=cv_chars, cast_to_ctype=None)
 
-	if v.type.is_generic():
-		if to.is_float() and v.type.is_rational():
-			return do_cvalue(v, ctx=ctx)
+	# Бессмысленно писать приведение в случаях вроде: uint32_t x = (uint32_t)0x12345678;
+	# А вот в случае макроса: #define X (uint32_t)0x12345678, это совершенно необходимо
+	if not is_macro:
+		if v.type.is_generic() and v.type.is_simple_type():
+			if to.brand == v.type.brand:
+				if to.is_float() and v.type.is_rational():
+					return do_cvalue(v, ctx=ctx)
+				if not (to.is_fixed() or to.is_char()):
+					return do_cvalue(v, ctx=ctx)
 
+	# print cast as is
 	return do_cvalue(value, ctx=ctx)
 
 
@@ -1940,7 +1942,7 @@ def do_cstmt_const(x):
 		global func_undef_list
 		func_undef_list.append(id_str)
 		# если точный тип константы неизвестен - печатаем ее как макро
-		iv = do_cinitializer(type, init_value, ctx=[])
+		iv = do_cinitializer(type, init_value, ctx=[], is_macro=True)
 		macro = CMacroDefValue(id_str, iv)
 		return macro
 
@@ -2265,7 +2267,7 @@ def do_def_const(x):
 		return (CRawText(""),)
 
 	id_str = camel_to_upper_snake(get_id_str(x.value))
-	iv = do_cinitializer(x.value.type, x.init_value, ctx=[])
+	iv = do_cinitializer(x.value.type, x.init_value, ctx=[], is_macro=True)
 
 	if x.init_value.is_cons() and x.init_value.method != 'explicit':
 		if x.init_value.value.type.is_generic() and not x.init_value.type.is_array():

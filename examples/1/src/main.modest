@@ -6,16 +6,11 @@ include "libc/stdio"
 
 //include "./lib"
 
+const preferredWindowWidth = Nat32 640
+const preferredWindowHeight = Nat32 480
 
-var n: Int32
-
-const k = -5
 
 func main () -> Int32 {
-	let a = -n
-	let b = --n
-	let c = --5
-	let d = -k
 	return 0
 }
 

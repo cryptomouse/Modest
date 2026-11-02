@@ -1,0 +1,58 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: explicit cons const
+// EXPECT-CODE(c11): #define WIDTH ((uint32_t)640)
+// EXPECT-CODE(c11): #define HEIGHT ((uint32_t)480)
+// EXPECT-CODE(c11): #define BIG ((uint64_t)4000000000UL)
+// EXPECT-CODE(c11): #define SMALL ((uint64_t)5)
+// EXPECT-CODE(c11): #define HALF ((float)1.5)
+// EXPECT-CODE(c11): #define MASK ((uint32_t)0xFF)
+// EXPECT-CODE(c11): static uint32_t counter = 7;
+// EXPECT-CODE(c11): uint32_t local = 3;
+//
+// A global const is a C macro, so its cast is the only thing that gives
+// the value its type: `Nat64 5` without it is a C `int`.  An explicit
+// construction (`Nat32 640`) used to lose the cast that the implicit one
+// (`x: Nat32 = 480`) kept.  A running program cannot see the type of a
+// macro, so it is checked in the C (EXPECT-CODE).  The initializer of a
+// variable needs no cast and still gets none.
+// Guards BUG#109 (fixed 2026-11-02).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const width = Nat32 640
+const height: Nat32 = 480
+const big = Nat64 4000000000
+const small = Nat64 5
+const half = Float32 1.5
+const mask = Word32 0xFF
+
+var counter = Nat32 7
+
+
+func main () -> Int {
+	var local = Nat32 3
+
+	var w = width
+	var h = height
+	var b = big
+	var s = small
+	if w != 640 or h != 480 or b != 4000000000 or s != 5 {
+		printf("failed: explicit cons const\n")
+		return exitFailure
+	}
+
+	if half != 1.5 or mask != 0xFF or counter != 7 or local != 3 {
+		printf("failed: explicit cons const\n")
+		return exitFailure
+	}
+
+	printf("passed: explicit cons const\n")
+	return exitSuccess
+}
+
+
