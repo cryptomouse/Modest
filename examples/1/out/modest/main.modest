@@ -7,8 +7,20 @@ const preferredWindowWidth = Nat32 640
 const preferredWindowHeight = Nat32 480
 
 
+var a: [10][20]Nat32
+
+var k: Nat32 = 10
+var l: Nat32 = 20
+
+
 @nonstatic
 func main () -> Int32 {
+	let p = Ptr &a
+
+	type MyArray = [k][l]Nat32
+
+	let pa = *MyArray p
+
 	return 0
 }
 

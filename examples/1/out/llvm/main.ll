@@ -134,10 +134,35 @@ declare void @perror(%ConstCharStr* %str)
 ; end from import "builtin"
 ; -- end print imports 'main' --
 ; -- strings --
+@.str1 = private constant [22 x i8] [i8 115, i8 105, i8 122, i8 101, i8 111, i8 102, i8 40, i8 77, i8 121, i8 65, i8 114, i8 114, i8 97, i8 121, i8 41, i8 32, i8 61, i8 32, i8 37, i8 100, i8 10, i8 0]
+@.str2 = private constant [18 x i8] [i8 115, i8 105, i8 122, i8 101, i8 111, i8 102, i8 40, i8 42, i8 112, i8 97, i8 41, i8 32, i8 61, i8 32, i8 37, i8 100, i8 10, i8 0]
 ; -- endstrings --
 
 ;include "./lib"
+@a = internal global [10 x [20 x %Nat32]] zeroinitializer
+@k = internal global %Nat32 10
+@l = internal global %Nat32 20
+%main.MyArray = type [0 x [0 x %Nat32]];
 define %Int32 @main() {
+	%1 = alloca i8*
+	%2 = call i8* @llvm.stacksave() 
+	store i8* %2, i8** %1
+	%3 = bitcast [10 x [20 x %Nat32]]* @a to i8*
+	store %Nat32 0, %Nat32* @k
+	store %Nat32 0, %Nat32* @l
+	%4 = bitcast i8* %3 to %main.MyArray*
+	%5 = load %Nat32, %Nat32* @l
+	%6 = zext %Nat32 %5 to %Size
+	%7 = mul %Size %6, 1
+	%8 = mul %Size %6, 4
+	%9 = load %Nat32, %Nat32* @k
+	%10 = zext %Nat32 %9 to %Size
+	%11 = mul %Size %10, %7
+	%12 = mul %Size %10, %8
+	%13 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([22 x i8]* @.str1 to [0 x i8]*), %Size %12)
+	%14 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str2 to [0 x i8]*), %Size %12)
+	%15 = load i8*, i8** %1
+	call void @llvm.stackrestore(i8* %15)
 	ret %Int32 0
 }
 

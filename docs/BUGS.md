@@ -1194,3 +1194,35 @@ errno.get()    // Undefined symbols: ___errno_location
 - `lib/libc/stat.modest` is Darwin-only already (its `struct stat`
   layout), so the library has no single target it works on as a whole.
 - `lib/fs.modest` binds `__error` itself until this is fixed.
+
+## BUG#110: A local VLA type's bounds are read at each use, not at its declaration
+
+```modest
+var k: Nat32 = 10
+var l: Nat32 = 20
+
+type MyArray = [k][l]Nat32
+k = 0
+l = 0
+printf("%d\n", sizeof(MyArray))    // 0 in both backends, must be 800
+```
+
+- C fixes a VLA's bounds when its declaration runs.  Modest re-reads the
+  bound expressions wherever the type is used, so `sizeof`, `lengthof`,
+  indexing and pointer casts see the bounds as they are at that point.
+- C backend: `cvalue_sizeof_type` (`src/backend/c11.py`) prints
+  `sizeof(uint32_t) * l * k` instead of `sizeof(MyArray)`, and the types
+  of pointers to the VLA (`uint32_t (*)[l]`) carry the bound expression too.
+- LLVM backend: `handleVLA` (`src/backend/llvm.py`) computes the sizes
+  lazily at the type's first use and caches the SSA registers on the type.
+  If the first use is inside a branch, a later use outside it refers to a
+  register that does not dominate it, and clang rejects the IR:
+  ```modest
+  type MyArray = [k][l]Nat32
+  if k > 5 {
+  	printf("%d\n", sizeof(MyArray))
+  }
+  printf("%d\n", sizeof(MyArray))    // llvm: Instruction does not dominate all uses!
+  ```
+- Fix: evaluate the bounds once where the type is declared, keep them in
+  temporaries, and make every later use refer to those.
