@@ -19,8 +19,8 @@ func main () -> Int32 {
 
 	type MyArray = [k][l]Nat32
 
-	// k = 0
-	// l = 0
+	k = 0
+	l = 0
 
 	let pa = *MyArray p
 

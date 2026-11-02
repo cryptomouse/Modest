@@ -148,21 +148,29 @@ define %Int32 @main() {
 	%2 = call i8* @llvm.stacksave() 
 	store i8* %2, i8** %1
 	%3 = bitcast [10 x [20 x %Nat32]]* @a to i8*
+	%4 = load %Nat32, %Nat32* @k
+	%5 = zext %Nat32 %4 to %Size
+	%6 = load %Nat32, %Nat32* @l
+	%7 = zext %Nat32 %6 to %Size
 	store %Nat32 0, %Nat32* @k
 	store %Nat32 0, %Nat32* @l
-	%4 = bitcast i8* %3 to %main.MyArray*
-	%5 = load %Nat32, %Nat32* @l
-	%6 = zext %Nat32 %5 to %Size
-	%7 = mul %Size %6, 1
-	%8 = mul %Size %6, 4
-	%9 = load %Nat32, %Nat32* @k
-	%10 = zext %Nat32 %9 to %Size
-	%11 = mul %Size %10, %7
-	%12 = mul %Size %10, %8
-	%13 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([22 x i8]* @.str1 to [0 x i8]*), %Size %12)
-	%14 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str2 to [0 x i8]*), %Size %12)
-	%15 = load i8*, i8** %1
-	call void @llvm.stackrestore(i8* %15)
+	%8 = bitcast i8* %3 to %main.MyArray*
+	%9 = mul %Size %7, 1
+	%10 = mul %Size %7, 4
+	%11 = mul %Size %5, %9
+	%12 = mul %Size %5, %10
+	%13 = mul %Size %7, 1
+	%14 = mul %Size %7, 4
+	%15 = mul %Size %5, %13
+	%16 = mul %Size %5, %14
+	%17 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([22 x i8]* @.str1 to [0 x i8]*), %Size %16)
+	%18 = mul %Size %7, 1
+	%19 = mul %Size %7, 4
+	%20 = mul %Size %5, %18
+	%21 = mul %Size %5, %19
+	%22 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str2 to [0 x i8]*), %Size %21)
+	%23 = load i8*, i8** %1
+	call void @llvm.stackrestore(i8* %23)
 	ret %Int32 0
 }
 
