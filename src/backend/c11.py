@@ -1596,7 +1596,7 @@ def do_cvalue_eq(x, logic, ctx):
 # (__STDC_NO_VLA__), не поддержаны MSVC и запрещены MISRA C:2012 (18.8).
 # Машинный код получается тот же самый.
 def cvalue_sizeof_type(t):
-	if t.is_vla():
+	if t.is_runtime_sized():
 		return CValueMul(cvalue_sizeof_type(t.of), cvalue_volume(t))
 	return CValueSizeofType(do_ctype(t))
 
@@ -1944,7 +1944,7 @@ def do_cstmt_var(x):
 	var_value = x.value
 	init_value = x.init_value
 
-	dynamic_init = init_value.type.is_array() and (init_value.is_runtime() or var_value.type.is_vla())
+	dynamic_init = init_value.type.is_array() and (init_value.is_runtime() or var_value.type.is_runtime_sized())
 
 	volumes = freeze_vla_volumes(var_value.type, get_id_str(var_value))
 
@@ -2974,7 +2974,7 @@ def get_root_value(x):
 
 def cons_vla_from_literal_array(x):
 	if x.is_cons():
-		if x.type.is_vla():
+		if x.type.is_runtime_sized():
 			#return x['value']['kind'] in ['literal', HLIR_VALUE_OP_ADD]
 			if x.is_bin():
 				return x.op in ['literal', HLIR_VALUE_OP_ADD]

@@ -1,25 +1,162 @@
 // TEST: run
 // BACKENDS: c11, llvm, modest
 // EXPECT-EXIT: 0
+// EXPECT-OUT: passed: variable
+// EXPECT-OUT: passed: copies
+// EXPECT-OUT: passed: named type
+// EXPECT-OUT: passed: pointer over a fixed array
+// EXPECT-OUT: passed: run-time, fixed, run-time
 // EXPECT-OUT: passed: fixed dimension over a run-time one
-// EXPECTED-FAIL(c11): BUG#114 `[3][n]` gets a static `{0}` initializer
-// EXPECTED-FAIL(llvm): BUG#114 sizeof of `[3][n]` is 0
 //
-// Only the inner dimension is known at run time; the array as a whole is
-// still a VLA, of 3 * n elements.
+// Only an inner dimension is known at run time; the array as a whole is
+// still a VLA — `[3][n]Int32` holds 3 * n elements, its size and its
+// layout are known only at run time.  Every element gets its own value,
+// so a wrong row stride shows up as an overwritten one.
+//
+// Guards BUG#114 (fixed 2026-11-02).
 
 include "libc/ctypes64"
 include "libc/stdio"
 include "libc/stdlib"
 
 
-func main () -> Int {
+var grid: [3][5]Int32
+
+
+func fill (p: *[]Int32, count: Nat32) -> Unit {
+	var i: Nat32 = 0
+	while i < count {
+		p[i] = Int32 i
+		i += 1
+	}
+}
+
+
+// a[i][j] must be element i * n + j of the storage
+func check (p: *[]Int32, n: Nat32) -> Bool {
+	var i: Nat32 = 0
+	while i < 3 * n {
+		if p[i] != Int32 i {
+			printf("element %u = %d, expected %u\n", i, p[i], i)
+			return false
+		}
+		i += 1
+	}
+	return true
+}
+
+
+func testVariable () -> Bool {
 	var n: Nat32 = 5
 	var a: [3][n]Int32
-	a[2][4] = 7
 
-	if a[2][4] != 7 or a[0][0] != 0 or sizeof(a) != 60 or lengthof(a) != 3 or lengthof(a[0]) != 5 {
-		printf("a[2][4] = %d, a[0][0] = %d, sizeof %zu, lengthof %zu, %zu, expected 7, 0, 60, 3, 5\n", a[2][4], a[0][0], sizeof(a), lengthof(a), lengthof(a[0]))
+	if a[2][4] != 0 or sizeof(a) != 60 or lengthof(a) != 3 or lengthof(a[0]) != 5 {
+		printf("a: a[2][4] = %d, sizeof %zu, lengthof %zu, %zu, expected 0, 60, 3, 5\n", a[2][4], sizeof(a), lengthof(a), lengthof(a[0]))
+		return false
+	}
+
+	var i: Nat32 = 0
+	while i < 3 {
+		var j: Nat32 = 0
+		while j < n {
+			a[i][j] = Int32 (i * n + j)
+			j += 1
+		}
+		i += 1
+	}
+
+	if not check(*[]Int32 *Unit &a, n) {
+		return false
+	}
+
+	printf("passed: variable\n")
+	return true
+}
+
+
+func testCopies () -> Bool {
+	var n: Nat32 = 5
+	var a: [3][n]Int32
+	fill(*[]Int32 *Unit &a, 15)
+
+	var b: [3][n]Int32
+	b = a
+	let c = a
+	a[2][4] = 0
+
+	if not check(*[]Int32 *Unit &b, n) {
+		return false
+	}
+
+	if c[0][0] != 0 or c[1][2] != 7 or c[2][4] != 14 {
+		printf("c: %d %d %d, expected 0, 7, 14\n", c[0][0], c[1][2], c[2][4])
+		return false
+	}
+
+	printf("passed: copies\n")
+	return true
+}
+
+
+func testNamedType () -> Bool {
+	var n: Nat32 = 5
+	type Rows = [3][n]Int32
+	n = 1
+
+	var a: Rows
+	fill(*[]Int32 *Unit &a, 15)
+
+	if sizeof(Rows) != 60 or a[2][4] != 14 or a[1][0] != 5 {
+		printf("Rows: sizeof %zu, a[2][4] = %d, a[1][0] = %d, expected 60, 14, 5\n", sizeof(Rows), a[2][4], a[1][0])
+		return false
+	}
+
+	printf("passed: named type\n")
+	return true
+}
+
+
+func testPointer () -> Bool {
+	var n: Nat32 = 5
+	let p = *[3][n]Int32 *Unit &grid
+	p[1][2] = 12
+	p[2][4] = 24
+
+	if sizeof(*p) != 60 or grid[1][2] != 12 or grid[2][4] != 24 {
+		printf("*p: sizeof %zu, grid[1][2] = %d, grid[2][4] = %d, expected 60, 12, 24\n", sizeof(*p), grid[1][2], grid[2][4])
+		return false
+	}
+
+	printf("passed: pointer over a fixed array\n")
+	return true
+}
+
+
+func testMixed () -> Bool {
+	var n: Nat32 = 2
+	var m: Nat32 = 4
+	var a: [n][3][m]Int32
+	fill(*[]Int32 *Unit &a, 24)
+
+	if sizeof(a) != 96 or a[1][2][3] != 23 or a[1][0][0] != 12 or a[0][1][0] != 4 {
+		printf("a: sizeof %zu, a[1][2][3] = %d, a[1][0][0] = %d, a[0][1][0] = %d, expected 96, 23, 12, 4\n", sizeof(a), a[1][2][3], a[1][0][0], a[0][1][0])
+		return false
+	}
+
+	printf("passed: run-time, fixed, run-time\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testVariable() and result
+	result = testCopies() and result
+	result = testNamedType() and result
+	result = testPointer() and result
+	result = testMixed() and result
+
+	if not result {
 		printf("failed: fixed dimension over a run-time one\n")
 		return exitFailure
 	}

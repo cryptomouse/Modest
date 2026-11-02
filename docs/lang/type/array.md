@@ -74,8 +74,7 @@ func fill (mem: *Unit, n: Nat32) -> Unit {
   type, or a variant member — by value or through a pointer — since there
   is no declaration to take its lengths at: `VLA in a record field is
   forbidden` (likewise `in a function type`, `in a variant`). Arrays and
-  pointers may wrap a VLA: `[i][j]T`, `*[n]T` (a fixed dimension over a
-  run-time one, `[3][n]T`, does not compile yet — BUG#114). And the
+  pointers may wrap a VLA: `[i][j]T`, `[3][n]T`, `*[n]T`. And the
   other way round is fine — an array of records `[n]Point`, or a record
   holding `*[]Int32`.
 - **The length is taken once, where the declaration runs.** A local
@@ -100,7 +99,8 @@ func fill (mem: *Unit, n: Nat32) -> Unit {
   current at *its* declaration.
 - `sizeof` and `lengthof` of a VLA are a run-time `Size` (see
   [sizeof](../value/sizeof.md)); indexing and slicing work as for any
-  array. Only some dimensions may be run-time: `[n][3]Int32`.
+  array. Only some dimensions may be run-time, in any position:
+  `[n][3]Int32`, `[3][n]Int32`.
 - **Initialization.** A VLA variable starts zero-filled; `= []` says the
   same explicitly. A generic array literal (`= [1, 2, 3]`) is not
   supported yet — BUG#112.

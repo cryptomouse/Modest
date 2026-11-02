@@ -794,6 +794,15 @@ class Type(Entity):
 
 
 	# *[10]*[3]*[n] -> True
+	# размер массива известен только при выполнении: VLA на любом его
+	# уровне. [n]T и [3][n]T -> True, *[n]T и [n]*T -> False
+	# (is_vla смотрит только на внешний уровень, ему хватает для lengthof)
+	def is_runtime_sized(self):
+		if not self.is_array() or self.of == None:
+			return False
+		return self.is_vla() or self.of.is_runtime_sized()
+
+
 	def contains_vla(self):
 		if self.is_vla():
 			return True
@@ -2199,7 +2208,7 @@ def is_array_widening(x):
 		return False
 	if not (t.is_sized_array() and from_type.is_sized_array()):
 		return False
-	if t.is_vla() or from_type.is_vla():
+	if t.is_runtime_sized() or from_type.is_runtime_sized():
 		return False
 	if not Type.eq(t.of, from_type.of):
 		return False
@@ -2444,7 +2453,7 @@ def type_for_size(size, is_runtime, ti=None):
 
 class ValueSizeofType(Value):
 	def __init__(self, of, ti=None):
-		is_vla = of.is_vla()
+		is_vla = of.is_runtime_sized()
 		size = 0 if is_vla else of.get_size()
 		super().__init__(type=type_for_size(size, is_vla, ti=ti), ti=ti)
 		self.oftype = of
@@ -2458,7 +2467,7 @@ class ValueSizeofType(Value):
 
 class ValueSizeofValue(Value):
 	def __init__(self, value, ti=None):
-		is_vla = value.type.is_vla()
+		is_vla = value.type.is_runtime_sized()
 		size = 0 if is_vla else value.type.get_size()
 		super().__init__(type=type_for_size(size, is_vla, ti=ti), ti=ti)
 		self.ofvalue = value

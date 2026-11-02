@@ -835,19 +835,22 @@ def llvm_store_simple(dst, src):
 def do_assign_arrays(dst, src):
 	#out("\n\t; -- ASSIGN ARRAY --")
 
-	#out("\n\t; -- start vol eval --")
-	volume = vla_volume(src['type'])
-	volume = trim(volume, 32)
-	#out("\n\t; -- end vol eval --")
+	t = src['type']
 
 	if 'items' in src:
 		if src['items'] == []:
 			#out("\n\t; -- zero fill rest of array")
 
-			# `size = volume * item_size`
-			item_sz = src['type'].of.get_size()
-			item_size = llvm_value_num(typeNat32, item_sz)
-			size = llvm_eval_binary('mul', volume, item_size)
+			if t.is_runtime_sized():
+				# элемент сам бывает VLA (`[3][n]T`) - размер целиком
+				# считает handleVLA
+				handleVLA(t)
+				size = trim(t.runtimeSizeBytes, 32)
+			else:
+				# `size = volume * item_size`
+				volume = trim(vla_volume(t), 32)
+				item_size = llvm_value_num(typeNat32, t.of.get_size())
+				size = llvm_eval_binary('mul', volume, item_size)
 
 			llvm_memzero(dst, size, volatile=False)
 			return
@@ -1435,7 +1438,7 @@ def ass(left, indexes):
 	if lt.is_pointer():
 		lt = lt.to
 
-	if lt.is_vla():
+	if lt.is_runtime_sized():
 		rootType = lt.get_array_root()
 		# получаем полное смещение в единицах - rootType
 		# (GEP будет оперировать с шагом sizeof(rootType))
@@ -1721,7 +1724,7 @@ def eval_cons_array(x):
 	# asset - уже приведенные элементы (value_array_cons), он бывает
 	# и у не-immediate литерала
 	if x.asset != None:
-		if x.type.is_vla():
+		if x.type.is_runtime_sized():
 			return do_eval_literal(x.value)
 		return do_eval_literal(x)
 
@@ -1859,7 +1862,7 @@ def do_eval_cons_pointer_to_array(x):
 	type = x.type
 
 	# Calculate size of VLA value in runtime (!)
-	if type.to.is_vla():
+	if type.to.is_runtime_sized():
 		handleVLA(type.to)
 
 	v = do_reval(value)
@@ -2373,7 +2376,7 @@ def do_eval_pos(v):
 
 
 def _eval_sizeof_type(t):
-	if t.is_vla():
+	if t.is_runtime_sized():
 		handleVLA(t)
 
 		return t.runtimeSizeBytes
@@ -2519,7 +2522,7 @@ def print_stmt_assign(x):
 # `[0 x T]` (размер LLVM неизвестен), и load/store такого значения не
 # копирует ничего. Литерал (`= []`) и срезы идут своим путем
 def is_vla_copy(to, value):
-	if not (to.is_vla() and value.type.is_vla()):
+	if not (to.is_runtime_sized() and value.type.is_runtime_sized()):
 		return False
 	if to.slice or value.type.slice:
 		return False
@@ -2656,7 +2659,7 @@ def print_stmt_var(x):
 		if t.contains_vla():
 			handleVLA(t)
 			sz = t.runtimeSizeRoots
-		if t.is_vla():
+		if t.is_runtime_sized():
 			t = t.get_array_root()
 		# VLA VLA VLA
 
@@ -2707,7 +2710,7 @@ def print_stmt_const(x):
 	if t.contains_vla():
 		handleVLA(t)
 		sz = t.runtimeSizeRoots
-	if t.is_vla():
+	if t.is_runtime_sized():
 		t = t.get_array_root()
 	# VLA VLA VLA
 

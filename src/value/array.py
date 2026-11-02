@@ -115,7 +115,7 @@ def _array_widening_can(to, from_type, method):
 	if not (to.is_sized_array() and from_type.is_sized_array()):
 		return False
 
-	if not (to.volume.is_immediate() and from_type.volume.is_immediate()):
+	if to.is_runtime_sized() or from_type.is_runtime_sized():
 		return False
 
 	if not Type.eq(to.of, from_type.of):
@@ -213,7 +213,7 @@ def value_array_cons(t, v, method, ti):
 			size += casted_item.type.get_size()
 			items.append(casted_item)
 
-		if t.is_sized_array() and not t.is_vla():
+		if t.is_sized_array() and not t.is_runtime_sized():
 			# add zero-tail for rest of sized array
 			i = len(items)
 			while i < t.volume.asset:
