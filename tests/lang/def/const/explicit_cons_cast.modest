@@ -8,6 +8,8 @@
 // EXPECT-CODE(c11): #define SMALL ((uint64_t)5)
 // EXPECT-CODE(c11): #define HALF ((float)1.5)
 // EXPECT-CODE(c11): #define MASK ((uint32_t)0xFF)
+// EXPECT-CODE(c11): #define TINY ((int8_t)5)
+// EXPECT-CODE(c11): #define HUGE ((int64_t)5000000000ULL)
 // EXPECT-CODE(c11): static uint32_t counter = 7;
 // EXPECT-CODE(c11): uint32_t local = 3;
 //
@@ -16,7 +18,9 @@
 // construction (`Nat32 640`) used to lose the cast that the implicit one
 // (`x: Nat32 = 480`) kept.  A running program cannot see the type of a
 // macro, so it is checked in the C (EXPECT-CODE).  The initializer of a
-// variable needs no cast and still gets none.
+// variable needs no cast and still gets none.  `Int8 5` lost the cast
+// even after that: the literal's own type is named `int8_t` too, and was
+// taken for the same type; `Int64 5000000000` was left unsigned (`ULL`).
 // Guards BUG#109 (fixed 2026-11-02).
 
 include "libc/ctypes64"
@@ -30,6 +34,8 @@ const big = Nat64 4000000000
 const small = Nat64 5
 const half = Float32 1.5
 const mask = Word32 0xFF
+const tiny = Int8 5
+const huge = Int64 5000000000
 
 var counter = Nat32 7
 
@@ -42,6 +48,13 @@ func main () -> Int {
 	var b = big
 	var s = small
 	if w != 640 or h != 480 or b != 4000000000 or s != 5 {
+		printf("failed: explicit cons const\n")
+		return exitFailure
+	}
+
+	var t = tiny
+	var u = huge
+	if t != 5 or u != 5000000000 {
 		printf("failed: explicit cons const\n")
 		return exitFailure
 	}

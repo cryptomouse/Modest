@@ -1092,10 +1092,11 @@ def do_cvalue_cons_pointer(x, ctx):
 
 
 def do_cvalue_cast(type, value, ctx):
-	if is_named(type):
+	# у generic Integer тоже есть c_alias (int8_t для 5), но это не тип
+	# значения в C: литерал там int, и без приведения Int8 5 станет int
+	if is_named(type) and not value.type.is_generic():
 		if get_id_str(type) == get_id_str(value.type):
-			cv = do_cvalue(value, ctx=ctx)
-			return cv
+			return do_cvalue(value, ctx=ctx)
 
 	ctype = do_ctype(type)
 	cvalue = do_cvalue(value, ctx=ctx)
