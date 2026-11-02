@@ -1195,7 +1195,7 @@ errno.get()    // Undefined symbols: ___errno_location
   layout), so the library has no single target it works on as a whole.
 - `lib/fs.modest` binds `__error` itself until this is fixed.
 
-## BUG#110: A local VLA type's bounds are read at each use, not at its declaration
+## BUG#110: LLVM backend reads a local VLA type's bounds at each use, not at its declaration
 
 ```modest
 var k: Nat32 = 10
@@ -1204,19 +1204,17 @@ var l: Nat32 = 20
 type MyArray = [k][l]Nat32
 k = 0
 l = 0
-printf("%d\n", sizeof(MyArray))    // 0 in both backends, must be 800
+printf("%d\n", sizeof(MyArray))    // llvm: 0, must be 800
 ```
 
-- C fixes a VLA's bounds when its declaration runs.  Modest re-reads the
-  bound expressions wherever the type is used, so `sizeof`, `lengthof`,
-  indexing and pointer casts see the bounds as they are at that point.
-- C backend: `cvalue_sizeof_type` (`src/backend/c11.py`) prints
-  `sizeof(uint32_t) * l * k` instead of `sizeof(MyArray)`, and the types
-  of pointers to the VLA (`uint32_t (*)[l]`) carry the bound expression too.
-- LLVM backend: `handleVLA` (`src/backend/llvm.py`) computes the sizes
-  lazily at the type's first use and caches the SSA registers on the type.
-  If the first use is inside a branch, a later use outside it refers to a
-  register that does not dominate it, and clang rejects the IR:
+- C fixes a VLA's bounds when its declaration runs: of a `type`, or of the
+  `var`/`let` an unnamed VLA type is written in.  The C backend does the
+  same (`freeze_vla_volumes` in `src/backend/c11.py` keeps each bound in a
+  temporary, `TypeArray.frozen_volume`); the LLVM backend does not.
+- `handleVLA` (`src/backend/llvm.py`) computes the sizes lazily at the
+  type's first use and caches the SSA registers on the type.  If the first
+  use is inside a branch, a later use outside it refers to a register that
+  does not dominate it, and clang rejects the IR:
   ```modest
   type MyArray = [k][l]Nat32
   if k > 5 {
@@ -1224,5 +1222,41 @@ printf("%d\n", sizeof(MyArray))    // 0 in both backends, must be 800
   }
   printf("%d\n", sizeof(MyArray))    // llvm: Instruction does not dominate all uses!
   ```
-- Fix: evaluate the bounds once where the type is declared, keep them in
-  temporaries, and make every later use refer to those.
+- Fix: as in the C backend, evaluate the bounds where the type, variable
+  or constant is declared, keep them in `frozen_volume`, and make every
+  later use refer to those.
+- Coverage: `tests/lang/type/array/vla_type_bounds.modest`, marked
+  `EXPECTED-FAIL(llvm)`.
+
+## BUG#111: A record field of a VLA type is accepted
+
+```modest
+var n: Nat32 = 4
+type R = {a: [n]Int32, b: Int32}    // must be rejected
+```
+
+- C has no variably modified fields.  The C backend prints
+  `struct r {int32_t a[n]; ...}`, which clang rejects (`fields must have
+  a constant size`).  The LLVM backend lays the field out as
+  `[0 x i32]`, so it compiles, `sizeof(R)` is 4 and `r.a` overlaps `r.b`.
+- A field that is a pointer to a VLA (`p: *[n]Int32`) is accepted too;
+  the C backend prints it as `int32_t *p`.
+- Should be `non local VLA are forbidden` or its own message, like a
+  parameter of a VLA type (`docs/lang/type/array.md`, "Variable-length
+  arrays").
+
+## BUG#112: A generic array literal into a VLA crashes the compiler
+
+```modest
+var n: Nat32 = 4
+var a: [n]Int32 = [1, 2, 3, 4]    // TypeError in value_array_cons
+var b: [n]Int32
+b = [1, 2]                        // the same
+```
+
+- `value_array_cons` (`src/value/array.py`) compares the literal's length
+  with the target volume, whose `asset` is `None` for a VLA:
+  `'<' not supported between instances of 'int' and 'NoneType'`.
+- `= []` and an array value of the same type work.
+- Needs a decision on what a literal of the wrong length does at run
+  time — QUESTION#7.

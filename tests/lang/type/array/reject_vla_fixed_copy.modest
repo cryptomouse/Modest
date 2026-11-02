@@ -1,0 +1,48 @@
+// TEST: reject
+// EXPECT-ERROR: cannot implicitly construct `[n]Int32` from `[4]Int32`
+// EXPECT-ERROR: cannot implicitly construct `[4]Int32` from `[n]Int32`
+// EXPECT-ERROR: type mismatch [n]Int32 & [4]Int32
+// EXPECT-ERROR: type mismatch [4]Int32 & [n]Int32
+// EXPECT-ERROR: cannot implicitly construct `[4]Int32` from `[n]Int32`
+// EXPECT-ERROR: cannot construct '[4]Int32' from '[n]Int32' value
+// EXPECT-ERROR: cannot construct '[n]Int32' from '[4]Int32' value
+// EXPECT-ERROR: type mismatch *[n]Int32 & *[4]Int32
+// EXPECT-ERROR-COUNT: 8
+//
+// A VLA and an array of a compile-time length are different types: their
+// lengths could be compared only at run time, and nothing compares them.
+// So neither is copied into the other, implicitly or explicitly, and a
+// pointer to one is not a pointer to the other.  Two VLAs and a slice
+// `a[i:j]` are not affected.
+
+include "libc/ctypes64"
+
+
+func first (v: [4]Int32) -> Int32 {
+	return v[0]
+}
+
+
+func main () -> Int {
+	var n: Nat32 = 4
+	var m: Nat32 = 4
+	var vla: [n]Int32
+	var other: [m]Int32
+	var fixed: [4]Int32
+
+	vla = other
+	vla[0:n] = fixed
+	fixed = vla[0:n]
+
+	vla = fixed
+	fixed = vla
+	var fromFixed: [n]Int32 = fixed
+	var fromVla: [4]Int32 = vla
+	let x = first(vla)
+	let toFixed = [4]Int32 vla
+	let toVla = [n]Int32 fixed
+	let p: *[n]Int32 = &fixed
+
+	return 0
+}
+

@@ -466,3 +466,65 @@ NaN gives 0 — what `as` does in Rust.
 ### Related
 
 - BUG#35 — the backends already disagree about a NaN in a comparison
+
+---
+
+## QUESTION#7: What does copying between two VLAs of different lengths do?
+
+**Question.** For fixed arrays the length is part of the type and the
+rules are static: `[N]T` takes `[N]T` implicitly, a shorter `[M]T` only by
+explicit construction (zero-filled tail), never a longer one. Between two
+VLAs the lengths are known only at run time. What does `a = b` do when
+they differ?
+
+```modest
+var a: [n]Int32
+var b: [m]Int32
+a = b      // n != m?
+```
+
+A VLA and a fixed array are already decided: they are different types
+and are not copied into each other at all (see
+[array](./type/array.md#variable-length-arrays)).
+
+### Where it stands today
+
+Accepted, and copies as many bytes as the *destination* holds —
+`memcpy(&a, &b, sizeof(int32_t) * n)`:
+
+- destination shorter — the source is cut silently;
+- destination longer — the copy reads past the end of the source.
+
+A slice with run-time bounds behaves the same way, whatever it is
+copied to or from, and there a mismatch is already undefined
+([`UB#1`](../UB.md)).
+
+### Options
+
+**A. Undefined unless the lengths match** — what a slice already is
+(`UB#1`); a new `UB#` next to it, or `UB#1` widened to cover VLAs.
+
+- Nothing to emit; the compiler stays as it is.
+- The reads past the end are real — the silent cut is the friendlier of
+  the two outcomes.
+
+**B. Trap on a mismatch.** A run-time compare before the copy.
+
+- One compare per copy, only where a VLA is involved.
+- Same objection as for any trap in embedded code.
+
+**C. Copy the shorter length, zero-fill the rest** — what explicit
+construction of a longer fixed array already does.
+
+- Never reads past the source; but silently loses data when the
+  destination is shorter, which the fixed-array rules never allow.
+- Fits only if it requires explicit construction (`[n]Int32 b`), as for
+  fixed arrays; implicit `a = b` would then need equal lengths — back to
+  A or B for that case.
+
+### What an answer touches
+
+- [`type/array.md`](./type/array.md) — "Variable-length arrays"
+- [`value/cons.md`](./value/cons.md) — array construction rules
+- the array copy in both backends, and the generic literal into a VLA
+  (BUG#112), which needs the same answer for a literal of the wrong length

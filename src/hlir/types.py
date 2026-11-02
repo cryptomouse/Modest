@@ -1034,6 +1034,13 @@ class Type(Entity):
 			if a.volume.asset != b.volume.asset:
 				return False
 
+		# VLA и массив с длиной, известной при компиляции, - разные типы:
+		# совпадут ли длины, известно только при выполнении, а их не
+		# сравнивает никто (QUESTION#7). Срез - не VLA, см. TypeArray.slice
+		if a.volume.is_immediate() != b.volume.is_immediate():
+			if not (a.slice or b.slice):
+				return False
+
 		if a.of == None and b.of == None:
 			return True
 
@@ -1559,6 +1566,9 @@ class TypeArray(Type):
 		# Заполняет backend: значение volume, снятое там, где выполняется
 		# объявление VLA-типа, - дальше размер берется из него (BUG#110)
 		self.frozen_volume = None
+		# тип среза `a[i:j]`: его длина `j - i` тоже бывает известна лишь
+		# при выполнении, но копировать его в массив и обратно можно (UB#1)
+		self.slice = False
 		self.size = array_size
 		self.align = of.get_align()
 

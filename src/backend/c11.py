@@ -1946,6 +1946,8 @@ def do_cstmt_var(x):
 
 	dynamic_init = init_value.type.is_array() and (init_value.is_runtime() or var_value.type.is_vla())
 
+	volumes = freeze_vla_volumes(var_value.type, get_id_str(var_value))
+
 	civ = None
 	if not dynamic_init and not init_value.is_undefined() and not init_value.type.is_va_list():
 		civ = do_cinitializer(var_value.type, init_value, ctx=[])
@@ -1957,9 +1959,9 @@ def do_cstmt_var(x):
 	dv = CStmtDefVar(get_id_str(var_value), do_ctype(var_value.type), initializer=civ, storage_class=storage_class)
 
 	if dynamic_init:
-		return (dv, do_assign_array(var_value, init_value, x.ti))
+		return tuple(volumes) + (dv, do_assign_array(var_value, init_value, x.ti))
 
-	return (dv,)
+	return tuple(volumes) + (dv,)
 
 
 def const_as_macro(v):
@@ -1990,6 +1992,8 @@ def do_cstmt_const(x):
 		macro = CMacroDefValue(id_str, iv)
 		return macro
 
+	volumes = freeze_vla_volumes(type, get_id_str(const_value))
+
 	civ = None
 	if not (init_value.type.is_array() and init_value.is_runtime()):
 		civ = do_cinitializer(type, init_value, ctx=[])
@@ -2002,9 +2006,9 @@ def do_cstmt_const(x):
 	# print constant as 'variable'
 	# литерал массива включающий в себя переменные печатаем отдельно
 	if init_value.type.is_array() and init_value.is_runtime():
-		return (dv, do_assign_array(const_value, init_value, x.ti))
+		return tuple(volumes) + (dv, do_assign_array(const_value, init_value, x.ti))
 
-	return dv
+	return tuple(volumes) + (dv,)
 
 
 def do_stmt_asm(x):
@@ -2260,6 +2264,10 @@ def do_def_type(x):
 # `type A = [n]Int32; n = 0` размер A стал бы нулевым. Поэтому значение
 # каждой границы здесь снимается во временную переменную, и дальше все
 # использования типа печатаются ею (см. cvalue_volume). BUG#110
+#
+# Вызывается для объявлений типа, переменной и константы: у `var a: [n]Int32`
+# граница фиксируется там же, где у typedef. Уровни, уже зафиксированные
+# своим typedef'ом (`var a: A`), не трогаем
 def freeze_vla_volumes(t, id_str):
 	stmts = []
 	dim = 0
@@ -2267,7 +2275,7 @@ def freeze_vla_volumes(t, id_str):
 		if t.is_pointer():
 			t = t.to
 			continue
-		if t.is_vla():
+		if t.is_vla() and t.frozen_volume == None:
 			name = unique_local_name('%s_%d' % (id_str, dim))
 			ct = do_ctype(t.volume.type)
 			if 'const' not in ct.specifiers:

@@ -1809,6 +1809,7 @@ def do_value_slice(x, ctx):
 	# а для слайса [a:b] это (b - a)
 	slice_volume = do_value_bin_op(HLIR_VALUE_OP_SUB, index_to, index_from, x['ti'], ctx=ctx)
 	type = TypeArray(array_type.of, slice_volume, generic=False, ti=x['ti'])
+	type.slice = True
 	nv = ValueSlice(type, left, index_from, index_to, x['ti'])
 	nv.is_initialized = left.is_initialized
 	if not left.type.is_pointer():

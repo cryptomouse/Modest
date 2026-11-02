@@ -8,12 +8,16 @@
 // EXPECT-OUT: passed: first use inside a branch
 // EXPECT-OUT: passed: same name in a nested block
 // EXPECT-OUT: passed: name taken by the program
+// EXPECT-OUT: passed: unnamed array type of a variable
+// EXPECT-OUT: passed: unnamed pointer type of a constant
+// EXPECT-OUT: passed: bound evaluated once
 // EXPECT-OUT: passed: VLA type bounds
 // EXPECTED-FAIL(llvm): BUG#110 VLA type bounds are read at each use
 //
 // A local type with run-time bounds takes their values where its
 // declaration runs, as in C: changing the variables afterwards changes
-// neither its size nor its layout.
+// neither its size nor its layout.  For an unnamed type that is the
+// declaration of the variable or constant it is written in.
 
 include "libc/ctypes64"
 include "libc/stdio"
@@ -160,6 +164,67 @@ func testTakenName () -> Bool {
 }
 
 
+func testUnnamedVar () -> Bool {
+	var k: Nat32 = 10
+	var l: Nat32 = 20
+	var a: [k][l]Nat32
+	k = 1
+	l = 1
+	a[9][19] = 5
+
+	if sizeof(a) != 800 or lengthof(a) != 10 or lengthof(a[0]) != 20 or a[9][19] != 5 {
+		printf("a: sizeof %zu, lengthof %zu, %zu, a[9][19] = %u, expected 800, 10, 20, 5\n", sizeof(a), lengthof(a), lengthof(a[0]), a[9][19])
+		return false
+	}
+
+	printf("passed: unnamed array type of a variable\n")
+	return true
+}
+
+
+func testUnnamedConst () -> Bool {
+	var k: Nat32 = 10
+	var l: Nat32 = 20
+	let p = *[k][l]Nat32 *Unit &grid
+	k = 1
+	l = 1
+	p[8][18] = 3
+
+	if sizeof(*p) != 800 or grid[8][18] != 3 {
+		printf("*p: sizeof %zu, grid[8][18] = %u, expected 800, 3\n", sizeof(*p), grid[8][18])
+		return false
+	}
+
+	printf("passed: unnamed pointer type of a constant\n")
+	return true
+}
+
+
+var calls: Nat32
+
+
+func countedVolume () -> Nat32 {
+	calls += 1
+	return 10
+}
+
+
+func testBoundOnce () -> Bool {
+	calls = 0
+	var a: [countedVolume()]Nat32
+	let size = sizeof(a)
+	let length = lengthof(a)
+
+	if size != 40 or length != 10 or calls != 1 {
+		printf("sizeof %zu, lengthof %zu, %u calls, expected 40, 10, 1\n", size, length, calls)
+		return false
+	}
+
+	printf("passed: bound evaluated once\n")
+	return true
+}
+
+
 func main () -> Int {
 	var result = true
 	result = testChangedBounds() and result
@@ -169,6 +234,9 @@ func main () -> Int {
 	result = testFirstUseInBranch() and result
 	result = testNestedBlock() and result
 	result = testTakenName() and result
+	result = testUnnamedVar() and result
+	result = testUnnamedConst() and result
+	result = testBoundOnce() and result
 
 	if not result {
 		printf("failed: VLA type bounds\n")

@@ -66,6 +66,7 @@ var g: Float32 = pi    // Rational implicitly cast to Float32
 ```modest
 [N]Type                            // fixed array: [10]Int32
 [N][M]Type                         // multi-dimensional: [2][3]Int32
+[n]Type                            // VLA: n is a run-time integer; local only, never a param/result/field
 []Type                             // unsized array (compile-time only, always behind pointer)
 *Type                              // pointer: *Int32, **Int32
 *Unit                              // untyped pointer (any type)
@@ -79,6 +80,13 @@ type Name = @branded Type          // branded type (newtype pattern)
 ```
 
 > There is no field with a function type — use a pointer to function instead.
+
+> A VLA takes its lengths once, where its `type` / `var` / `let` runs:
+> `type Row = [k]Nat32; k = 0` leaves `sizeof(Row)` as it was. To pass one
+> to a function, pass `*[]T` and the length. A VLA and a fixed array are
+> different types and never copy into each other — go through a slice:
+> `fixed = vla[0:4]`. See
+> [variable-length arrays](lang/type/array.md#variable-length-arrays).
 
 
 ## Literals
@@ -547,7 +555,7 @@ Unit value                         // discard a value (suppress warnings)
 | `*T` | `nil`, `*[N]T→*[]T`, `*Unit`, `String→*[]CharX`, `*[]T→*[N]T` | `*U`, `WordY`, `IntY` | `*[]T→*[N]T` safe only if element types match; otherwise full reinterpret = unsafe |
 | `CharX` | `Integer`(≤X), `WordY`(Y≤X), `String`(len=1) | any numeric | `String→CharX` compile-time only; string must be exactly 1 character |
 | `Bool` | `Bool` | — | no construction from other types; use `==` / `!=` to produce Bool |
-| `[N]T` | `GenericArray` (len≤N), `[M]T` (M≤N, same `T`) | — | missing elements take the element default (zero / record field defaults); `[M]T` source only by explicit construction, never shortens (use a slice) |
+| `[N]T` | `GenericArray` (len≤N), `[M]T` (M≤N, same `T`) | — | missing elements take the element default (zero / record field defaults); `[M]T` source only by explicit construction, never shortens (use a slice); never from or to a VLA `[n]T` |
 | `RecordT` | `GenericRecord` | — | omitted fields take their default: the type's default value (`0`/`false`/`nil`/...) or the field's explicit `= value` |
 | `Unit` | any | — | discards the value; suppresses unused-value warning |
 
