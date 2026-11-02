@@ -680,6 +680,8 @@ def do_type_record(x, anno, ctx):
 		if ast_field['line_comment']:
 			field.line_comment = do_stmt_comment(ast_field['line_comment'])
 
+		check_no_vla(field.type, "a record field", field.ti)
+
 		fields.append(field)
 
 	t = TypeRecord(fields, ti=x['ti'])
@@ -706,10 +708,22 @@ def pop_annos(alist, anno):
 	return res
 
 
+# VLA бывает только типом самой переменной, константы или локального
+# типа (и значения: конструирование, sizeof) - там его границы снимаются
+# при объявлении. Внутри поля записи, параметра или варианта их снять
+# негде, и размер такого типа не определен. Вне функции VLA уже отверг
+# do_type_array, второй раз об этом не говорим
+def check_no_vla(t, where, ti):
+	if is_local_context() and t.contains_vla():
+		error("VLA in %s is forbidden" % where, ti)
+
+
 def do_type_variant(x, anno, ctx):
 	#info("variant type", x['ti'])
 	uid = get_var_uid()
 	variants = [do_type(v, ctx=ctx) for v in x['variants']]
+	for v, ast_v in zip(variants, x['variants']):
+		check_no_vla(v, "a variant", ast_v['ti'])
 	t = TypeVariant(variants=variants, ti=x['ti'])
 	t.uid = uid
 	return t
@@ -723,10 +737,12 @@ def do_type_func(x, anno, func_id="_", *, ctx):
 		# @extern type уже отловил do_field
 		if param.type.is_forbidden_param() and not param.type.is_opaque():
 			error("forbidden param type", param.ti)
+		check_no_vla(param.type, "a function type", param.ti)
 		if param != None:
 			params.append(param)
 
 	to = do_type(x['to'], ctx=ctx)
+	check_no_vla(to, "a function type", x['to']['ti'])
 
 	if to.is_incompleted():
 		error("using of an incompleted type", x['to']['ti'])

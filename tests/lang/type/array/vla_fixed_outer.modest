@@ -1,0 +1,30 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: fixed dimension over a run-time one
+// EXPECTED-FAIL(c11): BUG#114 `[3][n]` gets a static `{0}` initializer
+// EXPECTED-FAIL(llvm): BUG#114 sizeof of `[3][n]` is 0
+//
+// Only the inner dimension is known at run time; the array as a whole is
+// still a VLA, of 3 * n elements.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func main () -> Int {
+	var n: Nat32 = 5
+	var a: [3][n]Int32
+	a[2][4] = 7
+
+	if a[2][4] != 7 or a[0][0] != 0 or sizeof(a) != 60 or lengthof(a) != 3 or lengthof(a[0]) != 5 {
+		printf("a[2][4] = %d, a[0][0] = %d, sizeof %zu, lengthof %zu, %zu, expected 7, 0, 60, 3, 5\n", a[2][4], a[0][0], sizeof(a), lengthof(a), lengthof(a[0]))
+		printf("failed: fixed dimension over a run-time one\n")
+		return exitFailure
+	}
+
+	printf("passed: fixed dimension over a run-time one\n")
+	return exitSuccess
+}
+

@@ -1,0 +1,43 @@
+// TEST: reject
+// EXPECT-ERROR: VLA in a record field is forbidden
+// EXPECT-ERROR: VLA in a record field is forbidden
+// EXPECT-ERROR: VLA in a record field is forbidden
+// EXPECT-ERROR: VLA in a record field is forbidden
+// EXPECT-ERROR: VLA in a function type is forbidden
+// EXPECT-ERROR: VLA in a function type is forbidden
+// EXPECT-ERROR: VLA in a variant is forbidden
+// EXPECT-ERROR-COUNT: 7
+//
+// A VLA takes its lengths where the declaration of a variable, a constant
+// or a local type runs.  Inside a record field, a parameter or a variant
+// there is no such point, so a VLA may not appear there — neither by
+// value nor behind a pointer.  An array of records, or a record holding
+// a pointer to an unsized array, stays allowed.
+//
+// Guards BUG#111 (fixed 2026-11-02).
+
+include "libc/ctypes64"
+
+
+type Point = {x: Int32, y: Int32}
+
+
+func main () -> Int {
+	var n: Nat32 = 4
+
+	type Field = {a: [n]Int32, b: Int32}
+	type PointerField = {p: *[n]Int32}
+	type ArrayOfRecords = [3]{a: [n]Int32}
+	var anonymous: {a: [n]Int32}
+
+	type Param = (a: *[n]Int32) -> Unit
+	type Result = () -> [n]Int32
+
+	type Variant = Int32 or *[n]Int32
+
+	var points: [n]Point
+	type Allowed = {p: *Point, q: *[]Int32}
+
+	return 0
+}
+

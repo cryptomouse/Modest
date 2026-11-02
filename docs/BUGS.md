@@ -1195,23 +1195,6 @@ errno.get()    // Undefined symbols: ___errno_location
   layout), so the library has no single target it works on as a whole.
 - `lib/fs.modest` binds `__error` itself until this is fixed.
 
-## BUG#111: A record field of a VLA type is accepted
-
-```modest
-var n: Nat32 = 4
-type R = {a: [n]Int32, b: Int32}    // must be rejected
-```
-
-- C has no variably modified fields.  The C backend prints
-  `struct r {int32_t a[n]; ...}`, which clang rejects (`fields must have
-  a constant size`).  The LLVM backend lays the field out as
-  `[0 x i32]`, so it compiles, `sizeof(R)` is 4 and `r.a` overlaps `r.b`.
-- A field that is a pointer to a VLA (`p: *[n]Int32`) is accepted too;
-  the C backend prints it as `int32_t *p`.
-- Should be `non local VLA are forbidden` or its own message, like a
-  parameter of a VLA type (`docs/lang/type/array.md`, "Variable-length
-  arrays").
-
 ## BUG#112: A generic array literal into a VLA crashes the compiler
 
 ```modest
@@ -1249,3 +1232,23 @@ if true {
 - Give a repeated name a suffix, as `unique_slot_name` does for slots.
 - Coverage: `tests/lang/stmt/type/same_name_blocks.modest`, marked
   `EXPECTED-FAIL(llvm)`.
+
+## BUG#114: A fixed dimension over a run-time one is treated as a fixed array
+
+```modest
+var n: Nat32 = 5
+var a: [3][n]Int32
+sizeof(a)    // llvm: 0, must be 60
+             // c11: `int32_t a[3][n] = {0};` - clang: variable-sized object may not be initialized
+```
+
+- `Type.is_vla()` looks only at the outer dimension, and the backends ask
+  it where they mean "has a run-time size":
+  - C backend: `do_cstmt_var` decides on a static `{0}` initializer by
+    `var_value.type.is_vla()`, which is false for `[3][n]`;
+  - LLVM backend: `_eval_sizeof_type` takes the static size, 0, for a type
+    that is not `is_vla()`.
+- `lengthof` and indexing work: they go one dimension at a time.
+- `[n][3]Int32`, a run-time dimension over a fixed one, works (`tests/lang/type/array/vla.modest`).
+- Coverage: `tests/lang/type/array/vla_fixed_outer.modest`, marked
+  `EXPECTED-FAIL`.

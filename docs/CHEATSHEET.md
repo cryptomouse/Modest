@@ -66,7 +66,7 @@ var g: Float32 = pi    // Rational implicitly cast to Float32
 ```modest
 [N]Type                            // fixed array: [10]Int32
 [N][M]Type                         // multi-dimensional: [2][3]Int32
-[n]Type                            // VLA: n is a run-time integer; local only, never a param/result/field
+[n]Type                            // VLA: n is a run-time integer; local only, never inside a field/param/result/variant
 []Type                             // unsized array (compile-time only, always behind pointer)
 *Type                              // pointer: *Int32, **Int32
 *Unit                              // untyped pointer (any type)

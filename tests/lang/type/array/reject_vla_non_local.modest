@@ -1,0 +1,46 @@
+// TEST: reject
+// EXPECT-ERROR: non local VLA are forbidden
+// EXPECT-ERROR: non local VLA are forbidden
+// EXPECT-ERROR: non local VLA are forbidden
+// EXPECT-ERROR: non local VLA are forbidden
+// EXPECT-ERROR: non local VLA are forbidden
+// EXPECT-ERROR: non local VLA are forbidden
+// EXPECT-ERROR: undefined value 'm'
+// EXPECT-ERROR-COUNT: 7
+//
+// A VLA lives on the stack of the function that declares it, so only a
+// function body may have one: not a module-level variable, constant or
+// type, and not a parameter or the result of a function — by value or
+// through a pointer.  A bound may not name another parameter either.
+
+include "libc/ctypes64"
+
+
+var n: Nat32 = 10
+var global: [n]Int32
+const constant: [n]Int32 = []
+type Global = [n]Int32
+
+
+func byValue (a: [n]Int32) -> Unit {
+}
+
+
+func byPointer (p: *[n]Int32) -> Unit {
+}
+
+
+func result () -> [n]Int32 {
+	var a: [n]Int32
+	return a
+}
+
+
+func boundParam (m: Nat32, p: *[m]Int32) -> Unit {
+}
+
+
+func main () -> Int {
+	return 0
+}
+

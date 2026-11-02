@@ -69,6 +69,15 @@ func fill (mem: *Unit, n: Nat32) -> Unit {
     parameter (`p: *[m]Int32` after `m: Nat32`) is `undefined value 'm'`.
     Pass a pointer to an unsized array and the length beside it instead:
     `func sum (v: *[]Int32, n: Nat32)`.
+- **Not in a record, function type or variant.** Even in a function body
+  a VLA may not be a record field, a parameter or result of a function
+  type, or a variant member — by value or through a pointer — since there
+  is no declaration to take its lengths at: `VLA in a record field is
+  forbidden` (likewise `in a function type`, `in a variant`). Arrays and
+  pointers may wrap a VLA: `[i][j]T`, `*[n]T` (a fixed dimension over a
+  run-time one, `[3][n]T`, does not compile yet — BUG#114). And the
+  other way round is fine — an array of records `[n]Point`, or a record
+  holding `*[]Int32`.
 - **The length is taken once, where the declaration runs.** A local
   `type`, `var` or `let` evaluates its bounds at that point, and the type
   keeps those values for the rest of its scope — as `typedef` and VLA
@@ -113,7 +122,6 @@ func fill (mem: *Unit, n: Nat32) -> Unit {
 
 - Two VLAs are copied into each other by value, like any array; their
   lengths are not compared — QUESTION#7.
-- A record field cannot be a VLA — BUG#111.
 
 ## Strings
 
