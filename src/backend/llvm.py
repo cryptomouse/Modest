@@ -836,7 +836,7 @@ def do_assign_arrays(dst, src):
 	#out("\n\t; -- ASSIGN ARRAY --")
 
 	#out("\n\t; -- start vol eval --")
-	volume = do_reval(src['type'].volume)
+	volume = vla_volume(src['type'])
 	volume = trim(volume, 32)
 	#out("\n\t; -- end vol eval --")
 
@@ -1772,6 +1772,32 @@ def vla_size(v):
 	return docast(v, sizeType)
 
 
+# Объем массива в Size; у VLA - значение, снятое при объявлении типа,
+# если оно было (см. freeze_vla_volumes)
+def vla_volume(t):
+	if t.frozen_volume != None:
+		return t.frozen_volume
+	return vla_size(do_reval(t.volume))
+
+
+# В C, а значит и у нас, границы VLA вычисляются один раз, когда
+# выполняется объявление типа, переменной или константы, а дальше
+# sizeof, lengthof и индексация берут их оттуда: после
+# `type A = [n]Int32; n = 0` размер A не меняется. Здесь значение каждой
+# еще не зафиксированной границы считается на месте объявления, и дальше
+# handleVLA строит размеры из него. Объявление доминирует над всеми
+# использованиями в своей области видимости, так что регистр годится.
+# Уровни, уже зафиксированные своим `type` (`var a: A`), не трогаем. BUG#110
+def freeze_vla_volumes(t):
+	while t.is_array() or t.is_pointer():
+		if t.is_pointer():
+			t = t.to
+			continue
+		if t.is_vla() and t.frozen_volume == None:
+			t.frozen_volume = vla_size(do_reval(t.volume))
+		t = t.of
+
+
 # Рекурсивно вычисляем itemSizeInRootElements & arraySizeInRootElements
 # для каждого типа массива (в цепочке [m][n]...)
 # Если встречаем в цепи указатель, перешагиваем и идем дальше
@@ -1781,16 +1807,17 @@ def vla_size(v):
 # Все три величины считаются в Size: объем приходит в типе своего
 # выражения (литерал - в узком Integer, граница среза - в типе границ),
 # а sizeof и lengthof и так Size (BUG#108)
+#
+# Размеры пересчитываются при каждом обращении, а не кэшируются в типе:
+# регистр, посчитанный при первом использовании внутри `if`, не
+# доминирует над использованием после него (BUG#110). Границы при этом
+# берутся из frozen_volume, так что пересчет - это только умножения
 def handleVLA(t):
 	#info("calculate VLA step", t.ti)
 	# type size (in VLA chain) in root-items
 	runtimeSizeRoots = None
 	runtimeSizeBytes = None
 	runtimeVolume = None
-
-	if hasattr(t, 'runtimeSizeRoots'):
-		# already handled type, skip
-		return
 
 	sizeType = vla_size_type()
 
@@ -1800,7 +1827,7 @@ def handleVLA(t):
 		# размер массива = его объем * объем его элемента
 		if t.is_sized_array():
 			#out("\n\t; -- HANDLE VLA --")
-			volume = vla_size(do_reval(t.volume))
+			volume = vla_volume(t)
 			runtimeVolume = volume
 			runtimeSizeRoots = llvm_eval_binary('mul', volume, t.of.runtimeSizeRoots)
 			#out("\n\t; -- END HANDLE VLA --")
@@ -2481,8 +2508,30 @@ def do_eval_lengthof_value(x):
 
 def print_stmt_assign(x):
 	l = do_eval(x.left)
+	if is_vla_copy(x.left.type, x.right):
+		llvm_copy_vla(l, x.left.type, x.right)
+		return
 	r = do_reval(x.right)
 	llvm_store(l, r)
+
+
+# VLA копируется memcpy по адресу источника: в регистре его значение -
+# `[0 x T]` (размер LLVM неизвестен), и load/store такого значения не
+# копирует ничего. Литерал (`= []`) и срезы идут своим путем
+def is_vla_copy(to, value):
+	if not (to.is_vla() and value.type.is_vla()):
+		return False
+	if to.slice or value.type.slice:
+		return False
+	return value.asset == None
+
+
+# Копируется размер приемника, как и в C-бэкенде (QUESTION#7)
+def llvm_copy_vla(dst, t, value):
+	src = do_eval(value)
+	handleVLA(t)
+	size = trim(t.runtimeSizeBytes, 32)
+	llvm_memcpy(dst, src, size)
 
 
 def print_stmt_if(x):
@@ -2578,10 +2627,23 @@ def print_stmt_return(x):
 
 
 
+# Локальный `type`: печатать нечего, но границы VLA снимаются здесь.
+# x.type - копия original_type, сделанная до freeze (Type.update), и
+# frozen_volume верхнего уровня ей нужно передать самим; уровни глубже
+# у них общие
+def print_stmt_def_type(x):
+	t = x.original_type
+	freeze_vla_volumes(t)
+	if x.type.is_array() and t.is_array():
+		x.type.frozen_volume = t.frozen_volume
+
+
 def print_stmt_var(x):
 	var = x.value
 	t = var.type
 	id_str = get_id_str(var)
+
+	freeze_vla_volumes(t)
 
 	# слот выделен в entry-блоке (см. print_slots)
 	left = fctx['slots'].get(id(x))
@@ -2603,7 +2665,9 @@ def print_stmt_var(x):
 	locals_add(id_str, left)
 
 	init_value = x.init_value
-	if not init_value.is_undefined():
+	if is_vla_copy(var.type, init_value):
+		llvm_copy_vla(left, var.type, init_value)
+	elif not init_value.is_undefined():
 		iv = do_reval(init_value)
 		llvm_store(left, iv)
 
@@ -2623,6 +2687,17 @@ def print_stmt_const(x):
 			v = do_eval_call(iv)
 			locals_add(id_str, v)
 			return None
+
+	freeze_vla_volumes(x.value.type)
+
+	# `let b = a` с VLA: своя копия на стеке, как у `var`
+	if is_vla_copy(x.value.type, iv):
+		t = x.value.type
+		handleVLA(t)
+		v = llvm_alloca(t.get_array_root(), size=t.runtimeSizeRoots, alignment=t.get_align())
+		llvm_copy_vla(v, t, iv)
+		locals_add(id_str, v)
+		return None
 
 	v = do_reval(iv)
 	t = x.value.type
@@ -2783,7 +2858,7 @@ def print_stmt(x):
 	elif x.is_stmt_again(): print_stmt_again(x)
 	elif x.is_stmt_comment(): print_comment(x)
 	elif x.is_stmt_asm(): print_stmt_asm(x)
-	elif x.is_stmt_def_type(): pass
+	elif x.is_stmt_def_type(): print_stmt_def_type(x)
 	elif x.is_stmt_def_func(): pass
 	elif x.is_stmt_assign_op(): return print_stmt_assign_op(x)
 	else: lo("<stmt %s>" % str(x))

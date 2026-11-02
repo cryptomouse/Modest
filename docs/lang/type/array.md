@@ -88,8 +88,7 @@ func fill (mem: *Unit, n: Nat32) -> Unit {
   construction passed straight to a call) is evaluated where it stands.
   Each declaration takes its own values: a `type` redeclared in a nested
   block, or a second `var a: [k]Nat32` after `k` changed, gets the bounds
-  current at *its* declaration. The LLVM backend does not keep the bounds
-  yet — BUG#110.
+  current at *its* declaration.
 - `sizeof` and `lengthof` of a VLA are a run-time `Size` (see
   [sizeof](../value/sizeof.md)); indexing and slicing work as for any
   array. Only some dimensions may be run-time: `[n][3]Int32`.

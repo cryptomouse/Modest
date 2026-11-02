@@ -1195,39 +1195,6 @@ errno.get()    // Undefined symbols: ___errno_location
   layout), so the library has no single target it works on as a whole.
 - `lib/fs.modest` binds `__error` itself until this is fixed.
 
-## BUG#110: LLVM backend reads a local VLA type's bounds at each use, not at its declaration
-
-```modest
-var k: Nat32 = 10
-var l: Nat32 = 20
-
-type MyArray = [k][l]Nat32
-k = 0
-l = 0
-printf("%d\n", sizeof(MyArray))    // llvm: 0, must be 800
-```
-
-- C fixes a VLA's bounds when its declaration runs: of a `type`, or of the
-  `var`/`let` an unnamed VLA type is written in.  The C backend does the
-  same (`freeze_vla_volumes` in `src/backend/c11.py` keeps each bound in a
-  temporary, `TypeArray.frozen_volume`); the LLVM backend does not.
-- `handleVLA` (`src/backend/llvm.py`) computes the sizes lazily at the
-  type's first use and caches the SSA registers on the type.  If the first
-  use is inside a branch, a later use outside it refers to a register that
-  does not dominate it, and clang rejects the IR:
-  ```modest
-  type MyArray = [k][l]Nat32
-  if k > 5 {
-  	printf("%d\n", sizeof(MyArray))
-  }
-  printf("%d\n", sizeof(MyArray))    // llvm: Instruction does not dominate all uses!
-  ```
-- Fix: as in the C backend, evaluate the bounds where the type, variable
-  or constant is declared, keep them in `frozen_volume`, and make every
-  later use refer to those.
-- Coverage: `tests/lang/type/array/vla_type_bounds.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#111: A record field of a VLA type is accepted
 
 ```modest
@@ -1260,3 +1227,25 @@ b = [1, 2]                        // the same
 - `= []` and an array value of the same type work.
 - Needs a decision on what a literal of the wrong length does at run
   time — QUESTION#7.
+
+## BUG#113: LLVM backend prints two local types of the same name as one
+
+```modest
+if true {
+	type T = Int32
+}
+if true {
+	type T = Int64    // llvm: redefinition of type
+}
+```
+
+- A local type is printed at module level as `%<func>.<name>`, so two
+  types named alike in one function — in sibling blocks, or one shadowing
+  the other in a nested block — both become `%main.T`.  When the
+  definitions match, the second is skipped (`printed_types` in
+  `src/backend/llvm.py`) and the program works; when they differ, clang
+  rejects the IR.  The C backend prints local typedefs in their blocks
+  and is not affected.
+- Give a repeated name a suffix, as `unique_slot_name` does for slots.
+- Coverage: `tests/lang/stmt/type/same_name_blocks.modest`, marked
+  `EXPECTED-FAIL(llvm)`.

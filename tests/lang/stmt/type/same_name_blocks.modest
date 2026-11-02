@@ -1,0 +1,39 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: same local type name in sibling blocks
+// EXPECTED-FAIL(llvm): BUG#113 both types print as one %main.T
+//
+// A local type is visible only in its block, so two sibling blocks may
+// each define their own `T`, and each one means its own type.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func main () -> Int {
+	var first: Size = 0
+	if true {
+		type T = Int32
+		var x: T = 1
+		first = sizeof(x)
+	}
+
+	var second: Size = 0
+	if true {
+		type T = Int64
+		var y: T = 2
+		second = sizeof(y)
+	}
+
+	if first != 4 or second != 8 {
+		printf("sizeof %zu, %zu, expected 4, 8\n", first, second)
+		printf("failed: same local type name in sibling blocks\n")
+		return exitFailure
+	}
+
+	printf("passed: same local type name in sibling blocks\n")
+	return exitSuccess
+}
+
