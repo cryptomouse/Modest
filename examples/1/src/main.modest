@@ -6,8 +6,6 @@ include "libc/stdio"
 
 //include "./lib"
 
-const preferredWindowWidth = Nat32 640
-const preferredWindowHeight = Nat32 480
 
 
 var a: [10][20]Nat32

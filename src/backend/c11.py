@@ -60,6 +60,11 @@ module_undef_list = []
 csettings = {}
 cfunc = None
 
+# Имена, занятые в теле текущей функции: ее параметры, локальные
+# объявления и временные переменные, заведенные самим backend'ом.
+# Заполняется в do_def_func, см. unique_local_name
+local_names = set()
+
 
 # print pointer to array as a pointer to array item (C array decay)
 POINTER_TO_ARRAY_RELAX = True
@@ -76,6 +81,36 @@ def init(settings):
 def is_global_context():
 	global cfunc
 	return cfunc == None
+
+
+def collect_local_names(x, acc):
+	if x == None:
+		return
+	if x.is_stmt_block():
+		for stmt in x.stmts:
+			collect_local_names(stmt, acc)
+	elif x.is_stmt_if():
+		collect_local_names(x.then, acc)
+		collect_local_names(x.els, acc)
+	elif x.is_stmt_while():
+		collect_local_names(x.stmt, acc)
+	elif x.is_stmt_def_var() or x.is_stmt_def_const():
+		acc.add(get_id_str(x.value))
+	elif x.is_stmt_def_type():
+		acc.add(get_id_str(x.type))
+
+
+# Имя для временной переменной в теле текущей функции: `__base`, а если
+# оно занято - `__base_2`, `__base_3`, ... Пользователь тоже может назвать
+# переменную `__base`, поэтому сверяемся с local_names
+def unique_local_name(base):
+	name = '__' + base
+	n = 1
+	while name in local_names:
+		n = n + 1
+		name = '__%s_%d' % (base, n)
+	local_names.add(name)
+	return name
 
 
 def is_local_context():
@@ -221,17 +256,25 @@ def do_ctype_func(t, specs=[]):
 
 # CIR TypeArray хранит volume уже как CValue (или None) — приведение HLIR-значения
 # к CIR откладывать до печати незачем и не нужно самому CIR
-def do_ctype_array_volume(volume):
-	if volume == None or volume.is_undefined():
+def do_ctype_array_volume(t):
+	if t.volume == None or t.volume.is_undefined():
 		return None
-	return do_cvalue(volume)
+	return cvalue_volume(t)
+
+
+# Объем массива; у VLA - значение, снятое при объявлении типа, если оно
+# было (см. freeze_vla_volumes)
+def cvalue_volume(t):
+	if t.frozen_volume != None:
+		return t.frozen_volume
+	return do_cvalue(t.volume)
 
 
 # преобразуем Modest TypeArray -> CIR TypeArray
 def do_ctype_array(t, specs=[]):
 	# сливаем *[][] в *[]
 	# такой укзаатель на массив массивов можно будет использовать только после приведения к *[n][m] ⚠️
-	return CTypeArray(item_type=do_ctype(t.of), size=do_ctype_array_volume(t.volume), specifiers=specs)
+	return CTypeArray(item_type=do_ctype(t.of), size=do_ctype_array_volume(t), specifiers=specs)
 
 
 
@@ -300,7 +343,7 @@ def do_ctype(t, is_param=False):
 			# Только для параметров функции!
 			if t.is_pointer_to_array():
 				if not need_ptr_to_item_instead_of_ptr_to_array(t.to):
-					return CTypeArray(item_type=do_ctype(t.to.of), size=do_ctype_array_volume(t.to.volume))
+					return CTypeArray(item_type=do_ctype(t.to.of), size=do_ctype_array_volume(t.to))
 
 	specs = []
 	if t.hasAttribute('const'):    specs.append('const')
@@ -1437,16 +1480,16 @@ def do_cvalue_lengthof(array_value):
 	if array_value.type.is_string():
 		return CValueInteger(array_value.type.length)
 	if array_value.is_immediate():
-		return do_cvalue(array_value.type.volume)
+		return cvalue_volume(array_value.type)
 	if array_value.is_const() and array_value.is_global():
-		return do_cvalue(array_value.type.volume)
+		return cvalue_volume(array_value.type)
 	elif array_value.is_slice():
-		return do_cvalue(array_value.type.volume)
+		return cvalue_volume(array_value.type)
 
 	lengthof_arg = do_cvalue(array_value)
 	if PTR_TO_ARR_AS_PTR_TO_ITEM:
 		if array_value.is_deref():
-			return do_cvalue(array_value.type.volume)
+			return cvalue_volume(array_value.type)
 
 	return CValueCall(CValueIdentifier("LENGTHOF"), [lengthof_arg])
 
@@ -1475,7 +1518,7 @@ def do_cvalue_lengthof_type(x, ctx):
 	# у VLA объём известен только в рантайме - печатаем само выражение,
 	# а не литерал (asset у такого объёма пуст). Ср. llvm.do_eval_lengthof_type
 	if x.oftype.is_vla():
-		return do_cvalue(x.oftype.volume)
+		return cvalue_volume(x.oftype)
 	return cvalue_literal_integer(x.asset, is_unsigned=True, ctx=ctx)
 
 def do_cvalue_alignof_type(x, ctx):
@@ -1554,7 +1597,7 @@ def do_cvalue_eq(x, logic, ctx):
 # Машинный код получается тот же самый.
 def cvalue_sizeof_type(t):
 	if t.is_vla():
-		return CValueMul(cvalue_sizeof_type(t.of), do_cvalue(t.volume))
+		return CValueMul(cvalue_sizeof_type(t.of), cvalue_volume(t))
 	return CValueSizeofType(do_ctype(t))
 
 
@@ -1816,7 +1859,7 @@ def do_assign_array(left, right, ti):
 	if left.is_var() or left.is_const():
 		slen = do_cvalue_lengthof(left)
 	else:
-		slen = do_cvalue(left.type.volume)
+		slen = cvalue_volume(left.type)
 	#return CStmtExpr(CValueCall(CValueIdentifier("ARRCPY"), [cleft, CValueParen(cright), slen]))
 	return CStmtExpr(cvalue_memcpy(cleft, CValueParen(cright), slen))
 
@@ -2126,6 +2169,14 @@ def do_def_func(x):
 		else:
 			storage_class = 'inline'
 
+	global local_names
+	old_local_names = local_names
+	local_names = set()
+	for param in func.type.params:
+		local_names.add(get_id_str(param))
+		local_names.add('_' + get_id_str(param))
+	collect_local_names(x.stmt, local_names)
+
 	cblock = do_cstmt_block(x.stmt)
 
 	#create local copy for array parameters
@@ -2155,6 +2206,7 @@ def do_def_func(x):
 	dv = CStmtDefFunc(get_id_str(func), ftype, cblock, storage_class=storage_class, attributes=x.attributes)
 
 	cfunc = old_cfunc
+	local_names = old_local_names
 
 	xdefs.append(dv)
 	defined.append(x)
@@ -2192,8 +2244,39 @@ def do_def_type(x):
 		result = do_def_type_record(x.type)
 		return result
 
+	volumes = freeze_vla_volumes(orig_type, id_str)
+	# x.type - копия orig_type, сделанная до freeze (Type.update), и
+	# frozen_volume верхнего уровня ей нужно передать самим; уровни
+	# глубже у них общие
+	if x.type.is_array() and orig_type.is_array():
+		x.type.frozen_volume = orig_type.frozen_volume
 	dt = CStmtDefType(id_str, do_ctype(orig_type))
-	return (dt,)
+	return tuple(volumes) + (dt,)
+
+
+# В C границы VLA вычисляются один раз, когда выполняется объявление типа,
+# а мы печатаем границу ее выражением при каждом использовании типа
+# (sizeof - как `sizeof(item) * n`, см. cvalue_sizeof_type), и после
+# `type A = [n]Int32; n = 0` размер A стал бы нулевым. Поэтому значение
+# каждой границы здесь снимается во временную переменную, и дальше все
+# использования типа печатаются ею (см. cvalue_volume). BUG#110
+def freeze_vla_volumes(t, id_str):
+	stmts = []
+	dim = 0
+	while t.is_array() or t.is_pointer():
+		if t.is_pointer():
+			t = t.to
+			continue
+		if t.is_vla():
+			name = unique_local_name('%s_%d' % (id_str, dim))
+			ct = do_ctype(t.volume.type)
+			if 'const' not in ct.specifiers:
+				ct.specifiers.append('const')
+			stmts.append(CStmtDefVar(name, ct, initializer=do_cvalue(t.volume), storage_class=None))
+			t.frozen_volume = CValueIdentifier(name)
+		t = t.of
+		dim = dim + 1
+	return stmts
 
 
 def do_def_type_record(t):

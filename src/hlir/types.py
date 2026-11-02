@@ -1556,6 +1556,9 @@ class TypeArray(Type):
 		self.incomplete = False
 		self.of = of
 		self.volume = volume
+		# Заполняет backend: значение volume, снятое там, где выполняется
+		# объявление VLA-типа, - дальше размер берется из него (BUG#110)
+		self.frozen_volume = None
 		self.size = array_size
 		self.align = of.get_align()
 
