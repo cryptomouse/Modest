@@ -1195,18 +1195,19 @@ errno.get()    // Undefined symbols: ___errno_location
   layout), so the library has no single target it works on as a whole.
 - `lib/fs.modest` binds `__error` itself until this is fixed.
 
-## BUG#115: An array literal into an array with a VLA inside is miscompiled
+## BUG#116: An array literal with a VLA value as a row is miscompiled
 
 ```modest
 var n: Nat32 = 2
-var a: [2][n]Int32 = [[1, 2], [3, 4]]
+var r: [n]Int32 = [5, 6]
+var a: [2][n]Int32 = [r, r]
 ```
 
-- C emits a compound literal of the VLA type, `(int32_t [2][__a_1]){...}`:
+- C emits a compound literal of the VLA type, `(int32_t [2][__a_1]){r, r}`:
   `compound literal cannot be of variable-length array type`.
-- LLVM stores the uncast generic literal (`[2 x [2 x i8]]`) as
-  `[2 x [0 x i32]]`, and clang rejects the IR.
-- A literal straight into `[n]T` works (BUG#112): it is built at its own
-  length and copied min(L, n) items, with a zeroed tail.  An inner VLA
-  needs the same per row — and the same open question for a row of
-  another length, QUESTION#7.
+- LLVM compiles it and the program prints garbage.
+- A literal whose rows are literals works (BUG#112, BUG#115): the backend
+  builds it at its own length and copies it row by row (`vla_literal_type`
+  in `src/hlir/types.py`).  A row that is a VLA value is not a literal, so
+  it falls back to the old path; it needs a VLA copy of its own, by the
+  rules of QUESTION#7.

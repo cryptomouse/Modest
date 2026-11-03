@@ -75,3 +75,4 @@ source.modest
 - Compiler structure overview: `docs/docs2/COMPILER_STRUCTURE.md`
 - Full language reference: `docs/lang/`
 - HLIR internals (types, values, stmts): `docs/agents/claude/hlir-internals.md`
+- VLA (variable-length arrays) across semantic and both backends: `docs/agents/claude/vla.md`

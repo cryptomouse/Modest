@@ -2551,40 +2551,70 @@ def llvm_copy_vla(dst, t, value):
 	llvm_memcpy(dst, src, size)
 
 
-# Литерал в VLA - как в C-бэкенде: длина литерала L известна при
-# компиляции, длина VLA n - лишь при выполнении.  Литерал своей длины
-# собираем во временном слоте `[L x T]` (он в entry-блоке, так что цикл
-# не растит стек), приемник обнуляем и копируем min(L, n) элементов: за
-# конец ни того, ни другого не выходим.  Что программа должна делать при
-# L != n - пока не решено (QUESTION#7).
-# Возвращает тип литерала или None, если это не литерал в VLA. BUG#112
-def vla_literal_type(t, v):
-	if not t.is_vla() or t.of.is_runtime_sized():
-		return None
-	if not (v.is_cons() and v.value.is_array()):
-		return None
-	if v.value.is_zero():
-		return None
-	return TypeArray(t.of, volume=v.value.type.volume, ti=v.ti)
-
-
+# Литерал в VLA (см. vla_literal_type) собираем своей длины во временном
+# слоте (он в entry-блоке, так что цикл не растит стек), приемник
+# обнуляем и копируем в него литерал построчно
 def llvm_copy_vla_literal(dst, t, value):
-	# элементы value_array_cons уже привел к T; do_eval ставит
-	# результату тип значения, так что тип меняем у копии
-	literal = copy.copy(value)
-	literal.type = vla_literal_type(t, value)
+	lt = vla_literal_type(t, value)
 	tmp = fctx['slots'][id(value)]
-	llvm_store(tmp, do_reval(literal))
+	llvm_store(tmp, do_reval(vla_literal_as(value, t, lt)))
 
 	handleVLA(t)
 	llvm_memzero(dst, trim(t.runtimeSizeBytes, 32))
+	llvm_copy_vla_literal_rows(dst, tmp, t, lt, None)
 
-	n = trim(vla_volume(t), 32)
-	length = llvm_value_num(typeNat32, literal.type.volume.asset)
-	less = llvm_eval_binary('icmp ult', n, length, ValueUndefined(typeBool))
-	count = llvm_select(less, n, length, typeNat32)
-	size = llvm_eval_binary('mul', count, llvm_value_num(typeNat32, t.of.get_size()))
-	llvm_memcpy(dst, tmp, size)
+
+# Элементы value_array_cons уже привел к типу элемента; do_eval ставит
+# результату тип значения, так что тип своей длины - у копии, и у копий
+# строк на уровнях с длиной времени исполнения
+def vla_literal_as(v, t, lt):
+	nv = copy.copy(v)
+	nv.type = lt
+	if t.of.is_runtime_sized():
+		nv.asset = [vla_literal_as(item, t.of, lt.of) for item in v.asset]
+	return nv
+
+
+# Строка литерала за концом VLA копирует 0 байт: guard - условие `i < n`
+# по всем VLA-уровням над ней.  Адрес такой строки за концом приемника,
+# но memcpy нулевой длины его не трогает
+def llvm_copy_vla_literal_rows(dst, src, t, lt, guard):
+	if not t.of.is_runtime_sized():
+		n = trim(vla_volume(t), 32)
+		length = llvm_value_num(typeNat32, lt.volume.asset)
+		less = llvm_eval_binary('icmp ult', n, length, ValueUndefined(typeBool))
+		count = llvm_select(less, n, length, typeNat32)
+		if guard != None:
+			count = llvm_select(guard, count, llvm_value_num(typeNat32, 0), typeNat32)
+		size = llvm_eval_binary('mul', count, llvm_value_num(typeNat32, t.of.get_size()))
+		llvm_memcpy(dst, src, size)
+		return
+
+	rows = lt.volume.asset
+	if not t.is_vla():
+		rows = min(rows, t.volume.asset)
+
+	size_type = vla_size_type()
+	i = 0
+	while i < rows:
+		row_guard = guard
+		if t.is_vla():
+			row_guard = llvm_eval_binary('icmp ult', llvm_value_num(size_type, i), vla_volume(t), ValueUndefined(typeBool))
+			if guard != None:
+				row_guard = llvm_eval_binary('and', guard, row_guard)
+		handleVLA(t.of)
+		dst_offset = llvm_eval_binary('mul', llvm_value_num(size_type, i), t.of.runtimeSizeBytes)
+		src_offset = llvm_value_num(size_type, i * lt.of.get_size())
+		row_dst = llvm_ptr_offset(dst, dst_offset)
+		row_src = llvm_ptr_offset(src, src_offset)
+		llvm_copy_vla_literal_rows(row_dst, row_src, t.of, lt.of, row_guard)
+		i += 1
+
+
+def llvm_ptr_offset(ptr, offset):
+	p = llvm_cast("ptrtoint", ptr, offset['type'])
+	p = llvm_eval_binary('add', p, offset)
+	return llvm_cast("inttoptr", p, typeFreePointer)
 
 
 def print_stmt_if(x):

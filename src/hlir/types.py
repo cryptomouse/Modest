@@ -2216,6 +2216,43 @@ def is_array_widening(x):
 	return from_type.volume.asset < t.volume.asset
 
 
+# Литерал в массив с длиной времени исполнения (`[n]T`, `[2][n]T`): длина
+# литерала L известна при компиляции, длина массива n - лишь при
+# исполнении.  Бэкенд строит литерал своей длины, приемник обнуляет и на
+# каждом уровне копирует min(L, n) элементов: за конец ни того, ни другого
+# не выходим.  Что программа должна делать при L != n - пока не решено
+# (QUESTION#7).  BUG#112, BUG#115
+#
+# Возвращает тип литерала его собственной длины: на уровне с длиной
+# времени исполнения внутри - длина самой длинной из его строк (короткие
+# дополняются нулями), ниже - тип элемента массива как есть.  None - если
+# это не литерал (или строка в нем - не литерал) либо длина массива
+# известна при компиляции
+def vla_literal_type(t, v):
+	if not t.is_array() or not t.is_runtime_sized():
+		return None
+	if not (v.is_cons() and v.value.is_array()) or v.value.is_zero():
+		return None
+	return _vla_literal_type(t, [v])
+
+
+def _vla_literal_type(t, rows):
+	length = 0
+	for row in rows:
+		if row.asset == None:
+			return None
+		length = max(length, len(row.asset))
+
+	of = t.of
+	if of.is_runtime_sized():
+		of = _vla_literal_type(of, [item for row in rows for item in row.asset])
+		if of == None:
+			return None
+
+	from value.integer import value_integer_create
+	return TypeArray(of, volume=value_integer_create(length, ti=t.ti), ti=t.ti)
+
+
 
 class ValueCons(Value):
 	def __init__(self, type, oftype, value, method, ti=None):

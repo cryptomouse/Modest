@@ -1868,27 +1868,69 @@ def do_assign_array(left, right, ti):
 
 
 
-# Литерал в VLA: длина литерала L известна при компиляции, длина VLA n -
-# лишь при выполнении.  Составной литерал VLA-типа C запрещает, поэтому
-# литерал строим своей длины - `(T [L]){...}`, приемник обнуляем и
-# копируем min(L, n) элементов: за конец ни того, ни другого не выходим.
-# Что программа должна делать при L != n - пока не решено (QUESTION#7).
-# Возвращает тип литерала или None, если это не литерал в VLA. BUG#112
-def vla_literal_type(t, v):
-	if not t.is_vla() or t.of.is_runtime_sized():
-		return None
-	if not (v.is_cons() and v.value.is_array()):
-		return None
-	return TypeArray(t.of, volume=v.value.type.volume, ti=v.ti)
-
-
+# Литерал в VLA (см. vla_literal_type).  Составной литерал VLA-типа C
+# запрещает, поэтому литерал строим своей длины - `(T [L]){...}`.  Если
+# VLA внутри (`[2][n]T`), литерал нужен построчно: кладем его в
+# переменную, чтобы элементы времени исполнения вычислялись один раз
 def assign_vla_literal(left, right):
-	n = cvalue_volume(left.type)
-	length = CValueInteger(vla_literal_type(left.type, right).volume.asset)
+	t = left.type
+	lt = vla_literal_type(t, right)
+	stmts = [do_memzero(left)]
+
+	dst = do_cvalue_ptr_to_x(left)
+	if isinstance(dst, CValueReference):
+		dst = dst.value
+	else:
+		dst = CValueDereference(dst)
+
+	if t.of.is_runtime_sized():
+		name = unique_local_name('literal')
+		stmts.append(CStmtDefVar(name, do_ctype(lt), initializer=do_cvalue(right), storage_class=None))
+		src = CValueIdentifier(name)
+		stmts.extend(copy_vla_literal_rows(dst, src, t, lt, []))
+	else:
+		size = cvalue_vla_literal_size(t, lt)
+		stmts.append(CStmtExpr(cvalue_memcpy(CValueReference(dst), do_cvalue_ptr_to_x(right), size)))
+
+	return tuple(stmts)
+
+
+# min(L, n) элементов в байтах
+def cvalue_vla_literal_size(t, lt):
+	n = cvalue_volume(t)
+	length = CValueInteger(lt.volume.asset)
 	count = CValueCond(CValueLt(n, length), n, length)
-	size = CValueMul(cvalue_sizeof_type(left.type.of), count)
-	copy = cvalue_memcpy(do_cvalue_ptr_to_x(left), do_cvalue_ptr_to_x(right), size)
-	return (do_memzero(left), CStmtExpr(copy))
+	return CValueMul(cvalue_sizeof_type(t.of), count)
+
+
+# Строки литерала, лежащие за концом VLA, не копируем: каждой - свое
+# условие `i < n` по всем VLA-уровням над ней
+def copy_vla_literal_rows(dst, src, t, lt, guards):
+	if not t.of.is_runtime_sized():
+		size = cvalue_vla_literal_size(t, lt)
+		stmt = CStmtExpr(cvalue_memcpy(CValueReference(dst), CValueReference(src), size))
+		if guards == []:
+			return [stmt]
+		cond = guards[0]
+		for g in guards[1:]:
+			cond = CValueLogicalAnd(cond, g)
+		return [CStmtIf(cond, CStmtBlock([stmt]), None)]
+
+	rows = lt.volume.asset
+	if not t.is_vla():
+		rows = min(rows, t.volume.asset)
+
+	stmts = []
+	i = 0
+	while i < rows:
+		row_guards = guards
+		if t.is_vla():
+			row_guards = guards + [CValueLt(CValueInteger(i), cvalue_volume(t))]
+		row_dst = CValueIndex(dst, CValueInteger(i))
+		row_src = CValueIndex(src, CValueInteger(i))
+		stmts.extend(copy_vla_literal_rows(row_dst, row_src, t.of, lt.of, row_guards))
+		i += 1
+	return stmts
 
 
 # `cond ? a : b` - такого узла в cshape нет
