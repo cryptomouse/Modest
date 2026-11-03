@@ -1,0 +1,64 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-OUT: passed: Float32 to fixed rounding
+// EXPECT-OUT: passed: fixed rounding
+//
+// `Float32 -> FixedX` rounds at a double's width, not the source's.
+//
+// The conversion multiplies by `2^fraction`, adds half a unit away from
+// zero and drops the fraction.  C11 does all of it in a double
+// (`__fixedX_from_float64`).  Done in the Float32 itself, the added half
+// is rounded away as soon as the scaled value reaches 2^23, where a
+// binary32 holds only integers: 2^23 + 1 plus 0.5 rounds to even, to
+// 2^23 + 2, and the result is one unit of the fixed type too high.
+//
+// 128 + 2^-16 is exactly such a value for a `Fixed32`: it is a binary32
+// (24 significant bits), a 16.16 (it is its storage 2^23 + 1 over 65536),
+// and so it must convert with no change at all.
+//
+// Guards BUG#40 (fixed 2026-11-03): the fix moved this multiplication to
+// a Float64 for every narrower source, not only for Float16.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func testFloat32 () -> Bool {
+	var f: Float32 = 128.0000152587890625
+	var x: Fixed32 = Fixed32 f
+	if not (Float64 x == 128.0000152587890625) {
+		printf("Fixed32 <- Float32 128 + 2^-16 = %.16f, expected 128.0000152587890625\n",
+			Float64 x)
+		return false
+	}
+
+	var g: Float32 = -128.0000152587890625
+	var y: Fixed32 = Fixed32 g
+	if not (Float64 y == -128.0000152587890625) {
+		printf("Fixed32 <- Float32 -(128 + 2^-16) = %.16f, expected -128.0000152587890625\n",
+			Float64 y)
+		return false
+	}
+
+	// and back: the storage, 2^23 + 1, is a binary32 as well
+	if not (Float32 x == f) {
+		printf("128 + 2^-16 round trip = %.16f, expected 128.0000152587890625\n",
+			Float64 Float32 x)
+		return false
+	}
+
+	printf("passed: Float32 to fixed rounding\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testFloat32() {
+		printf("failed: fixed rounding\n")
+		return exitFailure
+	}
+
+	printf("passed: fixed rounding\n")
+	return exitSuccess
+}

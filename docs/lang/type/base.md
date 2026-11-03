@@ -61,11 +61,9 @@ Target-width aliases (resolved from target config): `Int`, `Nat`, `Word`,
 > way `__int128` behind `Word128` is. Several things around `FloatX` do not
 > hold: `FloatX` ↔ `WordX` converts numerically instead of
 > reinterpreting bits, an `IntX`/`NatX` narrower than the float is refused,
-> and the LLVM backend gets `!=` on a NaN wrong and builds the
-> `FixedX` scale at the source float's width — which only a `Float16` source
-> is narrow enough to expose. A literal outside the type's range is a
-> compile-time error in both backends, the way an integer one is
-> ([cons](../value/cons.md)). See BUG#35–37, BUG#40 and
+> and the LLVM backend gets `!=` on a NaN wrong. A literal outside the
+> type's range is a compile-time error in both backends, the way an integer
+> one is ([cons](../value/cons.md)). See BUG#35–37 and
 > `tests/lang/type/float/`, where each has a marked reproducer next to the
 > files that pass.
 

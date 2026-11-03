@@ -29,9 +29,8 @@
 //
 // Two of the type's neighbours are not here.  A literal outside binary16's
 // range does not compile at all, which is its own pair of tests
-// (range.modest and overflow.modest), and `Fixed32 <- Float16` converts to
-// garbage, its scale not fitting the source width (BUG#40,
-// fixed.modest).  Unary
+// (range.modest and overflow.modest), and `FixedX <-> Float16`, which
+// has a scale between the two types, is fixed.modest.  Unary
 // `-` is avoided throughout for BUG#34, the way runtime.modest one
 // directory up avoids it — this file subtracts from zero instead.
 

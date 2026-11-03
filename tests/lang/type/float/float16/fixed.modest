@@ -3,29 +3,23 @@
 // EXPECT-OUT: passed: half to fixed
 // EXPECT-OUT: passed: half from fixed
 // EXPECT-OUT: passed: Float16 and fixed
-// EXPECTED-FAIL(llvm): BUG#40 the Float->Fixed scale is built in the source width
 //
 // `FixedX <-> Float16`, the one pair in the construction table where the
 // two types have a scale between them.
 //
-// A `FixedX` value is the number multiplied by `2^fraction`, so the
-// conversion in has to multiply by that scale — 65536 for the default
-// 16.16 `Fixed32`.  The LLVM backend builds the scale constant in the
-// *source* float's width (`do_eval_cons_fixed`'s run-time path, the
-// `fmul` in `src/backend/llvm.py`), and 65536 is not a binary16: the
-// largest one is 65504.  The compiler dies packing it, before the question
-// of what the product would have been even arises.
-//
-// The function right below it, `do_eval_from_fixed`, has the mirror of this
-// reasoning written out in a comment — "делим в ширине ИСТОЧНИКА: сузить
-// раньше деления - потерять целую часть" — and gets the direction out
-// right; only the direction in was left at the source width.  The C backend
-// has no such problem: `__fixed32_from_float64` takes a double whatever the
-// source was.
+// A `FixedX` value is the number multiplied by `2^fraction` — 65536 for
+// the default 16.16 `Fixed32`, 2^32 for `Fixed64`.  Neither is a binary16:
+// the largest one is 65504.  So the conversion cannot be done at the
+// Float16's own width in either direction: the way in multiplies by the
+// scale, and the way out holds the raw storage (1.5 in 16.16 is 98304) as
+// a float before dividing it.  Both must go through a wider float — C11's
+// helpers pivot on a double, `__fixedX_from_float64` /
+// `__fixedX_to_float64`, and the LLVM backend has to do the same.
 //
 // Float32 and Float64 hide it, which is why this file is here and not in
-// cons.modest one directory up: 65536.0 is exact in both of them, so the
-// scale happens to fit and the product happens to be right.
+// cons.modest one directory up: 65536.0 and 2^32 fit both of them.
+//
+// Guards BUG#40 (fixed 2026-11-03).
 
 include "libc/ctypes64"
 include "libc/stdio"
@@ -61,9 +55,9 @@ func testToFixed () -> Bool {
 }
 
 
-// The way back removes the scale.  It is the direction that already
-// divides at the source width, so this half is right — but it cannot be
-// reached under the LLVM backend without the half above.
+// The way back removes the scale.  The storage of 1.5 is 98304, already
+// past binary16's range, so this direction overflows at the target width
+// just as the other one does.
 func testFromFixed () -> Bool {
 	var x: Fixed32 = 1.5
 	var h: Float16 = Float16 x

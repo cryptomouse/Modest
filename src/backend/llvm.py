@@ -1896,11 +1896,20 @@ def do_eval_from_fixed(x):
 	v = do_reval(x.value)
 
 	if type.is_float():
-		# sitofp сразу в целевой FloatX: деление на точную степень
-		# двойки после него второго округления не добавляет
-		f = llvm_cast('sitofp', v, type)
-		scale = llvm_value_num(type, float(1 << from_type.fraction))
-		return llvm_eval_binary('fdiv', f, scale, x)
+		# (!) пивот - Float64, как __fixedX_to_float64 в C11: в узком
+		# FloatX не помещается ни масштаб 2^fraction (65536 > 65504, max
+		# у binary16), ни само хранилище (1.5 в 16.16 - это 98304), и
+		# выходит inf. Деление на точную степень двойки второго
+		# округления не добавляет, сужение - отдельным fptrunc
+		wide = type
+		if type.width < typeFloat64.width:
+			wide = typeFloat64
+		f = llvm_cast('sitofp', v, wide)
+		scale = llvm_value_num(wide, float(1 << from_type.fraction))
+		if wide is type:
+			return llvm_eval_binary('fdiv', f, scale, x)
+		q = llvm_eval_binary('fdiv', f, scale)
+		return llvm_cast('fptrunc', q, type)
 
 	# (!) делим в ширине ИСТОЧНИКА: сузить раньше деления - потерять
 	# целую часть. sdiv, как и '/' в C, отбрасывает дробь к нулю
@@ -1979,10 +1988,18 @@ def do_eval_to_fixed(x):
 
 	if from_type.is_float():
 		# масштабируем во float и отбрасываем дробь к нулю - ровно то,
-		# что делает макрос FIXED*() в C11
-		scale = llvm_value_num(from_type, float(1 << type.fraction))
+		# что делает макрос FIXED*() в C11.
+		# (!) считаем в Float64, как __fixedX_from_float64 в C11: масштаб
+		# 2^fraction в узкий FloatX может не влезть (65536 > 65504, max
+		# у binary16 - получится inf), а +0.5 у больших значений в нем
+		# теряется
+		wide = from_type
+		if from_type.width < typeFloat64.width:
+			wide = typeFloat64
+			v = llvm_cast('fpext', v, wide)
+		scale = llvm_value_num(wide, float(1 << type.fraction))
 		f = llvm_eval_binary('fmul', v, scale)
-		f = llvm_bias_half_away(f, from_type, 0.5)
+		f = llvm_bias_half_away(f, wide, 0.5)
 		return llvm_cast('fptosi', f, type)
 
 	# целое: дробной части нет, масштаб - точное умножение.

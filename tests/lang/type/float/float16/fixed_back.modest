@@ -1,0 +1,103 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-OUT: passed: fixed to half
+// EXPECT-OUT: passed: half extremes through fixed
+// EXPECT-OUT: passed: Float16 fixed pivot
+//
+// `FixedX -> Float16`, checked so that an overflow cannot slip by.
+//
+// The storage of a `FixedX` is the number times `2^fraction`: 1.5 in
+// 16.16 is 98304, past binary16's largest finite value of 65504.  Turning
+// that storage into a Float16 first and dividing afterwards gives inf, and
+// the scale itself, 65536, is an inf in binary16 as well, so the quotient
+// comes out NaN or zero.  The conversion has to pivot on a wider float, the
+// way C11's `__fixedX_to_float64` does.
+//
+// fixed.modest next to this file covers the same direction, but with `!=`,
+// and `NaN != 1.5` is false under the LLVM backend (BUG#35), which let the
+// broken conversion of 1.5 pass there.  Every check here is a `==` under
+// `not`, which is false for a NaN on every backend.
+//
+// The far end of binary16's range goes through `Fixed64`: 65504 does not
+// fit the 16-bit integer part of a `Fixed32`, and 2^32, the `Fixed64`
+// scale, is further outside binary16 than 65536 is.
+//
+// Guards BUG#40 (fixed 2026-11-03).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func testToHalf () -> Bool {
+	var a: Fixed32 = 1.5
+	if not (Float16 a == 1.5) {
+		printf("Float16 <- Fixed32 1.5 = %f, expected 1.5\n", Float64 Float16 a)
+		return false
+	}
+
+	var n: Fixed32 = -2.5
+	if not (Float16 n == -2.5) {
+		printf("Float16 <- Fixed32 -2.5 = %f, expected -2.5\n", Float64 Float16 n)
+		return false
+	}
+
+	// 30000 is exact in binary16 (11 significant bits); its storage is
+	// 30000 * 65536, far outside the type
+	var big: Fixed32 = 30000.0
+	if not (Float16 big == 30000.0) {
+		printf("Float16 <- Fixed32 30000 = %f, expected 30000\n",
+			Float64 Float16 big)
+		return false
+	}
+
+	var w: Fixed64 = 2.25
+	if not (Float16 w == 2.25) {
+		printf("Float16 <- Fixed64 2.25 = %f, expected 2.25\n", Float64 Float16 w)
+		return false
+	}
+
+	printf("passed: fixed to half\n")
+	return true
+}
+
+
+func testExtremes () -> Bool {
+	var top: Float16 = 65504.0
+	var x: Fixed64 = Fixed64 top
+	if not (Float64 x == 65504.0) {
+		printf("Fixed64 <- Float16 65504 = %f, expected 65504\n", Float64 x)
+		return false
+	}
+	if not (Float16 x == top) {
+		printf("65504 round trip = %f, expected 65504\n", Float64 Float16 x)
+		return false
+	}
+
+	// the smallest normal binary16, 2^-14, sits well inside 32.32
+	var tiny: Float16 = 0.00006103515625
+	var t: Fixed64 = Fixed64 tiny
+	if not (Float16 t == tiny) {
+		printf("2^-14 round trip = %.16f, expected 0.00006103515625\n",
+			Float64 Float16 t)
+		return false
+	}
+
+	printf("passed: half extremes through fixed\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testToHalf() and result
+	result = testExtremes() and result
+
+	if not result {
+		printf("failed: Float16 fixed pivot\n")
+		return exitFailure
+	}
+
+	printf("passed: Float16 fixed pivot\n")
+	return exitSuccess
+}

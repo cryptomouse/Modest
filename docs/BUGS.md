@@ -268,34 +268,6 @@ if nan != nan { printf("NaN\n") }    // c11: prints    llvm: does not
 - Coverage: `tests/lang/type/float/nan.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#40: LLVM backend builds the `FixedX` scale in the source float's width
-
-```modest
-var h: Float16 = 1.5
-var x: Fixed32 = Fixed32 h   // c11: 1.5   llvm: 32767.999985
-```
-
-- A `FixedX` value is the number multiplied by `2^fraction`, so the
-  conversion in multiplies by that scale — 65536 for the default 16.16
-  `Fixed32`. The run-time path in `src/backend/llvm.py` emits
-  `f = llvm_eval_binary('fmul', v, scale)` with `scale` created at the
-  *source* float's type. 65536 is not a binary16 — the largest one is
-  65504 — so the scale rounds to an infinity, and the product with it.
-- The compiler used to die packing that constant; it no longer does, which
-  only makes the fault quieter. The multiply has to happen at a width that
-  holds `2^fraction`.
-- `do_eval_from_fixed`, the function immediately below, has the mirror of
-  this reasoning written out — "делим в ширине ИСТОЧНИКА: сузить раньше
-  деления - потерять целую часть" — and gets the way out right. Only the
-  way in was left at the source width.
-- Float32 and Float64 hide it: 65536.0 and 2^32 are exact in both, so the
-  scale fits and the product is right. `Float16` is the only source that
-  fails, which is why the reproducer lives under `float16/`.
-- The C backend is unaffected: it calls `__fixed32_from_float64`, which
-  takes a `double` whatever the source was.
-- Coverage: `tests/lang/type/float/float16/fixed.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#43: LLVM backend ignores `@layout("union")`
 
 ```modest
