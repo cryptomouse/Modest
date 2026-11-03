@@ -161,7 +161,18 @@ def collect_slot_stmts(x, acc):
 	elif x.is_stmt_def_var() or x.is_stmt_def_const():
 		t = stmt_slot_type(x)
 		if t != None:
-			acc.append((x, t))
+			alignment = t.get_align() if x.is_stmt_def_var() else 0
+			acc.append((x, get_id_str(x.value), t, alignment))
+		collect_vla_literal_slot(x.value.type, x.init_value, acc)
+	elif x.is_stmt_assign():
+		collect_vla_literal_slot(x.left.type, x.right, acc)
+
+
+# литералу в VLA - временный массив его длины (см. llvm_copy_vla_literal)
+def collect_vla_literal_slot(t, v, acc):
+	lt = vla_literal_type(t, v)
+	if lt != None:
+		acc.append((v, 'literal', lt, 0))
 
 
 def unique_slot_name(id_str, taken):
@@ -183,9 +194,8 @@ def print_slots(fn, body):
 
 	acc = []
 	collect_slot_stmts(body, acc)
-	for x, t in acc:
-		name = unique_slot_name(get_id_str(x.value), taken)
-		alignment = t.get_align() if x.is_stmt_def_var() else 0
+	for x, id_str, t, alignment in acc:
+		name = unique_slot_name(id_str, taken)
 		fctx['slots'][id(x)] = llvm_alloca(t, id_str=name, alignment=alignment)
 
 
@@ -2514,6 +2524,9 @@ def print_stmt_assign(x):
 	if is_vla_copy(x.left.type, x.right):
 		llvm_copy_vla(l, x.left.type, x.right)
 		return
+	if vla_literal_type(x.left.type, x.right) != None:
+		llvm_copy_vla_literal(l, x.left.type, x.right)
+		return
 	r = do_reval(x.right)
 	llvm_store(l, r)
 
@@ -2526,7 +2539,8 @@ def is_vla_copy(to, value):
 		return False
 	if to.slice or value.type.slice:
 		return False
-	return value.asset == None
+	# у `let`, заданной литералом, asset тоже есть, но живет она в памяти
+	return value.asset == None or value.is_const()
 
 
 # Копируется размер приемника, как и в C-бэкенде (QUESTION#7)
@@ -2535,6 +2549,42 @@ def llvm_copy_vla(dst, t, value):
 	handleVLA(t)
 	size = trim(t.runtimeSizeBytes, 32)
 	llvm_memcpy(dst, src, size)
+
+
+# Литерал в VLA - как в C-бэкенде: длина литерала L известна при
+# компиляции, длина VLA n - лишь при выполнении.  Литерал своей длины
+# собираем во временном слоте `[L x T]` (он в entry-блоке, так что цикл
+# не растит стек), приемник обнуляем и копируем min(L, n) элементов: за
+# конец ни того, ни другого не выходим.  Что программа должна делать при
+# L != n - пока не решено (QUESTION#7).
+# Возвращает тип литерала или None, если это не литерал в VLA. BUG#112
+def vla_literal_type(t, v):
+	if not t.is_vla() or t.of.is_runtime_sized():
+		return None
+	if not (v.is_cons() and v.value.is_array()):
+		return None
+	if v.value.is_zero():
+		return None
+	return TypeArray(t.of, volume=v.value.type.volume, ti=v.ti)
+
+
+def llvm_copy_vla_literal(dst, t, value):
+	# элементы value_array_cons уже привел к T; do_eval ставит
+	# результату тип значения, так что тип меняем у копии
+	literal = copy.copy(value)
+	literal.type = vla_literal_type(t, value)
+	tmp = fctx['slots'][id(value)]
+	llvm_store(tmp, do_reval(literal))
+
+	handleVLA(t)
+	llvm_memzero(dst, trim(t.runtimeSizeBytes, 32))
+
+	n = trim(vla_volume(t), 32)
+	length = llvm_value_num(typeNat32, literal.type.volume.asset)
+	less = llvm_eval_binary('icmp ult', n, length, ValueUndefined(typeBool))
+	count = llvm_select(less, n, length, typeNat32)
+	size = llvm_eval_binary('mul', count, llvm_value_num(typeNat32, t.of.get_size()))
+	llvm_memcpy(dst, tmp, size)
 
 
 def print_stmt_if(x):
@@ -2670,6 +2720,8 @@ def print_stmt_var(x):
 	init_value = x.init_value
 	if is_vla_copy(var.type, init_value):
 		llvm_copy_vla(left, var.type, init_value)
+	elif vla_literal_type(var.type, init_value) != None:
+		llvm_copy_vla_literal(left, var.type, init_value)
 	elif not init_value.is_undefined():
 		iv = do_reval(init_value)
 		llvm_store(left, iv)
@@ -2694,11 +2746,15 @@ def print_stmt_const(x):
 	freeze_vla_volumes(x.value.type)
 
 	# `let b = a` с VLA: своя копия на стеке, как у `var`
-	if is_vla_copy(x.value.type, iv):
+	is_literal = vla_literal_type(x.value.type, iv) != None
+	if is_vla_copy(x.value.type, iv) or is_literal:
 		t = x.value.type
 		handleVLA(t)
 		v = llvm_alloca(t.get_array_root(), size=t.runtimeSizeRoots, alignment=t.get_align())
-		llvm_copy_vla(v, t, iv)
+		if is_literal:
+			llvm_copy_vla_literal(v, t, iv)
+		else:
+			llvm_copy_vla(v, t, iv)
 		locals_add(id_str, v)
 		return None
 

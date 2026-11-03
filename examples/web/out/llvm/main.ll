@@ -305,7 +305,7 @@ declare %Word16 @htons(%Word16 %x)
 define internal void @handleRequest(%Int32 %clientSocket) {
 	%buffer = alloca [1024 x %Word8], align 1
 	%response = alloca [1024 x %Char8], align 1
-	%1 = zext i16 1024 to %Nat32
+	%1 = trunc %Size 1024 to %Nat32
 	%2 = mul %Nat32 %1, 1
 	%3 = bitcast [1024 x %Word8]* %buffer to i8*
 	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %3, i8 0, %Nat32 %2, i1 0)
@@ -325,7 +325,7 @@ endif_0:
 	store %Word8 0, %Word8* %10
 	%11 = bitcast [1024 x %Word8]* %buffer to %Str8*
 	%12 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([22 x i8]* @.str3 to [0 x i8]*), %Str8* %11)
-	%13 = zext i16 1024 to %Nat32
+	%13 = trunc %Size 1024 to %Nat32
 	%14 = mul %Nat32 %13, 1
 	%15 = bitcast [1024 x %Char8]* %response to i8*
 	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %15, i8 0, %Nat32 %14, i1 0)

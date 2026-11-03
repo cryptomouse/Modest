@@ -1,0 +1,130 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: literal of the same length
+// EXPECT-OUT: passed: literal of another length
+// EXPECT-OUT: passed: literal in a loop
+// EXPECT-OUT: passed: array literal into a VLA
+//
+// A generic array literal goes into a VLA: in `var`, `let`, assignment and
+// explicit construction, with immediate and run-time items.  The literal's
+// length is known at compile time, the VLA's only at run time: the copy
+// takes as many items as both have and zero-fills the rest of the VLA.
+// What a literal of another length should do is not decided yet
+// (QUESTION#7); the cases below only pin down that nothing is read or
+// written past either end.
+//
+// Every volume goes through `opaque`, so it cannot be folded away.
+//
+// Guards BUG#112 (fixed 2026-11-03).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func opaque (n: Nat32) -> Nat32 {
+	return n
+}
+
+
+func check (name: *Str8, p: *[]Int32, n: Nat32, want: [4]Int32) -> Bool {
+	var i: Nat32 = 0
+	while i < n {
+		if p[i] != want[i] {
+			printf("%s[%u] = %d, expected %d\n", name, i, p[i], want[i])
+			return false
+		}
+		i += 1
+	}
+	return true
+}
+
+
+func testSameLength () -> Bool {
+	let n = opaque(4)
+	let x: Int32 = 10
+
+	var a: [n]Int32 = [1, 2, 3, 4]
+	var b: [n]Int32 = [x, x + 1, x + 2, x + 3]
+	var c: [n]Int32
+	c = [5, 6, 7, 8]
+	let d: [n]Int32 = [9, 10, 11, 12]
+	var e: [n]Int32 = d
+
+	var ok = true
+	ok = check("a", &a, n, [1, 2, 3, 4]) and ok
+	ok = check("b", &b, n, [10, 11, 12, 13]) and ok
+	ok = check("c", &c, n, [5, 6, 7, 8]) and ok
+	ok = check("e", &e, n, [9, 10, 11, 12]) and ok
+	if d[3] != 12 {
+		printf("d[3] = %d, expected 12\n", d[3])
+		ok = false
+	}
+
+	if ok {
+		printf("passed: literal of the same length\n")
+	}
+	return ok
+}
+
+
+func testOtherLength () -> Bool {
+	let n = opaque(4)
+
+	// shorter: the tail is zero, as for a fixed array
+	var a: [n]Int32 = [1, 2]
+	let b = [n]Int32 [3, 4]
+	var c: [n]Int32 = [9, 9, 9, 9]
+	c = [5]
+	var bb: [n]Int32 = b
+
+	// longer: only the first n items
+	let m = opaque(2)
+	var d: [m]Int32 = [6, 7, 8, 9]
+
+	var ok = true
+	ok = check("a", &a, n, [1, 2, 0, 0]) and ok
+	ok = check("b", &bb, n, [3, 4, 0, 0]) and ok
+	ok = check("c", &c, n, [5, 0, 0, 0]) and ok
+	ok = check("d", &d, m, [6, 7]) and ok
+
+	if ok {
+		printf("passed: literal of another length\n")
+	}
+	return ok
+}
+
+
+func testLoop () -> Bool {
+	var ok = true
+	var k: Nat32 = 0
+	while k < 3 {
+		let v = Int32 k
+		var a: [opaque(k + 1)]Int32 = [7, 7, 7]
+		a = [v, v, v]
+		ok = check("a", &a, k + 1, [v, v, v]) and ok
+		k += 1
+	}
+
+	if ok {
+		printf("passed: literal in a loop\n")
+	}
+	return ok
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testSameLength() and result
+	result = testOtherLength() and result
+	result = testLoop() and result
+
+	if not result {
+		printf("failed: array literal into a VLA\n")
+		return exitFailure
+	}
+
+	printf("passed: array literal into a VLA\n")
+	return exitSuccess
+}

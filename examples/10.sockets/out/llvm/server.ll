@@ -196,7 +196,7 @@ declare %Int @accept(%Int %socket, %SockAddr* %addr, %SocklenT* %addrlen)
 ; -- endstrings --
 define internal %Bool @writeFile(%Int %sockFd) {
 	%buffer = alloca [1024 x %Char8], align 1
-	%1 = zext i16 1024 to %Nat32
+	%1 = trunc %Size 1024 to %Nat32
 	%2 = mul %Nat32 %1, 1
 	%3 = bitcast [1024 x %Char8]* %buffer to i8*
 	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %3, i8 0, %Nat32 %2, i1 0)
@@ -224,7 +224,7 @@ then_1:
 	br label %endif_1
 endif_1:
 	%11 = call %Int (%FILE*, %Str*, ...) @fprintf(%FILE* %4, %Str* bitcast ([3 x i8]* @.str4 to [0 x i8]*), [1024 x %Char8]* %buffer)
-	%12 = zext i16 1024 to %Nat32
+	%12 = trunc %Size 1024 to %Nat32
 	%13 = mul %Nat32 %12, 1
 	%14 = bitcast [1024 x %Char8]* %buffer to i8*
 	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %14, i8 0, %Nat32 %13, i1 0)

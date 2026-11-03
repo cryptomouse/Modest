@@ -1839,6 +1839,9 @@ def do_assign_array(left, right, ti):
 	if rv.is_zero():
 		return do_memzero(left)
 
+	if vla_literal_type(left.type, right) != None:
+		return assign_vla_literal(left, right)
+
 	l_root = get_root_value(left)
 	r_root = get_root_value(right)
 
@@ -1863,6 +1866,45 @@ def do_assign_array(left, right, ti):
 	#return CStmtExpr(CValueCall(CValueIdentifier("ARRCPY"), [cleft, CValueParen(cright), slen]))
 	return CStmtExpr(cvalue_memcpy(cleft, CValueParen(cright), slen))
 
+
+
+# Литерал в VLA: длина литерала L известна при компиляции, длина VLA n -
+# лишь при выполнении.  Составной литерал VLA-типа C запрещает, поэтому
+# литерал строим своей длины - `(T [L]){...}`, приемник обнуляем и
+# копируем min(L, n) элементов: за конец ни того, ни другого не выходим.
+# Что программа должна делать при L != n - пока не решено (QUESTION#7).
+# Возвращает тип литерала или None, если это не литерал в VLA. BUG#112
+def vla_literal_type(t, v):
+	if not t.is_vla() or t.of.is_runtime_sized():
+		return None
+	if not (v.is_cons() and v.value.is_array()):
+		return None
+	return TypeArray(t.of, volume=v.value.type.volume, ti=v.ti)
+
+
+def assign_vla_literal(left, right):
+	n = cvalue_volume(left.type)
+	length = CValueInteger(vla_literal_type(left.type, right).volume.asset)
+	count = CValueCond(CValueLt(n, length), n, length)
+	size = CValueMul(cvalue_sizeof_type(left.type.of), count)
+	copy = cvalue_memcpy(do_cvalue_ptr_to_x(left), do_cvalue_ptr_to_x(right), size)
+	return (do_memzero(left), CStmtExpr(copy))
+
+
+# `cond ? a : b` - такого узла в cshape нет
+class CValueCond(CValue):
+	def __init__(self, cond, a, b):
+		super().__init__()
+		self.cond = cond
+		self.a = a
+		self.b = b
+		self.precedence = 2
+
+	def __str__(self):
+		c = str_cvalue(self.cond, ext_precedence=self.precedence + 1)
+		a = str_cvalue(self.a, ext_precedence=self.precedence + 1)
+		b = str_cvalue(self.b, ext_precedence=self.precedence)
+		return '%s ? %s : %s' % (c, a, b)
 
 
 def do_cstmt_block(x):
@@ -1959,9 +2001,15 @@ def do_cstmt_var(x):
 	dv = CStmtDefVar(get_id_str(var_value), do_ctype(var_value.type), initializer=civ, storage_class=storage_class)
 
 	if dynamic_init:
-		return tuple(volumes) + (dv, do_assign_array(var_value, init_value, x.ti))
+		return tuple(volumes) + (dv,) + as_stmts(do_assign_array(var_value, init_value, x.ti))
 
 	return tuple(volumes) + (dv,)
+
+
+def as_stmts(x):
+	if isinstance(x, tuple):
+		return x
+	return (x,)
 
 
 def const_as_macro(v):
@@ -1994,19 +2042,22 @@ def do_cstmt_const(x):
 
 	volumes = freeze_vla_volumes(type, get_id_str(const_value))
 
+	# литерал массива включающий в себя переменные печатаем отдельно;
+	# VLA, как и у `var`, C не дает инициализировать в объявлении
+	dynamic_init = init_value.type.is_array() and (init_value.is_runtime() or type.is_runtime_sized())
+
 	civ = None
-	if not (init_value.type.is_array() and init_value.is_runtime()):
+	if not dynamic_init:
 		civ = do_cinitializer(type, init_value, ctx=[])
 
 	ct = do_ctype(type)
-	if type.is_array() and not init_value.is_immediate():
+	if type.is_array() and (dynamic_init or not init_value.is_immediate()):
 		ct.specifiers.remove('const')
 	dv = CStmtDefVar(get_id_str(x), ct, initializer=civ, storage_class=None)
 
 	# print constant as 'variable'
-	# литерал массива включающий в себя переменные печатаем отдельно
-	if init_value.type.is_array() and init_value.is_runtime():
-		return tuple(volumes) + (dv, do_assign_array(const_value, init_value, x.ti))
+	if dynamic_init:
+		return tuple(volumes) + (dv,) + as_stmts(do_assign_array(const_value, init_value, x.ti))
 
 	return tuple(volumes) + (dv,)
 
@@ -2990,7 +3041,8 @@ def do_cvalue_mem(x):
 		return cv
 
 	if x.is_array() or (x.is_cons() and x.value.is_array()):
-		cv = CValueCast(do_ctype(x.type), cv)
+		t = vla_literal_type(x.type, x) or x.type
+		cv = CValueCast(do_ctype(t), cv)
 		return cv
 
 	if x.is_runtime():

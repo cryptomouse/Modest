@@ -14,8 +14,9 @@ bool queueWord8_init(struct queue_word8_queue_word8 *q, uint8_t *buf, uint32_t c
 }
 
 void queueWord8_deinit(struct queue_word8_queue_word8 *q) {
+	const uint32_t __pdata_0 = queue_capacity(&q->queue);
 	uint8_t *const pdata = (uint8_t *)q->data;
-	__builtin_bzero(pdata, sizeof(uint8_t) * queue_capacity(&q->queue));
+	__builtin_bzero(pdata, sizeof(uint8_t) * __pdata_0);
 	queue_deinit(&q->queue);
 	q->data = NULL;
 }
@@ -80,8 +81,9 @@ uint32_t queueWord8_write(struct queue_word8_queue_word8 *q, uint8_t *data, uint
 }
 
 void queueWord8_clear(struct queue_word8_queue_word8 *q) {
+	const uint32_t __pdata_0 = queue_capacity(&q->queue);
 	uint8_t *const pdata = (uint8_t *)q->data;
-	__builtin_bzero(pdata, sizeof(uint8_t) * queue_capacity(&q->queue));
+	__builtin_bzero(pdata, sizeof(uint8_t) * __pdata_0);
 	queue_clear(&q->queue);
 }
 

@@ -172,7 +172,7 @@ def value_array_cons(t, v, method, ti):
 		else:
 			n_from = v.type.volume.asset
 
-		if n_from > 0 and n_from < n_to:
+		if n_to != None and n_from > 0 and n_from < n_to:
 			pass
 			#warning("implicit cons biggest array from smaller", ti)
 

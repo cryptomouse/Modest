@@ -112,17 +112,19 @@ define void @queueWord8_deinit(%queueWord8_QueueWord8* %q) {
 	%8 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 1
 	%9 = load [0 x %Word8]*, [0 x %Word8]** %8
 	%10 = bitcast [0 x %Word8]* %9 to [0 x %Word8]*
-	%11 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 0
-	%12 = call %Nat32 @queue_capacity(%queue_Queue* %11)
-	%13 = mul %Nat32 %12, 1
-	%14 = bitcast [0 x %Word8]* %10 to i8*
-	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %14, i8 0, %Nat32 %13, i1 0)
-	%15 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 0
-	call void @queue_deinit(%queue_Queue* %15)
-	%16 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 1
-	store [0 x %Word8]* null, [0 x %Word8]** %16
-	%17 = load i8*, i8** %1
-	call void @llvm.stackrestore(i8* %17)
+	%11 = mul %Size %5, 1
+	%12 = mul %Size %5, 1
+	%13 = mul %Size %5, 1
+	%14 = mul %Size %5, 1
+	%15 = trunc %Size %14 to %Nat32
+	%16 = bitcast [0 x %Word8]* %10 to i8*
+	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %16, i8 0, %Nat32 %15, i1 0)
+	%17 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 0
+	call void @queue_deinit(%queue_Queue* %17)
+	%18 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 1
+	store [0 x %Word8]* null, [0 x %Word8]** %18
+	%19 = load i8*, i8** %1
+	call void @llvm.stackrestore(i8* %19)
 	ret void
 }
 
@@ -266,15 +268,17 @@ define void @queueWord8_clear(%queueWord8_QueueWord8* %q) {
 	%8 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 1
 	%9 = load [0 x %Word8]*, [0 x %Word8]** %8
 	%10 = bitcast [0 x %Word8]* %9 to [0 x %Word8]*
-	%11 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 0
-	%12 = call %Nat32 @queue_capacity(%queue_Queue* %11)
-	%13 = mul %Nat32 %12, 1
-	%14 = bitcast [0 x %Word8]* %10 to i8*
-	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %14, i8 0, %Nat32 %13, i1 0)
-	%15 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 0
-	call void @queue_clear(%queue_Queue* %15)
-	%16 = load i8*, i8** %1
-	call void @llvm.stackrestore(i8* %16)
+	%11 = mul %Size %5, 1
+	%12 = mul %Size %5, 1
+	%13 = mul %Size %5, 1
+	%14 = mul %Size %5, 1
+	%15 = trunc %Size %14 to %Nat32
+	%16 = bitcast [0 x %Word8]* %10 to i8*
+	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %16, i8 0, %Nat32 %15, i1 0)
+	%17 = getelementptr %queueWord8_QueueWord8, %queueWord8_QueueWord8* %q, %Int32 0, %Int32 0
+	call void @queue_clear(%queue_Queue* %17)
+	%18 = load i8*, i8** %1
+	call void @llvm.stackrestore(i8* %18)
 	ret void
 }
 

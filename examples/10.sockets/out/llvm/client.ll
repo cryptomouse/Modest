@@ -279,7 +279,7 @@ declare %Int @accept(%Int %socket, %SockAddr* %addr, %SocklenT* %addrlen)
 ; -- endstrings --
 define internal %Bool @sendFile(%FILE* %fp, %Int %sockFd) {
 	%data = alloca [1024 x %Char8], align 1
-	%1 = zext i16 1024 to %Nat32
+	%1 = trunc %Size 1024 to %Nat32
 	%2 = mul %Nat32 %1, 1
 	%3 = bitcast [1024 x %Char8]* %data to i8*
 	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %3, i8 0, %Nat32 %2, i1 0)
@@ -300,7 +300,7 @@ then_0:
 	ret %Bool 0
 	br label %endif_0
 endif_0:
-	%11 = zext i16 1024 to %Nat32
+	%11 = trunc %Size 1024 to %Nat32
 	%12 = mul %Nat32 %11, 1
 	%13 = bitcast [1024 x %Char8]* %data to i8*
 	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %13, i8 0, %Nat32 %12, i1 0)

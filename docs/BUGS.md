@@ -1195,18 +1195,18 @@ errno.get()    // Undefined symbols: ___errno_location
   layout), so the library has no single target it works on as a whole.
 - `lib/fs.modest` binds `__error` itself until this is fixed.
 
-## BUG#112: A generic array literal into a VLA crashes the compiler
+## BUG#115: An array literal into an array with a VLA inside is miscompiled
 
 ```modest
-var n: Nat32 = 4
-var a: [n]Int32 = [1, 2, 3, 4]    // TypeError in value_array_cons
-var b: [n]Int32
-b = [1, 2]                        // the same
+var n: Nat32 = 2
+var a: [2][n]Int32 = [[1, 2], [3, 4]]
 ```
 
-- `value_array_cons` (`src/value/array.py`) compares the literal's length
-  with the target volume, whose `asset` is `None` for a VLA:
-  `'<' not supported between instances of 'int' and 'NoneType'`.
-- `= []` and an array value of the same type work.
-- Needs a decision on what a literal of the wrong length does at run
-  time — QUESTION#7.
+- C emits a compound literal of the VLA type, `(int32_t [2][__a_1]){...}`:
+  `compound literal cannot be of variable-length array type`.
+- LLVM stores the uncast generic literal (`[2 x [2 x i8]]`) as
+  `[2 x [0 x i32]]`, and clang rejects the IR.
+- A literal straight into `[n]T` works (BUG#112): it is built at its own
+  length and copied min(L, n) items, with a zeroed tail.  An inner VLA
+  needs the same per row — and the same open question for a row of
+  another length, QUESTION#7.

@@ -14,15 +14,17 @@ bool ringWord8_init(struct ring_word8_ring_word8 *q, uint8_t *buf, uint32_t capa
 }
 
 void ringWord8_deinit(struct ring_word8_ring_word8 *q) {
+	const uint32_t __pdata_0 = queue_capacity(&q->queue);
 	uint8_t *const pdata = (uint8_t *)q->data;
-	__builtin_bzero(pdata, sizeof(uint8_t) * queue_capacity(&q->queue));
+	__builtin_bzero(pdata, sizeof(uint8_t) * __pdata_0);
 	queue_deinit(&q->queue);
 	q->data = NULL;
 }
 
 void ringWord8_clear(struct ring_word8_ring_word8 *q) {
+	const uint32_t __pdata_0 = queue_capacity(&q->queue);
 	uint8_t *const pdata = (uint8_t *)q->data;
-	__builtin_bzero(pdata, sizeof(uint8_t) * queue_capacity(&q->queue));
+	__builtin_bzero(pdata, sizeof(uint8_t) * __pdata_0);
 	queue_clear(&q->queue);
 }
 

@@ -102,8 +102,14 @@ func fill (mem: *Unit, n: Nat32) -> Unit {
   array. Only some dimensions may be run-time, in any position:
   `[n][3]Int32`, `[3][n]Int32`.
 - **Initialization.** A VLA variable starts zero-filled; `= []` says the
-  same explicitly. A generic array literal (`= [1, 2, 3]`) is not
-  supported yet — BUG#112.
+  same explicitly. A generic array literal goes into a VLA in a `var`, a
+  `let`, an assignment or an explicit construction (`[n]Int32 [1, 2]`).
+  Its length is known at compile time and the VLA's only at run time, so
+  the lengths are not compared: as many items are copied as both have,
+  and the rest of the VLA is zero-filled — nothing is read or written
+  past either end. Whether a literal of another length should be an
+  error is not decided yet — QUESTION#7. A literal into an array that
+  holds a VLA inside (`[2][n]Int32`) is not supported yet — BUG#115.
 - **A VLA and a fixed array are different types**, even when the lengths
   happen to be equal: their lengths could only be compared at run time.
   Neither is copied into the other — not by assignment, initialization,

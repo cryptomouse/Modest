@@ -526,5 +526,8 @@ construction of a longer fixed array already does.
 
 - [`type/array.md`](./type/array.md) — "Variable-length arrays"
 - [`value/cons.md`](./value/cons.md) — array construction rules
-- the array copy in both backends, and the generic literal into a VLA
-  (BUG#112), which needs the same answer for a literal of the wrong length
+- the array copy in both backends, and the generic literal into a VLA,
+  which needs the same answer for a literal of the wrong length.  For now
+  (BUG#112) the literal is copied min(L, n) items and the rest of the VLA
+  is zero-filled — option C, taken only because it never reads or writes
+  past either end, not as the answer

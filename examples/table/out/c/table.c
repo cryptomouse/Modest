@@ -13,9 +13,12 @@ static void printRow(char **raw_row, uint32_t *sz, uint32_t nCols);
 void table_print(table_Table *table) {
 	uint32_t i = 0;
 	uint32_t j = 0;
-	char *(*const data)[table->nCols] = (char *(*)[table->nCols])table->data;
-	uint32_t sz[table->nCols];
-	__builtin_bzero(&sz, sizeof(uint32_t) * table->nCols);
+	const uint32_t __data_0 = table->nRows;
+	const uint32_t __data_1 = table->nCols;
+	char *(*const data)[__data_1] = (char *(*)[__data_1])table->data;
+	const uint32_t __sz_0 = table->nCols;
+	uint32_t sz[__sz_0];
+	__builtin_bzero(&sz, sizeof(uint32_t) * __sz_0);
 	if (table->header != NULL) {
 		i = 0;
 		while (i < table->nCols) {
@@ -60,6 +63,7 @@ void table_print(table_Table *table) {
 }
 
 static void printRow(char **raw_row, uint32_t *sz, uint32_t nCols) {
+	const uint32_t __row_0 = nCols;
 	char **const row = (char **)raw_row;
 	uint32_t j = 0;
 	while (j < nCols) {
