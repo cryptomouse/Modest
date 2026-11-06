@@ -270,7 +270,7 @@ endif_0:
 	%12 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1
 	%13 = bitcast %fsm_ComplexState* %11 to i8*
 	%14 = bitcast %fsm_ComplexState* %12 to i8*
-	%15 = call i1 (i8*, i8*, i64) @memeq(i8* %13, i8* %14, %Int64 16)
+	%15 = call i1 @__eq.rec.0(i8* %13, i8* %14)
 	%16 = icmp eq %Bool %15, 0
 	br %Bool %16 , label %then_1, label %endif_1
 then_1:
@@ -452,3 +452,26 @@ endif_0:
 }
 
 
+
+define internal i1 @__eq.rec.0(i8* %a, i8* %b) {
+entry:
+	%0 = bitcast i8* %a to %fsm_ComplexState*
+	%1 = bitcast i8* %b to %fsm_ComplexState*
+	%2 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %0, i32 0, i32 0
+	%3 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %1, i32 0, i32 0
+	%4 = load %fsm_StateDesc*, %fsm_StateDesc** %2
+	%5 = load %fsm_StateDesc*, %fsm_StateDesc** %3
+	%6 = icmp eq %fsm_StateDesc* %4, %5
+	br %Bool %6 , label %field_0, label %ne
+field_0:
+	%7 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %0, i32 0, i32 1
+	%8 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %1, i32 0, i32 1
+	%9 = load %fsm_StageId, %fsm_StageId* %7
+	%10 = load %fsm_StageId, %fsm_StageId* %8
+	%11 = icmp eq %fsm_StageId %9, %10
+	br %Bool %11 , label %field_1, label %ne
+field_1:
+	ret i1 1
+ne:
+	ret i1 0
+}

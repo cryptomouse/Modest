@@ -23,7 +23,7 @@ void fsm_task(struct fsm_fsm *self) {
 		const uint32_t top = 0;
 		printf("[%s] fsm timeout (%u) occured, switch_to_stage(%d)\n", self->id, top, self->next_state.stage);
 	}
-	if (__builtin_memcmp(&self->next_state, &self->state, sizeof(fsm_ComplexState)) != 0) {
+	if (!({ const fsm_ComplexState *__eq_l = (const fsm_ComplexState *)&self->next_state; const fsm_ComplexState *__eq_r = (const fsm_ComplexState *)&self->state; __eq_l->state == __eq_r->state && __eq_l->stage == __eq_r->stage; })) {
 		const fsm_ComplexState state = self->state;
 		const fsm_ComplexState next_state = self->next_state;
 		printf("[%s] #%s_%u -> #%s_%u\n", self->id, state.state->id, state.stage, next_state.state->id, next_state.stage);

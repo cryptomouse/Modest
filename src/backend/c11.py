@@ -756,7 +756,7 @@ def do_cvalue_array_widening(x, ctx):
 	if not default.is_zero():
 		citems = do_array_literal_from_citems(default.asset, ctx=ctx).items
 	dst = CValueReference(do_cvalue_literal_array_from_citems(citems, cast_to_ctype=do_ctype(x.type)))
-	cv = cvalue_memcpy(dst, do_cvalue_ptr_to_x(x.value), cvalue_sizeof_type(x.value.type))
+	cv = cvalue_memcpy(dst, do_cvalue_addr_of(x.value), cvalue_sizeof_type(x.value.type))
 	return CValueCast(do_ctype(TypePointer(x.type), is_param=True), cv)
 
 
@@ -1279,7 +1279,7 @@ def do_cvalue_arg(av):
 	if av.type.is_array() and not av.type.is_array_of_char():
 		# Если в функцию передается массив по значению - передаем указатель на него ⚠️
 		# тк функции си не умеют получать массивы по значению
-		a = do_cvalue_ptr_to_x(av, parr_relax=POINTER_TO_ARRAY_RELAX)
+		a = do_cvalue_addr_of(av, parr_relax=POINTER_TO_ARRAY_RELAX)
 	else:
 		if not PTR_TO_ARR_AS_PTR_TO_ITEM:
 			if av.type.is_pointer_to_array():
@@ -1559,17 +1559,16 @@ def do_cvalue_eq(x, logic, ctx):
 
 	lx = None
 	rx = None
-	if left.type.is_aggregate() and not left.type.is_compared_bytewise():
-		# по полям / по элементам, см. cvalue_aggregate_eq
-		a = do_cvalue_ptr_to_x(left)
-		b = do_cvalue_ptr_to_x(right)
-		eq = cvalue_aggregate_eq(left.type, a, b)
-		return eq if logic else CValueLogicalNot(eq)
+	if left.type.is_aggregate():
+		a = do_cvalue_addr_of(left)
+		b = do_cvalue_addr_of(right)
 
-	elif left.type.is_aggregate():
-		# сравниваем массивы / записи
-		a = do_cvalue_ptr_to_x(left)
-		b = do_cvalue_ptr_to_x(right)
+		if not left.type.is_compared_bytewise():
+			# по полям / по элементам, см. cvalue_aggregate_eq
+			eq = cvalue_aggregate_eq(left.type, a, b)
+			return eq if logic else CValueLogicalNot(eq)
+
+		# сравниваем массивы / записи просто побайтово
 		sz = get_cvalue_size_for(left, right, ti=x.ti)
 		lx = cvalue_memcmp(a, b, sz)
 		rx = CValueInteger(0)
@@ -1580,8 +1579,8 @@ def do_cvalue_eq(x, logic, ctx):
 		ctype_pointer_to_chars = CTypePointer(CTypeIdentifier("char"))
 		ctype_pointer_to_chars.specifiers = ['const']
 		lx = CValueCall(CValueIdentifier("__builtin_strcmp"), [
-			CValueCast(ctype_pointer_to_chars, do_cvalue_ptr_to_x(left)),
-			CValueCast(ctype_pointer_to_chars, do_cvalue_ptr_to_x(right))
+			CValueCast(ctype_pointer_to_chars, a),
+			CValueCast(ctype_pointer_to_chars, b)
 		])
 		rx = CValueInteger(0)
 
@@ -1776,7 +1775,7 @@ def cvalue_malloc(size):
 
 def do_cvalue_new(x, ctx):
 	sizeof = cvalue_sizeof_type(x.value.type)
-	xvalue = do_cvalue_ptr_to_x(x.value)
+	xvalue = do_cvalue_addr_of(x.value)
 	return CValueCast(do_ctype(x.type), cvalue_memcpy(cvalue_malloc(sizeof), xvalue, sizeof))
 
 
@@ -1996,8 +1995,8 @@ def do_assign_array(left, right, ti):
 	if l_root.type.of.get_size() == right.type.of.get_size():
 		return assign_by_memcopy(left, right)
 
-	cleft = do_cvalue_ptr_to_x(left)
-	cright = do_cvalue_ptr_to_x(right)
+	cleft = do_cvalue_addr_of(left)
+	cright = do_cvalue_addr_of(right)
 	slen = None
 	if left.is_var() or left.is_const():
 		slen = do_cvalue_lengthof(left)
@@ -2017,7 +2016,7 @@ def assign_vla_literal(left, right):
 	lt = vla_literal_type(t, right)
 	stmts = [do_memzero(left)]
 
-	dst = do_cvalue_ptr_to_x(left)
+	dst = do_cvalue_addr_of(left)
 	if isinstance(dst, CValueReference):
 		dst = dst.value
 	else:
@@ -2030,7 +2029,7 @@ def assign_vla_literal(left, right):
 		stmts.extend(copy_vla_literal_rows(dst, src, t, lt, []))
 	else:
 		size = cvalue_vla_literal_size(t, lt)
-		stmts.append(CStmtExpr(cvalue_memcpy(CValueReference(dst), do_cvalue_ptr_to_x(right), size)))
+		stmts.append(CStmtExpr(cvalue_memcpy(CValueReference(dst), do_cvalue_addr_of(right), size)))
 
 	return tuple(stmts)
 
@@ -2136,7 +2135,7 @@ def do_cstmt_return(x):
 		return CStmtReturn(
 			cvalue_memcpy(
 				CValueIdentifier("__out"),
-				do_cvalue_ptr_to_x(x.value),
+				do_cvalue_addr_of(x.value),
 				cvalue_sizeof_type(x.value.type)
 			)
 		)
@@ -3250,7 +3249,7 @@ def do_cvalue_mem(x):
 
 
 
-def do_cvalue_ptr_to_x(x, parr_relax=False):
+def do_cvalue_addr_of(x, parr_relax=False):
 
 	if x.is_deref():
 		return do_cvalue(x.value)  # Если это разыменовывание - просто вернем его аргумент (это указатель)
@@ -3291,7 +3290,7 @@ def do_cvalue_ptr_to_x(x, parr_relax=False):
 
 
 def do_memzero(value):
-	return CStmtExpr(cvalue_memzero(do_cvalue_ptr_to_x(value), cvalue_sizeof_type(value.type)))
+	return CStmtExpr(cvalue_memzero(do_cvalue_addr_of(value), cvalue_sizeof_type(value.type)))
 
 
 def assign_by_memcopy(left, right):
@@ -3301,8 +3300,8 @@ def assign_by_memcopy(left, right):
 
 	return CStmtExpr(
 		cvalue_memcpy(
-			do_cvalue_ptr_to_x(left),
-			do_cvalue_ptr_to_x(right),
+			do_cvalue_addr_of(left),
+			do_cvalue_addr_of(right),
 			cvalue_sizeof_type(left.type)
 		)
 	)
