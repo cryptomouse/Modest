@@ -566,6 +566,11 @@ def llvm_print_value_record(x):
 		indent()
 		llvm_print_type_value(item['value'])
 		i = i + 1
+	if x.get('pad', 0) > 0:
+		# добивка union до его размера (см. str_type_union)
+		out(",\n")
+		indent()
+		out("[%d x i8] zeroinitializer" % x['pad'])
 	indent_down()
 	out("\n")
 	indent()
@@ -1202,7 +1207,53 @@ def print_type_enum(t):
 	out('i%d' % t.width)
 
 
+# union в LLVM - как у clang: поле с наибольшим выравниванием плюс
+# добивка байтами до размера union. Выравнивание и размер выходят те же,
+# что посчитал фронтенд, а все поля лежат с нулевого смещения - к любому
+# из них обращаемся по адресу самого union (указатели непрозрачные)
+def is_union(t):
+	return t.is_record() and t.layout == TYPE_RECORD_LAYOUT_UNION
+
+
+def union_rep_field(t):
+	rep = None
+	for field in t.fields:
+		if rep == None or field.type.get_align() > rep.type.get_align() or \
+				(field.type.get_align() == rep.type.get_align() and \
+				field.type.get_size() > rep.type.get_size()):
+			rep = field
+	return rep
+
+
+def union_pad(t):
+	return t.get_size() - union_rep_field(t).type.get_size()
+
+
+def str_type_union(t):
+	sstr = "{" + str_type(union_rep_field(t).type)
+	pad = union_pad(t)
+	if pad > 0:
+		sstr += ", [%d x i8]" % pad
+	return sstr + "}"
+
+
+# адрес поля union - адрес самого union, но с типом поля
+def union_field_adr(u, union_type, field):
+	if by_value(u):
+		# union пришел значением в регистре: адреса у него нет
+		u = dict(u)
+		u['type'] = union_type
+		u = llvm_alloca_store(union_type, init_value=u)
+	rv = dict(u)
+	rv['type'] = field.type
+	rv['is_adr'] = True
+	return rv
+
+
 def str_type_record(t):
+	if is_union(t):
+		return str_type_union(t)
+
 	sstr = ''
 	packed = t.layout == TYPE_RECORD_LAYOUT_PACKED
 
@@ -1739,6 +1790,13 @@ def access(x):
 	return do_eval(x.left), (i,)
 
 
+# значение, с которого access() начинает цепочку полей
+def access_root(x):
+	while not x.left.type.is_pointer() and x.left.is_access_record():
+		x = x.left
+	return x.left
+
+
 
 def do_eval_access(x):
 	#warning("do_eval_access()", x.ti)
@@ -1749,9 +1807,25 @@ def do_eval_access(x):
 	notype = typeInt32
 	indexes = []
 
+	# запись, которой принадлежит очередное поле цепочки
+	rec_type = access_root(x).type
+	if rec_type.is_pointer():
+		rec_type = rec_type.to
+
 	for f in fields:
-		fno = llvm_value_num(notype, f.field_no)
-		indexes.append(fno)
+		if is_union(rec_type):
+			# у поля union нет индекса в GEP: доходим до самого union
+			# и продолжаем уже от его поля (BUG#43)
+			if len(indexes) > 0:
+				left = ass2(left, indexes)
+				indexes = []
+			left = union_field_adr(left, rec_type, f)
+		else:
+			indexes.append(llvm_value_num(notype, f.field_no))
+		rec_type = f.type
+
+	if len(indexes) == 0:
+		return left
 	return ass2(left, indexes)
 
 
@@ -2434,6 +2508,9 @@ def do_eval_record(v):
 	# (кроме констант, ведь они едут до последнего)
 	rec_type = v.type
 
+	if is_union(rec_type):
+		return do_eval_union(v)
+
 	if is_global_context():
 		items = []
 		for initializer in v.asset:
@@ -2456,6 +2533,52 @@ def do_eval_record(v):
 			xv = insertvalue(xv, iv, field.field_no)
 
 	return xv
+
+
+
+# Литерал union задает ровно одно поле - то, что названо в самом литерале.
+# Значения по умолчанию остальных полей в него не попадают: они легли бы
+# в ту же память поверх названного (см. c11 do_cvalue_cons_record_literal_from_cons_asset)
+def union_initializer(v):
+	named = v.asset
+	if v.is_cons() and v.value.is_record():
+		named = v.value.asset
+	for initializer in named:
+		if not initializer.value.is_undefined():
+			for own in v.asset:
+				if own.id.str == initializer.id.str:
+					return own
+			return initializer
+	return None
+
+
+def do_eval_union(v):
+	rec_type = v.type
+	initializer = union_initializer(v)
+	if initializer == None:
+		return llvm_value_zero(rec_type)
+
+	field = TypeRecord.record_field_get(rec_type, initializer.id.str)
+	rep = union_rep_field(rec_type)
+
+	if is_global_context():
+		if field is not rep:
+			error("LLVM backend: a global union initialised through a field "
+				"other than its most aligned one is not supported yet",
+				v.ti)
+		iv = do_reval(initializer.value)
+		rv = llvm_value_record([{'id': initializer.id, 'value': iv}], rec_type)
+		rv['pad'] = union_pad(rec_type)
+		return rv
+
+	iv = do_reval(initializer.value)
+	if field is rep:
+		return insertvalue(llvm_value_zero(rec_type), iv, 0)
+
+	# поле не совпадает с тем, что стоит в типе: пишем его через память
+	slot = llvm_alloca_store(rec_type, init_value=llvm_value_zero(rec_type))
+	llvm_store(union_field_adr(slot, rec_type, field), iv)
+	return llvm_load(slot)
 
 
 

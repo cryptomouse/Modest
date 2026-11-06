@@ -1576,6 +1576,8 @@ def do_cvalue_eq(x, logic, ctx):
 	#elif left.type.is_str() and right.type.is_str():
 	elif left.type.is_str() or left.type.is_string():
 		# сравниваем строки (Str8, Str16, Str32)
+		a = do_cvalue_addr_of(left)
+		b = do_cvalue_addr_of(right)
 		ctype_pointer_to_chars = CTypePointer(CTypeIdentifier("char"))
 		ctype_pointer_to_chars.specifiers = ['const']
 		lx = CValueCall(CValueIdentifier("__builtin_strcmp"), [

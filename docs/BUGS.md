@@ -229,44 +229,6 @@ if nan != nan { printf("NaN\n") }    // c11: prints    llvm: does not
 - Coverage: `tests/lang/type/float/nan.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#43: LLVM backend ignores `@layout("union")`
-
-```modest
-type Color = @layout("union") {
-	rgba: Word32
-	bytes: [4]Word8
-}
-
-var c: Color = {}
-c.rgba = 5
-c.bytes[0]              // c11: 5    llvm: 0
-```
-
-```llvm
-%Color = type {
-	%Word32,
-	[4 x %Word8]
-};
-```
-
-- The C backend emits `union` for a record whose `layout` is `union`
-  (`isa = 'struct' if not t.layout == 'union' else 'union'`, four places
-  in `src/backend/c11.py`). The LLVM backend reads `layout` only to decide
-  whether to pack, and emits its ordinary struct either way, so the fields
-  sit side by side instead of on top of each other: the aliasing the type
-  exists for does not happen, and writing one field leaves the others as
-  they were.
-- LLVM has no union type — the C one is normally modelled as a struct
-  holding a single array of bytes the size of the largest member, with
-  each access bitcast to the field's type.
-- The frontend is no longer the problem: `calc_record_size_align` lays a
-  `union` record's fields from zero and takes its size from the largest of
-  them, so `sizeof` and `offsetof` answer 4 and 0. What is left is the
-  emission — the IR still says `{ %Word32, [4 x %Word8] }`, and on that
-  backend the type's own layout is what a `getelementptr` follows.
-- Coverage: `tests/lang/type/record/union.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#50: C backend emits an identifier that is a C keyword as it stands
 
 ```modest
@@ -1174,3 +1136,31 @@ var a: [2]Float64 = [-0.0, 1.0]
 - Coverage: `tests/lang/type/float/negative_zero_aggregate.modest`,
   marked `EXPECTED-FAIL(llvm)`.  `tests/lang/value/binary/aggregate_fieldwise.modest`
   builds its `-0.0` at run time (`-zero`) to stay clear of this.
+
+## BUG#118: LLVM rejects a global union literal through any but its most aligned field
+
+```modest
+type Slot = @layout("union") {
+	word: Word32
+	bytes: [4]Word8
+}
+
+var a: Slot = {word = 0xFFFFFFFF}             // fine
+var b: Slot = {bytes = [0x11, 0x11, 0x11, 0x11]}
+// llvm: error: a global union initialised through a field other than its
+//       most aligned one is not supported yet
+```
+
+- LLVM has no union type: a union record is emitted as its most aligned
+  field, padded with bytes up to the union's size (`str_type_union` in
+  `src/backend/llvm.py`).  A constant of that type can only spell out that
+  one field, so `do_eval_union` refuses a global literal that names another.
+  A local literal is not affected — it writes the field through memory.
+- The usual fix, and what clang does for C: give such a global the type of
+  its own initializer — `{ [4 x i8], <padding> }` — instead of `%Slot`.
+  With opaque pointers every use of the global still works.  The hard part
+  is nesting: a union inside a global record (or array) makes the enclosing
+  constant need its own literal type too, all the way up.
+- The C backend is unaffected — it prints a designated initializer.
+- Coverage: `tests/lang/type/record/union_global.modest`, marked
+  `EXPECTED-FAIL(llvm)`.

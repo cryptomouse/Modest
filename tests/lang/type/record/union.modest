@@ -7,19 +7,19 @@
 // EXPECT-OUT: passed: a union field inside a record
 // EXPECT-OUT: passed: a field default leaves the union alone
 // EXPECT-OUT: passed: union layout
-// EXPECTED-FAIL(llvm): BUG#43 @layout("union") is ignored, the fields do not overlap
 //
 // `@layout("union")` puts every field of the record at offset 0 — the C
 // union.  The fields are then one storage under several names: writing
 // one is reading the others, which is the whole point of asking for it.
 //
-// The C backend emits a real `union`.  The LLVM backend still emits its
-// ordinary struct, so the fields end up side by side and the aliasing the
-// type was written for does not happen — the offsets and the size the
-// frontend reports are right there, which only makes the two disagree.
+// The C backend emits a real `union`.  LLVM has none, so there the type
+// is its most aligned field padded out to the size, and every field is
+// reached at the address of the union itself.
 //
 // The checks below never depend on byte order: they either write all the
 // bytes to one value, or write and read the same width.
+//
+// Guards BUG#43 (fixed 2026-11-06).
 
 include "libc/ctypes64"
 include "libc/stdio"

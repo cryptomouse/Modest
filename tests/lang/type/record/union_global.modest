@@ -1,0 +1,64 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: a global union through its aligned field
+// EXPECT-OUT: passed: a global union through another field
+// EXPECT-OUT: passed: global union
+// EXPECTED-FAIL(llvm): BUG#118 a global union literal only through its most aligned field
+//
+// A global union is initialised by a constant, and the constant may name
+// any of its fields — not only the one LLVM builds the type from.
+//
+// The checks never depend on byte order.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Slot = @layout("union") {
+	word: Word32
+	bytes: [4]Word8
+}
+
+var byWord: Slot = {word = 0xFFFFFFFF}
+var byBytes: Slot = {bytes = [0x11, 0x11, 0x11, 0x11]}
+
+
+func testByWord () -> Bool {
+	if byWord.bytes[0] != 0xFF or byWord.bytes[3] != 0xFF {
+		printf("byWord.bytes = [%x ... %x], expected FF\n",
+			Nat32 byWord.bytes[0], Nat32 byWord.bytes[3])
+		return false
+	}
+
+	printf("passed: a global union through its aligned field\n")
+	return true
+}
+
+
+func testByBytes () -> Bool {
+	if byBytes.word != 0x11111111 {
+		printf("byBytes.word = %08X, expected 11111111\n", Nat32 byBytes.word)
+		return false
+	}
+
+	printf("passed: a global union through another field\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testByWord() and result
+	result = testByBytes() and result
+
+	if not result {
+		printf("failed: global union\n")
+		return exitFailure
+	}
+
+	printf("passed: global union\n")
+	return exitSuccess
+}
+

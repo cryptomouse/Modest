@@ -1902,7 +1902,10 @@ def acc(left, field_id, ti):
 		nv.is_immutable = left.is_immutable
 
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
-	if left.is_immediate() and not via_pointer:
+	# поле union не сворачиваем: у литерала есть значение только названного
+	# поля, остальные - те же байты под другим типом, а не их инициализаторы
+	is_union = record_type.layout == TYPE_RECORD_LAYOUT_UNION
+	if left.is_immediate() and not via_pointer and not is_union:
 		initializer = get_item_by_id(left.asset, field_id['str'])
 		Value.cp_immediate(nv, initializer.value)
 		nv.stage = HLIR_VALUE_STAGE_COMPILETIME

@@ -1,0 +1,234 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: a padded union
+// EXPECT-OUT: passed: a union returned by value
+// EXPECT-OUT: passed: a union inside a record returned by value
+// EXPECT-OUT: passed: a union through a pointer
+// EXPECT-OUT: passed: a union inside a union
+// EXPECT-OUT: passed: a literal through a narrower field
+// EXPECT-OUT: passed: union equality
+// EXPECT-OUT: passed: union access
+//
+// Every way of reaching a union field: through a variable, through a
+// pointer, on a value that has no address (a call result), through a
+// record that holds the union, and through a union that holds another.
+// A literal may name any field, not just the one a backend happens to
+// build the type from.
+//
+// The union here is padded: its widest field is not its most aligned one,
+// so its size is more than any single field it is built from.
+//
+// The checks never depend on byte order.
+//
+// Guards BUG#43 (fixed 2026-11-06).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Mix = @layout("union") {
+	small: Word8
+	wide: Word64
+	bytes: [12]Word8
+}
+
+type Half = @layout("union") {
+	word: Word16
+	bytes: [2]Word8
+}
+
+type Nest = @layout("union") {
+	word: Word32
+	half: Half
+}
+
+type Box = {
+	tag: Word8
+	mix: Mix
+	tail: Word8
+}
+
+
+func makeMix () -> Mix {
+	return {bytes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+}
+
+
+func makeBox () -> Box {
+	var box: Box = {tag = 1, tail = 2}
+	box.mix.wide = 0xFFFFFFFFFFFFFFFF
+	box.mix.bytes[11] = 0x33
+	return box
+}
+
+
+func fillThroughPointer (p: *Mix) -> Word8 {
+	p.wide = 0
+	p.bytes[2] = 0x77
+	return p.bytes[2]
+}
+
+
+func testPadded () -> Bool {
+	// 12 bytes of the array, rounded up to the 8 the Word64 asks for.
+	if sizeof(Mix) != 16 or alignof(Mix) != 8 {
+		printf("sizeof(Mix) = %zu, alignof(Mix) = %zu, expected 16 and 8\n",
+			sizeof(Mix), alignof(Mix))
+		return false
+	}
+	if offsetof(Box.tail) != 24 or sizeof(Box) != 32 {
+		printf("offsetof(Box.tail) = %zu, sizeof(Box) = %zu, expected 24 and 32\n",
+			offsetof(Box.tail), sizeof(Box))
+		return false
+	}
+
+	// Past the widest-aligned field: the bytes beyond the Word64 are
+	// storage of the union too.
+	var m: Mix = {}
+	m.wide = 0xFFFFFFFFFFFFFFFF
+	m.bytes[11] = 0x5A
+	if m.bytes[7] != 0xFF or m.bytes[11] != 0x5A {
+		printf("m.bytes = [.. %x .. %x], expected FF and 5A\n",
+			Nat32 m.bytes[7], Nat32 m.bytes[11])
+		return false
+	}
+
+	printf("passed: a padded union\n")
+	return true
+}
+
+
+func testByValue () -> Bool {
+	if makeMix().bytes[11] != 12 {
+		printf("makeMix().bytes[11] = %u, expected 12\n", Nat32 makeMix().bytes[11])
+		return false
+	}
+	// The first eight bytes are all non-zero, so is the Word64 over them.
+	if makeMix().wide == 0 {
+		printf("makeMix().wide = 0, expected the bytes of the literal\n")
+		return false
+	}
+
+	printf("passed: a union returned by value\n")
+	return true
+}
+
+
+func testInsideByValue () -> Bool {
+	if makeBox().mix.bytes[11] != 0x33 {
+		printf("makeBox().mix.bytes[11] = %x, expected 33\n",
+			Nat32 makeBox().mix.bytes[11])
+		return false
+	}
+	if makeBox().mix.bytes[0] != 0xFF {
+		printf("makeBox().mix.bytes[0] = %x, expected FF\n",
+			Nat32 makeBox().mix.bytes[0])
+		return false
+	}
+	if makeBox().tail != 2 {
+		printf("makeBox().tail = %u, expected 2\n", Nat32 makeBox().tail)
+		return false
+	}
+
+	printf("passed: a union inside a record returned by value\n")
+	return true
+}
+
+
+func testPointer () -> Bool {
+	var m: Mix = {}
+	let got = fillThroughPointer(&m)
+	if got != 0x77 or m.bytes[2] != 0x77 {
+		printf("bytes[2] = %x through the pointer, %x after, expected 77\n",
+			Nat32 got, Nat32 m.bytes[2])
+		return false
+	}
+	// One of its bytes was written after the Word64 was cleared.
+	if m.wide == 0 {
+		printf("m.wide = 0 after writing m.bytes[2]\n")
+		return false
+	}
+
+	printf("passed: a union through a pointer\n")
+	return true
+}
+
+
+func testNested () -> Bool {
+	var n: Nest = {half = {bytes = [0xFF, 0xFF]}}
+	if n.half.word != 0xFFFF {
+		printf("n.half.word = %x, expected FFFF\n", Nat32 n.half.word)
+		return false
+	}
+
+	n.word = 0xFFFFFFFF
+	n.half.word = 0
+	if n.word == 0xFFFFFFFF or n.half.bytes[1] != 0 {
+		printf("n.word = %x after clearing n.half.word\n", Nat32 n.word)
+		return false
+	}
+
+	printf("passed: a union inside a union\n")
+	return true
+}
+
+
+func testNarrowLiteral () -> Bool {
+	// `small` is not the field the type is built from: the literal still
+	// has to put exactly it into the storage, and zero the rest.
+	var sum: Nat32 = 0
+	var i = 0
+	while i < 3 {
+		let m: Mix = {small = 5}
+		sum = sum + Nat32 m.small + Nat32 m.bytes[11]
+		if m.wide == 0 {
+			printf("m.wide = 0 for {small = 5}\n")
+			return false
+		}
+		i = i + 1
+	}
+	if sum != 15 {
+		printf("sum = %u, expected 15\n", sum)
+		return false
+	}
+
+	printf("passed: a literal through a narrower field\n")
+	return true
+}
+
+
+func testEquality () -> Bool {
+	let a: Mix = {wide = 7}
+	let b: Mix = {wide = 7}
+	let c: Mix = {wide = 8}
+	if a != b or a == c {
+		printf("union equality is wrong\n")
+		return false
+	}
+
+	printf("passed: union equality\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testPadded() and result
+	result = testByValue() and result
+	result = testInsideByValue() and result
+	result = testPointer() and result
+	result = testNested() and result
+	result = testNarrowLiteral() and result
+	result = testEquality() and result
+
+	if not result {
+		printf("failed: union access\n")
+		return exitFailure
+	}
+
+	printf("passed: union access\n")
+	return exitSuccess
+}
+
