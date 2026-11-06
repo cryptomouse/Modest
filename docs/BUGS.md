@@ -206,45 +206,6 @@ Coverage: `tests/lang/type/fixed/runtime.modest` (run-time) and
 `tests/lang/type/fixed/comptime.modest` (compile-time); both pass under c11 and
 llvm.
 
-## BUG#26: Record equality compares the padding between fields
-
-```modest
-type Sample = {
-	tag: Word8       // 1 byte, then 3 bytes of padding
-	value: Int32
-}
-
-var a: Sample = {tag = 0x01, value = 7}
-var b: Sample = {tag = 0x01, value = 7}
-
-a == b        // llvm: false      c11: true
-```
-
-- `docs/lang/value/binary.md` says records compare field-wise. Both backends
-  instead compare the object's raw bytes over `sizeof`, which includes the
-  padding that belongs to no field: `__builtin_memcmp` in C
-  (`cvalue_memcmp`, `src/backend/c11.py:1373`) and a hand-written `memeq`
-  loop in LLVM (`llvm_memcmp`, `src/backend/llvm.py:814`).
-- Only the LLVM backend is visibly wrong today, and the C backend is right
-  by luck rather than by construction: it emits a compound literal
-  (`(struct sample){.tag = 0x01, .value = 7}`), which clang zero-fills, so
-  both objects' padding agrees. The LLVM backend emits an `alloca` and
-  stores each field into it, leaving the three bytes between them as
-  whatever the stack held — two identical values then differ.
-- Arrays are unaffected unless their element type is a padded record: the
-  elements of `[8]Int32` are contiguous, with nothing between them.
-- The same comparison is what `!=` uses, so a padded record is unequal to
-  itself in both directions.
-- Fix: compare aggregates member-wise — field by field for a record,
-  element by element for an array, recursing into both — and keep the
-  byte-wise path only for types that provably have no padding. The
-  alternative, zeroing every record on creation, makes the comparison
-  correct by making every write more expensive, and still leaves a record
-  reached through a pointer from elsewhere.
-- Coverage: `tests/lang/value/binary/record_padding.modest`, marked
-  `EXPECTED-FAIL(llvm)`. It passes under c11 on purpose — if that backend
-  ever stops emitting a compound literal, the test reports it.
-
 ## BUG#35: Backends disagree about `!=` on a NaN
 
 ```modest
@@ -1183,3 +1144,33 @@ var a: [2][n]Int32 = [r, r]
   in `src/hlir/types.py`).  A row that is a VLA value is not a literal, so
   it falls back to the old path; it needs a VLA copy of its own, by the
   rules of QUESTION#7.
+
+## BUG#117: LLVM drops the sign of `-0.0` inside a local record or array literal
+
+```modest
+var p: Point = {x = -0.0, y = 1.0}
+var a: [2]Float64 = [-0.0, 1.0]
+1.0 / p.x     // c11: -inf    llvm: inf
+1.0 / a[0]    // c11: -inf    llvm: inf
+```
+
+- A local literal is built from `zeroinitializer` with `insertvalue` for
+  each item, and an item that is zero is skipped as already there
+  (`do_eval_record`, `src/backend/llvm.py:2453`; `do_eval_array_local`,
+  `:2421`).  `Value.is_zero()` (`src/hlir/types.py`) compares the asset
+  with `0`, and `-0.0 == 0` in Python, so `-0.0` counts as zero and the
+  field is left `+0.0`.
+- Only the local path loses it: a scalar `var s: Float64 = -0.0`, and a
+  global record or array literal, keep the sign.  The C backend is
+  unaffected — it prints the literal as written.
+- Visible wherever the sign of zero matters: division (`1.0 / x`),
+  `copysign`, and the bits a `Word64` construction reinterprets.  Record
+  and array `==` are not affected — they compare floats as floats, and
+  `-0.0 == 0.0` (BUG#26).
+- Fix, probably: an `is_zero()` that a floating `-0.0` fails — compare
+  the bits, or check the sign — or skip only values that are zero in
+  every bit.  `is_negated_zero` in the same file already recovers the
+  sign for a constructed value.
+- Coverage: `tests/lang/type/float/negative_zero_aggregate.modest`,
+  marked `EXPECTED-FAIL(llvm)`.  `tests/lang/value/binary/aggregate_fieldwise.modest`
+  builds its `-0.0` at run time (`-zero`) to stay clear of this.

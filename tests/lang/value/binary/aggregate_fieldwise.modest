@@ -1,0 +1,242 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: aggregate fieldwise
+//
+// `==` on records and arrays is field- / element-wise
+// (docs/lang/value/binary.md), not a comparison of their bytes.  A
+// byte-wise comparison is wrong in two ways, and both are checked here:
+//
+//   - padding: the bytes between and after fields belong to no field, and
+//     hold whatever was there (record_padding.modest covers the basic
+//     case; this file covers everywhere the field-wise comparison goes);
+//   - floating point: `-0.0 == 0.0` although their bytes differ, and
+//     NaN is unequal to itself although its bytes are the same.
+//
+// Every padded value below gets its padding dirtied first — copied out of
+// a buffer full of 0xAA — so that two equal values really do differ in
+// the bytes between their fields, in both backends.
+//
+// Guards BUG#26 (fixed 2026-11-06).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+include "libc/string"
+
+
+// 1 byte, then 4 — three bytes of padding in between.
+type Sample = {
+	tag: Word8
+	value: Int32
+}
+
+type Point = {
+	x: Float64
+	y: Float64
+}
+
+// Every kind of member the comparison steps into: a padded record, a
+// two-dimensional array of them, a record of floats, and a byte array,
+// which needs no field-wise comparison of its own.
+type Nested = {
+	head: Sample
+	grid: [2][2]Sample
+	point: Point
+	bytes: [3]Word8
+}
+
+var calls: Int32 = 0
+
+
+// Returns `s` with all its padding bytes set to 0xAA.
+func dirty (s: Sample) -> Sample {
+	var junk: [8]Word8 = [0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA, 0xAA]
+	var result: Sample
+	memcpy(&result, &junk, sizeof(Sample))
+	result.tag = s.tag
+	result.value = s.value
+	return result
+}
+
+
+func sample (tag: Word8, value: Int32) -> Sample {
+	calls = calls + 1
+	return {tag = tag, value = value}
+}
+
+
+func testFloat () -> Bool {
+	var zero: Float64 = 0.0
+	let nan = zero / zero
+
+	// -0.0 is made at run time, and the values are `var`, not `let`: a
+	// comparison of two constants is folded at compile time, and that
+	// folding is not what this test is about.
+	let negativeZero = -zero
+	var positive: Point = {x = 0.0, y = 1.0}
+	var negative: Point = {x = negativeZero, y = 1.0}
+	if not (positive == negative) or positive != negative {
+		printf("{0.0, 1.0} does not equal {-0.0, 1.0}\n")
+		return false
+	}
+
+	var p: Point = {x = nan, y = 1.0}
+	if p == p or not (p != p) {
+		printf("{nan, 1.0} equals itself\n")
+		return false
+	}
+
+	var row: [2]Float64 = [negativeZero, 1.0]
+	var other: [2]Float64 = [0.0, 1.0]
+	if not (row == other) {
+		printf("[-0.0, 1.0] does not equal [0.0, 1.0]\n")
+		return false
+	}
+
+	return true
+}
+
+
+func testNested () -> Bool {
+	var a: Nested
+	var b: Nested
+	memset(&a, 0x11, sizeof(Nested))
+	memset(&b, 0x22, sizeof(Nested))
+
+	var i: Int32 = 0
+	while i < 2 {
+		var j: Int32 = 0
+		while j < 2 {
+			a.grid[i][j] = dirty({tag = 0x01, value = i * 2 + j})
+			b.grid[i][j] = {tag = 0x01, value = i * 2 + j}
+			j = j + 1
+		}
+		i = i + 1
+	}
+
+	a.head = dirty({tag = 0x01, value = 7})
+	b.head = {tag = 0x01, value = 7}
+	a.point = {x = -0.0, y = 2.5}
+	b.point = {x = 0.0, y = 2.5}
+	a.bytes = [1, 2, 3]
+	b.bytes = [1, 2, 3]
+
+	if not (a == b) {
+		printf("equal Nested values compare unequal\n")
+		return false
+	}
+
+	b.grid[1][1].value = 100
+	if a == b {
+		printf("Nested values differing in grid[1][1] compare equal\n")
+		return false
+	}
+	b.grid[1][1].value = 3
+
+	b.bytes[2] = 4
+	if a == b {
+		printf("Nested values differing in bytes[2] compare equal\n")
+		return false
+	}
+
+	return true
+}
+
+
+// The comparison binds each side once: a call on either side runs once.
+func testOperandsOnce () -> Bool {
+	calls = 0
+	let same = sample(0x01, 7) == sample(0x01, 7)
+	if not same {
+		printf("sample() == sample() is false\n")
+		return false
+	}
+	if calls != 2 {
+		printf("sample() == sample(): %d calls, expected 2\n", calls)
+		return false
+	}
+	return true
+}
+
+
+// A type defined inside a function, and a record type with no name.
+func testLocalAndAnonymous () -> Bool {
+	type Local = {
+		flag: Bool
+		count: Int64
+	}
+
+	var a: Local = {flag = true, count = 5}
+	var b: Local = {flag = true, count = 5}
+	memset(&a, 0xAA, sizeof(Local))
+	a.flag = true
+	a.count = 5
+	if a != b {
+		printf("equal Local values compare unequal\n")
+		return false
+	}
+
+	var c: {q: Word8, r: Int64} = {q = 1, r = 2}
+	var d: {q: Word8, r: Int64} = {q = 1, r = 2}
+	memset(&c, 0xAA, sizeof(Int64))
+	c.q = 1
+	if not (c == d) {
+		printf("equal anonymous records compare unequal\n")
+		return false
+	}
+
+	return true
+}
+
+
+// Arrays whose length is known only at run time: of a padded record, and
+// of a plain integer, which is still compared byte by byte.
+func testVla (n: Nat32) -> Bool {
+	var a: [n]Sample
+	var b: [n]Sample
+	var x: [n]Int32
+	var y: [n]Int32
+
+	var i: Nat32 = 0
+	while i < n {
+		a[i] = dirty({tag = 0x05, value = Int32 i})
+		b[i] = {tag = 0x05, value = Int32 i}
+		x[i] = Int32 i
+		y[i] = Int32 i
+		i = i + 1
+	}
+
+	if a != b or x != y {
+		printf("equal [n] arrays compare unequal\n")
+		return false
+	}
+
+	b[n - 1].value = 100
+	y[n - 1] = 100
+	if a == b or x == y {
+		printf("[n] arrays differing in the last item compare equal\n")
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testFloat() and result
+	result = testNested() and result
+	result = testOperandsOnce() and result
+	result = testLocalAndAnonymous() and result
+	result = testVla(5) and result
+
+	if not result {
+		printf("failed: aggregate fieldwise\n")
+		return exitFailure
+	}
+
+	printf("passed: aggregate fieldwise\n")
+	return exitSuccess
+}
+

@@ -1559,7 +1559,14 @@ def do_cvalue_eq(x, logic, ctx):
 
 	lx = None
 	rx = None
-	if left.type.is_aggregate():
+	if left.type.is_aggregate() and not left.type.is_compared_bytewise():
+		# по полям / по элементам, см. cvalue_aggregate_eq
+		a = do_cvalue_ptr_to_x(left)
+		b = do_cvalue_ptr_to_x(right)
+		eq = cvalue_aggregate_eq(left.type, a, b)
+		return eq if logic else CValueLogicalNot(eq)
+
+	elif left.type.is_aggregate():
 		# сравниваем массивы / записи
 		a = do_cvalue_ptr_to_x(left)
 		b = do_cvalue_ptr_to_x(right)
@@ -1586,6 +1593,139 @@ def do_cvalue_eq(x, logic, ctx):
 		return CValueEq(lx, rx)
 
 	return CValueNe(lx, rx)
+
+
+
+# `({ ...; result; })` - выражение-блок GNU C (gcc и clang). Печатается
+# одной строкой: декларации, необязательный цикл без тела
+# `while (cond) step;` и значение блока
+class CValueStmtExpr(CValue):
+	def __init__(self, decls, result, loop=None):
+		super().__init__()
+		self.decls = decls
+		self.loop = loop
+		self.result = result
+		self.precedence = 15
+
+	def __str__(self):
+		sstr = '({'
+		for d in self.decls:
+			sstr += ' ' + str(d)
+		if self.loop != None:
+			cond, step = self.loop
+			sstr += ' while (%s) %s;' % (str_cvalue(cond), step)
+		sstr += ' %s; })' % str_cvalue(self.result)
+		return sstr
+
+
+# Равенство записей и массивов, у которых байты не годятся (BUG#26, см.
+# Type.is_compared_bytewise): запись сравнивается по полям, массив - по
+# элементам, с заходом внутрь вложенных записей и массивов. То, что внутри
+# побайтовое, по-прежнему уходит в memcmp.
+#
+# Делается на месте, выражением-блоком, а не отдельной функцией на тип: тип
+# может быть локальным (`type L = {...}` в теле функции печатается в C внутри
+# нее), и функция уровня файла его просто не увидит. Блок же видит все имена
+# в точке сравнения и вычисляет каждый операнд ровно один раз - указатели на
+# них привязываются к переменным в его начале.
+#
+# a, b - указатели на сравниваемые значения (C-выражения); результат - int,
+# ненулевой, если значения равны
+def cvalue_aggregate_eq(t, a, b):
+	if t.is_array():
+		return cvalue_array_eq(t, a, b)
+
+	ptype = cvalue_eq_ptr_type(t)
+	l = unique_local_name('eq_l')
+	r = unique_local_name('eq_r')
+	decls = [
+		CStmtDefVar(l, ptype, initializer=CValueCast(ptype, a)),
+		CStmtDefVar(r, ptype, initializer=CValueCast(ptype, b)),
+	]
+	result = cvalue_eq_in_place(
+		t,
+		CValueDereference(CValueIdentifier(l)),
+		CValueDereference(CValueIdentifier(r))
+	)
+	return CValueStmtExpr(decls, result)
+
+
+# Массив любой вложенности сравнивается одним циклом по корневым элементам:
+# у [m][n]T между строками дыр нет, и он лежит в памяти ровно как [m*n]T
+def cvalue_array_eq(t, a, b):
+	root = t.get_array_root()
+	ptype = cvalue_eq_ptr_type(root)
+	l = unique_local_name('eq_l')
+	r = unique_local_name('eq_r')
+	n = unique_local_name('eq_n')
+	i = unique_local_name('eq_i')
+	size_t = CTypeIdentifier('size_t')
+	decls = [
+		CStmtDefVar(l, ptype, initializer=CValueCast(ptype, a)),
+		CStmtDefVar(r, ptype, initializer=CValueCast(ptype, b)),
+		CStmtDefVar(n, size_t, initializer=cvalue_array_roots(t)),
+		CStmtDefVar(i, size_t, initializer=CValueInteger(0)),
+	]
+	item_eq = cvalue_eq_in_place(
+		root,
+		CValueIndex(CValueIdentifier(l), CValueIdentifier(i)),
+		CValueIndex(CValueIdentifier(r), CValueIdentifier(i))
+	)
+	cond = CValueLogicalAnd(CValueLt(CValueIdentifier(i), CValueIdentifier(n)), item_eq)
+	result = CValueEq(CValueIdentifier(i), CValueIdentifier(n))
+	return CValueStmtExpr(decls, result, loop=(cond, '%s++' % i))
+
+
+# `const T *`
+def cvalue_eq_ptr_type(t):
+	to = do_ctype(t)
+	if 'const' not in to.specifiers:
+		to.specifiers = to.specifiers + ['const']
+	return CTypePointer(to)
+
+
+# Число корневых элементов массива: произведение объемов всех его уровней
+def cvalue_array_roots(t):
+	n = None
+	while t.is_array():
+		v = cvalue_volume(t)
+		n = v if n == None else CValueMul(n, v)
+		t = t.of
+	return n
+
+
+# l, r - сами сравниваемые значения типа t, а не указатели на них; это
+# lvalue без побочных эффектов (разыменованная переменная блока, ее поле,
+# ее элемент), их можно упоминать сколько угодно раз
+def cvalue_eq_in_place(t, l, r):
+	if not t.is_aggregate():
+		# в т.ч. FloatX: здесь `==` по значению, а не по байтам
+		return CValueEq(l, r)
+
+	if t.is_compared_bytewise():
+		eq = cvalue_memcmp(CValueReference(l), CValueReference(r), cvalue_sizeof_type(t))
+		return CValueEq(eq, CValueInteger(0))
+
+	if t.is_array():
+		return cvalue_array_eq(t, CValueReference(l), CValueReference(r))
+
+	result = None
+	for field in t.fields:
+		field_id = get_id_str(field)
+		eq = cvalue_eq_in_place(
+			field.type,
+			cvalue_field_of(l, field_id),
+			cvalue_field_of(r, field_id)
+		)
+		result = eq if result == None else CValueLogicalAnd(result, eq)
+	return result
+
+
+# `(*p).f` печатаем как `p->f`
+def cvalue_field_of(x, field_id):
+	if isinstance(x, CValueDereference):
+		return CValuePtrFieldAccess(x.value, field_id)
+	return CValueFieldAccess(x, field_id)
 
 
 

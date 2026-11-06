@@ -2,26 +2,23 @@
 // BACKENDS: c11, llvm, modest
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: record padding
-// EXPECTED-FAIL(llvm): BUG#26 record equality compares the padding bytes
 //
 // docs/lang/value/binary.md says records compare field-wise.  Both backends
-// instead compare the raw bytes of the whole object — `__builtin_memcmp` in
+// used to compare the raw bytes of the whole object — `__builtin_memcmp` in
 // C, a hand-written `memeq` loop in LLVM — and a record whose fields have
 // unequal widths has padding between them that belongs to neither field.
 //
 // `Sample` below is one byte followed by a four-byte field, so on any
 // ordinary target there are three bytes of padding after `tag`.  Two
-// `Sample` values built from the same field values must be equal; whether
-// they are depends on what the compiler happened to leave in those three
-// bytes.
+// `Sample` values built from the same field values must be equal, whatever
+// the compiler happened to leave in those three bytes.
 //
-// Under c11 it currently passes, and not because the comparison is right:
-// the C backend emits a compound literal, which clang zero-fills, so the
-// padding agrees by accident.  Under llvm the record is an `alloca` with
-// the fields stored into it, the padding keeps whatever the stack held, and
-// two identical values compare unequal.  The test is marked failing there
-// and passing here on purpose — the day the C backend stops emitting a
-// compound literal, this file is what notices.
+// Under llvm the record is an `alloca` with the fields stored into it, the
+// padding keeps whatever the stack held, and the byte-wise comparison told
+// two identical values apart.  Under c11 it passed by accident: the C
+// backend emits a compound literal, which clang zero-fills.
+//
+// Guards BUG#26 (fixed 2026-11-06).
 
 include "libc/ctypes64"
 include "libc/stdio"

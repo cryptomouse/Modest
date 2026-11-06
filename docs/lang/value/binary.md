@@ -45,7 +45,11 @@
   operand, and a negative literal, are all rejected with `expected
   natural or non-negative integer value`.
 - Equality extends to composites: arrays and records compare element- /
-  field-wise, pointers compare addresses (`p == nil`).
+  field-wise, pointers compare addresses (`p == nil`). The padding between
+  fields takes no part, and a `FloatX` field compares as a float: a record
+  holding `-0.0` equals one holding `0.0`, and one holding a NaN is unequal
+  to itself. A `@layout("union")` record has no live field to compare by,
+  so it compares as its bytes.
 - No ordering on `Char`, `Word`, `Bool`, pointers.
 - There is no `xor` keyword: exclusive-or is `^` (Word). `and` / `or`
   are Bool-only.

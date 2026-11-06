@@ -821,6 +821,37 @@ class Type(Entity):
 		return self.is_array() or self.is_record()
 
 
+	# Равенство значений этого типа - то же, что равенство их байтов, и `==`
+	# можно делать через memcmp. Запись сравнивается по полям (BUG#26), и
+	# байты подводят в двух случаях:
+	#   - добивка между полями и в хвосте записи: она не принадлежит ни
+	#     одному полю, и в ней лежит что угодно;
+	#   - плавающая точка: NaN != NaN, хотя байты совпадают, и
+	#     +0.0 == -0.0, хотя байты разные.
+	# Массив дыр между элементами не имеет (размер элемента кратен его
+	# выравниванию), так что он побайтовый ровно тогда, когда побайтовый его
+	# элемент. Union по полям не сравнить - какое из них живое, неизвестно, -
+	# у него сравнение побайтовое по определению. Вариант - так же, как было.
+	def is_compared_bytewise(self):
+		if self.is_float():
+			return False
+
+		if self.is_array():
+			return self.of.is_compared_bytewise()
+
+		if self.is_record():
+			if self.layout == TYPE_RECORD_LAYOUT_UNION:
+				return True
+			fields_size = 0
+			for field in self.fields:
+				if not field.type.is_compared_bytewise():
+					return False
+				fields_size += field.type.get_size()
+			return fields_size == self.get_size()
+
+		return True
+
+
 	def is_composite_type(self):
 		return self.is_array() or self.is_record() or self.is_func() or self.is_pointer()
 

@@ -1,0 +1,84 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: negative zero in aggregates
+// EXPECTED-FAIL(llvm): BUG#117 a local record or array literal drops the sign of -0.0
+//
+// A `-0.0` written as an item of a record or array literal has to keep
+// its sign, as it does in a scalar (negative_zero_literal.modest).
+//
+// The LLVM backend builds a local literal from `zeroinitializer` and
+// skips every item that is zero as already there — and `-0.0` counts as
+// zero, so the item comes out `+0.0`.  A global literal and the C backend
+// keep the sign; they are checked here too, so that a fix for the local
+// path cannot break them.
+//
+// The sign of a zero is only visible by dividing by it: equality says the
+// two zeros are the same.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Point = {
+	x: Float64
+	y: Float64
+}
+
+var globalPoint: Point = {x = -0.0, y = 1.0}
+var globalRow: [2]Float64 = [-0.0, 1.0]
+
+
+func isNegative (z: Float64) -> Bool {
+	var one: Float64 = 1.0
+	return one / z < 0.0
+}
+
+
+func testRecord () -> Bool {
+	var p: Point = {x = -0.0, y = 1.0}
+	if not isNegative(p.x) {
+		printf("local {x = -0.0}: x lost its sign\n")
+		return false
+	}
+
+	if not isNegative(globalPoint.x) {
+		printf("global {x = -0.0}: x lost its sign\n")
+		return false
+	}
+
+	return true
+}
+
+
+func testArray () -> Bool {
+	var a: [2]Float64 = [-0.0, 1.0]
+	if not isNegative(a[0]) {
+		printf("local [-0.0, 1.0]: item 0 lost its sign\n")
+		return false
+	}
+
+	if not isNegative(globalRow[0]) {
+		printf("global [-0.0, 1.0]: item 0 lost its sign\n")
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testRecord() and result
+	result = testArray() and result
+
+	if not result {
+		printf("failed: negative zero in aggregates\n")
+		return exitFailure
+	}
+
+	printf("passed: negative zero in aggregates\n")
+	return exitSuccess
+}
+

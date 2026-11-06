@@ -966,6 +966,175 @@ def llvm_memcmp(op, p0, p1, size):
 	return rv2
 
 
+# Равенство записей и массивов, у которых байты не годятся (BUG#26, см.
+# Type.is_compared_bytewise): запись сравнивается по полям, массив - по
+# элементам, с заходом внутрь вложенных записей и массивов.
+#
+# На каждый такой тип - своя функция, одна на модуль, и `==` ее вызывает.
+# Функции два вида:
+#   rec - запись:            i1 (i8* a, i8* b)
+#   arr - массив элементов:  i1 (i8* a, i8* b, i64 n), n - число элементов
+# Массив любой вложенности сравнивается функцией своего корневого элемента:
+# у [m][n]T между строками дыр нет, и он лежит в памяти ровно как [m*n]T;
+# у VLA n просто считается при выполнении.
+#
+# internal, а не weak - чтобы LLVM мог ее подставить (см. fixed_helpers_impl):
+# небольшая запись после подстановки сворачивается в несколько сравнений, а
+# большая остается одним вызовом. Тела печатаются после модуля
+# (print_eq_helpers): в LLVM все типы, включая локальные (%main.T),
+# определены на уровне модуля, так что функция видит любой из них
+eq_helpers = []
+
+def eq_helper(kind, t):
+	for h in eq_helpers:
+		if h['kind'] == kind and Type.eq(h['type'], t):
+			return h['name']
+	name = '__eq.%s.%d' % (kind, len(eq_helpers))
+	eq_helpers.append({'kind': kind, 'type': t, 'name': name, 'printed': False})
+	return name
+
+
+# p0, p1 - адреса сравниваемых значений типа t (is_adr)
+def llvm_eval_aggregate_eq(t, p0, p1):
+	args = [llvm_cast('bitcast', p0, typeFreePointer), llvm_cast('bitcast', p1, typeFreePointer)]
+
+	if t.is_array():
+		name = eq_helper('arr', t.get_array_root())
+		args.append(llvm_array_roots(t))
+	else:
+		name = eq_helper('rec', t)
+
+	rv = ll_reg_operation('call', typeBool)
+	out("i1 @%s(" % name)
+	print_list_with(args, llvm_print_type_value)
+	out(")")
+	return rv
+
+
+# Число корневых элементов массива (i64): произведение объемов всех уровней
+def llvm_array_roots(t):
+	if t.is_runtime_sized():
+		handleVLA(t)
+		return docast(t.runtimeSizeRoots, typeInt64)
+
+	n = 1
+	while t.is_array():
+		n = n * t.volume.asset
+		t = t.of
+	return llvm_value_num(typeInt64, n)
+
+
+# i1: равны ли значения типа t по адресам p0 и p1 (is_adr).
+# Вызывается внутри функции-сравнения
+def llvm_eq_in_place(t, p0, p1):
+	if not t.is_aggregate():
+		# в т.ч. FloatX: fcmp, а не сравнение байтов
+		v0 = llvm_load(p0)
+		v1 = llvm_load(p1)
+		return llvm_eval_binary(get_bin_opcode(HLIR_VALUE_OP_EQ, t), v0, v1, ValueUndefined(typeBool))
+
+	if t.is_compared_bytewise():
+		sz = llvm_value_num(typeInt64, t.get_size())
+		return llvm_memcmp(HLIR_VALUE_OP_EQ, p0, p1, sz)
+
+	return llvm_eval_aggregate_eq(t, p0, p1)
+
+
+# `getelementptr`, индексы - готовые строки вида 'i32 0'
+def llvm_eq_gep(p, et, indexes, result_type):
+	rv = ll_reg_operation('getelementptr', result_type)
+	rv['is_adr'] = True
+	print_type(et)
+	out(", ")
+	llvm_print_type_value(p)
+	out(", " + ", ".join(indexes))
+	return rv
+
+
+# i8* %name -> адрес значения типа t
+def llvm_eq_param(name, t):
+	rv = ll_reg_operation('bitcast', t)
+	rv['is_adr'] = True
+	out("i8* %%%s to " % name)
+	print_type(t)
+	out("*")
+	return rv
+
+
+def print_eq_helper(h):
+	t = h['type']
+	kind = h['kind']
+
+	fctx_push({
+		'func': None,
+		'if_no': 0,
+		'while_no': 0,
+		'cur_while_id': 0,
+		'free_reg': 0,
+		'locals': [],
+		'stackptr': None,
+		'slots': {},
+	})
+
+	params = "i8* %a, i8* %b"
+	if kind == 'arr':
+		params += ", i64 %n"
+
+	out("\ndefine internal i1 @%s(%s) {" % (h['name'], params))
+	out("\nentry:")
+	indent_up()
+
+	a = llvm_eq_param('a', t)
+	b = llvm_eq_param('b', t)
+
+	if kind == 'rec':
+		i = 0
+		for field in t.fields:
+			index = ['i32 0', 'i32 %d' % field.field_no]
+			fa = llvm_eq_gep(a, t, index, field.type)
+			fb = llvm_eq_gep(b, t, index, field.type)
+			eq = llvm_eq_in_place(field.type, fa, fb)
+			label = 'field_%d' % i
+			llvm_br(eq, label, 'ne')
+			llvm_label(label)
+			i = i + 1
+		lo("ret i1 1")
+
+	else:
+		# for (i = 0; i < n; i++) if (a[i] != b[i]) return 0; return 1
+		llvm_jump('head')
+		llvm_label('head')
+		lo("%i = phi i64 [0, %entry], [%i.next, %next]")
+		lo("%more = icmp ult i64 %i, %n")
+		lo("br i1 %more, label %body, label %eq")
+		llvm_label('body')
+		ia = llvm_eq_gep(a, t, ['i64 %i'], t)
+		ib = llvm_eq_gep(b, t, ['i64 %i'], t)
+		eq = llvm_eq_in_place(t, ia, ib)
+		llvm_br(eq, 'next', 'ne')
+		llvm_label('next')
+		lo("%i.next = add i64 %i, 1")
+		lo("br label %head")
+		llvm_label('eq')
+		lo("ret i1 1")
+
+	llvm_label('ne')
+	lo("ret i1 0")
+
+	indent_down()
+	lo("}\n")
+	fctx_pop()
+
+
+# Тело функции может попросить функцию для вложенного типа - печатаем,
+# пока не кончатся
+def print_eq_helpers():
+	for h in eq_helpers:
+		if not h['printed']:
+			h['printed'] = True
+			print_eq_helper(h)
+
+
 def llvm_br(x, then_label, else_label):
 	lo("br ")
 	llvm_print_type_value(x)
@@ -1240,8 +1409,20 @@ def do_eval_bin(x):
 			if not r['is_adr']:
 				r = llvm_alloca_store(r['type'], id_str=None, init_value=r)
 
+			t = x.left.type
+			if not t.is_compared_bytewise():
+				# по полям / по элементам (BUG#26), см. eq_helper
+				eq = llvm_eval_aggregate_eq(l['type'], l, r)
+				if op == HLIR_VALUE_OP_NE:
+					return llvm_eval_binary('icmp eq', eq, llvm_value_num(typeBool, 0))
+				return eq
+
 			# Теперь сравниваем значения по указателям и длине (memcmp)
-			sz = llvm_value_num(typeInt64, l['type'].get_size())
+			# (у VLA размер известен только при выполнении)
+			if l['type'].is_runtime_sized():
+				sz = docast(_eval_sizeof_type(l['type']), typeInt64)
+			else:
+				sz = llvm_value_num(typeInt64, l['type'].get_size())
 
 			return llvm_memcmp(op, l, r, sz)
 
@@ -3612,8 +3793,9 @@ def print_module(m):
 
 
 def run(module, outname):
-	global cmodule
+	global cmodule, eq_helpers
 	cmodule = module
+	eq_helpers = []
 	collect_defined_funcs(module)
 	outname = outname + '.ll'
 	output_open(outname)
@@ -3680,6 +3862,7 @@ def run(module, outname):
 		out(fixed_helpers_impl)
 
 	print_module(module)
+	print_eq_helpers()
 	output_close()
 
 
