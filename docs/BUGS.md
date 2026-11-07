@@ -14,23 +14,6 @@ reproduced it: its `EXPECTED-FAIL` marker becomes a `Guards BUG#N (fixed
 "Known-broken tests").  Who fixed it and when is git's to answer:
 `git log -S '## BUG#N:' -- docs/BUGS.md`.
 
-## BUG#5: `builtin.*` namespace does not resolve (regression)
-
-```modest
-var w: builtin.target.Word        // error: via import is forbidden
-let v = builtin.compiler.version  // error: unknown value
-```
-
-The wiring exists (`create_builtin_module`, auto-import at
-`src/semantic.py:2707`), but any `builtin.x` access fails with
-`unknown value`. The repo's own `tests/builtin` fails with 10 errors —
-it is not listed in `tests/run.sh`, so the regression went unnoticed.
-Affects everything under the `builtin.*` namespace in
-`docs/lang/builtin_constants.md`, including
-`builtin.target.rationalPrecision`. Top-level constants documented on
-that same page (`true`, `false`, `nil`) are bound directly at module
-scope, not under `builtin.*`, and are unaffected.
-
 ## BUG#12: LLVM backend does not apply C's default argument promotion to variadic calls
 
 ```modest

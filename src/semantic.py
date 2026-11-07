@@ -314,8 +314,14 @@ def xcreate_const(symtab, id_str, value, type=None, ti=None):
 	assert(value.ti != None)
 	value = value_cons_implicit(type, value)
 	const_value = ValueConst(type, Id(id_str), init_value=value, ti=ti)
-	const_value.set_asset(value.asset)
+	const_value.is_initialized = True
+	const_value.stage = value.stage
+	if value.is_immediate():
+		Value.cp_immediate(const_value, value)
 	const_value.addAttribute('cbyvalue')
+	# builtin-константы видны из любого модуля как builtin.<id>
+	const_value.definition = StmtDefConst(Id(id_str), const_value, init_value=value, ti=ti)
+	const_value.definition.access_level = HLIR_ACCESS_LEVEL_PUBLIC
 	symtab.value_add(id_str, const_value)
 	return const_value
 
@@ -332,130 +338,121 @@ def create_builtin_module():
 	builtin_symtab = Symtab()
 	builtin_module = Module("builtin", ast=None, symtab=builtin_symtab, defs=[], sourcename="__builtin_source__")
 
-	target_symtab = Symtab()
-	target_module = Module("target", ast=None, symtab=target_symtab, defs=[], sourcename="__target_source__")
+	# builtin.compiler и builtin.target - константы-записи модуля builtin,
+	# а не вложенные модули: сквозной доступ через импорт запрещен
+	# (см. do_type_named), и вложенные модули делали их недоступными
 
-	import_target = StmtImport(impline="builtin/target", name="builtin", module=target_module, ti=builtin_ti, include=False)
-	builtin_module.imports["target"] = import_target
-
-	compiler_symtab = Symtab()
-	compiler_module = Module("compiler", ast=None, symtab=compiler_symtab, defs=[], sourcename="__compiler_source__")
-
-	import_compiler = StmtImport(impline="builtin/compiler", name="builtin", module=compiler_module, ti=builtin_ti, include=False)
-	builtin_module.imports["compiler"] = import_compiler
-
+	def add_field(initializers, name, value, type=None):
+		if type == None:
+			type = value.type
+		v = value_cons_implicit(type, value)
+		initializers.append(Initializer(Id(name), v))
+		return v
 
 	#
 	# builtin.compiler
 	#
 
-	# compiler name
-	compilerNameConst = xcreate_const(compiler_symtab, "name", value_string_create("m2"))
-
-	# compiler version
-	compilerVersionMajor = ValueLiteral(typeNat32, 0, ti=builtin_ti)
-	compilerVersionMinor = ValueLiteral(typeNat32, 7, ti=builtin_ti)
-	compilerVersionPatch = ValueLiteral(typeNat32, 100, ti=builtin_ti)
+	compiler_initializers = []
+	add_field(compiler_initializers, "name", value_string_create("m2"))
 
 	compiler_version_initializers = [
-		Initializer(Id('major'), compilerVersionMajor),
-		Initializer(Id('minor'), compilerVersionMinor),
-		Initializer(Id('patch'), compilerVersionPatch),
+		Initializer(Id('major'), ValueLiteral(typeNat32, 0, ti=builtin_ti)),
+		Initializer(Id('minor'), ValueLiteral(typeNat32, 7, ti=builtin_ti)),
+		Initializer(Id('patch'), ValueLiteral(typeNat32, 100, ti=builtin_ti)),
 	]
 	compilerVersionRecord = value_record_create(t=None, initializers=compiler_version_initializers, ti=builtin_ti)
+	add_field(compiler_initializers, "version", compilerVersionRecord)
 
-	compilerVersionConst = xcreate_const(compiler_symtab, "version", compilerVersionRecord)
-
-	# '__compiler' record
-#	compiler_initializers = [
-#		Initializer(Id('name'), compilerName),
-#		Initializer(Id('version'), compilerVersion),
-#	]
-#	compiler_iv = value_record_create(compiler_initializers, ti=builtin_ti)
-#	const_compiler = ValueConst(compiler_iv.type, Id("__compiler"), init_value=compiler_iv, ti=builtin_ti)
-#	const_compiler.set_asset(compiler_iv.asset)
-#	const_compiler.stage = HLIR_VALUE_STAGE_COMPILETIME
-#	builtin_symtab.value_add('compiler', const_compiler)
+	compilerRecord = value_record_create(t=None, initializers=compiler_initializers, ti=builtin_ti)
+	xcreate_const(builtin_symtab, "compiler", compilerRecord)
 
 	#
 	# builtin.target
 	#
 
-	targetNameConst = xcreate_const(target_symtab, "name", value_string_create("mac"))
+	ti = []  # target initializers
 
-	typeArch = type_string_create(32, 0, ti=builtin_ti)
-	typeArch.brand = get_brand()
+	# Варианты arch/os/abi/endian - поля-константы записи (archX86, ...),
+	# а текущий - тот, что назван в cfg/*.toml: (поле, значение, ключ в cfg)
+	def add_choices(cfg_key, choices):
+		t = type_string_create(32, 0, ti=builtin_ti)
+		t.brand = get_brand()
+		cfg_value = str(settings.get(cfg_key, ''))
+		selected = None
+		for field_name, value_str, cfg_name in choices:
+			v = add_field(ti, field_name, value_string_create(value_str), type=t)
+			if cfg_name == cfg_value:
+				selected = v
+		if selected == None:
+			known = ", ".join('"%s"' % c[2] for c in choices)
+			fatal("config: unknown %s = \"%s\" (expected one of %s)" % (cfg_key, cfg_value, known))
+		return selected
 
-	archX86 = xcreate_const(target_symtab, "archX86", value_string_create("x86"), type=typeArch)
-	archX86_64 = xcreate_const(target_symtab, "archX86_64", value_string_create("x86_64"), type=typeArch)
-	archArm = xcreate_const(target_symtab, "archArm", value_string_create("arm"), type=typeArch)
-	archAarch64 = xcreate_const(target_symtab, "archAarch64", value_string_create("aarch64"), type=typeArch)
-	archRiscv32 = xcreate_const(target_symtab, "archRiscv32", value_string_create("riscv32"), type=typeArch)
-	archRiscv64 = xcreate_const(target_symtab, "archRiscv64", value_string_create("riscv64"), type=typeArch)
+	add_field(ti, "name", value_string_create(str(settings['target_name'])))
 
-	typeOs = type_string_create(32, 0, ti=builtin_ti)
-	typeOs.brand = get_brand()
-	osLinux = xcreate_const(target_symtab, "osLinux", value_string_create("linux"), type=typeOs)
-	osWindows = xcreate_const(target_symtab, "osWindows", value_string_create("windows"), type=typeOs)
-	osMacos = xcreate_const(target_symtab, "osMacos", value_string_create("darwin"), type=typeOs)
-	osNoos = xcreate_const(target_symtab, "osNoos", value_string_create("noos"), type=typeOs)
+	arch = add_choices('arch', [
+		("archX86", "x86", "x86"),
+		("archX86_64", "x86_64", "x86_64"),
+		("archArm", "arm", "arm"),
+		("archAarch64", "aarch64", "aarch64"),
+		("archRiscv32", "riscv32", "riscv32"),
+		("archRiscv64", "riscv64", "riscv64"),
+	])
 
-	typeAbi = type_string_create(32, 0, ti=builtin_ti)
-	typeAbi.brand = get_brand()
-	abiSysV = xcreate_const(target_symtab, "abiSysV", value_string_create("sysv"), type=typeAbi)
-	abiWin32 = xcreate_const(target_symtab, "abiWin32", value_string_create("win32"), type=typeAbi)
-	abiWin64 = xcreate_const(target_symtab, "abiWin64", value_string_create("win64"), type=typeAbi)
-	abiEabi = xcreate_const(target_symtab, "abiEabi", value_string_create("eabi"), type=typeAbi)
-	abiUnknown = xcreate_const(target_symtab, "abiUnknown", value_string_create("unknown_abi"), type=typeAbi)
+	os_ = add_choices('os', [
+		("osLinux", "linux", "linux"),
+		("osWindows", "windows", "windows"),
+		("osMacos", "darwin", "macos"),
+		("osNoos", "noos", "noos"),
+	])
 
-	typeEndian = type_string_create(32, 0, ti=builtin_ti)
-	typeEndian.brand = get_brand()
-	endianBig = xcreate_const(target_symtab, "endianBig", value_string_create("big-endian"), type=typeEndian)
-	endianLittle = xcreate_const(target_symtab, "endianLittle", value_string_create("little-endian"), type=typeEndian)
-	target_endian = xcreate_const(target_symtab, "endian", endianLittle, type=typeEndian)
-	target_arch = xcreate_const(target_symtab, "arch", archAarch64, type=typeArch)
-	target_os = xcreate_const(target_symtab, "os", osMacos, type=typeOs)
-	target_abi = xcreate_const(target_symtab, "abi", abiSysV, type=typeAbi)
-	target_char_width = xcreate_const(target_symtab, "charWidth", ValueLiteral(typeInteger, char_width, ti=builtin_ti))
-	target_int_width = xcreate_const(target_symtab, "intWidth", ValueLiteral(typeInteger, int_width, ti=builtin_ti))
-	target_int_width = xcreate_const(target_symtab, "floatWidth", ValueLiteral(typeInteger, float_width, ti=builtin_ti))
-	target_int_width = xcreate_const(target_symtab, "pointerWidth", ValueLiteral(typeInteger, pointer_width, ti=builtin_ti))
-	target_rational_precision = xcreate_const(target_symtab, "rationalPrecision", ValueLiteral(typeInteger, int(settings['precision']), ti=builtin_ti))
+	abi = add_choices('abi', [
+		("abiSysV", "sysv", "sysv"),
+		("abiWin32", "win32", "win32"),
+		("abiWin64", "win64", "win64"),
+		("abiEabi", "eabi", "eabi"),
+		("abiUnknown", "unknown_abi", "unknown"),
+	])
 
+	endian = add_choices('endianness', [
+		("endianBig", "big-endian", "big"),
+		("endianLittle", "little-endian", "little"),
+	])
 
-	mw = type_word_create(width=32)
+	add_field(ti, "endian", endian)
+	add_field(ti, "arch", arch)
+	add_field(ti, "os", os_)
+	add_field(ti, "abi", abi)
+	add_field(ti, "wordWidth", ValueLiteral(typeInteger, int(settings['word_width']), ti=builtin_ti))
+	add_field(ti, "charWidth", ValueLiteral(typeInteger, char_width, ti=builtin_ti))
+	add_field(ti, "intWidth", ValueLiteral(typeInteger, int_width, ti=builtin_ti))
+	add_field(ti, "floatWidth", ValueLiteral(typeInteger, float_width, ti=builtin_ti))
+	add_field(ti, "pointerWidth", ValueLiteral(typeInteger, pointer_width, ti=builtin_ti))
+	add_field(ti, "rationalPrecision", ValueLiteral(typeInteger, int(settings['precision']), ti=builtin_ti))
+
+	targetRecord = value_record_create(t=None, initializers=ti, ti=builtin_ti)
+	xcreate_const(builtin_symtab, "target", targetRecord)
+
+	#
+	# target-width types: builtin.Word, builtin.Int, builtin.Nat
+	# (в запись тип не положить; ширина - word_width/integer_width из cfg)
+	#
+
+	mw = type_word_create(width=int(settings['word_width']))
 	mw.definition = StmtDefType("Word", mw, None, ti=builtin_ti)
-	target_symtab.type_add('Word', mw)
+	mw.definition.access_level = HLIR_ACCESS_LEVEL_PUBLIC
 	builtin_symtab.type_add('Word', mw)
 
-	mi = type_int_create(width=32)
+	mi = type_int_create(width=int(settings['integer_width']))
 	mi.definition = StmtDefType("Int", mi, None, ti=builtin_ti)
-	target_symtab.type_add('Int', mi)
+	mi.definition.access_level = HLIR_ACCESS_LEVEL_PUBLIC
 	builtin_symtab.type_add('Int', mi)
 
-	mn = type_nat_create(width=32)
+	mn = type_nat_create(width=int(settings['integer_width']))
 	mn.definition = StmtDefType("Nat", mn, None, ti=builtin_ti)
-	target_symtab.type_add('Nat', mn)
+	mn.definition.access_level = HLIR_ACCESS_LEVEL_PUBLIC
 	builtin_symtab.type_add('Nat', mn)
-
-	# create '__target' record
-#	target_initializers = [
-#		Initializer(Id('name'), value_string_create(target_name)),
-#		Initializer(Id('arch'), archAarch64),
-#		Initializer(Id('os'), osMacos),
-#		Initializer(Id('abi'), abiSysV),
-#		Initializer(Id('endian'), endianLittle),
-#		Initializer(Id('charWidth'), ValueLiteral(typeInteger, char_width)),
-#		Initializer(Id('intWidth'), ValueLiteral(typeInteger, int_width)),
-#		Initializer(Id('floatWidth'), ValueLiteral(typeInteger, float_width)),
-#		Initializer(Id('pointerWidth'), ValueLiteral(typeInteger, pointer_width))
-#	]
-#	target_iv = value_record_create(target_initializers, ti=builtin_ti)
-#	const_target = ValueConst(target_iv.type, Id("__target"), init_value=target_iv, ti=builtin_ti)
-#	const_target.set_asset(target_iv.asset)
-#	const_target.stage = HLIR_VALUE_STAGE_COMPILETIME
-#
-#	builtin_symtab.value_add('target', const_target)
 
 	return builtin_module
 

@@ -1,0 +1,39 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: const_record_field
+//
+// A field of a constant with an anonymous record literal is known at
+// compile time, and the backends print the field's literal.  The C
+// backend used to access the field on the literal of the whole record
+// instead, casting it to a struct with a made-up `char8_t` field.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const conf = {name = "conf", width = 64, version = {major = 1, minor = 2}}
+
+
+func main () -> Int {
+	var ok = true
+
+	ok = conf.width == 64 and ok
+	ok = conf.version.minor == 2 and ok
+	ok = conf.name == "conf" and ok
+
+	let v = conf.version
+	ok = v.major == 1 and ok
+
+	let width: Int32 = conf.width
+	ok = width == 64 and ok
+
+	if not ok {
+		printf("failed: const_record_field\n")
+		return exitFailure
+	}
+
+	printf("passed: const_record_field\n")
+	return exitSuccess
+}

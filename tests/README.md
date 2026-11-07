@@ -162,7 +162,7 @@ sites and match them in order.
 A test for a bug that is not fixed yet stays in the suite, marked:
 
 ```modest
-// EXPECTED-FAIL: BUG#5 builtin.* does not resolve
+// EXPECTED-FAIL: BUG#54 an empty record is emitted as void
 // EXPECTED-FAIL(llvm): BUG#12 no default argument promotion for variadics
 ```
 

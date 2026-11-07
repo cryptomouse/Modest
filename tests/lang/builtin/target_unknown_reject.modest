@@ -1,0 +1,13 @@
+// TEST: reject
+// FLAGS: -march=pdp11
+// EXPECT-ERROR: config: unknown arch = "pdp11"
+//
+// A target setting outside the known values is rejected by name, instead
+// of `builtin.target.arch` silently matching none of the arch* constants.
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	return 0
+}

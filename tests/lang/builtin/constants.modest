@@ -1,0 +1,52 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: builtin
+//
+// `builtin.compiler` and `builtin.target` are record constants of the
+// implicitly imported `builtin` module, and the target-width types are
+// `builtin.Word` / `builtin.Int` / `builtin.Nat`.  Every field folds to
+// its literal at compile time, so nothing here reaches the generated code
+// as a record.  The values come from cfg/default.toml (target_from_config
+// checks they follow the config).
+// Guards BUG#5 (fixed 2026-11-06).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func main () -> Int {
+	var ok = true
+
+	let version = builtin.compiler.version
+	ok = version.major == 0 and ok
+	ok = version.minor == 7 and ok
+	ok = builtin.compiler.version.patch == 100 and ok
+	ok = builtin.compiler.name == "m2" and ok
+
+	ok = builtin.target.endian == builtin.target.endianLittle and ok
+	ok = builtin.target.endian != builtin.target.endianBig and ok
+	ok = builtin.target.arch == builtin.target.archAarch64 and ok
+	ok = builtin.target.os == builtin.target.osMacos and ok
+	ok = builtin.target.abi == builtin.target.abiSysV and ok
+	ok = builtin.target.charWidth == 8 and ok
+	ok = builtin.target.pointerWidth == 64 and ok
+	ok = builtin.target.rationalPrecision > 0 and ok
+
+	var w: builtin.Word = 0xFF
+	var i: builtin.Int = -1
+	var n: builtin.Nat = 1
+	ok = sizeof(w) * 8 == builtin.target.wordWidth and ok
+	ok = sizeof(i) * 8 == builtin.target.intWidth and ok
+	ok = sizeof(n) * 8 == builtin.target.intWidth and ok
+	ok = i < 0 and n > 0 and ok
+
+	if not ok {
+		printf("failed: builtin\n")
+		return exitFailure
+	}
+
+	printf("passed: builtin\n")
+	return exitSuccess
+}

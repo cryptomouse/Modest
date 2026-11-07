@@ -1,0 +1,40 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// FLAGS: -mtarget_name=board -march=riscv64 -mos=noos -mabi=eabi -mendianness=big -mword_width=16 -minteger_width=16
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: target_from_config
+//
+// `builtin.target` and the widths of `builtin.Word` / `Int` / `Nat` follow
+// the target settings (cfg/*.toml, overridden here with -m), not values
+// fixed in the compiler.  The settings only describe the target to the
+// program; the code is still built for the host.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func main () -> Int {
+	var ok = true
+
+	ok = builtin.target.name == "board" and ok
+	ok = builtin.target.arch == builtin.target.archRiscv64 and ok
+	ok = builtin.target.os == builtin.target.osNoos and ok
+	ok = builtin.target.abi == builtin.target.abiEabi and ok
+	ok = builtin.target.endian == builtin.target.endianBig and ok
+	ok = builtin.target.wordWidth == 16 and ok
+	ok = builtin.target.intWidth == 16 and ok
+
+	var w: builtin.Word = 0xFFFF
+	var i: builtin.Int = -1
+	ok = sizeof(w) == 2 and ok
+	ok = sizeof(i) == 2 and ok
+
+	if not ok {
+		printf("failed: target_from_config\n")
+		return exitFailure
+	}
+
+	printf("passed: target_from_config\n")
+	return exitSuccess
+}

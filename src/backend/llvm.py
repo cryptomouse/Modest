@@ -2777,7 +2777,13 @@ def do_eval(x):
 	elif x.is_call(): y = do_eval_call(x)
 	elif x.is_index(): y = do_eval_index(x)
 	elif x.is_access_module(): y = do_eval(x.value)
-	elif x.is_access_record(): y = do_eval_access(x)
+	elif x.is_access_record():
+		# поле константной записи semantic уже свернул (acc): берем литерал
+		# поля, а не адресуем поле у литерала всей записи
+		if x.is_immediate() and not x.left.type.is_pointer():
+			y = do_eval_literal(x)
+		else:
+			y = do_eval_access(x)
 	elif x.is_slice(): y = do_eval_slice(x)
 	elif x.is_subexpr(): y = do_eval(x.value)
 	elif x.is_not(): y = do_eval_not(x)

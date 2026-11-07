@@ -659,8 +659,9 @@ def do_cvalue_literal_number(t, v, ctx):
 		return CValueCall(CValueIdentifier("BIG_INT128"), [high, low])
 
 	is_unsigned = t.is_nat() or t.is_word() or (t.is_integer() and v.asset >= 0)
+	# nsigns есть только у ValueLiteral; свернутый доступ к полю (acc) его не несет
 	as_hex = v.hasAttribute('hexadecimal') or t.is_word()
-	cv = cvalue_literal_integer(int(v.asset), width=t.width, is_unsigned=is_unsigned, as_hex=as_hex, nsigns=v.nsigns, ctx=ctx)
+	cv = cvalue_literal_integer(int(v.asset), width=t.width, is_unsigned=is_unsigned, as_hex=as_hex, nsigns=getattr(v, 'nsigns', 0), ctx=ctx)
 	return cv
 
 
@@ -1335,6 +1336,11 @@ def do_cvalue_slice(x, ctx):
 
 def do_cvalue_access(x, ctx):
 	left = x.left
+
+	# поле константной записи semantic уже свернул (acc): выводим литерал
+	# поля, а не обращение к полю у литерала всей записи ({...}.f - не C)
+	if x.is_immediate() and not left.type.is_pointer():
+		return do_cvalue_literal_with_type(x, x.type, ctx)
 
 	# если имеем дело c константной записью (глоб константа)
 	# и результат операции доступа - константа которая уже тут
