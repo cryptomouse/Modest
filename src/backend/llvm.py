@@ -76,6 +76,7 @@ cmodule = None
 LLVM_TARGET_TRIPLE = ""
 LLVM_TARGET_DATALAYOUT = ""
 SIZE_WIDTH = 0
+INTEGER_WIDTH = 32  # ширина C-шного int цели (integer_width из cfg)
 
 
 # LLVM не умеет нативно возвращать большие значения
@@ -228,9 +229,11 @@ llvm_value_num_zero = None
 
 def init(settings):
 	global LLVM_TARGET_TRIPLE, LLVM_TARGET_DATALAYOUT, llvm_value_num_zero, SIZE_WIDTH
+	global INTEGER_WIDTH
 	LLVM_TARGET_TRIPLE = settings['target_triple']
 	LLVM_TARGET_DATALAYOUT = settings['target_datalayout']
 	SIZE_WIDTH = settings['size_width']
+	INTEGER_WIDTH = int(settings['integer_width'])
 	llvm_value_num_zero = llvm_value_num(typeInt32, 0)
 
 
@@ -1561,19 +1564,45 @@ def do_eval_ref(v):
 	return nv
 
 
+# аргумент, попавший в `...`, C расширяет сам (default argument promotion):
+# float -> double, всё целое уже int -> int. Вызываемая сторона читает его
+# через va_arg именно такой ширины, поэтому в IR расширяем явно, как clang
+# (BUG#12)
+def llvm_promote_variadic_arg(arg, t):
+	if t.is_float():
+		if t.width < typeFloat64.width:
+			return llvm_cast('fpext', arg, typeFloat64)
+		return arg
+
+	if t.is_bool():
+		return llvm_cast('zext', arg, type_int_create(width=INTEGER_WIDTH))
+
+	if t.is_int() or t.is_nat() or t.is_word() or t.is_char() or t.is_fixed():
+		if t.width < INTEGER_WIDTH:
+			kind = 'sext' if t.is_signed() else 'zext'
+			return llvm_cast(kind, arg, type_int_create(width=INTEGER_WIDTH))
+
+	return arg
+
+
 def do_eval_call(v):
 
 	if v.is_immediate():
 		return do_eval_literal(v)
 
-	# eval all args
-	args = []
-	for a in v.args:
-		arg = do_reval(a.value)
-		args.append(arg)
-
 	func = v.func
 	ftype = func.type
+
+	callee_type = ftype.to if ftype.is_pointer() else ftype
+	nparams = len(callee_type.params)
+
+	# eval all args
+	args = []
+	for i, a in enumerate(v.args):
+		arg = do_reval(a.value)
+		if callee_type.extra_args and i >= nparams:
+			arg = llvm_promote_variadic_arg(arg, a.value.type)
+		args.append(arg)
 
 	sret = need_sret(ftype)
 

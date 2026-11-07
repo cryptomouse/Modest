@@ -23,8 +23,8 @@
 // narrow_int.modest (BUG#37).  What this file checks is every other
 // direction, so that a change to construction has to come past it.
 //
-// Every Float32 is printed through Float64: the LLVM backend passes a
-// Float32 to a variadic call at the wrong width (BUG#12).
+// Every Float32 is printed through Float64, so the checks do not lean on
+// the variadic promotion that the LLVM backend once skipped (BUG#12).
 
 include "libc/ctypes64"
 include "libc/stdio"

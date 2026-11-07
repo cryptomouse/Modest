@@ -17,11 +17,12 @@
 //
 // Two things shape how the checks below are written.
 //
-// A Float32 never reaches printf directly: the LLVM backend does not widen
-// it to double for a variadic call (BUG#12), so every value printed
-// here is constructed to Float64 first.  That is also what the language
-// wants — there is no implicit promotion between FloatX widths, so the two
-// types never mix in one expression either.
+// Every value printed here is constructed to Float64 first.  A Float32
+// passed to printf directly is widened by the backend too (C's default
+// argument promotion, which the LLVM backend once skipped - BUG#12), but
+// writing it out keeps to what the language wants: there is no implicit
+// promotion between FloatX widths, so the two types never mix in one
+// expression either.
 //
 // Equality on a float is honest only where the value is exact, so the
 // arithmetic checks use halves and quarters, which both formats hold to the

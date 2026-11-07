@@ -1,0 +1,137 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: float
+// EXPECT-OUT: passed: narrow signed
+// EXPECT-OUT: passed: narrow unsigned
+// EXPECT-OUT: passed: bool
+// EXPECT-OUT: passed: wide untouched
+// EXPECT-OUT: passed: variadic promotion
+// EXPECT-CODE(llvm): fpext
+// EXPECT-CODE(llvm): sext
+// EXPECT-CODE(llvm): zext
+//
+// An argument that lands in a variadic `...` goes through C's default
+// argument promotion: a float narrower than double is passed as double,
+// an integer narrower than int as int.  The callee reads it back with
+// va_arg at exactly that width, so a backend that passes the value at its
+// own width hands printf the wrong bits.  Every check formats through
+// sprintf and compares the text, so a wrong slot shows up as a wrong
+// string rather than as a silently different number.
+//
+// Without the promotion a negative Int8/Int16 prints as its unsigned bit
+// pattern on arm64 (251, 65236), while Nat8/Nat16/Bool happen to come out
+// right by luck of the ABI - the EXPECT-CODE lines are what holds those:
+// the widening has to be there in the generated IR.
+//
+// Guards BUG#12 (fixed 2026-11-07).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+include "libc/string"
+
+
+var buf: [64]Char8
+
+
+func expect (name: *Str8, want: *Str8) -> Bool {
+	if strcmp(&buf, want) != 0 {
+		printf("%s: got \"%s\", expected \"%s\"\n", name, &buf, want)
+		return false
+	}
+	return true
+}
+
+
+func testFloat () -> Bool {
+	var f32: Float32 = 3.140625
+	sprintf(&buf, "%f", f32)
+	if not expect("Float32", "3.140625") {
+		return false
+	}
+
+	// several in a row - each one takes a double-sized slot
+	var a: Float32 = 0.5
+	var b: Float32 = 1.25
+	sprintf(&buf, "%.2f %.2f %d", a, b, Int32 7)
+	if not expect("Float32 x2", "0.50 1.25 7") {
+		return false
+	}
+
+	printf("passed: float\n")
+	return true
+}
+
+
+func testNarrowSigned () -> Bool {
+	var i8: Int8 = 0 - 5
+	var i16: Int16 = 0 - 300
+	sprintf(&buf, "%d %d", i8, i16)
+	if not expect("Int8/Int16", "-5 -300") {
+		return false
+	}
+
+	printf("passed: narrow signed\n")
+	return true
+}
+
+
+func testNarrowUnsigned () -> Bool {
+	var n8: Nat8 = 250
+	var n16: Nat16 = 65000
+	var w8: Word8 = 0xF0
+	sprintf(&buf, "%d %d %d", n8, n16, w8)
+	if not expect("Nat8/Nat16/Word8", "250 65000 240") {
+		return false
+	}
+
+	printf("passed: narrow unsigned\n")
+	return true
+}
+
+
+func testBool () -> Bool {
+	var yes = true
+	var no = false
+	sprintf(&buf, "%d %d", yes, no)
+	if not expect("Bool", "1 0") {
+		return false
+	}
+
+	printf("passed: bool\n")
+	return true
+}
+
+
+func testWideUntouched () -> Bool {
+	var f64: Float64 = 2.5
+	var i64: Int64 = 0 - 9000000000
+	sprintf(&buf, "%.1f %lld", f64, i64)
+	if not expect("Float64/Int64", "2.5 -9000000000") {
+		return false
+	}
+
+	printf("passed: wide untouched\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testFloat() and result
+	result = testNarrowSigned() and result
+	result = testNarrowUnsigned() and result
+	result = testBool() and result
+	result = testWideUntouched() and result
+
+	if not result {
+		printf("failed: variadic promotion\n")
+		return exitFailure
+	}
+
+	printf("passed: variadic promotion\n")
+	return exitSuccess
+}
+
+

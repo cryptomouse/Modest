@@ -23,9 +23,9 @@
 // `Word128`.  On a target that has it, the two must agree to the bit, so
 // every value below is one both backends have to produce.
 //
-// Every Float16 is printed through Float64: a float narrower than a double
-// cannot be passed to a variadic call at its own width (BUG#12 is the
-// Float32 side of the same thing).
+// Every Float16 is printed through Float64: C does not promote `_Float16`
+// in a variadic call the way it promotes `float` (the LLVM backend widens
+// both since BUG#12), so the C11 backend would pass it at its own width.
 //
 // Two of the type's neighbours are not here.  A literal outside binary16's
 // range does not compile at all, which is its own pair of tests

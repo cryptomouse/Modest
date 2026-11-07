@@ -14,56 +14,6 @@ reproduced it: its `EXPECTED-FAIL` marker becomes a `Guards BUG#N (fixed
 "Known-broken tests").  Who fixed it and when is git's to answer:
 `git log -S '## BUG#N:' -- docs/BUGS.md`.
 
-## BUG#12: LLVM backend does not apply C's default argument promotion to variadic calls
-
-```modest
-var f32: Float32 = 3.14159265358979323846264338327950288419716939937510582097494459
-printf("f32 = %f\n", f32)
-```
-
-`-mbackend=llvm` prints `f32 = 0.000000`; `-mbackend=c11` (same source)
-prints `f32 = 3.141593`, which is correct.
-
-- Not a `Rational`-precision bug — the stored value is fine
-  (`store %Float32 3.1415927410125732, ...` is the correctly-rounded
-  `Float32` value of the literal). The bug is purely in how the
-  argument is *passed* to a variadic call.
-- Cause: a `float` (or any type narrower than what C's default
-  argument promotion would give it) passed through a variadic `...`
-  parameter must be widened before the call — C always promotes
-  `float` to `double` for a `...` argument, and `printf`'s `%f` always
-  reads a `double`-sized slot regardless of what was actually written.
-  `do_eval_call` (`src/backend/llvm.py:1133-1198`) builds the argument
-  list from `do_reval(a.value)` and prints each one with its own
-  natural type (`llvm.py:1192`, `print_list_with(args,
-  llvm_print_type_value)`) — there is no promotion step at all, so a
-  4-byte `%Float32` gets passed where the callee expects an 8-byte
-  `%Float64` slot.
-- Checked whether this is float-specific: `Int8`/`Int16` arguments to
-  the same kind of variadic call print correctly on this platform
-  (arm64/AAPCS64) even though C would promote `char`/`short` to `int`
-  too and this backend doesn't do that either. Likely coincidental —
-  small integers land in a general-purpose register slot that
-  `va_arg(int)` still reads correctly by luck of the ABI, whereas
-  `float` occupies a different register class and a different byte
-  width than `double`, so the mismatch is immediately visible. Not
-  verified on other targets/ABIs — the underlying missing-promotion
-  cause is the same for both, so integer variadic args should not be
-  assumed safe on every target either.
-- `Bool` is the same case at its narrowest: it goes out as a bare `i1`
-  (`printf("%d\n", ok)` emits `%Bool %4`), where clang would `zext` it
-  to `i32` first. On arm64 the backend happens to mask the stack slot
-  with `and #0x1`, so `printf` prints 0 or 1; nothing in the IR promises
-  the upper bits on other targets.
-- Scope: not specific to this test file or to `Rational` — any
-  `Float32` value (whatever its origin) passed to a variadic function
-  (`printf`, `sprintf`, any `@extern` with `...`) through the LLVM
-  backend is affected.
-- Expected: `do_eval_call` should widen variadic arguments per C's
-  default argument promotion rules (`float` → `double`; integer types
-  narrower than `int` → `int`) before emitting the call.
-- Low priority for now — noted for later, not scheduled.
-
 ## BUG#15: C backend's `#include` of its own header ignores `-o`
 
 ```sh
