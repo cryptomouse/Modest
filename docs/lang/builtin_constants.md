@@ -86,8 +86,10 @@ picture and caveats.
 literal. A `Rational` constant is an exact fraction and cannot hold
 either, so both are *generic Float* constants: like an untyped numeric
 literal they take the type of their context and convert implicitly to
-any `FloatX` (`Float16`, `Float32`, `Float64`). Without a context
-(`let x = builtin.inf`) they are `Float` (`float_width`).
+any `FloatX` (`Float16`, `Float32`, `Float64`). A variable with no
+type of its own (`var x = builtin.inf`) gets the `FloatX` of
+`float_width` — `Float64` by default. A diagnostic names the generic
+type itself `Float`, the way it names `Integer` and `Rational`.
 
 ```modest
 var d: Float64 = builtin.nan

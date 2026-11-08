@@ -247,6 +247,13 @@ def str_type(t):
 def str_type2(t):
 	assert(isinstance(t, Type))
 
+	# generic Float (builtin.nan, builtin.inf) - это FloatX ширины float_width
+	# с флагом generic, и идентификатор у него от той ширины (Float64). Как
+	# Integer и Rational, он называется по сути, а не по ширине. В объявления
+	# он не попадает - там уже конкретный тип (_select_default_type_for)
+	if t.is_float() and t.is_generic():
+		return "Float"
+
 	# Если тип связан с идентификатором - распечатаем его
 	id_str = get_id_str(t)
 	if id_str != None:

@@ -4,7 +4,7 @@
 // EXPECT-ERROR: cannot construct 'Char16' from 'Float32' value
 // EXPECT-ERROR: cannot construct 'Char32' from 'Float16' value
 // EXPECT-ERROR: cannot construct 'Char8' from 'Float64' value
-// EXPECT-ERROR: cannot construct 'Char8' from 'Float64' value
+// EXPECT-ERROR: cannot construct 'Char8' from 'Float' value
 // EXPECT-ERROR: cannot construct 'Char8' from 'Float64' value
 // EXPECT-ERROR-COUNT: 6
 //

@@ -1,13 +1,13 @@
 // TEST: reject
 // BACKENDS: c11, llvm, modest
 // EXPECT-ERROR: integer overflow
-// EXPECT-ERROR: attempt to construct `Int32` from `Float64`
+// EXPECT-ERROR: attempt to construct `Int32` from `Float`
 // EXPECT-ERROR: integer overflow
-// EXPECT-ERROR: attempt to construct `Int32` from `Float64`
+// EXPECT-ERROR: attempt to construct `Int32` from `Float`
 // EXPECT-ERROR: integer overflow
 // EXPECT-ERROR: attempt to construct `Nat8` from `Float64`
 // EXPECT-ERROR: integer overflow
-// EXPECT-ERROR: attempt to construct `Int16` from `Float64`
+// EXPECT-ERROR: attempt to construct `Int16` from `Float`
 // EXPECT-ERROR-COUNT: 4
 //
 // A constant NaN or infinity constructed to an integer: neither fits any
@@ -16,7 +16,8 @@
 // out of the fold.  `-builtin.inf` written in place is there because the
 // negation used to turn the generic Float into a Rational holding -inf,
 // which went down a different path to the same traceback.  The `unsafe`
-// form is reject_special_to_int_unsafe.modest.
+// form is reject_special_to_int_unsafe.modest.  `builtin.nan` itself is a
+// generic Float, named `Float` in a diagnostic; `negInf` is a `Float64`.
 // Guards BUG#120 (fixed 2026-11-08).
 
 include "libc/ctypes64"
