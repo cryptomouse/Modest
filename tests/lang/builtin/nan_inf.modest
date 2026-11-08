@@ -1,0 +1,101 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: builtin.nan
+// EXPECT-OUT: passed: builtin.inf
+//
+// `builtin.nan` and `builtin.inf` are generic Float constants: a Rational
+// (exact fraction) has neither, so they convert implicitly to any FloatX.
+// NaN is unordered, so it is unequal to itself both when folded at compile
+// time and when compared at run time.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const nanEq = builtin.nan == builtin.nan
+const nanNe = builtin.nan != builtin.nan
+const nanLt = builtin.nan < 1.0
+const nanGt = builtin.nan > 1.0
+const infGt = builtin.inf > 1000000.0
+const minusInfLt = -builtin.inf < -1000000.0
+const nan32: Float32 = builtin.nan
+const inf16: Float16 = builtin.inf
+
+
+func checkNan () -> Bool {
+	var ok = true
+
+	// свернуто при компиляции
+	ok = not nanEq and ok
+	ok = nanNe and ok
+	ok = not nanLt and ok
+	ok = not nanGt and ok
+
+	// сравнения в рантайме
+	var d: Float64 = builtin.nan
+	var f: Float32 = builtin.nan
+	var h: Float16 = builtin.nan
+	let g = builtin.nan
+	ok = d != d and ok
+	ok = not (d == d) and ok
+	ok = f != f and ok
+	ok = h != h and ok
+	ok = g != g and ok
+	ok = nan32 != nan32 and ok
+	ok = not (d < 0.0) and not (d > 0.0) and ok
+
+	// NaN заразен
+	var one: Float64 = 1.0
+	let sum = d + one
+	ok = sum != sum and ok
+
+	return ok
+}
+
+
+func checkInf () -> Bool {
+	var ok = true
+
+	// свернуто при компиляции
+	ok = infGt and ok
+	ok = minusInfLt and ok
+
+	// сравнения в рантайме
+	var d: Float64 = builtin.inf
+	var f: Float32 = builtin.inf
+	var nd: Float64 = -builtin.inf
+	ok = d == d and ok
+	ok = d > 1000000.0 and ok
+	ok = f > 1000000.0 and ok
+	ok = Float64 inf16 > 60000.0 and ok
+	ok = nd < -1000000.0 and ok
+	ok = nd == -d and ok
+
+	// inf + x == inf, inf - inf == NaN
+	var one: Float64 = 1.0
+	ok = d + one == d and ok
+	let diff = d - d
+	ok = diff != diff and ok
+
+	return ok
+}
+
+
+func main () -> Int {
+	if not checkNan() {
+		printf("failed: builtin.nan\n")
+		return exitFailure
+	}
+	printf("passed: builtin.nan\n")
+
+	if not checkInf() {
+		printf("failed: builtin.inf\n")
+		return exitFailure
+	}
+	printf("passed: builtin.inf\n")
+
+	return exitSuccess
+}
+

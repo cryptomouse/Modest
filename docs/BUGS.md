@@ -139,29 +139,6 @@ Coverage: `tests/lang/type/fixed/runtime.modest` (run-time) and
 `tests/lang/type/fixed/comptime.modest` (compile-time); both pass under c11 and
 llvm.
 
-## BUG#35: Backends disagree about `!=` on a NaN
-
-```modest
-var zero: Float64 = 0.0
-var nan = zero / zero
-if nan != nan { printf("NaN\n") }    // c11: prints    llvm: does not
-```
-
-- IEEE 754 makes NaN the one value not equal to itself, and that is the
-  only way to detect one without a library. C's `!=` on floats is an
-  *unordered* compare — true whenever either operand is NaN — and the C
-  backend inherits it by printing `a != b` as C.
-- Cause: `select_bin_opcode` (`src/backend/llvm.py:3203`) maps both `==`
-  and `!=` through `'fcmp o' + opp`, which gives `fcmp one` — *ordered*
-  and not equal, false for NaN. For `==` the ordered form is right
-  (`fcmp oeq` and C's `==` are both false for NaN); only `!=` needs the
-  unordered one, `fcmp une`.
-- `<`, `>`, `<=`, `>=` are ordered in C too, so `fcmp o<cc>` is right for
-  all four and they agree between the backends.
-- Expected: `fcmp une` for `!=`, leaving `==` as it is.
-- Coverage: `tests/lang/type/float/nan.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#50: C backend emits an identifier that is a C keyword as it stands
 
 ```modest

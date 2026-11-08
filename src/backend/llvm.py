@@ -4058,41 +4058,42 @@ def get_bin_opcode(op, t):
 
 	opcode = "<unknown opcode '%s'>" % op
 	if op in [HLIR_VALUE_OP_EQ, HLIR_VALUE_OP_NE]:
-		opp = '?'
+		# NaN не равен ничему, даже себе: == - упорядоченное (oeq, на NaN
+		# false), а != - его отрицание, неупорядоченное (une, на NaN true).
+		# 'one' здесь ошибка: на NaN он тоже false. Так же делает и C
 		if op == HLIR_VALUE_OP_EQ:
-			opp = 'eq'
-		elif op == HLIR_VALUE_OP_NE:
-			opp = 'ne'
-		opcode = select_bin_opcode_f('icmp ' + opp, 'fcmp o' + opp, t)
+			opcode = select_bin_opcode_f('icmp eq', 'fcmp oeq', t)
+		else:
+			opcode = select_bin_opcode_f('icmp ne', 'fcmp une', t)
 	elif op in [HLIR_VALUE_OP_ADD, HLIR_VALUE_OP_SUB, HLIR_VALUE_OP_MUL]:
-		opp = '?'
+		_op = '?'
 		if op == HLIR_VALUE_OP_ADD:
-			opp = 'add'
+			_op = 'add'
 		elif op == HLIR_VALUE_OP_SUB:
-			opp = 'sub'
+			_op = 'sub'
 		elif op == HLIR_VALUE_OP_MUL:
-			opp = 'mul'
-		opcode = select_bin_opcode_f(opp, 'f' + opp, t)
+			_op = 'mul'
+		opcode = select_bin_opcode_f(_op, 'f' + _op, t)
 	elif op in [HLIR_VALUE_OP_LOGIC_AND, HLIR_VALUE_OP_LOGIC_OR, HLIR_VALUE_OP_SHL, HLIR_VALUE_OP_BITWISE_AND, HLIR_VALUE_OP_BITWISE_OR, HLIR_VALUE_OP_BITWISE_XOR]:
 		opcode = opmap[op]
 	elif op in [HLIR_VALUE_OP_DIV, HLIR_VALUE_OP_REM]:
-		opp = '?'
+		_op = '?'
 		if op == HLIR_VALUE_OP_DIV:
-			opp = 'div'
+			_op = 'div'
 		elif op == HLIR_VALUE_OP_REM:
-			opp = 'rem'
-		opcode = select_bin_opcode_suf('s' + opp, 'u' + opp, 'f' + opp, t)
+			_op = 'rem'
+		opcode = select_bin_opcode_suf('s' + _op, 'u' + _op, 'f' + _op, t)
 	elif op in [HLIR_VALUE_OP_LT, HLIR_VALUE_OP_GT, HLIR_VALUE_OP_LE, HLIR_VALUE_OP_GE]:
-		opp = '?'
+		_op = '?'
 		if op == HLIR_VALUE_OP_LT:
-			opp = 'lt'
+			_op = 'lt'
 		elif op == HLIR_VALUE_OP_GT:
-			opp = 'gt'
+			_op = 'gt'
 		elif op == HLIR_VALUE_OP_LE:
-			opp = 'le'
+			_op = 'le'
 		elif op == HLIR_VALUE_OP_GE:
-			opp = 'ge'
-		opcode = select_bin_opcode_suf('icmp s' + opp, 'icmp u' + opp, 'fcmp o' + opp, t)
+			_op = 'ge'
+		opcode = select_bin_opcode_suf('icmp s' + _op, 'icmp u' + _op, 'fcmp o' + _op, t)
 
 	return opcode
 

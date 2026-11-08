@@ -5,23 +5,20 @@
 // EXPECT-OUT: passed: NaN ordering
 // EXPECT-OUT: passed: NaN propagation
 // EXPECT-OUT: passed: NaN
-// EXPECTED-FAIL(llvm): BUG#35 `!=` on floats is an ordered compare
 //
 // Not-a-number, and the one property that makes it observable without any
 // library: it is the only value not equal to itself.
 //
-// The two backends disagree.  C's `!=` on floats is an *unordered* compare
-// — true whenever either operand is NaN — and the C backend inherits that
-// by printing `a != b` as C.  The LLVM backend emits `fcmp one`, the
-// *ordered* one, which is false for NaN, so `nan != nan` comes out false
-// there and every check below that rests on it fails.  `==` agrees in both
-// (`fcmp oeq` is false for NaN, and so is C's `==`); it is only the
-// negative form that parts.
+// C's `!=` on floats is an *unordered* compare — true whenever either
+// operand is NaN — and the C backend inherits that by printing `a != b` as
+// C.  The LLVM backend used to emit `fcmp one`, the *ordered* one, which is
+// false for NaN, so `nan != nan` came out false there; it emits `fcmp une`
+// now.  `==` is `fcmp oeq`, false for NaN, as C's `==` is.
+// Guards BUG#35 (fixed 2026-11-07).
 //
-// NaN is built here rather than named: the language has no literal for it,
-// and 0.0/0.0 at run time is the shortest way to one.  Kept apart from
-// runtime.modest so that this divergence does not mark the whole type
-// broken.
+// NaN is built here at run time from 0.0/0.0, so that this file is about
+// what the backends emit; `builtin.nan` is covered by
+// tests/lang/builtin/nan_inf.modest.
 
 include "libc/ctypes64"
 include "libc/stdio"

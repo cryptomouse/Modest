@@ -465,7 +465,7 @@ NaN gives 0 — what `as` does in Rust.
 
 ### Related
 
-- BUG#35 — the backends already disagree about a NaN in a comparison
+- BUG#35 (fixed) — the backends used to disagree about `!=` on a NaN
 
 ---
 

@@ -3,6 +3,7 @@
 import os
 import re
 import copy
+import math
 import decimal
 import pathlib
 
@@ -15,6 +16,7 @@ from common import settings
 from value.bool import value_bool_create
 from value.integer import value_integer_create
 from value.rational import value_rational_create
+from value.float import value_float_create
 from value.string import value_string_create, value_string_concat
 from value.array import value_array_create, value_array_concat
 from value.record import value_record_create
@@ -306,7 +308,7 @@ def init():
 
 
 
-def xcreate_const(symtab, id_str, value, type=None, ti=None):
+def create_const(symtab, id_str, value, type=None, ti=None):
 	if type == None:
 		type = value.type
 	if ti == None:
@@ -365,7 +367,7 @@ def create_builtin_module():
 	add_field(compiler_initializers, "version", compilerVersionRecord)
 
 	compilerRecord = value_record_create(t=None, initializers=compiler_initializers, ti=builtin_ti)
-	xcreate_const(builtin_symtab, "compiler", compilerRecord)
+	create_const(builtin_symtab, "compiler", compilerRecord)
 
 	#
 	# builtin.target
@@ -432,7 +434,15 @@ def create_builtin_module():
 	add_field(ti, "rationalPrecision", ValueLiteral(typeInteger, int(settings['precision']), ti=builtin_ti))
 
 	targetRecord = value_record_create(t=None, initializers=ti, ti=builtin_ti)
-	xcreate_const(builtin_symtab, "target", targetRecord)
+	create_const(builtin_symtab, "target", targetRecord)
+
+	#
+	# builtin.nan, builtin.inf: у Rational (Fraction) их не бывает, поэтому
+	# это generic Float - неявно приводится к любому FloatX
+	#
+
+	create_const(builtin_symtab, "nan", value_float_create(math.nan, ti=builtin_ti))
+	create_const(builtin_symtab, "inf", value_float_create(math.inf, ti=builtin_ti))
 
 	#
 	# target-width types: builtin.Word, builtin.Int, builtin.Nat

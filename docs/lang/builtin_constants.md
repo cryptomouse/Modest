@@ -45,6 +45,10 @@ builtin.target.endian     // endianLittle, endianBig
 
 // target-width type aliases (word_width, integer_width)
 builtin.Word, builtin.Int, builtin.Nat
+
+// IEEE 754 specials: generic Float
+builtin.nan                           // quiet NaN
+builtin.inf                           // +infinity; -builtin.inf for -infinity
 ```
 
 Everything under `builtin.target` comes from the target settings in
@@ -75,6 +79,25 @@ no effect on the LLVM backend, which always rounds such literals to
 0.5`) — see
 [Rational precision](./type/generic.md#rational-precision) for the full
 picture and caveats.
+
+## NaN and infinity
+
+`builtin.nan` and `builtin.inf` are the IEEE 754 values that have no
+literal. A `Rational` constant is an exact fraction and cannot hold
+either, so both are *generic Float* constants: like an untyped numeric
+literal they take the type of their context and convert implicitly to
+any `FloatX` (`Float16`, `Float32`, `Float64`). Without a context
+(`let x = builtin.inf`) they are `Float` (`float_width`).
+
+```modest
+var d: Float64 = builtin.nan
+var h: Float16 = -builtin.inf
+```
+
+NaN is unordered: it is unequal to every value, itself included, so
+`x != x` is the way to detect it. `==`, `<`, `>`, `<=`, `>=` with a NaN
+operand are `false`, `!=` is `true` — the same at run time and when the
+comparison is folded at compile time.
 
 ## Example
 

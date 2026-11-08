@@ -262,56 +262,59 @@ then_0:
 	%7 = load %Str8*, %Str8** %6
 	%8 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 2, %Int32 1
 	%9 = load %fsm_StageId, %fsm_StageId* %8
-	%10 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([52 x i8]* @.str1 to [0 x i8]*), %Str8* %7, %Nat32 0, %fsm_StageId %9)
+	%10 = zext %fsm_StageId %9 to %Int32
+	%11 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([52 x i8]* @.str1 to [0 x i8]*), %Str8* %7, %Nat32 0, %Int32 %10)
 	br label %endif_0
 endif_0:
 ; if_1
-	%11 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 2
-	%12 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1
-	%13 = bitcast %fsm_ComplexState* %11 to i8*
+	%12 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 2
+	%13 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1
 	%14 = bitcast %fsm_ComplexState* %12 to i8*
-	%15 = call i1 @__eq.rec.0(i8* %13, i8* %14)
-	%16 = icmp eq %Bool %15, 0
-	br %Bool %16 , label %then_1, label %endif_1
+	%15 = bitcast %fsm_ComplexState* %13 to i8*
+	%16 = call i1 @__eq.rec.0(i8* %14, i8* %15)
+	%17 = icmp eq %Bool %16, 0
+	br %Bool %17 , label %then_1, label %endif_1
 then_1:
-	%17 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1
-	%18 = load %fsm_ComplexState, %fsm_ComplexState* %17
-	store %fsm_ComplexState %18, %fsm_ComplexState* %state
-	%19 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 2
-	%20 = load %fsm_ComplexState, %fsm_ComplexState* %19
-	store %fsm_ComplexState %20, %fsm_ComplexState* %next_state
-	%21 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 0
-	%22 = load %Str8*, %Str8** %21
-	%23 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %state, %Int32 0, %Int32 0
-	%24 = load %fsm_StateDesc*, %fsm_StateDesc** %23
-	%25 = getelementptr %fsm_StateDesc, %fsm_StateDesc* %24, %Int32 0, %Int32 0
-	%26 = load %Str8*, %Str8** %25
-	%27 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %state, %Int32 0, %Int32 1
-	%28 = load %fsm_StageId, %fsm_StageId* %27
-	%29 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %next_state, %Int32 0, %Int32 0
-	%30 = load %fsm_StateDesc*, %fsm_StateDesc** %29
-	%31 = getelementptr %fsm_StateDesc, %fsm_StateDesc* %30, %Int32 0, %Int32 0
-	%32 = load %Str8*, %Str8** %31
-	%33 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %next_state, %Int32 0, %Int32 1
-	%34 = load %fsm_StageId, %fsm_StageId* %33
-	%35 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([23 x i8]* @.str2 to [0 x i8]*), %Str8* %22, %Str8* %26, %fsm_StageId %28, %Str8* %32, %fsm_StageId %34)
-	%36 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1
-	%37 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 2
-	%38 = load %fsm_ComplexState, %fsm_ComplexState* %37
-	store %fsm_ComplexState %38, %fsm_ComplexState* %36
+	%18 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1
+	%19 = load %fsm_ComplexState, %fsm_ComplexState* %18
+	store %fsm_ComplexState %19, %fsm_ComplexState* %state
+	%20 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 2
+	%21 = load %fsm_ComplexState, %fsm_ComplexState* %20
+	store %fsm_ComplexState %21, %fsm_ComplexState* %next_state
+	%22 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 0
+	%23 = load %Str8*, %Str8** %22
+	%24 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %state, %Int32 0, %Int32 0
+	%25 = load %fsm_StateDesc*, %fsm_StateDesc** %24
+	%26 = getelementptr %fsm_StateDesc, %fsm_StateDesc* %25, %Int32 0, %Int32 0
+	%27 = load %Str8*, %Str8** %26
+	%28 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %state, %Int32 0, %Int32 1
+	%29 = load %fsm_StageId, %fsm_StageId* %28
+	%30 = zext %fsm_StageId %29 to %Int32
+	%31 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %next_state, %Int32 0, %Int32 0
+	%32 = load %fsm_StateDesc*, %fsm_StateDesc** %31
+	%33 = getelementptr %fsm_StateDesc, %fsm_StateDesc* %32, %Int32 0, %Int32 0
+	%34 = load %Str8*, %Str8** %33
+	%35 = getelementptr %fsm_ComplexState, %fsm_ComplexState* %next_state, %Int32 0, %Int32 1
+	%36 = load %fsm_StageId, %fsm_StageId* %35
+	%37 = zext %fsm_StageId %36 to %Int32
+	%38 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([23 x i8]* @.str2 to [0 x i8]*), %Str8* %23, %Str8* %27, %Int32 %30, %Str8* %34, %Int32 %37)
+	%39 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1
+	%40 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 2
+	%41 = load %fsm_ComplexState, %fsm_ComplexState* %40
+	store %fsm_ComplexState %41, %fsm_ComplexState* %39
 	br label %endif_1
 endif_1:
-	%39 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1, %Int32 0
-	%40 = load %fsm_StateDesc*, %fsm_StateDesc** %39
-	%41 = getelementptr %fsm_StateDesc, %fsm_StateDesc* %40, %Int32 0, %Int32 2
-	%42 = load %fsm_StateServiceRoutine*, %fsm_StateServiceRoutine** %41
-	%43 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 2
-	%44 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1
-	%45 = load %fsm_ComplexState, %fsm_ComplexState* %44
-	%46 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 3
-	%47 = load i8*, i8** %46
-	%48 = call %fsm_ComplexState %42(%fsm_ComplexState %45, i8* %47)
-	store %fsm_ComplexState %48, %fsm_ComplexState* %43
+	%42 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1, %Int32 0
+	%43 = load %fsm_StateDesc*, %fsm_StateDesc** %42
+	%44 = getelementptr %fsm_StateDesc, %fsm_StateDesc* %43, %Int32 0, %Int32 2
+	%45 = load %fsm_StateServiceRoutine*, %fsm_StateServiceRoutine** %44
+	%46 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 2
+	%47 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 1
+	%48 = load %fsm_ComplexState, %fsm_ComplexState* %47
+	%49 = getelementptr %fsm_FSM, %fsm_FSM* %self, %Int32 0, %Int32 3
+	%50 = load i8*, i8** %49
+	%51 = call %fsm_ComplexState %45(%fsm_ComplexState %48, i8* %50)
+	store %fsm_ComplexState %51, %fsm_ComplexState* %46
 	ret void
 }
 

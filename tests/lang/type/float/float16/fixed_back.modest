@@ -14,8 +14,8 @@
 // way C11's `__fixedX_to_float64` does.
 //
 // fixed.modest next to this file covers the same direction, but with `!=`,
-// and `NaN != 1.5` is false under the LLVM backend (BUG#35), which let the
-// broken conversion of 1.5 pass there.  Every check here is a `==` under
+// and `NaN != 1.5` used to be false under the LLVM backend (BUG#35), which
+// let the broken conversion of 1.5 pass there.  Every check here is a `==` under
 // `not`, which is false for a NaN on every backend.
 //
 // The far end of binary16's range goes through `Fixed64`: 65504 does not

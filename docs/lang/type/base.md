@@ -60,8 +60,8 @@ Target-width aliases (resolved from target config): `Int`, `Nat`, `Word`,
 > targets that have it: it is absent on ppc64le, wasm and msp430, the same
 > way `__int128` behind `Word128` is. Several things around `FloatX` do not
 > hold: `FloatX` ↔ `WordX` converts numerically instead of
-> reinterpreting bits, an `IntX`/`NatX` narrower than the float is refused,
-> and the LLVM backend gets `!=` on a NaN wrong. A literal outside the
+> reinterpreting bits, and an `IntX`/`NatX` narrower than the float is
+> refused. A literal outside the
 > type's range is a compile-time error in both backends, the way an integer
 > one is ([cons](../value/cons.md)). See BUG#35–37 and
 > `tests/lang/type/float/`, where each has a marked reproducer next to the
