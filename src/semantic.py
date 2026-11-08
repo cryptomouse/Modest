@@ -2661,6 +2661,14 @@ def do_id(x):
 
 
 def def_type1(x):
+	# Имя встроенного типа (Bool, Size, Int32, ...) занято: LLVM-бэкенд
+	# выдает глобальные типы под их собственным именем, и `%Size` столкнулся
+	# бы с прелюдией. Word/Int/Nat (модуль builtin) переопределять можно:
+	# libc/ctypes* делает их C-алиасами.
+	id_str = x['id']['str']
+	if builtinSymtab.type_get(id_str) != None:
+		error("redefinition of builtin type `%s`" % id_str, x['id']['ti'])
+
 	is_public = get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC
 	t = Type(x['ti'])  # Incomplete type (!)
 	definition = new_def_type(x, t)

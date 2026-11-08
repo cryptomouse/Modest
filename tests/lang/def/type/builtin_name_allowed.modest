@@ -1,0 +1,66 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: local type with a builtin name
+// EXPECT-OUT: passed: Int, Nat and Word redefined
+//
+// Only a global type is refused a builtin name (reject_builtin_name.modest).
+// A local type is emitted under a function-qualified name, so a local
+// `Size` hides the builtin one inside its block and collides with nothing;
+// outside the block `Size` is the builtin again. `Word`, `Int` and `Nat`
+// stay redefinable at the top level: libc/ctypes64 makes `Int` a C alias,
+// and this module redefines `Nat` and `Word` itself.
+//
+// Guards BUG#51 (fixed 2026-11-08).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Nat = Nat16
+type Word = Word8
+
+
+func testLocal () -> Bool {
+	var area: Int32 = 0
+	if true {
+		type Size = {w: Int32, h: Int32}
+		var s: Size = {w = 3, h = 4}
+		area = s.w * s.h
+	}
+
+	let n: Size = sizeof(Int32)
+	if area != 12 or n != 4 {
+		printf("area %d, sizeof %zu, expected 12, 4\n", area, n)
+		return false
+	}
+
+	printf("passed: local type with a builtin name\n")
+	return true
+}
+
+
+func testAliases () -> Bool {
+	let i: Int = -1
+	let u: Nat = 1
+	let w: Word = 0xFF
+	if sizeof(i) != 4 or sizeof(u) != 2 or sizeof(w) != 1 {
+		printf("sizeof %zu, %zu, %zu, expected 4, 2, 1\n", sizeof(i), sizeof(u), sizeof(w))
+		return false
+	}
+
+	printf("passed: Int, Nat and Word redefined\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testLocal() {
+		return exitFailure
+	}
+	if not testAliases() {
+		return exitFailure
+	}
+	return exitSuccess
+}

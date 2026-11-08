@@ -1,0 +1,18 @@
+// TEST: reject
+// EXPECT-ERROR: redefinition of builtin type `Size`
+// EXPECT-ERROR: redefinition of builtin type `Bool`
+// EXPECT-ERROR: redefinition of builtin type `Str8`
+// EXPECT-ERROR-COUNT: 3
+//
+// A global type may not take the name of a builtin type: the LLVM backend
+// emits a global type under its own name, and the prelude already defines
+// `%Size`, `%Bool`, ... — clang refused the file with "redefinition of
+// type" while modest itself said nothing. A record and an alias are both
+// refused, one error each. `Word`, `Int` and `Nat` stay redefinable (see
+// builtin_name_allowed.modest).
+//
+// Guards BUG#51 (fixed 2026-11-08).
+
+type Size = {w: Int32, h: Int32}
+type Bool = Int32
+public type Str8 = [8]Char8

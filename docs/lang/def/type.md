@@ -32,6 +32,12 @@ type <#identifier#> = <#type_expression#>
 
 - Type definitions are allowed inside function bodies; the name is then
   local to the body.
+- A module-level type may not take the name of a builtin type (`Bool`,
+  `Size`, `Byte`, `Int32`, `Str8`, `Ptr`, ...): `type Size = {...}` is
+  rejected with *redefinition of builtin type `Size`*. A local type may —
+  it hides the builtin inside its block. `Word`, `Int` and `Nat` are not
+  covered: they are meant to be redefined, e.g. `libc/ctypes64` makes `Int`
+  a C alias (`type Int = Int32`).
 - Layout and qualifiers are controlled with annotations on the right-hand
   side: `@layout("packed" | "union" | "exact")`, `@alignment(N)`,
   `@volatile`, `@const` (see [annotations](../annotation.md)).

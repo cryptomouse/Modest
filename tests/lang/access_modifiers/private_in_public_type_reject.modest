@@ -1,6 +1,6 @@
 // TEST: reject
 // EXPECT-ERROR: public type `Alias` exposes private type `Hidden`
-// EXPECT-ERROR: public type `Ptr` exposes private type `Hidden`
+// EXPECT-ERROR: public type `PtrHidden` exposes private type `Hidden`
 // EXPECT-ERROR: public type `Nested` exposes private type `Hidden`
 // EXPECT-ERROR: public type `RecExplicit` exposes private type `Hidden`
 // EXPECT-ERROR: public x: Hidden
@@ -27,7 +27,7 @@
 type Hidden = Int32
 
 public type Alias = Hidden
-public type Ptr = *Hidden
+public type PtrHidden = *Hidden
 public type Nested = *[2]*Hidden
 
 public type RecExplicit = record {

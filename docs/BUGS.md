@@ -163,31 +163,6 @@ int32_t switch = 1;
   the backend already mangles what it has to.
 - No reproducer in the suite.
 
-## BUG#51: A type named after a builtin redefines it in the LLVM backend
-
-```modest
-type Size = {w: Int32, h: Int32}
-```
-
-```llvm
-%Size = type i64        ; the prelude's
-%Size = type { ... }    ; error: redefinition of type
-```
-
-- `Size` is a builtin type name, and the front end lets a module define
-  its own without a word: inside that module the user's `Size` wins, and
-  `var n: Size = sizeof(Int32)` is reported as `type mismatch Size &
-  Integer(8)` — which is the shadowing working as the front end sees it.
-- The LLVM backend then emits the user's type under the same `%Size` the
-  prelude already defines, and clang refuses the file. Every builtin type
-  name is a candidate: `Size`, `Byte`, `Bool`, `File`, `Str8`.
-- The C backend is unaffected: it lowercases record tags, so `struct
-  size` does not collide with `size_t`.
-- Fix: either reject a definition that shadows a builtin type, or emit
-  user types under names that cannot collide with the prelude's.
-- No reproducer in the suite.
-
-
 ## BUG#54: An empty record type is emitted as `void` in an initializer
 
 ```modest
