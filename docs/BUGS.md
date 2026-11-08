@@ -921,29 +921,3 @@ import "./b/point" as pb     // module "b/point", public func two
 - A fix would name the header after the module name when there is one
   (`a_point.h`), with `-o` naming only the `.c`, or let the importer find
   the header by the imported module's own output name.
-
-## BUG#123: LLVM importer does not define the private types of an imported record
-
-```modest
-// m1.modest
-type Hidden = Int32
-public type Opaque = record {
-	h: Hidden            // private field: allowed in a public record
-}
-public func mk () -> Opaque
-
-// main.modest
-import "m1"
-var o = m1.mk()          // llvm: storing unsized types is not allowed
-```
-
-- The LLVM counterpart of BUG#88.  `print_imports` (`src/backend/llvm.py`)
-  prints the imported module's public types only, so `%m1_Opaque` refers to
-  `%Hidden`, which the importer's `.ll` never defines: an opaque struct, and
-  any value of `Opaque` fails to build.
-- Printing the private types of the import as well is not enough by itself:
-  they are named without the module prefix (`%Hidden`), so they would clash
-  with a private type of the same name in the importer.  They need a
-  module-qualified LLVM name (or the importer must print them under one).
-- Only the LLVM backend; C gets them from the header since BUG#88.
-  Reproducer: `tests/lang/access_modifiers/private_in_public_header.modest`.

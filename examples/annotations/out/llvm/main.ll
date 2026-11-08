@@ -133,11 +133,11 @@ declare void @perror(%ConstCharStr* %str)
 @.str1 = private constant [5 x i8] [i8 104, i8 105, i8 33, i8 10, i8 0]
 @.str2 = private constant [21 x i8] [i8 65, i8 110, i8 110, i8 111, i8 116, i8 97, i8 116, i8 105, i8 111, i8 110, i8 115, i8 32, i8 101, i8 120, i8 97, i8 109, i8 112, i8 108, i8 101, i8 10, i8 0]
 ; -- endstrings --
-%MyInt32 = type %Int32;
-%MyInt32_2 = type %MyInt32;
-%MyInt32_3 = type %MyInt32;
+%main_MyInt32 = type %Int32;
+%main_MyInt32_2 = type %main_MyInt32;
+%main_MyInt32_3 = type %main_MyInt32;
 @vvb = internal global %Int32 1
-%ProtocolHeader = type <{
+%main_ProtocolHeader = type <{
 	%Word16,
 	%Nat16
 }>;
@@ -167,7 +167,7 @@ define internal %Int32 @staticInlineHintFunc(%Int32 %x) inlinehint {
 	ret %Int32 %1
 }
 
-%Point2D = type {
+%main_Point2D = type {
 	%Float64,
 	%Float64
 };

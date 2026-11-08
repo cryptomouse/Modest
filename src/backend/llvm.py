@@ -3889,7 +3889,7 @@ def print_included(m):
 			out("\n; from included %s" % inc.id)
 
 			for d in inc.defs:
-				if is_private(d):
+				if is_private(d) and not d.is_stmt_def_type():
 					continue
 
 				if d.is_stmt_def_type():
@@ -3918,7 +3918,7 @@ def print_imports(imports):
 		out("\n\n; from import \"%s\"" % imp.name)
 
 		for d in imp.module.defs:
-			if is_private(d):
+			if is_private(d) and not d.is_stmt_def_type():
 				continue
 
 			if d.is_stmt_def_type():

@@ -1,0 +1,44 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// LINK: ./_private_in_public_same_name/shape.modest
+// EXPECT-OUT: passed: private_in_public_same_name
+//
+// A private type of a module goes out under the module prefix, like a
+// public one: through a public record it reaches the importer — the C
+// header, the importer's LLVM IR — and there it must not clash with the
+// importer's own private types of the same name.  Here both modules have
+// a private `Hidden` and `Node`, built differently, and the importer keeps
+// an imported `Shape` (holding shape's `Node`) next to its own `Node`.
+// Guards BUG#123 (fixed 2026-11-08).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+import "./_private_in_public_same_name/shape"
+
+
+type Hidden = Int64
+
+type Node = record {
+	w: Hidden
+	tag: Char8
+}
+
+
+func main () -> Int {
+	var s = shape.shape_new(5)
+	var n: Node = {w = 1000000000000, tag = "x"}
+
+	if shape.shape_sum(&s) != 15 {
+		printf("shape_sum = %d, expected 15\n", shape.shape_sum(&s))
+		return exitFailure
+	}
+	if n.w != 1000000000000 or n.tag != "x" {
+		printf("own Node broken\n")
+		return exitFailure
+	}
+
+	printf("passed: private_in_public_same_name\n")
+	return exitSuccess
+}
+

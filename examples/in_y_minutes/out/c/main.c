@@ -17,20 +17,20 @@
 // PascalCase for types, camelCase for everything else. Base types: Bool,
 // IntX/NatX/WordX (8/16/32/64/128 — signed/unsigned/bitwise), CharX (8/16/32),
 // FloatX (32/64), Str8/Str16/Str32 (= []CharX), Int/Nat/Word (target width).
-struct point {
+struct main_point {
 	double x;
 	double y;
 };
-typedef double Meters;
-typedef uint8_t Color;
-#define COLOR_RED ((Color)0)
-#define COLOR_GREEN ((Color)1)
-#define COLOR_BLUE ((Color)2)
-typedef void Action(void);
+typedef double main_Meters;
+typedef uint8_t main_Color;
+#define COLOR_RED ((main_Color)0)
+#define COLOR_GREEN ((main_Color)1)
+#define COLOR_BLUE ((main_Color)2)
+typedef void main_Action(void);
 // --- Functions ----------------------------------------------------------------
 
 __attribute__((always_inline))
-static inline double distance(struct point a, struct point b) {
+static inline double distance(struct main_point a, struct main_point b) {
 	const double dx = a.x - b.x;
 	const double dy = a.y - b.y;
 	return sqrt(dx * dx + dy * dy);
@@ -62,7 +62,7 @@ int main(void) {
 	uint64_t w = (uint64_t)1 << 63;
 	int64_t asInt = (int64_t)w;
 	printf("w = %llx -> asInt = %lld\n", w, asInt);
-	Meters height = 1.8;
+	main_Meters height = 1.8;
 	printf("height = %f\n", (double)height);
 	char *const greeting = "Hello, Modest!";
 	const char initial = 'M';
@@ -76,14 +76,14 @@ int main(void) {
 		i += 1;
 	}
 	printf("\n");
-	const struct point origin = (struct point){.x = 0.0, .y = 0.0};
-	const struct point corner = (struct point){.x = 3.0, .y = 4.0};
+	const struct main_point origin = (struct main_point){.x = 0.0, .y = 0.0};
+	const struct main_point corner = (struct main_point){.x = 3.0, .y = 4.0};
 	printf("distance = %f\n", distance(origin, corner));
-	struct point p = corner;
-	struct point *pp = &p;
+	struct main_point p = corner;
+	struct main_point *pp = &p;
 	pp->x = 99.0;
 	printf("p.x = %f\n", p.x);
-	Color c = COLOR_GREEN;
+	main_Color c = COLOR_GREEN;
 	if (c == COLOR_GREEN) {
 		printf("color is green\n");
 	}
@@ -109,9 +109,9 @@ int main(void) {
 	if (i32 > 0 && !(counter < 0)) {
 		printf("logic works\n");
 	}
-	Action *cb = &announce;
+	main_Action *cb = &announce;
 	cb();
-	printf("sizeof(Point) = %lu\n", sizeof(struct point));
+	printf("sizeof(Point) = %lu\n", sizeof(struct main_point));
 	printf("sum(0..5) = %d\n", sum(5));
 	return 0;
 	#undef n

@@ -3,14 +3,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
-typedef int32_t MyInt32;
-#define MY_ZERO ((MyInt32)0)
-#define MY_ONE ((MyInt32)1)
-typedef MyInt32 MyInt32_2;
-typedef MyInt32 MyInt32_3;
+typedef int32_t main_MyInt32;
+#define MY_ZERO ((main_MyInt32)0)
+#define MY_ONE ((main_MyInt32)1)
+typedef main_MyInt32 main_MyInt32_2;
+typedef main_MyInt32 main_MyInt32_3;
 #define CVB ((int32_t)0)
 static volatile int32_t vvb = 1;
-struct protocol_header {
+struct main_protocol_header {
 	uint16_t start;
 	uint16_t len;
 } __attribute__((packed));
@@ -41,7 +41,7 @@ static int32_t staticNoinlineFunc(int32_t x) {
 static int32_t staticInlineHintFunc(int32_t x) {
 	return x + 1;
 }
-struct point2_d {
+struct main_point2_d {
 	double x;
 	double y;
 };

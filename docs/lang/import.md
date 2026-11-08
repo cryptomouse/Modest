@@ -23,8 +23,8 @@ include <#"path"#>
   3. otherwise, the library directory (`MODEST_LIB` / `-L`).
 - A module is translated once; repeated imports reuse it. Recursive
   imports are an error (`recursive import detected`).
-- In output, public symbols of an imported module get its name as a
-  prefix (`utils_f`); `include`d modules keep original names
+- In output, public symbols and all types of an imported module get its
+  name as a prefix (`utils_f`); `include`d modules keep original names
   (see [access modifiers](./access_modifiers.md)).
 
 ## Module name

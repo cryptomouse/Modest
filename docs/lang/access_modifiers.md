@@ -77,7 +77,11 @@ Tests: `tests/lang/access_modifiers/private_in_public*.modest`.
 
 Consequences in output: `public` symbols of module `m` are emitted with
 the prefix `m_`; `private` symbols keep their name (and become `static`
-in C). An `@extern` declaration never gets the prefix — it names a symbol
+in C). Types are the exception: a `private` type gets the prefix too,
+because it may still reach the importer — a public record with a private
+field of type `Hidden` needs `m_Hidden` in `m.h` (and in the importer's
+LLVM IR), where a bare `Hidden` would clash with the importer's own.
+An `@extern` declaration never gets the prefix — it names a symbol
 defined outside the module
 (see [import](./import.md), [annotations](./annotation.md)).
 

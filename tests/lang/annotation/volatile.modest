@@ -4,7 +4,7 @@
 // EXPECT-OUT: passed: volatile
 // EXPECT-CODE(llvm): store volatile %Word8 17
 // EXPECT-CODE(llvm): load volatile %Word8
-// EXPECT-CODE(llvm): load volatile %GPIO*, %GPIO** @through
+// EXPECT-CODE(llvm): load volatile %volatile_GPIO*, %volatile_GPIO** @through
 // EXPECT-CODE(llvm): store %Word8 34
 // EXPECT-CODE(llvm): store volatile %Word8 51
 // EXPECT-CODE(llvm): store volatile %Word8 68

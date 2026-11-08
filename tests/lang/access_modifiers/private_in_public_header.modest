@@ -1,7 +1,6 @@
 // TEST: run
 // BACKENDS: c11, llvm
 // LINK: ./_private_in_public_header/opaque.modest
-// EXPECTED-FAIL(llvm): BUG#123 importer does not define the private types of an imported record
 // EXPECT-OUT: passed: private_in_public_header
 //
 // A public record of another module, kept by value, whose private fields
@@ -9,8 +8,9 @@
 // a record holding both, an anonymous record holding them.  The importer
 // cannot name them, but C needs the complete struct, so `opaque.h` carries
 // all of them, in dependency order, ahead of `Opaque`, and `opaque.c` does
-// not repeat them.
+// not repeat them; under LLVM the importer's IR defines them too.
 // Guards BUG#88 (fixed 2026-11-08).
+// Guards BUG#123 (fixed 2026-11-08).
 
 include "libc/ctypes64"
 include "libc/stdio"
@@ -29,3 +29,4 @@ func main () -> Int {
 	printf("passed: private_in_public_header\n")
 	return exitSuccess
 }
+

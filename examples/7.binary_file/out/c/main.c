@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdio.h>
 #define FILENAME "file.bin"
-struct chunk {
+struct main_chunk {
 	char id[100];
 	char data[1024];
 };
@@ -18,11 +18,11 @@ static void writeExample(void) {
 		printf("error: cannot create file '%s'", FILENAME);
 		return;
 	}
-	struct chunk chunk = (struct chunk){
+	struct main_chunk chunk = (struct main_chunk){
 		.id = {'i', 'd'},
 		.data = {'d', 'a', 't', 'a'}
 	};
-	fwrite((void *)&chunk, sizeof(struct chunk), 1, fp);
+	fwrite((void *)&chunk, sizeof(struct main_chunk), 1, fp);
 	fclose(fp);
 }
 
@@ -34,8 +34,8 @@ static void readExample(void) {
 		printf("error: cannot open file '%s'", FILENAME);
 		return;
 	}
-	struct chunk chunk = {0};
-	fread((void *)&chunk, sizeof(struct chunk), 1, fp);
+	struct main_chunk chunk = {0};
+	fread((void *)&chunk, sizeof(struct main_chunk), 1, fp);
 	printf("file \"%s\" contains:\n", FILENAME);
 	printf("chunk.id: \"%s\"\n", chunk.id);
 	printf("chunk.data: \"%s\"\n", chunk.data);

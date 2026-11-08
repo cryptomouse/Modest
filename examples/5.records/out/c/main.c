@@ -5,17 +5,17 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-struct point {
+struct main_point {
 	double x;
 	double y;
 };
-struct line {
-	struct point a;
-	struct point b;
+struct main_line {
+	struct main_point a;
+	struct main_point b;
 };
-static struct line line = (struct line){
-	.a = (struct point){.x = 0, .y = 0},
-	.b = (struct point){.x = 1.0, .y = 1.0}
+static struct main_line line = (struct main_line){
+	.a = (struct main_point){.x = 0, .y = 0},
+	.b = (struct main_point){.x = 1.0, .y = 1.0}
 };
 
 __attribute__((always_inline))
@@ -34,7 +34,7 @@ static inline double min(double a, double b) {
 	return b;
 }
 
-static double distance(struct point a, struct point b) {
+static double distance(struct main_point a, struct main_point b) {
 	const double dx = max(a.x, b.x) - min(a.x, b.x);
 	const double dy = max(a.y, b.y) - min(a.y, b.y);
 	const double dx2 = pow(dx, 2.0);
@@ -42,12 +42,12 @@ static double distance(struct point a, struct point b) {
 	return sqrt(dx2 + dy2);
 }
 
-static double lineLength(struct line line) {
+static double lineLength(struct main_line line) {
 	return distance(line.a, line.b);
 }
 
 static void ptr_example(void) {
-	struct point *const ptr_p = (struct point *)malloc(sizeof(struct point));
+	struct main_point *const ptr_p = (struct main_point *)malloc(sizeof(struct main_point));
 	ptr_p->x = 1.0e+01;
 	ptr_p->y = 2.0e+01;
 	printf("point(%f, %f)\n", ptr_p->x, ptr_p->y);

@@ -1,0 +1,27 @@
+// Fixture for private_in_public_same_name.modest: private types whose
+// names the importer reuses for private types of its own.
+
+include "libc/ctypes64"
+
+
+type Hidden = Int32
+
+type Node = record {
+	v: Hidden
+	next: *Node
+}
+
+public type Shape = record {
+	n: Node
+	k: Hidden
+}
+
+
+public func shape_new (v: Int32) -> Shape {
+	return {n = {v = v, next = nil}, k = v * 2}
+}
+
+public func shape_sum (s: *Shape) -> Int32 {
+	return s.n.v + s.k
+}
+

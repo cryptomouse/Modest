@@ -241,29 +241,29 @@ declare %LongDouble @fmal(%LongDouble %a, %LongDouble %b, %LongDouble %c)
 ; PascalCase for types, camelCase for everything else. Base types: Bool,
 ; IntX/NatX/WordX (8/16/32/64/128 — signed/unsigned/bitwise), CharX (8/16/32),
 ; FloatX (32/64), Str8/Str16/Str32 (= []CharX), Int/Nat/Word (target width).
-%Point = type {
+%main_Point = type {
 	%Float64,
 	%Float64
 };
 
-%Meters = type %Float64;
-%Color = type %Nat8;
-%Action = type void ();
+%main_Meters = type %Float64;
+%main_Color = type %Nat8;
+%main_Action = type void ();
 
 
 ; --- Functions ----------------------------------------------------------------
-define internal %Float64 @distance(%Point %__a, %Point %__b) alwaysinline {
-	%a = alloca %Point
-	store %Point %__a, %Point* %a
-	%b = alloca %Point
-	store %Point %__b, %Point* %b
-	%1 = getelementptr %Point, %Point* %a, %Int32 0, %Int32 0
-	%2 = getelementptr %Point, %Point* %b, %Int32 0, %Int32 0
+define internal %Float64 @distance(%main_Point %__a, %main_Point %__b) alwaysinline {
+	%a = alloca %main_Point
+	store %main_Point %__a, %main_Point* %a
+	%b = alloca %main_Point
+	store %main_Point %__b, %main_Point* %b
+	%1 = getelementptr %main_Point, %main_Point* %a, %Int32 0, %Int32 0
+	%2 = getelementptr %main_Point, %main_Point* %b, %Int32 0, %Int32 0
 	%3 = load %Float64, %Float64* %1
 	%4 = load %Float64, %Float64* %2
 	%5 = fsub %Float64 %3, %4
-	%6 = getelementptr %Point, %Point* %a, %Int32 0, %Int32 1
-	%7 = getelementptr %Point, %Point* %b, %Int32 0, %Int32 1
+	%6 = getelementptr %main_Point, %main_Point* %a, %Int32 0, %Int32 1
+	%7 = getelementptr %main_Point, %main_Point* %b, %Int32 0, %Int32 1
 	%8 = load %Float64, %Float64* %6
 	%9 = load %Float64, %Float64* %7
 	%10 = fsub %Float64 %8, %9
@@ -310,20 +310,20 @@ define %Int @main() {
 	%counter = alloca %Int32, align 4
 	%w = alloca %Word64, align 8
 	%asInt = alloca %Int64, align 8
-	%height = alloca %Meters, align 8
+	%height = alloca %main_Meters, align 8
 	%arr = alloca [5 x %Int32], align 4
 	%slice = alloca [2 x %Int32], align 4
 	%i = alloca %Nat32, align 4
-	%origin = alloca %Point
-	%corner = alloca %Point
-	%p = alloca %Point, align 8
-	%pp = alloca %Point*, align 8
-	%c = alloca %Color, align 1
+	%origin = alloca %main_Point
+	%corner = alloca %main_Point
+	%p = alloca %main_Point, align 8
+	%pp = alloca %main_Point*, align 8
+	%c = alloca %main_Color, align 1
 	%u = alloca %Word32, align 4
 	%v = alloca %Word32, align 4
 	%k = alloca %Int32, align 4
 	%j = alloca %Int32, align 4
-	%cb = alloca %Action*, align 8
+	%cb = alloca %main_Action*, align 8
 	store %Int32 42, %Int32* %i32
 	store %Float64 3.14159, %Float64* %f64
 	store %Int32 10, %Int32* %counter
@@ -335,9 +335,9 @@ define %Int @main() {
 	%3 = load %Word64, %Word64* %w
 	%4 = load %Int64, %Int64* %asInt
 	%5 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([26 x i8]* @.str2 to [0 x i8]*), %Word64 %3, %Int64 %4)
-	store %Meters 1.8, %Meters* %height
-	%6 = load %Meters, %Meters* %height
-	%7 = bitcast %Meters %6 to %Float64
+	store %main_Meters 1.8, %main_Meters* %height
+	%6 = load %main_Meters, %main_Meters* %height
+	%7 = bitcast %main_Meters %6 to %Float64
 	%8 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str3 to [0 x i8]*), %Float64 %7)
 	%9 = zext %Char8 77 to %Int32
 	%10 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str5 to [0 x i8]*), %Str8* bitcast ([15 x i8]* @.str4 to [0 x i8]*), %Int32 %9)
@@ -371,27 +371,27 @@ body_1:
 	br label %again_1
 break_1:
 	%29 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([2 x i8]* @.str7 to [0 x i8]*))
-	store %Point zeroinitializer, %Point* %origin
-	%30 = insertvalue %Point zeroinitializer, %Float64 3.0, 0
-	%31 = insertvalue %Point %30, %Float64 4.0, 1
-	store %Point %31, %Point* %corner
-	%32 = load %Point, %Point* %origin
-	%33 = load %Point, %Point* %corner
-	%34 = call %Float64 @distance(%Point %32, %Point %33)
+	store %main_Point zeroinitializer, %main_Point* %origin
+	%30 = insertvalue %main_Point zeroinitializer, %Float64 3.0, 0
+	%31 = insertvalue %main_Point %30, %Float64 4.0, 1
+	store %main_Point %31, %main_Point* %corner
+	%32 = load %main_Point, %main_Point* %origin
+	%33 = load %main_Point, %main_Point* %corner
+	%34 = call %Float64 @distance(%main_Point %32, %main_Point %33)
 	%35 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([15 x i8]* @.str8 to [0 x i8]*), %Float64 %34)
-	%36 = load %Point, %Point* %corner
-	store %Point %36, %Point* %p
-	store %Point* %p, %Point** %pp
-	%37 = load %Point*, %Point** %pp
-	%38 = getelementptr %Point, %Point* %37, %Int32 0, %Int32 0
+	%36 = load %main_Point, %main_Point* %corner
+	store %main_Point %36, %main_Point* %p
+	store %main_Point* %p, %main_Point** %pp
+	%37 = load %main_Point*, %main_Point** %pp
+	%38 = getelementptr %main_Point, %main_Point* %37, %Int32 0, %Int32 0
 	store %Float64 99.0, %Float64* %38
-	%39 = getelementptr %Point, %Point* %p, %Int32 0, %Int32 0
+	%39 = getelementptr %main_Point, %main_Point* %p, %Int32 0, %Int32 0
 	%40 = load %Float64, %Float64* %39
 	%41 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([10 x i8]* @.str9 to [0 x i8]*), %Float64 %40)
-	store %Color 1, %Color* %c
+	store %main_Color 1, %main_Color* %c
 ; if_0
-	%42 = load %Color, %Color* %c
-	%43 = icmp eq %Color %42, 1
+	%42 = load %main_Color, %main_Color* %c
+	%43 = icmp eq %main_Color %42, 1
 	br %Bool %43 , label %then_0, label %endif_0
 then_0:
 	%44 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([16 x i8]* @.str10 to [0 x i8]*))
@@ -459,8 +459,8 @@ then_3:
 	%71 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([13 x i8]* @.str14 to [0 x i8]*))
 	br label %endif_3
 endif_3:
-	store %Action* @announce, %Action** %cb
-	%72 = load %Action*, %Action** %cb
+	store %main_Action* @announce, %main_Action** %cb
+	%72 = load %main_Action*, %main_Action** %cb
 	call void %72()
 	%73 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str15 to [0 x i8]*), %Size 16)
 	%74 = call %Int32 @sum(%Int32 5)

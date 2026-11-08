@@ -228,22 +228,22 @@ declare void @perror(%ConstCharStr* %str)
 @.str1 = private constant [15 x i8] [i8 112, i8 111, i8 105, i8 110, i8 116, i8 40, i8 37, i8 102, i8 44, i8 32, i8 37, i8 102, i8 41, i8 10, i8 0]
 @.str2 = private constant [18 x i8] [i8 108, i8 105, i8 110, i8 101, i8 32, i8 108, i8 101, i8 110, i8 103, i8 116, i8 104, i8 32, i8 61, i8 32, i8 37, i8 102, i8 10, i8 0]
 ; -- endstrings --
-%Point = type {
+%main_Point = type {
 	%Double,
 	%Double
 };
 
-%Line = type {
-	%Point,
-	%Point
+%main_Line = type {
+	%main_Point,
+	%main_Point
 };
 
-@line = internal global %Line {
-	%Point {
+@line = internal global %main_Line {
+	%main_Point {
 		%Double 0.0,
 		%Double 0.0
 	},
-	%Point {
+	%main_Point {
 		%Double 1.0,
 		%Double 1.0
 	}
@@ -270,30 +270,30 @@ endif_0:
 	ret %Double %b
 }
 
-define internal %Double @distance(%Point %__a, %Point %__b) {
-	%a = alloca %Point
-	store %Point %__a, %Point* %a
-	%b = alloca %Point
-	store %Point %__b, %Point* %b
-	%1 = getelementptr %Point, %Point* %a, %Int32 0, %Int32 0
+define internal %Double @distance(%main_Point %__a, %main_Point %__b) {
+	%a = alloca %main_Point
+	store %main_Point %__a, %main_Point* %a
+	%b = alloca %main_Point
+	store %main_Point %__b, %main_Point* %b
+	%1 = getelementptr %main_Point, %main_Point* %a, %Int32 0, %Int32 0
 	%2 = load %Double, %Double* %1
-	%3 = getelementptr %Point, %Point* %b, %Int32 0, %Int32 0
+	%3 = getelementptr %main_Point, %main_Point* %b, %Int32 0, %Int32 0
 	%4 = load %Double, %Double* %3
 	%5 = call %Double @max(%Double %2, %Double %4)
-	%6 = getelementptr %Point, %Point* %a, %Int32 0, %Int32 0
+	%6 = getelementptr %main_Point, %main_Point* %a, %Int32 0, %Int32 0
 	%7 = load %Double, %Double* %6
-	%8 = getelementptr %Point, %Point* %b, %Int32 0, %Int32 0
+	%8 = getelementptr %main_Point, %main_Point* %b, %Int32 0, %Int32 0
 	%9 = load %Double, %Double* %8
 	%10 = call %Double @min(%Double %7, %Double %9)
 	%11 = fsub %Double %5, %10
-	%12 = getelementptr %Point, %Point* %a, %Int32 0, %Int32 1
+	%12 = getelementptr %main_Point, %main_Point* %a, %Int32 0, %Int32 1
 	%13 = load %Double, %Double* %12
-	%14 = getelementptr %Point, %Point* %b, %Int32 0, %Int32 1
+	%14 = getelementptr %main_Point, %main_Point* %b, %Int32 0, %Int32 1
 	%15 = load %Double, %Double* %14
 	%16 = call %Double @max(%Double %13, %Double %15)
-	%17 = getelementptr %Point, %Point* %a, %Int32 0, %Int32 1
+	%17 = getelementptr %main_Point, %main_Point* %a, %Int32 0, %Int32 1
 	%18 = load %Double, %Double* %17
-	%19 = getelementptr %Point, %Point* %b, %Int32 0, %Int32 1
+	%19 = getelementptr %main_Point, %main_Point* %b, %Int32 0, %Int32 1
 	%20 = load %Double, %Double* %19
 	%21 = call %Double @min(%Double %18, %Double %20)
 	%22 = fsub %Double %16, %21
@@ -304,35 +304,35 @@ define internal %Double @distance(%Point %__a, %Point %__b) {
 	ret %Double %26
 }
 
-define internal %Double @lineLength(%Line %__line) {
-	%line = alloca %Line
-	store %Line %__line, %Line* %line
-	%1 = getelementptr %Line, %Line* %line, %Int32 0, %Int32 0
-	%2 = load %Point, %Point* %1
-	%3 = getelementptr %Line, %Line* %line, %Int32 0, %Int32 1
-	%4 = load %Point, %Point* %3
-	%5 = call %Double @distance(%Point %2, %Point %4)
+define internal %Double @lineLength(%main_Line %__line) {
+	%line = alloca %main_Line
+	store %main_Line %__line, %main_Line* %line
+	%1 = getelementptr %main_Line, %main_Line* %line, %Int32 0, %Int32 0
+	%2 = load %main_Point, %main_Point* %1
+	%3 = getelementptr %main_Line, %main_Line* %line, %Int32 0, %Int32 1
+	%4 = load %main_Point, %main_Point* %3
+	%5 = call %Double @distance(%main_Point %2, %main_Point %4)
 	ret %Double %5
 }
 
 define internal void @ptr_example() {
 	%1 = call i8* @malloc(%SizeT 16)
-	%2 = bitcast i8* %1 to %Point*
-	%3 = getelementptr %Point, %Point* %2, %Int32 0, %Int32 0
+	%2 = bitcast i8* %1 to %main_Point*
+	%3 = getelementptr %main_Point, %main_Point* %2, %Int32 0, %Int32 0
 	store %Double 1.0e+01, %Double* %3
-	%4 = getelementptr %Point, %Point* %2, %Int32 0, %Int32 1
+	%4 = getelementptr %main_Point, %main_Point* %2, %Int32 0, %Int32 1
 	store %Double 2.0e+01, %Double* %4
-	%5 = getelementptr %Point, %Point* %2, %Int32 0, %Int32 0
+	%5 = getelementptr %main_Point, %main_Point* %2, %Int32 0, %Int32 0
 	%6 = load %Double, %Double* %5
-	%7 = getelementptr %Point, %Point* %2, %Int32 0, %Int32 1
+	%7 = getelementptr %main_Point, %main_Point* %2, %Int32 0, %Int32 1
 	%8 = load %Double, %Double* %7
 	%9 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([15 x i8]* @.str1 to [0 x i8]*), %Double %6, %Double %8)
 	ret void
 }
 
 define %Int @main() {
-	%1 = load %Line, %Line* @line
-	%2 = call %Double @lineLength(%Line %1)
+	%1 = load %main_Line, %main_Line* @line
+	%2 = call %Double @lineLength(%main_Line %1)
 	%3 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str2 to [0 x i8]*), %Double %2)
 	call void @ptr_example()
 	ret %Int 0

@@ -3681,7 +3681,7 @@ def def_phase2(ast):
 					error("annotation '%s' not defined\n" % a['kind'], a['ti'])
 
 
-			if get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC:
+			if get_access_level(x) == HLIR_ACCESS_LEVEL_PUBLIC or df.is_stmt_def_type():
 				df.id.prefix = global_prefix
 
 			if 'comment' in x and x['comment'] != None:
