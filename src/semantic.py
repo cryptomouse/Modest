@@ -1217,7 +1217,9 @@ def do_value_neg(x, ctx):
 		if v.asset != None:  # for ValueUndefined
 			nv.set_asset(-v.asset)
 
-		if nv.type.is_generic():
+		# generic Float (builtin.inf) так и остается generic Float:
+		# у Rational бесконечности не бывает
+		if nv.type.is_generic() and not nv.type.is_float():
 			if isinstance(v.asset, int):
 				nt = type_integer_for(v.asset, ti=v.ti)
 			else:

@@ -2,7 +2,7 @@
 from hlir import *
 from error import info, warning, error
 from bits import nbits_for_num
-from .int import is_fractional, frac_to_int
+from .int import is_fractional, frac_to_int, frac_special_to_int
 
 
 
@@ -53,6 +53,10 @@ def value_nat_cons(t, v, method, ti):
 	# ширина записи hex-литерала держит только неявную конструкцию
 	if method == 'explicit' and v.is_immediate() and v.type.is_integer():
 		from_width = nbits_for_num(v.asset)
+
+	special = frac_special_to_int(t, v, method, ti)
+	if special is not None:
+		return special
 
 	if is_fractional(v.type):
 		# как в value_int_cons: значение, а не ширина; abs() - как ниже

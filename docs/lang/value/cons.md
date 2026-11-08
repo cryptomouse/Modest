@@ -87,6 +87,9 @@ Key behaviors:
   about whether its value fits. A constant is checked by its value
   (`Int8 c` with `c = 200.0` is `integer overflow`); a run-time value that
   does not fit is undefined, see [UB#3](../../UB.md).
+  A constant NaN or infinity fits no integer: `Int32 builtin.nan` is
+  `integer overflow`, and unlike a finite value out of range it stays an
+  error under `unsafe` too — there is no integer to give.
 - Operands of binary operations are **not** promoted implicitly —
   construct explicitly to a common type first
   (see [binary](./binary.md)).

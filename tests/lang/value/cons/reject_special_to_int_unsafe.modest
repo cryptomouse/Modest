@@ -1,0 +1,32 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: cannot construct `Int32` from NaN
+// EXPECT-ERROR: cannot construct `Nat64` from infinity
+// EXPECT-ERROR: cannot construct `Int8` from infinity
+// EXPECT-ERROR: cannot construct `Int32` from NaN
+// EXPECT-ERROR-COUNT: 4
+//
+// A constant NaN or infinity constructed to an integer under `unsafe` is
+// an error too.  `unsafe(Int8 300.0)` is let through — it is UB#3 at run
+// time, and the programmer said they know — but a NaN or an infinity has
+// no integer to give at all, and the value is already known here, so
+// `unsafe` would only hide the garbage.  The diagnostic names the value
+// rather than calling it an overflow.
+// Guards BUG#120 (fixed 2026-11-08).
+
+pragma unsafe
+
+include "libc/ctypes64"
+
+
+const nan32: Float32 = builtin.nan
+
+
+func main () -> Int {
+	let a = unsafe(Int32 builtin.nan)
+	let b = unsafe(Nat64 builtin.inf)
+	let c = unsafe(Int8 -builtin.inf)
+	let d = unsafe(Int32 nan32)
+	return 0
+}
+
