@@ -223,6 +223,7 @@ utils.doSomething()
 
 ```modest
 module "geo/point"       // optional, first line of the file: the module's name
+                         // its last part must be the file name (point.modest)
                          // public symbols become geo_point_<name> in C/LLVM
                          // (default prefix: the source basename, point_)
 ```

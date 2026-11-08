@@ -34,7 +34,9 @@ module "geo/point"
 ```
 
 An optional first line of the file names the module.  The name is one or
-more identifiers separated by `/`, and with `/` turned into `_` it becomes
+more identifiers separated by `/`, and its last part is the file name
+without the extension: `module "geo/point"` belongs in `point.modest`, and
+in any other file it is an error.  With `/` turned into `_` the name becomes
 the prefix of the module's public symbols: `make` is `geo_point_make` in
 C and LLVM.  Without it the prefix is the source basename (`point_make`).
 

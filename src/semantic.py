@@ -3470,6 +3470,12 @@ def do_directive_module(x):
 	if not MODULE_NAME.fullmatch(name):
 		error("bad module name \"%s\": expected identifiers separated by '/'" % name, x['line']['ti'])
 		return
+	# the name ends with the file's own: `module "geo/point"` lives in
+	# `point.modest`, so the file can be found by the name and vice versa
+	last = name.rsplit('/', 1)[-1]
+	if last != cmodule.id:
+		error("module name \"%s\" does not match the file name: expected it to end in \"%s\"" % (name, cmodule.id), x['line']['ti'])
+		return
 	cmodule.name = name
 	global_prefix = name.replace('/', '_') + '_'
 

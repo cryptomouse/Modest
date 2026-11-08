@@ -1,0 +1,16 @@
+// TEST: reject
+// EXPECT-ERROR: module name "geo/point" does not match the file name: expected it to end in "reject_file_name"
+// EXPECT-ERROR-COUNT: 1
+//
+// The last part of a module name is the file's own name, without the
+// extension: `module "geo/point"` belongs in `point.modest`.  This file is
+// `reject_file_name.modest`, so the name is refused.
+
+module "geo/point"
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	return 0
+}
