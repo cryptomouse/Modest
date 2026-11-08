@@ -2,7 +2,6 @@
 // BACKENDS: c11, llvm
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: fold rounding
-// EXPECTED-FAIL(c11, llvm): BUG#119 a constant narrower than Float64 is rounded twice
 //
 // A constant folded into a `Float32` has to round once, straight from its
 // exact value to binary32, as the hardware rounds a run-time conversion.
@@ -14,7 +13,14 @@
 // and 2^24 + 2, so it rounds up.  2^62 + 2^38 + 1 is the integer form of
 // the same trap: the binary32 step there is 2^39, so 2^38 is the halfway
 // point and the trailing 1 decides.  The run-time conversion of the same
-// integer is checked next to it, as the reference.
+// integer is checked next to it, as the reference.  2049 + 1e-14 is the
+// binary16 case: its neighbours are 2048 and 2050, and 1e-14 is below
+// what a double holds at 2049, so the double is the halfway point itself.
+//
+// The C backend used to hand the literal to the C compiler as a double —
+// `(float)16777217.0` — which rounds twice on its own; it now prints the
+// folded value, `(float)16777218.0`, which a double holds exactly.
+// Guards BUG#119 (fixed 2026-11-08).
 //
 // `modest` is not in BACKENDS: it stops after code generation, so it would
 // pass this file without ever running it.
@@ -26,6 +32,13 @@ include "libc/stdlib"
 
 const litConst: Float32 = 16777217.000000001
 var litGlobal: Float32 = 16777217.000000001
+
+const negConst: Float32 = -16777217.000000001
+const halfConst: Float16 = 2049.00000000000001
+
+const rational = 16777217.000000001
+const fromRational = Float32 rational
+var fromRationalGlobal: Float32 = rational
 
 const big: Int64 = 4611686293305294849
 const bigConst = Float32 big
@@ -47,6 +60,16 @@ func main () -> Int {
 	ok = check("const literal", litConst, 16777218.0) and ok
 	ok = check("global literal", litGlobal, 16777218.0) and ok
 	ok = check("local literal", litLocal, 16777218.0) and ok
+
+	ok = check("negative literal", negConst, -16777218.0) and ok
+	ok = check("Float16 literal", Float32 halfConst, 2050.0) and ok
+	var halfLocal: Float16 = 2049.00000000000001
+	ok = check("Float16 local literal", Float32 halfLocal, 2050.0) and ok
+
+	ok = check("Float32 of a Rational const", fromRational, 16777218.0) and ok
+	ok = check("global from a Rational const", fromRationalGlobal, 16777218.0) and ok
+	var fromRationalLocal: Float32 = rational
+	ok = check("local from a Rational const", fromRationalLocal, 16777218.0) and ok
 
 	var bigRuntime: Int64 = 4611686293305294849
 	ok = check("run-time Float32 Int64", Float32 bigRuntime, 4611686568183201792.0) and ok

@@ -1075,39 +1075,6 @@ var b: Slot = {bytes = [0x11, 0x11, 0x11, 0x11]}
 - Coverage: `tests/lang/type/record/union_global.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#119: A constant narrower than `Float64` is rounded twice
-
-```modest
-const lit: Float32 = 16777217.000000001   // 2^24 + 1 + 1e-9
-// expected 16777218.0, c11 and llvm both give 16777216.0
-
-const big: Int64 = 4611686293305294849    // 2^62 + 2^38 + 1
-const f = Float32 big
-// expected 4611686568183201792.0, llvm gives 4611686018427387904.0
-```
-
-- Cause: `pack_float` (`src/real.py`) rounds an exact `Fraction` or `int`
-  to the target width as `struct.pack('<f', float(val))` — first to the
-  nearest double, then to the nearest binary32. The first rounding can land
-  exactly on a binary32 halfway point, and the second one then breaks the
-  tie to even instead of up: the same double-rounding error as
-  `(float)(double)x` in C. Both values above sit just over such a halfway
-  point by less than a double can hold.
-- Everything that folds a constant into a `Float32` or `Float16` goes
-  through it: both backends print the literal from `pack_float`
-  (`src/backend/c11.py:498`, `src/backend/llvm.py:617`), so a `Rational`
-  literal is wrong in both. An integer constant constructed to `Float32`
-  is wrong only under LLVM — the C backend prints the conversion,
-  `((float)BIG)`, and lets the C compiler round it once.
-- Run-time conversions are not affected: `sitofp`/`(float)i` round once.
-- Fix, probably: round the exact value to the target's significand width
-  directly (scale the `Fraction` by a power of two, round half to even,
-  check the exponent range), and only then pack it.  The C backend has to
-  print it with an `f` suffix or as a hex float, or the C compiler reads
-  the decimal as a double and rounds it a second time on its own.
-- Coverage: `tests/lang/type/float/fold_rounding.modest`, marked
-  `EXPECTED-FAIL(c11, llvm)`.
-
 ## BUG#120: A NaN or an infinity constant constructed to an integer crashes the compiler
 
 ```modest

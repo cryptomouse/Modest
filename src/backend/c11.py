@@ -1043,6 +1043,23 @@ def do_cvalue_cons_nat(x, ctx):
 	return cv
 
 
+# Rational, свернутый в FloatX уже double. Сам Rational C печатает как
+# double, и если отдать его компилятору C как есть - `(float)16777217.0`,
+# - тот округлит дважды: точное значение до double, потом до float (BUG#119).
+# Свертка уже округлила точное значение до ширины цели один раз, поэтому
+# печатаем ее результат: он точен в double, и приведение к float его не
+# меняет. Целые источники не трогаем: `(float)BIG` C округляет один раз сам.
+# Ноль - тоже: он точен в любой ширине, а знак у свернутого нуля потерян
+# (Fraction), и `-0.0` должен печататься как выражение, со своим минусом.
+def folded_rational_to_narrow_float(x):
+	t = x.type
+	if not (t.is_float() and t.width < 64):
+		return False
+	if not (x.is_immediate() and x.value.type.is_rational()):
+		return False
+	return x.asset != 0
+
+
 def do_cvalue_cons_float(x, ctx):
 	type = x.type
 	value = x.value
@@ -1050,6 +1067,9 @@ def do_cvalue_cons_float(x, ctx):
 
 	if value.is_literal() and (type.width == 64):
 		return do_cvalue_literal_rational(value, ctx)
+
+	if folded_rational_to_narrow_float(x):
+		return CValueCast(do_ctype(type), do_cvalue_literal_rational(x, ctx))
 
 	if x.method in ['implicit', 'default']:
 
@@ -1963,6 +1983,8 @@ def do_cinitializer_cons(_type, value, is_macro, ctx):
 	if not is_macro:
 		if v.type.is_generic() and v.type.is_simple_type():
 			if to.brand == v.type.brand:
+				if folded_rational_to_narrow_float(value):
+					return do_cvalue_literal_rational(value, ctx)
 				if to.is_float() and v.type.is_rational():
 					return do_cvalue(v, ctx=ctx)
 				if not (to.is_fixed() or to.is_char()):

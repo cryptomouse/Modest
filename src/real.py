@@ -29,12 +29,15 @@ def str_fractional(x, width=None):
 		return mantissa + e + exp
 
 	# в голом float ширина FloatX не сохраняется, поэтому кратчайшую запись,
-	# которая читается обратно в то же самое значение, ищем сами
+	# которая читается обратно в то же самое значение, ищем сами. Проверяем
+	# так, как ее прочтет компилятор C: литерал без суффикса - double, и уже
+	# он приводится к float (двойное округление, но val точен в double, и
+	# запись в 17 цифр ему всегда уцелеет)
 	if width is not None:
 		val = pack_float(x, width)
 		for p in range(1, 18):
 			s = '%.*g' % (p, val)
-			if pack_float(s, width) == val:
+			if pack_float(float(s), width) == val:
 				return str_always_float(s)
 
 	return str_always_float(decimal_to_str(fractional_to_decimal(x)))
@@ -76,10 +79,38 @@ def pack_float(val, width):
 	except OverflowError:
 		return math.inf if val > 0 else -math.inf
 
+	if width < 64:
+		f = _round_to_odd(val, f)
+
 	try:
 		return struct.unpack(fmt, struct.pack(fmt, f))[0]
 	except OverflowError:
 		return math.copysign(math.inf, f)
+
+
+# Точное val, уже округленное float() до ближайшего double f, нельзя просто
+# округлить еще раз до binary32/binary16: f мог попасть ровно на середину
+# между соседями узкого типа, и тогда ничья уходит к четному - а точное
+# значение лежало по одну сторону от середины (BUG#119). Как (float)(double)x
+# в C.
+#
+# Лечится округлением "к нечетному" на первом шаге: если val в double не
+# точен, берем из двух соседних double тот, у которого младший бит
+# мантиссы 1. Такой f никогда не лежит на середине узкого типа, и второе
+# округление дает ровно то, что дало бы одно-единственное. Верно, пока у
+# промежуточного типа хотя бы на 2 бита больше, чем у целевого: 53 против
+# 24 и 11. Для самого double (width=64) этот шаг неверен - там он и не нужен.
+def _round_to_odd(val, f):
+	if isinstance(val, float) or math.isinf(f):
+		return f
+	exact = Fraction(val)
+	fexact = Fraction(f)
+	if fexact == exact:
+		return f
+	if struct.unpack('<Q', struct.pack('<d', f))[0] & 1:
+		return f
+	# у соседа по ту сторону от точного значения младший бит нечетный
+	return math.nextafter(f, math.inf if exact > fexact else -math.inf)
 
 
 # наибольшее конечное значение floatX - им же и заканчивается диапазон,
