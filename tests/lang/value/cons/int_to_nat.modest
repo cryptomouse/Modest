@@ -5,13 +5,13 @@
 // EXPECT-OUT: passed: widening
 // EXPECT-OUT: passed: positive values
 // EXPECT-OUT: passed: int to nat
-// EXPECTED-FAIL(llvm): BUG#85 IntX to NatX reinterprets the bits instead of taking abs()
 //
 // `NatX i` of a signed value is its magnitude: the conversion applies
 // `abs()` (docs/CHEATSHEET.md, conversion table), so `Nat32 Int8 -5` is 5,
 // not the two's complement bits of -5.  The values are run-time ones on
 // purpose: a constant is folded by the front end, which gets it right, and
 // never reaches the code generator.
+// Guards BUG#85 (fixed 2026-11-08).
 
 include "libc/ctypes64"
 include "libc/stdio"

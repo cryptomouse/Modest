@@ -1,0 +1,132 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: the minimum
+// EXPECT-OUT: passed: narrowing
+// EXPECT-OUT: passed: a global and a field
+// EXPECT-OUT: passed: fixed to nat
+// EXPECT-OUT: passed: int to nat edges
+//
+// `NatX i` takes the magnitude in the width of the source and only then
+// changes the width, as `(uint32_t)abs(i)` does in C.  So the minimum
+// comes out right (`Nat32 Int8 -128` is 128: the magnitude of 0x80 is
+// 0x80, which as an unsigned value is 128), and narrowing keeps the low
+// bits of the magnitude (`Nat8 Int32 -300` is 300 & 0xff = 44).
+// `NatX f` of a FixedY takes the same magnitude of the integer part.
+// The values are run-time ones: a constant is folded by the front end
+// and never reaches the code generator.
+// Guards BUG#85 (fixed 2026-11-08).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Regs = {
+	i: Int16
+}
+
+var gi: Int32 = -7
+var regs: Regs
+
+
+func testMinimum () -> Bool {
+	var a: Int8 = -128
+	var b: Int16 = -32768
+
+	let x = Nat32 a
+	if x != 128 {
+		printf("Nat32 Int8 -128 = %u, expected 128\n", x)
+		return false
+	}
+
+	let y = Nat16 b
+	if y != 32768 {
+		printf("Nat16 Int16 -32768 = %u, expected 32768\n", Nat32 y)
+		return false
+	}
+
+	return true
+}
+
+
+func testNarrowing () -> Bool {
+	var a: Int32 = -300
+
+	let x = unsafe(Nat8 a)
+	if x != 44 {
+		printf("Nat8 Int32 -300 = %u, expected 44\n", Nat32 x)
+		return false
+	}
+
+	return true
+}
+
+
+func testGlobalAndField () -> Bool {
+	let x = Nat64 gi
+	if x != 7 {
+		printf("Nat64 gi = %llu, expected 7\n", x)
+		return false
+	}
+
+	regs.i = -1000
+	let y = Nat32 regs.i
+	if y != 1000 {
+		printf("Nat32 regs.i = %u, expected 1000\n", y)
+		return false
+	}
+
+	return true
+}
+
+
+func testFixed () -> Bool {
+	var f: Fixed32 = -3.75
+
+	let x = Nat32 f
+	if x != 3 {
+		printf("Nat32 Fixed32 -3.75 = %u, expected 3\n", x)
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	if testMinimum() {
+		printf("passed: the minimum\n")
+	} else {
+		ok = false
+	}
+
+	if testNarrowing() {
+		printf("passed: narrowing\n")
+	} else {
+		ok = false
+	}
+
+	if testGlobalAndField() {
+		printf("passed: a global and a field\n")
+	} else {
+		ok = false
+	}
+
+	if testFixed() {
+		printf("passed: fixed to nat\n")
+	} else {
+		ok = false
+	}
+
+	if not ok {
+		printf("failed: int to nat edges\n")
+		return exitFailure
+	}
+
+	printf("passed: int to nat edges\n")
+	return exitSuccess
+}
+

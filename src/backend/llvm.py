@@ -2210,17 +2210,24 @@ def do_eval_from_fixed(x):
 		# (кроме MIN, но и его модуль верен как беззнаковое), и zext
 		# при расширении дает то, что нужно
 		q = llvm_eval_binary('sdiv', v, scale)
-		zero = llvm_value_num(from_type, 0)
-		neg = llvm_eval_binary('icmp slt', q, zero, ValueUndefined(typeBool))
-		nq = llvm_eval_binary('sub', zero, q)
-		a = llvm_select(neg, nq, q, from_type)
-		return docast(a, type)
+		return docast(llvm_abs(q, from_type), type)
 
 	if type.width == from_type.width:
 		return llvm_eval_binary('sdiv', v, scale, x)
 
 	q = llvm_eval_binary('sdiv', v, scale)
 	return docast(q, type)
+
+
+
+# Модуль знакового v в ширине его типа - abs() из C, без интринсика:
+# icmp/sub/select оптимизатор и сам сворачивает в llvm.abs. MIN остается
+# MIN, но как беззнаковое это и есть верный модуль (0x80 у Int8 -> 128)
+def llvm_abs(v, type):
+	zero = llvm_value_num(type, 0)
+	neg = llvm_eval_binary('icmp slt', v, zero, ValueUndefined(typeBool))
+	nv = llvm_eval_binary('sub', zero, v)
+	return llvm_select(neg, nv, v, type)
 
 
 
@@ -2355,6 +2362,15 @@ def do_eval_cons(x):
 				return do_eval_literal(x)
 			v = do_reval(value)
 			return docast(v, type)
+
+	# IntY -> NatX - это abs(), а не биты (docs/CHEATSHEET.md), как
+	# (uint32_t)abs(i) в C11. Модуль - в ширине ИСТОЧНИКА, а уж потом
+	# zext/trunc/bitcast из select_cast_operator
+	if type.is_nat() and from_type.is_int():
+		if x.is_immediate() and x.asset != None:
+			return do_eval_literal(x)
+		v = do_reval(value)
+		return docast(llvm_abs(v, from_type), type)
 
 	# (!) до общей ветки scalar: у FixedX приведение несет в себе масштаб,
 	# отдавать вместо него исходное значение нельзя - ни в ту сторону,

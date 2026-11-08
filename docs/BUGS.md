@@ -405,28 +405,6 @@ sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
 - Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#85: LLVM backend converts `IntX` to `NatX` without `abs()`
-
-```modest
-var a: Int8 = -5
-var b: Int32 = -5
-let x = Nat32 a      // 251, expected 5
-let y = Nat32 b      // 4294967291, expected 5
-```
-
-- `IntY → NatX` applies `abs()` (`docs/CHEATSHEET.md`, conversion table),
-  and the C backend follows that: `(uint32_t)abs(i8)`, `llabs` for 64 bits.
-  The LLVM backend emits nothing but the plain cast from
-  `select_cast_operator` (`zext`, `trunc` or `bitcast`), so a negative value
-  comes out as its two's complement bits.  Same width and widening are
-  both affected.
-- Constants are not affected: `Nat32 k` for a `const k = Int8 -5` is
-  folded by the front end and gives 5.
-- The magnitude needs its own step before the cast (`llvm.abs.*` or
-  `select` on `icmp slt`); the extension that follows it stays a `zext`.
-- `tests/lang/value/cons/int_to_nat.modest` reproduces it.
-
-
 ## BUG#86: LLVM backend zero-extends a negative literal constructed into `WordX`
 
 ```modest
@@ -544,8 +522,7 @@ func main () -> Int {
     assignment does not — `n = Nat32 i` with `i = -5` stores 4294967291
     instead of 5, with no diagnostic.  The same source in a `let` /
     `var` initializer is correct (`(uint32_t)abs(i)`).
-- The LLVM backend handles the pointer case in both forms.  It gets
-  `IntY → NatX` wrong in both forms too, but that is BUG#85, not this.
+- The LLVM backend handles both cases in both forms.
 - Found in RV32-EMU (`sw/display`): `*reg(displayFB) = unsafe(Word32 &fb)`
   failed to compile.  Workaround: construct through `NatX` first —
   `Word32 unsafe(Nat32 &fb)` emits `(uint32_t)fb`; for `IntY → NatX`, bind
