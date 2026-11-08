@@ -333,7 +333,7 @@ endif_0:
 	store %Word8 0, %Word8* %x
 	%6 = call %Bool @queueWord8_get(%queueWord8_QueueWord8* @bq0, %Word8* %x)
 	%7 = load %Word8, %Word8* %x
-	%8 = sext %Word8 %7 to %Int
+	%8 = zext %Word8 %7 to %Int
 	%9 = zext %Bool %6 to %Word8
 	%10 = zext %Word8 %9 to %Word32
 	%11 = bitcast %Word32 %10 to %Int

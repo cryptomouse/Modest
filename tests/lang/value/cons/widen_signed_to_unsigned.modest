@@ -1,0 +1,132 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: signed to a wider word
+// EXPECT-OUT: passed: signed to a wider signed
+// EXPECT-OUT: passed: unsigned to a wider unsigned
+// EXPECT-OUT: passed: widen signed to unsigned
+//
+// The choice between sign and zero extension depends on both sides: only a
+// signed source has a sign to extend, and a WordX target takes even a
+// signed source with zeros (`Word32 Int8 -1` is 0xff, not 0xffffffff).  So
+// a sign extension is right only when both the source and the target are
+// signed.  The fix of BUG#84 moved that choice from the target to the
+// source; this test holds the cases around it that must not move with it.
+// The values are run-time ones: a constant is folded by the front end and
+// never reaches the code generator.
+// Guards BUG#84 (fixed 2026-11-08).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Regs = {
+	i: Int16
+}
+
+var gi: Int8 = -1
+var regs: Regs
+
+
+func testSignedToWord () -> Bool {
+	var i: Int8 = -1
+
+	let a = Word32 i
+	if a != 0xff {
+		printf("Word32 Int8 -1 = 0x%x, expected 0xff\n", a)
+		return false
+	}
+
+	let b = Word64 gi
+	if b != 0xff {
+		printf("Word64 Int8 -1 = 0x%llx, expected 0xff\n", b)
+		return false
+	}
+
+	regs.i = -2
+	let c = Word64 regs.i
+	if c != 0xfffe {
+		printf("Word64 Int16 -2 = 0x%llx, expected 0xfffe\n", c)
+		return false
+	}
+
+	return true
+}
+
+
+func testSignedToSigned () -> Bool {
+	var i: Int16 = -2
+
+	let a = Int64 i
+	if a != -2 {
+		printf("Int64 Int16 -2 = %lld, expected -2\n", a)
+		return false
+	}
+
+	let b = Int32 gi
+	if b != -1 {
+		printf("Int32 Int8 -1 = %d, expected -1\n", b)
+		return false
+	}
+
+	return true
+}
+
+
+func testUnsignedToUnsigned () -> Bool {
+	var w: Word8 = 0x80
+	var n: Nat8 = 200
+
+	let a = Nat32 w
+	if a != 128 {
+		printf("Nat32 Word8 0x80 = %u, expected 128\n", a)
+		return false
+	}
+
+	let b = Word64 n
+	if b != 200 {
+		printf("Word64 Nat8 200 = %llu, expected 200\n", b)
+		return false
+	}
+
+	let c = Nat64 n
+	if c != 200 {
+		printf("Nat64 Nat8 200 = %llu, expected 200\n", c)
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	if testSignedToWord() {
+		printf("passed: signed to a wider word\n")
+	} else {
+		ok = false
+	}
+
+	if testSignedToSigned() {
+		printf("passed: signed to a wider signed\n")
+	} else {
+		ok = false
+	}
+
+	if testUnsignedToUnsigned() {
+		printf("passed: unsigned to a wider unsigned\n")
+	} else {
+		ok = false
+	}
+
+	if not ok {
+		printf("failed: widen signed to unsigned\n")
+		return exitFailure
+	}
+
+	printf("passed: widen signed to unsigned\n")
+	return exitSuccess
+}
+

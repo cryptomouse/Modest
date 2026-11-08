@@ -6,13 +6,13 @@
 // EXPECT-OUT: passed: widen a field
 // EXPECT-OUT: passed: widen a signed value
 // EXPECT-OUT: passed: widen unsigned
-// EXPECTED-FAIL(llvm): BUG#84 widening WordX/NatX to a signed type sign-extends
 //
 // Widening keeps the value, and the value is set by the source type: a
 // WordX or NatX is never negative, so `Int32 w` of a `Word8 0xff` is 255,
 // and only a signed source extends its sign.  The values are run-time ones
 // on purpose: a constant is folded by the front end, which gets it right,
 // and never reaches the code generator.
+// Guards BUG#84 (fixed 2026-11-08).
 
 include "libc/ctypes64"
 include "libc/stdio"

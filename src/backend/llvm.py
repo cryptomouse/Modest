@@ -1889,7 +1889,13 @@ def select_cast_operator(a, b):
 	if a.is_integer() or a.is_int() or a.is_nat() or a.is_char() or a.is_word() or a.is_fixed():
 
 		if b.is_integer() or b.is_rational() or b.is_int() or b.is_nat() or b.is_char() or b.is_bool() or b.is_word() or b.is_fixed():
-			signed = b.is_signed()
+			# Знак расширяет только знаковый источник: WordX/NatX/Char
+			# никогда не отрицательны (BUG#84). А в WordX даже знаковый
+			# источник расширяется нулями (docs/CHEATSHEET.md), как и в NatX
+			# (там величину до приведения дает abs()), так что sext - только
+			# когда знаковые обе стороны. Integer без unsigned может быть < 0
+			a_signed = a.is_signed() or (a.is_integer() and not a.is_unsigned())
+			signed = a_signed and b.is_signed()
 
 			aw = a.width
 			bw = b.width

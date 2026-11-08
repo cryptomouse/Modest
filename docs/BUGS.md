@@ -405,33 +405,6 @@ sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
 - Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#84: LLVM backend sign-extends a `WordX`/`NatX` widened to a signed type
-
-```modest
-var w: Word8 = 0xff
-var n: Nat16 = 65535
-let a = Int32 w      // -1, expected 255
-let b = Int32 n      // -1, expected 65535
-```
-
-```llvm
-%6 = sext %Word8 %5 to %Int32
-```
-
-- Any run-time widening of an unsigned source (`WordX`, `NatX`) to a wider
-  signed type (`IntY`) sign-extends, so every value with the top bit set
-  comes out negative.  Locals, globals and fields all behave the same way.
-- `select_cast_operator` (`src/backend/llvm.py`) chooses between `sext`
-  and `zext` by the *target* (`signed = b.is_signed()`).  Whether the
-  extension is signed depends on the *source*: only a signed source
-  extends its sign.
-- Constants are not affected: `Int32 Word8 0xff` and `Int32 k` for a
-  `const k = Word8 0xff` are folded by the front end and give 255, which is
-  why the existing tests, which convert mostly constants, never saw it.
-- Only the LLVM backend.  C gives 255 / 65535.
-- `tests/lang/value/cons/widen_unsigned.modest` reproduces it.
-
-
 ## BUG#85: LLVM backend converts `IntX` to `NatX` without `abs()`
 
 ```modest
@@ -449,10 +422,8 @@ let y = Nat32 b      // 4294967291, expected 5
   both affected.
 - Constants are not affected: `Nat32 k` for a `const k = Int8 -5` is
   folded by the front end and gives 5.
-- Not the same fault as BUG#84, though the code is next to it: fixing the
-  choice of `sext`/`zext` there turns this case into `sext` and gives
-  4294967291 for `Nat32 Int8 -5`.  The magnitude needs its own step before
-  the cast (`llvm.abs.*` or `select` on `icmp slt`).
+- The magnitude needs its own step before the cast (`llvm.abs.*` or
+  `select` on `icmp slt`); the extension that follows it stays a `zext`.
 - `tests/lang/value/cons/int_to_nat.modest` reproduces it.
 
 
