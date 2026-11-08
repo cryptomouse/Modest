@@ -17,6 +17,9 @@ def value_char_create(char_code, _type=None, ti=None):
 
 
 def value_char_can(to, from_type, method, ti):
+	if from_type.is_float():
+		return False
+
 	if method == 'unsafe':
 		return True
 

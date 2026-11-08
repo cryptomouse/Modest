@@ -58,14 +58,13 @@ Target-width aliases (resolved from target config): `Int`, `Nat`, `Word`,
 > conversions to and from the other numeric types. `Float16` is binary16 in
 > both backends — `_Float16` in C11, `half` in LLVM — and reaches only the
 > targets that have it: it is absent on ppc64le, wasm and msp430, the same
-> way `__int128` behind `Word128` is. Several things around `FloatX` do not
-> hold: `FloatX` ↔ `WordX` converts numerically instead of
-> reinterpreting bits, and an `IntX`/`NatX` narrower than the float is
-> refused. A literal outside the
-> type's range is a compile-time error in both backends, the way an integer
-> one is ([cons](../value/cons.md)). See BUG#35–37 and
-> `tests/lang/type/float/`, where each has a marked reproducer next to the
-> files that pass.
+> way `__int128` behind `Word128` is. `FloatX` ↔ `WordY` reinterprets
+> bits rather than converting numerically, and `IntY`/`NatY` of any width
+> convert to and from `FloatX` explicitly ([cons](../value/cons.md)). A
+> literal outside the type's range is a compile-time error in both
+> backends, the way an integer one is. What does not hold yet is in
+> `docs/BUGS.md` (BUG#94, BUG#117), with marked reproducers in
+> `tests/lang/type/float/` next to the files that pass.
 
 ## Examples
 

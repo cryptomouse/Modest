@@ -553,7 +553,7 @@ Unit value                         // discard a value (suppress warnings)
 | `FloatX` | `Integer`, `Rational`, `IntY`, `NatY`, `FloatY`, `FixedY` | `WordY` | `WordY→FloatX` reinterprets bits; `FixedY→FloatX` removes the scale; compile-time overflow = error (`Float16 70000.0`), at run time IEEE infinity |
 | `FixedX` | `Integer`, `Rational`, `IntY`, `NatY`, `FloatY`, `FixedY` | `WordY` | applies the scale of the target's own `@fraction`; `WordY→FixedX` takes the raw storage as is |
 | `*T` | `nil`, `*[N]T→*[]T`, `*Unit`, `String→*[]CharX`, `*[]T→*[N]T` | `*U`, `WordY`, `IntY` | `*[]T→*[N]T` safe only if element types match; otherwise full reinterpret = unsafe |
-| `CharX` | `Integer`(≤X), `WordY`(Y≤X), `String`(len=1) | any numeric | `String→CharX` compile-time only; string must be exactly 1 character |
+| `CharX` | `Integer`(≤X), `WordY`(Y≤X), `String`(len=1) | any numeric but `FloatY` | `String→CharX` compile-time only; string must be exactly 1 character. `FloatY→CharX` is refused even under `unsafe` — go through `IntY` |
 | `Bool` | `Bool` | — | no construction from other types; use `==` / `!=` to produce Bool |
 | `[N]T` | `GenericArray` (len≤N), `[M]T` (M≤N, same `T`) | — | missing elements take the element default (zero / record field defaults); `[M]T` source only by explicit construction, never shortens (use a slice); never from or to a VLA `[n]T` |
 | `RecordT` | `GenericRecord` | — | omitted fields take their default: the type's default value (`0`/`false`/`nil`/...) or the field's explicit `= value` |

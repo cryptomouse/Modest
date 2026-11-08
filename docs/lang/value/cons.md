@@ -43,7 +43,7 @@ Per-target rules (`X`, `Y` — widths; verified against the compiler):
 | `NatX` | `Integer`, `NatY` Y≤X | + `IntY`, `WordY` Y≤X; `FloatY`, `FixedY` (`IntY` applies `abs`; `FixedY` truncates, then `abs`) | wider sources; `*T` |
 | `WordX` | `Integer`, `WordY` Y≤X | + `WordY` any Y (truncates); `IntY`, `NatY`, `CharY`, `FloatY` Y≤X; `Bool` | wider `IntY`/`NatY`/`FloatY`; `*T` |
 | `FloatX` | `Rational`, `Integer` | + `FloatY` any Y; `IntY`, `NatY`, `FixedY` | `WordY` (bit reinterpret) |
-| `CharX` | length-1 `String`; generic char | + `Integer`, `WordY` Y≤X | any numeric |
+| `CharX` | length-1 `String`; generic char | + `Integer`, `WordY` Y≤X | any numeric but `FloatY` (never: go through `IntY`) |
 | `Bool` | `Bool` | — (use `x != 0`) | — |
 | `*T` | `nil`; `*[N]T`→`*[]T`; `String`→`*[]CharX` | `*Unit`→`*T`, `*T`→`*Unit` | `*U` (other pointee); integer sources |
 | `[N]T` | generic array, same length | generic array, shorter (zero-fills tail); `[M]T` M≤N (tail takes the element default) | — |
@@ -78,6 +78,10 @@ Key behaviors:
   changes on the `WordX` side, as in `WordY → WordX`: `Word64` of a
   `Float32` is its pattern zero-extended, `unsafe(Float32 w)` of a
   `Word64` takes the low 32 bits.
+- `CharX` is never built from a `FloatY`, not even under `unsafe`: a
+  character is a code, and truncating a fraction to one means nothing.
+  When a code really is held in a float, the conversion is written out —
+  `unsafe(Char8 Int32 f)`.
 - `FloatY → IntX/NatX` and `FixedY → IntX/NatX` truncate the fraction
   toward zero, at any width: the width of a fractional source says nothing
   about whether its value fits. A constant is checked by its value

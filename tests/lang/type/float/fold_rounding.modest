@@ -1,0 +1,63 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: fold rounding
+// EXPECTED-FAIL(c11, llvm): BUG#119 a constant narrower than Float64 is rounded twice
+//
+// A constant folded into a `Float32` has to round once, straight from its
+// exact value to binary32, as the hardware rounds a run-time conversion.
+// Rounding it to a double first and to binary32 afterwards goes wrong on a
+// value just above a binary32 halfway point: the double lands on the
+// halfway point itself, and the tie then goes to even — downwards.
+//
+// 16777217.000000001 is 2^24 + 1 + 1e-9; the binary32 neighbours are 2^24
+// and 2^24 + 2, so it rounds up.  2^62 + 2^38 + 1 is the integer form of
+// the same trap: the binary32 step there is 2^39, so 2^38 is the halfway
+// point and the trailing 1 decides.  The run-time conversion of the same
+// integer is checked next to it, as the reference.
+//
+// `modest` is not in BACKENDS: it stops after code generation, so it would
+// pass this file without ever running it.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const litConst: Float32 = 16777217.000000001
+var litGlobal: Float32 = 16777217.000000001
+
+const big: Int64 = 4611686293305294849
+const bigConst = Float32 big
+
+
+func check (what: *Str, got: Float32, expected: Float64) -> Bool {
+	if Float64 got != expected {
+		printf("%s = %.1f, expected %.1f\n", what, Float64 got, expected)
+		return false
+	}
+	return true
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	var litLocal: Float32 = 16777217.000000001
+	ok = check("const literal", litConst, 16777218.0) and ok
+	ok = check("global literal", litGlobal, 16777218.0) and ok
+	ok = check("local literal", litLocal, 16777218.0) and ok
+
+	var bigRuntime: Int64 = 4611686293305294849
+	ok = check("run-time Float32 Int64", Float32 bigRuntime, 4611686568183201792.0) and ok
+	ok = check("const Float32 Int64", bigConst, 4611686568183201792.0) and ok
+
+	if not ok {
+		printf("failed: fold rounding\n")
+		return exitFailure
+	}
+
+	printf("passed: fold rounding\n")
+	return exitSuccess
+}
+

@@ -1,0 +1,41 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: cannot construct 'Char8' from 'Float64' value
+// EXPECT-ERROR: cannot construct 'Char16' from 'Float32' value
+// EXPECT-ERROR: cannot construct 'Char32' from 'Float16' value
+// EXPECT-ERROR: cannot construct 'Char8' from 'Float64' value
+// EXPECT-ERROR: cannot construct 'Char8' from 'Float64' value
+// EXPECT-ERROR: cannot construct 'Char8' from 'Float64' value
+// EXPECT-ERROR-COUNT: 6
+//
+// `CharX` is never built from a `FloatY`, not even under `unsafe`: a
+// character is a code, and truncating a fraction to one means nothing.
+// Every width is refused, from a run-time value, a constant and
+// `builtin.nan` alike.  The way through `IntY`, written out, still works —
+// the last line compiles.
+//
+// The LLVM backend used to take the unsafe form and emit an invalid
+// `cast %Float64 ... to %Char8`; the construction is now refused before it
+// reaches any backend.
+
+pragma unsafe
+
+include "libc/ctypes64"
+
+
+const code: Float64 = 66.0
+
+
+func main () -> Int {
+	var f: Float64 = 65.7
+	var h: Float16 = 1.0
+	let a = unsafe(Char8 f)
+	let b = unsafe(Char16 Float32 f)
+	let c = unsafe(Char32 h)
+	let d = unsafe(Char8 code)
+	let e = unsafe(Char8 builtin.nan)
+	let g = Char8 f
+	let viaInt = unsafe(Char8 Int32 f)
+	return 0
+}
+

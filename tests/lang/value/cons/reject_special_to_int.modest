@@ -1,0 +1,29 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECTED-FAIL: BUG#120 a NaN or an infinity constant to an integer crashes the compiler
+// EXPECT-ERROR: integer overflow
+// EXPECT-ERROR: attempt to construct `Int32` from `Float64`
+// EXPECT-ERROR: integer overflow
+// EXPECT-ERROR: attempt to construct `Int32` from `Float64`
+// EXPECT-ERROR: integer overflow
+// EXPECT-ERROR: attempt to construct `Nat8` from `Float64`
+// EXPECT-ERROR-COUNT: 3
+//
+// A constant NaN or infinity constructed to an integer: neither fits any
+// integer type, so it is the same `integer overflow` as `Int8 300.0`
+// (reject_fractional_to_int_overflow.modest) — and not a Python traceback
+// out of the fold.
+
+include "libc/ctypes64"
+
+
+const negInf: Float64 = -builtin.inf
+
+
+func main () -> Int {
+	let a = Int32 builtin.nan
+	let b = Int32 builtin.inf
+	let c = Nat8 negInf
+	return 0
+}
+
