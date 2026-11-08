@@ -221,6 +221,12 @@ import "utils"
 utils.doSomething()
 ```
 
+```modest
+module "geo/point"       // optional, first line of the file: the module's name
+                         // public symbols become geo_point_<name> in C/LLVM
+                         // (default prefix: the source basename, point_)
+```
+
 ### Common includes
 ```modest
 include "libc/ctypes64"   // C-named aliases: Int, Long, Float, Double, SizeT, Str, Char, ...

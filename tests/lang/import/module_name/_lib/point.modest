@@ -1,0 +1,17 @@
+// Part of `module_name/point.modest`: a module named `geo/point`, whose
+// source basename is the same as the test's own.
+
+module "geo/point"
+
+include "libc/ctypes64"
+
+
+public type Point = {
+	public x: Int32
+	public y: Int32
+}
+
+
+public func make (x: Int32, y: Int32) -> Point {
+	return {x = x, y = y}
+}

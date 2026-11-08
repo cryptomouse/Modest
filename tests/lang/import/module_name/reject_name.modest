@@ -1,0 +1,16 @@
+// TEST: reject
+// EXPECT-ERROR: bad module name "geo//point": expected identifiers separated by '/'
+// EXPECT-ERROR-COUNT: 1
+//
+// A module name becomes a symbol prefix (`geo_point_`), so each part
+// between the slashes has to be an identifier: an empty one, as here,
+// would not round-trip through `/` -> `_`.
+
+module "geo//point"
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	return 0
+}

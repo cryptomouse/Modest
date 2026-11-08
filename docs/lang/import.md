@@ -27,6 +27,28 @@ include <#"path"#>
   prefix (`utils_f`); `include`d modules keep original names
   (see [access modifiers](./access_modifiers.md)).
 
+## Module name
+
+```modest
+module "geo/point"
+```
+
+An optional first line of the file names the module.  The name is one or
+more identifiers separated by `/`, and with `/` turned into `_` it becomes
+the prefix of the module's public symbols: `make` is `geo_point_make` in
+C and LLVM.  Without it the prefix is the source basename (`point_make`).
+
+The name is written in the module itself, so every compilation that meets
+the module — its own and each importer's — gives its symbols the same
+names.  That is what lets two modules with the same file name, such as
+`geo/point.modest` and `ui/point.modest`, be linked into one program.
+
+- It does not change how the module is imported: importers still use its
+  path, and `import "geo/point"` still names the namespace `point`.
+- It does not change file names: the C header, its include guard and the
+  output files still follow `-o`.
+- `pragma prefix "p"` later in the file overrides the prefix it sets.
+
 ## Examples
 
 ```modest

@@ -48,4 +48,6 @@ Tokens of the form `$name` are reserved for compiler directives
 ## See also
 
 - [Annotations](./annotation.md) — per-definition metadata
+- [Module name](./import.md#module-name) — `module "geo/point"`, which
+  also sets the symbol prefix
 - [Import](./import.md)

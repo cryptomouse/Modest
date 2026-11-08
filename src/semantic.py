@@ -3457,6 +3457,23 @@ def translate(abspath):
 
 
 
+# `module "misc/crc32"`: the module's own name, written in its source so
+# that every compilation that meets the module - its own and each of its
+# importers' - names its symbols the same way.  It replaces the source
+# basename as the prefix of public C/LLVM names (`misc_crc32_run`); file
+# names (header, guard, -o) stay with the file (BUG#121).
+MODULE_NAME = re.compile(r'[A-Za-z_][A-Za-z0-9_]*(/[A-Za-z_][A-Za-z0-9_]*)*')
+
+def do_directive_module(x):
+	global global_prefix
+	name = x['line']['str']
+	if not MODULE_NAME.fullmatch(name):
+		error("bad module name \"%s\": expected identifiers separated by '/'" % name, x['line']['ti'])
+		return
+	cmodule.name = name
+	global_prefix = name.replace('/', '_') + '_'
+
+
 def process_module(idStr, sourcename, ast):
 	global csymtab, cmodule, global_prefix
 
@@ -3484,8 +3501,7 @@ def process_module(idStr, sourcename, ast):
 		if isa == 'ast_directive':
 			y = None
 			if x['kind'] == 'module':
-				#print("MODULE('%s')" % x['line']['str'])
-				pass
+				do_directive_module(x)
 			elif x['kind'] == 'import':
 				y = do_import(x)
 			elif x['kind'] == 'include':
@@ -3599,7 +3615,7 @@ def def_phase1(ast):
 
 		if isa == 'ast_directive':
 			if x['kind'] == 'module':
-				print("MODULE('%s')" % x['line']['str'])
+				pass  # done with the imports, before any definition
 			elif x['kind'] == 'pragma':
 				do_directive_pragma(x)
 

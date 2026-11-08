@@ -193,6 +193,7 @@ class Entity():
 class Module:
 	def __init__(self, id_str, ast, symtab, defs, sourcename):
 		self.id = id_str
+		self.name = None    # from `module "..."`; None when the source has none
 		self.sourcename = sourcename
 		self.ast = ast
 		#self.prefix = idStr

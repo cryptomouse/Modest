@@ -339,7 +339,7 @@ def do_case(t, backend, workdir):
 	if clash:
 		# Two linked modules with the same basename: an importer includes
 		# both as the same `<name>.h`, and one would generate on top of the
-		# other (BUG#121).  Say so here rather than let the linker guess.
+		# other (BUG#122).  Say so here rather than let the linker guess.
 		return result(FAIL, "two sources are both named '%s.modest'" % clash[0])
 
 	generated = []

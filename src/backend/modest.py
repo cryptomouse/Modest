@@ -1121,6 +1121,11 @@ def run(module, fname):
 	if ss != []:
 		ss[0] = ss[0].lstrip(nl_symbol).removeprefix("; ").removeprefix(" ")
 
+	# the module name sets the prefix of public symbols, so dropping it
+	# would change the module's ABI
+	if module.name != None:
+		ss.insert(0, 'module "%s"\n\n' % module.name)
+
 	dirname = os.path.dirname(fname)
 	if dirname != '':
 		os.makedirs(dirname, exist_ok=True)

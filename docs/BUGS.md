@@ -1004,27 +1004,26 @@ var b: Slot = {bytes = [0x11, 0x11, 0x11, 0x11]}
   `EXPECTED-FAIL(llvm)`.
 
 
-## BUG#121: Two modules with the same basename get the same C symbols
+## BUG#122: Two imports with the same basename share one C header
 
-```sh
-# lib/point.modest and point.modest both declare `public func make`
-modest -o point      -mbackend=c11 lib/point.modest
-modest -o point_test -mbackend=c11 point.modest     # imports "./lib/point"
-clang point.c point_test.c    # ld: 1 duplicate symbols (point_make)
+```modest
+module "app"
+
+import "./a/point" as pa     // module "a/point", public func one
+import "./b/point" as pb     // module "b/point", public func two
+
+// main.c: a single #include "point.h", so one module has no declarations
 ```
 
-- The prefix of a module's C names is its source basename
-  (`global_prefix = idStr + '_'`, `idStr = pathlib.Path(abspath).stem` in
-  `src/semantic.py`), so both `make`s come out as `point_make`. LLVM is the
-  same: `@point_make` is defined in both `.ll` files.
-- `-o` does not help: since BUG#68 it names the header, its guard and the
-  self-include, but not the symbols.
-- Importing two such modules into one module fails earlier still: the C
-  backend includes an import as `basename(impline) + '.h'`, so
-  `import "a/point"` and `import "b/point"` both ask for `point.h`.
-  `tests/run.py` refuses two linked sources with the same basename for
-  this reason.
-- A fix is a module identity that is unique by construction — the import
-  path (`misc/crc32`) rather than the stem — used for the symbol prefix,
-  the header name and `module.id` (about 30 uses in `c11.py`, plus
-  `llvm.py`).
+- The C backend includes an import as `basename(impline) + '.h'`
+  (`include_imports`, `src/backend/c11.py`), and `include` drops the second
+  `point.h` as already included.  Even with distinct headers on disk the two
+  could not both be called `point.h` in one include path.
+- Since BUG#121 the symbols are already apart (`a_point_one`, `b_point_two`
+  with `module "..."`); only the header names collide.  LLVM has no headers
+  and is not affected.
+- `tests/run.py` refuses two linked sources with the same basename for this
+  reason.
+- A fix would name the header after the module name when there is one
+  (`a_point.h`), with `-o` naming only the `.c`, or let the importer find
+  the header by the imported module's own output name.

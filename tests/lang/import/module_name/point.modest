@@ -1,0 +1,54 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// LINK: ./_lib/point.modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: module name
+// EXPECT-CODE(c11): demo_point_Point demo_point_make(int32_t x, int32_t y)
+// EXPECT-CODE(c11): geo_point_make(
+// EXPECT-CODE(llvm): define %demo_point_Point @demo_point_make(
+// EXPECT-CODE(llvm): call %geo_point_Point @geo_point_make(
+// EXPECT-CODE(modest): module "demo/point"
+//
+// `module "..."` names a module, and the name, with `/` turned into `_`,
+// is the prefix of its public C and LLVM symbols.  The test and the module
+// it links are both `point.modest`, and both have a public `Point` and
+// `make`; it is their names, `demo/point` and `geo/point`, that keep
+// `demo_point_make` and `geo_point_make` apart.
+//
+// Without the name the prefix is the source basename, so both came out as
+// `point_make` and the program did not link.
+//
+// Guards BUG#121 (fixed 2026-11-08).
+
+module "demo/point"
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+import "./_lib/point" as geo
+
+
+public type Point = {
+	public x: Int32
+	public y: Int32
+	public z: Int32
+}
+
+
+public func make (x: Int32, y: Int32) -> Point {
+	return {x = x, y = y, z = x + y}
+}
+
+
+func main () -> Int {
+	let p = make(1, 2)
+	let q = geo.make(10, 20)
+	if p.z != 3 or q.x + q.y != 30 {
+		printf("p.z = %d, q = (%d, %d)\n", Int p.z, Int q.x, Int q.y)
+		printf("failed: module name\n")
+		return exitFailure
+	}
+
+	printf("passed: module name\n")
+	return exitSuccess
+}
