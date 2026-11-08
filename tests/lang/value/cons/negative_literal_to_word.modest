@@ -1,0 +1,231 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: a local
+// EXPECT-OUT: passed: a global
+// EXPECT-OUT: passed: a construction
+// EXPECT-OUT: passed: a named constant
+// EXPECT-OUT: passed: an argument and an assignment
+// EXPECT-OUT: passed: a field and an element
+// EXPECT-OUT: passed: a literal pair
+// EXPECT-OUT: passed: negative literal to word
+//
+// A literal has no width of its own, so a negative one is the same value at
+// any width, and as a `WordX` it has every bit above its magnitude set:
+// `Word64 -1` is 0xffffffffffffffff, `Word32 -300` is 0xfffffed4.  An
+// `IntX` source is different — it has a width, and `Word64 Int32 -1` is
+// 0x00000000ffffffff (widen_signed_to_unsigned.modest) — so the literal must
+// be given the target's width directly, not negated at a width of its own
+// and then zero-extended.  A module-level `var g: Word32 = -1` used to
+// crash the LLVM backend for the same reason (a run-time `sub` in the
+// global context).
+// Guards BUG#86 (fixed 2026-11-01).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Regs = {
+	w: Word64
+}
+
+const k = -5
+
+var g32: Word32 = -1
+var g64: Word64 = Word64 -300
+var regs: Regs
+
+
+func pass (w: Word64) -> Word64 {
+	return w
+}
+
+
+func testLocal () -> Bool {
+	var a: Word64 = -1
+	var b: Word32 = -300
+	var c: Word16 = -2
+
+	if a != 0xffffffffffffffff {
+		printf("Word64 = -1 gives 0x%llx\n", a)
+		return false
+	}
+
+	if b != 0xfffffed4 {
+		printf("Word32 = -300 gives 0x%x\n", b)
+		return false
+	}
+
+	if c != 0xfffe {
+		printf("Word16 = -2 gives 0x%x\n", Nat32 c)
+		return false
+	}
+
+	return true
+}
+
+
+func testGlobal () -> Bool {
+	if g32 != 0xffffffff {
+		printf("global Word32 = -1 gives 0x%x\n", g32)
+		return false
+	}
+
+	if g64 != 0xfffffffffffffed4 {
+		printf("global Word64 -300 gives 0x%llx\n", g64)
+		return false
+	}
+
+	return true
+}
+
+
+func testConstruction () -> Bool {
+	let a = Word64 -1
+	if a != 0xffffffffffffffff {
+		printf("Word64 -1 gives 0x%llx\n", a)
+		return false
+	}
+
+	let b = Word32 -300
+	if b != 0xfffffed4 {
+		printf("Word32 -300 gives 0x%x\n", b)
+		return false
+	}
+
+	return true
+}
+
+
+func testNamedConstant () -> Bool {
+	let a = Word64 k
+	if a != 0xfffffffffffffffb {
+		printf("Word64 k gives 0x%llx\n", a)
+		return false
+	}
+
+	var b: Word16 = k
+	if b != 0xfffb {
+		printf("Word16 = k gives 0x%x\n", Nat32 b)
+		return false
+	}
+
+	return true
+}
+
+
+func testArgumentAndAssignment () -> Bool {
+	let a = pass(-1)
+	if a != 0xffffffffffffffff {
+		printf("pass(-1) gives 0x%llx\n", a)
+		return false
+	}
+
+	var b: Word64 = 0
+	b = -2
+	if b != 0xfffffffffffffffe {
+		printf("b = -2 gives 0x%llx\n", b)
+		return false
+	}
+
+	return true
+}
+
+
+func testFieldAndElement () -> Bool {
+	regs.w = -1
+	if regs.w != 0xffffffffffffffff {
+		printf("regs.w = -1 gives 0x%llx\n", regs.w)
+		return false
+	}
+
+	var arr: [2]Word32
+	arr[1] = -7
+	if arr[1] != 0xfffffff9 {
+		printf("arr[1] = -7 gives 0x%x\n", arr[1])
+		return false
+	}
+
+	return true
+}
+
+
+func testLiteralPair () -> Bool {
+	var a: Word64 = -1 | 0x0F
+	if a != 0xffffffffffffffff {
+		printf("Word64 = -1 | 0x0F gives 0x%llx\n", a)
+		return false
+	}
+
+	var b: Word64 = -256 & 0xFFFF
+	if b != 0xff00 {
+		printf("Word64 = -256 & 0xFFFF gives 0x%llx\n", b)
+		return false
+	}
+
+	// a literal meeting a run-time word takes its width too
+	var w: Word64 = 0
+	let c = w ^ -300
+	if c != 0xfffffffffffffed4 {
+		printf("w ^ -300 gives 0x%llx\n", c)
+		return false
+	}
+
+	return true
+}
+
+
+func main () -> Int {
+	var ok = true
+
+	if testLocal() {
+		printf("passed: a local\n")
+	} else {
+		ok = false
+	}
+
+	if testGlobal() {
+		printf("passed: a global\n")
+	} else {
+		ok = false
+	}
+
+	if testConstruction() {
+		printf("passed: a construction\n")
+	} else {
+		ok = false
+	}
+
+	if testNamedConstant() {
+		printf("passed: a named constant\n")
+	} else {
+		ok = false
+	}
+
+	if testArgumentAndAssignment() {
+		printf("passed: an argument and an assignment\n")
+	} else {
+		ok = false
+	}
+
+	if testFieldAndElement() {
+		printf("passed: a field and an element\n")
+	} else {
+		ok = false
+	}
+
+	if testLiteralPair() {
+		printf("passed: a literal pair\n")
+	} else {
+		ok = false
+	}
+
+	if not ok {
+		printf("failed: negative literal to word\n")
+		return exitFailure
+	}
+
+	printf("passed: negative literal to word\n")
+	return exitSuccess
+}

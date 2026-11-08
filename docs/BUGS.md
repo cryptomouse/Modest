@@ -405,37 +405,6 @@ sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
 - Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
   `EXPECTED-FAIL(llvm)`.
 
-## BUG#86: LLVM backend zero-extends a negative literal constructed into `WordX`
-
-```modest
-var a: Word64 = -1          // llvm: 0xff      c11: 0xffffffffffffffff
-var b: Word32 = -300        // llvm: 0xfed4    c11: 0xfffffed4
-var c: Word64 = Word64 -1   // llvm: 0xff
-var d: Word64 = -1 | 0x0F   // llvm: 0xff      (literal pair, see BUG#28)
-var g: Word32 = -1          // at module level: the backend crashes
-```
-
-- A literal has no width of its own, so a negative one is the same value at
-  any width, and as a `WordX` it has every bit above its magnitude set.
-  The front end folds it that way — `const k: Word64 = -1` gives
-  `0xffffffffffffffff` on both backends — and so does C.
-- `do_eval_cons` (`src/backend/llvm.py`) sends `Integer → WordX` down the
-  same path as `IntX → WordX`: `do_reval` of the literal, then `docast`.
-  `do_reval` computes the negation at the literal's own width
-  (`sub i8 0, 1`), and `select_cast_operator` picks the extension by the
-  *target*, which is unsigned, so it is `zext`: the upper bits come back 0.
-  The comment there (`int32(-1) -> uint64 => 0x00000000ffffffff`) is right
-  for an `IntX` source, which has a width, and wrong for a literal.
-- The same run-time `sub` is what crashes a module-level `var g: Word32 =
-  -1`: `reg_get` asserts it is not in the global context.  A module-level
-  `var h: Int32 = -1` is fine.
-- The same fault as BUG#63 (a literal sized to its own value, then
-  zero-extended), on the construction path instead of `~`.  An immediate
-  operand should be emitted from its folded `asset` at the target's width.
-- Only the LLVM backend.  No test covers it: `tests/lang/value/binary/
-  literal_pair.modest` keeps its literal pairs non-negative because of it.
-
-
 ## BUG#87: C backend overflows `int` on a folded literal expression
 
 ```modest
