@@ -1,5 +1,4 @@
 // TEST: run
-// EXPECTED-FAIL(c11): BUG#88 header uses a private type it does not declare
 // EXPECT-OUT: passed: private_in_public
 //
 // The counterpart of private_in_public_*_reject.modest: a private type may
@@ -10,6 +9,7 @@
 //   - in the body of a public func;
 //   - anywhere in a private definition;
 // and a public type built from other public types is fine.
+// Guards BUG#88 (fixed 2026-11-08).
 
 include "libc/ctypes64"
 include "libc/stdio"

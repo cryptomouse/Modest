@@ -2901,6 +2901,8 @@ def do_header(module, hname):
 			xdefs.extend(do_def_var(x, isdecl=True))
 		elif x.is_stmt_def_type():
 			xdefs.extend(do_deps(x.deps))
+			xdefs.extend(do_private_types_for(x.original_type, module))
+			xdefs.extend(flush_anons(module))
 			xdefs.extend(do_def_type(x))
 		elif x.is_stmt_def_const():
 			xdefs.extend(do_deps(x.deps))
@@ -2913,6 +2915,33 @@ def do_header(module, hname):
 
 	dv = CConditionalRegion(pairs=[("!defined(%s)" % guardsymbol, xdefs)])
 	return (dv,)
+
+
+# Закрытые типы модуля, без которых не собрать C-определение типа t
+# (BUG#88): у публичной записи может быть закрытое поле закрытого типа -
+# в интерфейс Modest оно не входит, но C нужен полный struct, а значит и
+# все имена в нем. Такие типы уходят в заголовок перед t (закрытыми в
+# Modest они остаются: импортер их не назовет), а .c их уже не повторит -
+# они попали в defined. Публичные именованные типы не трогаем: их выведет
+# основной цикл
+def do_private_types_for(t, module, seen=None):
+	if seen is None:
+		seen = []
+	xdefs = []
+	for c in type_children(t):
+		if c in seen:
+			continue
+		seen.append(c)
+		d = getattr(c, 'definition', None)
+		if isinstance(d, StmtDefType) and getattr(c, 'module', None) == module:
+			if not is_private(d):
+				continue
+			xdefs.extend(do_private_types_for(d.original_type, module, seen))
+			xdefs.extend(do_deps(d.deps))
+			xdefs.extend(do_def_type(d))
+		else:
+			xdefs.extend(do_private_types_for(c, module, seen))
+	return xdefs
 
 
 def was_defined(x):
