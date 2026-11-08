@@ -131,6 +131,11 @@ moving it to another directory does not touch its header.  A file pulled
 in through `LINK` is a part of some other test, so it is not collected as
 a test of its own even when it sits inside `tests/`.
 
+Each source is generated under its own basename, because that is the header
+an `import` asks for.  If the test shares its basename with a linked module,
+the test is the one renamed — `point.modest` builds as `point_test.c` — since
+nothing imports it.  Two linked modules with the same basename are refused.
+
 ### Tests that must not compile
 
 Some rules are only visible when they are broken: an out-of-range literal,

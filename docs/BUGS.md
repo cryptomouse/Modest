@@ -14,23 +14,6 @@ reproduced it: its `EXPECTED-FAIL` marker becomes a `Guards BUG#N (fixed
 "Known-broken tests").  Who fixed it and when is git's to answer:
 `git log -S '## BUG#N:' -- docs/BUGS.md`.
 
-## BUG#15: C backend's `#include` of its own header ignores `-o`
-
-```sh
-modest -o out/prog -mbackend=c11 main.modest
-# writes out/prog.c and out/prog.h, but out/prog.c contains:
-#include "main.h"        # does not exist -> clang: file not found
-```
-
-- Cause: the include line is built from the module id (`include(module.id
-  + '.h')`, `src/backend/c11.py:2161`), which is the *source* base name,
-  while the header file is written as `os.path.basename(_outname) + '.h'`
-  (`src/backend/c11.py:2282`) — the *output* prefix. The two agree only
-  when `-o` happens to end in the same base name as the source.
-- Expected: both should come from the same name.
-- Went unnoticed because every existing invocation follows the
-  `-o <dir>/main main.modest` shape, where the two coincide.
-
 ## BUG#19: `-funsafe` is never consulted; only `pragma unsafe` grants permission
 
 ```bash
@@ -244,36 +227,6 @@ struct main__anonymous_variant_1 r = divide(10, 2);
   gets through.
 - Coverage: `tests/lang/type/variant/basic.modest` holds the working shape and
   points here.
-
-## BUG#68: `-o` renames the generated files but not the module inside them
-
-```sh
-modest -o zzz -mbackend=c11 xxh64.modest
-```
-
-```c
-/* zzz.c */
-#include "xxh64.h"
-
-/* zzz.h */
-#if !defined(XXH64_H)
-#define XXH64_H
-```
-
-- The C11 backend writes `zzz.c` and `zzz.h` as asked, but names the module
-  after the source file: the self-include and the include guard both say
-  `xxh64`. The `.c` then includes a header that was never written, and clang
-  stops at `'xxh64.h' file not found`.
-- The reverse case is worse, because it is silent. Two modules whose sources
-  share a basename — a test `prog/crc32.modest` linked against
-  `lib/misc/crc32.modest` — generate the same guard `CRC32_H` whatever `-o`
-  calls the files. The second header to be included is skipped entirely, and
-  the program links only if it happens not to need the declarations that were
-  dropped.
-- So the name a module is known by is the source filename, and `-o` cannot
-  change it. Either the module name should follow `-o`, or it should be the
-  import path (`misc/crc32`), which is unique by construction.
-
 
 ## BUG#71: `@alignment(N)` on a record type loses its N
 
@@ -1049,3 +1002,29 @@ var b: Slot = {bytes = [0x11, 0x11, 0x11, 0x11]}
 - The C backend is unaffected — it prints a designated initializer.
 - Coverage: `tests/lang/type/record/union_global.modest`, marked
   `EXPECTED-FAIL(llvm)`.
+
+
+## BUG#121: Two modules with the same basename get the same C symbols
+
+```sh
+# lib/point.modest and point.modest both declare `public func make`
+modest -o point      -mbackend=c11 lib/point.modest
+modest -o point_test -mbackend=c11 point.modest     # imports "./lib/point"
+clang point.c point_test.c    # ld: 1 duplicate symbols (point_make)
+```
+
+- The prefix of a module's C names is its source basename
+  (`global_prefix = idStr + '_'`, `idStr = pathlib.Path(abspath).stem` in
+  `src/semantic.py`), so both `make`s come out as `point_make`. LLVM is the
+  same: `@point_make` is defined in both `.ll` files.
+- `-o` does not help: since BUG#68 it names the header, its guard and the
+  self-include, but not the symbols.
+- Importing two such modules into one module fails earlier still: the C
+  backend includes an import as `basename(impline) + '.h'`, so
+  `import "a/point"` and `import "b/point"` both ask for `point.h`.
+  `tests/run.py` refuses two linked sources with the same basename for
+  this reason.
+- A fix is a module identity that is unique by construction — the import
+  path (`misc/crc32`) rather than the stem — used for the symbol prefix,
+  the header name and `module.id` (about 30 uses in `c11.py`, plus
+  `llvm.py`).

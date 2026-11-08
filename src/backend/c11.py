@@ -2840,7 +2840,7 @@ c_helpers = {
 }
 
 
-def do_header(module):
+def do_header(module, hname):
 	defs = module.defs
 
 	global already_included
@@ -2848,7 +2848,11 @@ def do_header(module):
 
 	xdefs = []
 
-	guardsymbol = camel_to_upper_snake(module.id) + '_H'
+	# guard follows the file actually written (-o), not the source name:
+	# two modules that share a basename must not share a guard (BUG#68)
+	guardsymbol = re.sub(r'\W', '_', camel_to_upper_snake(hname)) + '_H'
+	if guardsymbol[0].isdigit():
+		guardsymbol = 'M' + guardsymbol
 	xdefs.append(CMacroDef(guardsymbol, None))
 
 	if defs != []:
@@ -3047,7 +3051,7 @@ def flush_anons(module):
 
 
 
-def do_cfile(module):
+def do_cfile(module, hname):
 	defs = module.defs
 
 	global already_included, defined
@@ -3056,7 +3060,7 @@ def do_cfile(module):
 	xdefs = []
 
 	if module.id != 'main':
-		xdefs.extend(include(module.id + '.h'))
+		xdefs.extend(include(hname + '.h'))
 
 	xdefs.extend(include("stddef.h", local=False))
 	xdefs.extend(include("stdint.h", local=False))
@@ -3195,20 +3199,22 @@ def run(module, _outname):
 	global anons_done
 	anons_done = []
 
+	# the module's own header is named after -o, and so are its guard and
+	# the .c file's self-include (BUG#68)
+	hname = os.path.basename(_outname)
 	hpath = _outname
 	if 'include_dir' in csettings:
 		inc_dir = csettings['include_dir']
-		hname = os.path.basename(_outname)
 		hpath = os.path.join(inc_dir, hname)
 
 
 	if not 'no-h-file' in features:
 		if module.id != 'main':
-			hh = do_header(module)
+			hh = do_header(module, hname)
 			dump(hpath + '.h', hh)
 
 	if not 'no-c-file' in features:
-		cc = do_cfile(module)
+		cc = do_cfile(module, hname)
 		dump(_outname + '.c', cc)
 
 	dirs = set()

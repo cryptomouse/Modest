@@ -1,0 +1,41 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// LINK: ./_lib/point.modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: same basename
+//
+// The test and the module it imports are both `point.modest`.  The runner
+// compiles the test with `-o point_test`, and the C backend has to name
+// the module after that: `point_test.c` includes `point_test.h`, guarded
+// by `POINT_TEST_H`.
+//
+// It used to take both from the source name, so the test's `.c` included
+// the library's `point.h` instead of its own header, and `Pair`, declared
+// only there, was unknown.
+//
+// Guards BUG#68 (fixed 2026-11-08), and BUG#15, its earlier duplicate.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+import "./_lib/point"
+
+
+public type Pair = {
+	public a: point.Point
+	public b: point.Point
+}
+
+
+func main () -> Int {
+	let pair = Pair {a = point.make(1, 2), b = point.make(3, 4)}
+	let sum = pair.a.x + pair.a.y + pair.b.x + pair.b.y
+	if sum != 10 {
+		printf("sum = %d, expected 10\n", Int sum)
+		printf("failed: same basename\n")
+		return exitFailure
+	}
+
+	printf("passed: same basename\n")
+	return exitSuccess
+}

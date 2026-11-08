@@ -1,0 +1,15 @@
+// Part of `same_basename/point.modest`: a module whose basename is the
+// same as the test's own.
+
+include "libc/ctypes64"
+
+
+public type Point = {
+	public x: Int32
+	public y: Int32
+}
+
+
+public func make (x: Int32, y: Int32) -> Point {
+	return {x = x, y = y}
+}

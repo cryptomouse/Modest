@@ -265,12 +265,16 @@ def install(new, binary):
 def output_names(sources):
 	"""What each source is called after code generation.
 
-	Its own basename, and it cannot be anything else: the backend names the
-	module — its self-include, its include guard — after the source file and
-	ignores `-o` when doing so (BUG#68).  Rename the output and the `.c` asks
-	for a header nobody wrote.
+	Its own basename, since that is the header an `import` asks for:
+	`import "misc/crc32"` includes `crc32.h`, so a linked module cannot be
+	renamed.  The test itself is imported by nobody, so when its basename
+	is taken by a linked module it is the one that moves — the backend
+	names a module's self-include and include guard after `-o` (BUG#68).
 	"""
-	return [os.path.splitext(os.path.basename(s))[0] for s in sources]
+	names = [os.path.splitext(os.path.basename(s))[0] for s in sources]
+	if names[0] in names[1:]:
+		names[0] += '_test'
+	return names
 
 
 def do_reject(t, backend, sources, workdir, result):
@@ -333,9 +337,9 @@ def do_case(t, backend, workdir):
 	names = output_names(sources)
 	clash = [n for n in names if names.count(n) > 1]
 	if clash:
-		# Same basename, same module name, same include guard (BUG#68): one
-		# generates on top of the other and the survivor is missing half its
-		# declarations.  Say so here rather than let the linker guess.
+		# Two linked modules with the same basename: an importer includes
+		# both as the same `<name>.h`, and one would generate on top of the
+		# other (BUG#121).  Say so here rather than let the linker guess.
 		return result(FAIL, "two sources are both named '%s.modest'" % clash[0])
 
 	generated = []
