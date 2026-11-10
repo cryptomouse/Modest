@@ -1,0 +1,58 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: nested_func
+//
+// A function defined inside a loop body has loops of its own, and its
+// `break` / `again` belong to them.  After the definition the enclosing
+// loop is still the current one, so its own `break` and `again` stay
+// valid.  The reject side is reject_outside_loop.modest.
+// Guards BUG#124 (fixed 2026-11-10).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func main () -> Int {
+	var rounds: Int32 = 0
+	var total: Int32 = 0
+
+	while true {
+		// Sums 1..limit skipping 2, with its own `again` and `break`.
+		func sumTo (limit: Int32) -> Int32 {
+			var i: Int32 = 0
+			var s: Int32 = 0
+			while true {
+				i += 1
+				if i == 2 {
+					again
+				}
+				if i > limit {
+					break
+				}
+				s += i
+			}
+			return s
+		}
+
+		rounds += 1
+		if rounds == 1 {
+			again        // the outer loop's, after the nested definition
+		}
+		total = total + sumTo(rounds)
+		if rounds == 4 {
+			break        // the outer loop's
+		}
+	}
+
+	// rounds 2..4: sumTo(2) = 1, sumTo(3) = 4, sumTo(4) = 8
+	if rounds != 4 or total != 13 {
+		printf("rounds = %d, total = %d, expected 4 and 13\n", rounds, total)
+		printf("failed: nested_func\n")
+		return exitFailure
+	}
+
+	printf("passed: nested_func\n")
+	return exitSuccess
+}

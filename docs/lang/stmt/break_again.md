@@ -1,7 +1,8 @@
 # Break / Again
 
 Loop control statements; both are valid only inside a
-[`while`](./while.md) body.
+[`while`](./while.md) body — anywhere else, including the body of a
+function defined inside a loop, they are a compile error.
 
 ## break
 

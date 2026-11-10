@@ -1,0 +1,48 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: `again` outside of a loop
+// EXPECT-ERROR: `break` outside of a loop
+// EXPECT-ERROR: `break` outside of a loop
+// EXPECT-ERROR: `again` outside of a loop
+// EXPECT-ERROR: `break` outside of a loop
+// EXPECT-ERROR-COUNT: 5
+//
+// `break` and `again` are only valid inside a `while` body.  They used to
+// be accepted anywhere and passed straight to the backend: c11 emitted a
+// stray `continue;` / `break;` for the C compiler to trip over, llvm a
+// jump to a label that does not exist.  Covered: the function body itself,
+// an `if` that is not in a loop, the code right after a loop (it must not
+// stay "inside"), and a function defined in a loop body — the loop is
+// around the definition, not around the body that runs when it is called.
+// Guards BUG#124 (fixed 2026-11-10).
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	var n: Int32 = 0
+
+	again
+
+	if n == 0 {
+		break
+	}
+
+	while n < 3 {
+		n += 1
+	}
+	break
+
+	while n < 6 {
+		func step (k: Int32) -> Int32 {
+			if k > 4 {
+				again
+			}
+			break
+			return k + 1
+		}
+		n = step(n)
+	}
+
+	return 0
+}

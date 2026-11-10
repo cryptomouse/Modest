@@ -135,6 +135,7 @@ cmodule = None  # Current module
 csymtab = None  # current symtab (symtab)
 cdef = None     # current definition
 cfunc = None	# current function
+loop_depth = 0	# number of `while` statements around the current statement
 
 import_stack = []
 
@@ -2358,7 +2359,10 @@ def do_stmt_while(x):
 	if cond.is_bad():
 		return StmtBad(x['ti'])
 
+	global loop_depth
+	loop_depth += 1
 	block = do_stmt(x['stmt'])
+	loop_depth -= 1
 
 	if block.is_stmt_bad():
 		return StmtBad(x['ti'])
@@ -2414,10 +2418,16 @@ def do_stmt_func(x):
 
 
 def do_stmt_again(x):
+	if loop_depth == 0:
+		error("`again` outside of a loop", x['ti'])
+		return StmtBad(x['ti'])
 	return StmtAgain(x['ti'])
 
 
 def do_stmt_break(x):
+	if loop_depth == 0:
+		error("`break` outside of a loop", x['ti'])
+		return StmtBad(x['ti'])
 	return StmtBreak(x['ti'])
 
 
@@ -3120,7 +3130,7 @@ def def_func1(x):
 
 
 def def_func2(x, annos):
-	global cmodule, cdef, cfunc, csymtab
+	global cmodule, cdef, cfunc, csymtab, loop_depth
 
 	if is_local_context():
 		# this is a nested function
@@ -3193,6 +3203,10 @@ def def_func2(x, annos):
 	prev_cfunc = cfunc
 	cfunc = fn
 
+	# a loop around a nested function's definition is not around its body
+	prev_loop_depth = loop_depth
+	loop_depth = 0
+
 	create_params(fn)
 
 	# for C backend, for #include <stdarg.h>
@@ -3228,6 +3242,7 @@ def def_func2(x, annos):
 	csymtab = csymtab.parent_get()  # remove params symtab
 
 	cfunc = prev_cfunc
+	loop_depth = prev_loop_depth
 	cdef = prev_cdef
 
 #	if fn.is_pure:
