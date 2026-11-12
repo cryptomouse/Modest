@@ -506,6 +506,18 @@ def do_cvalue_literal_rational(v, ctx):
 	return CValueIdentifier(str_fractional(val, width))
 
 
+# Свернутое значение FloatX. do_cvalue_literal_rational печатает его в
+# ширине типа, но без суффикса, и C читает такой литерал как double:
+# `0.33333334 != f` сравнивал бы в double, где это уже не то же число,
+# что float 0.33333334 (BUG#125). Уже округленное значение приводим
+# обратно к типу - тогда и выражение вокруг считается в его ширине
+def do_cvalue_literal_float(v, t, ctx):
+	cv = do_cvalue_literal_rational(v, ctx)
+	if t.width == 64:
+		return cv
+	return CValueCast(do_ctype(t), cv)
+
+
 def do_cvalue_literal_char(t, v, ctx):
 	return CValueChar(v.asset, width=t.width)
 
@@ -682,7 +694,7 @@ def do_cvalue_literal_with_type(v, t, ctx):
 
 	elif t.is_bool(): return do_cvalue_literal_bool(v, ctx)
 	elif t.is_rational(): return do_cvalue_literal_rational(v, ctx)
-	elif t.is_float(): return do_cvalue_literal_rational(v, ctx)
+	elif t.is_float(): return do_cvalue_literal_float(v, t, ctx)
 	elif t.is_fixed(): return do_cvalue_fixed(t, v, ctx)
 	elif t.is_char(): return do_cvalue_literal_char(t, v, ctx)
 	elif t.is_array(): return do_cvalue_literal_array(v, ctx)
@@ -922,8 +934,7 @@ def do_cvalue_float_bits(x, ctx):
 	if x.is_immediate():
 		if t.is_word():
 			return cvalue_literal_integer(x.asset, width=t.width, is_unsigned=True, as_hex=True, ctx=ctx)
-		cv = do_cvalue_literal_rational(x, ctx)
-		return cv if t.width == 64 else CValueCast(do_ctype(t), cv)
+		return do_cvalue_literal_float(x, t, ctx)
 
 	float_type = from_type if from_type.is_float() else t
 	word_ctype = do_ctype(type_word_create(float_type.width))
@@ -1918,7 +1929,10 @@ def do_cvalue_bin(x, ctx):
 	# в исходнике человек написал 'totalVolume / elementVolume', и по
 	# голому 3.125 в .c этого уже не видно
 	if x.is_immediate() and (x.asset != None) and x.type.is_fractional():
-		cv = do_cvalue_literal_rational(x, ctx)
+		if x.type.is_float():
+			cv = do_cvalue_literal_float(x, x.type, ctx)
+		else:
+			cv = do_cvalue_literal_rational(x, ctx)
 		cv.mark = str_cvalue(do_cvalue_bin_expr(x, ctx))
 		return cv
 

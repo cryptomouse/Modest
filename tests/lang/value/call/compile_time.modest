@@ -132,12 +132,9 @@ func main () -> Int {
 	}
 	printf("passed: construction\n")
 
-	// through a typed `let`: the C backend prints a bare folded Float32
-	// as a double literal, and `!=` would compare it in double (BUG#125)
 	var f: Float32 = 1.0
-	let folded: Float32 = third(1.0)
-	if folded != third(f) {
-		printf("third(1.0) = %.10f, at run time %.10f\n", Float64 folded, Float64 third(f))
+	if third(1.0) != third(f) {
+		printf("third(1.0) = %.10f, at run time %.10f\n", Float64 third(1.0), Float64 third(f))
 		return exitFailure
 	}
 	printf("passed: float\n")

@@ -1,21 +1,34 @@
 // TEST: run
 // BACKENDS: c11, llvm
-// EXPECTED-FAIL(c11): BUG#125 a folded Float32 value is printed as a double literal
 // EXPECT-EXIT: 0
+// EXPECT-CODE(c11): (float)0.33333334
 // EXPECT-OUT: passed: folded expression
 // EXPECT-OUT: passed: folded call
+// EXPECT-OUT: passed: folded constant
+// EXPECT-OUT: passed: folded field
+// EXPECT-OUT: passed: folded Float16
 // EXPECT-OUT: passed: folded float32
 //
-// A Float32 value known at compile time, compared with the same value
-// computed at run time.  Folding rounds it to binary32 correctly, but the
-// C backend prints it bare (`0.33333334`), which C reads as a double:
-// `==` against a `float` then compares in double, and 0.33333334 is not
-// 0.3333333432674408.  Through a typed variable the value would be
-// rounded back to float, so every case compares the folded value directly.
+// A FloatX value known at compile time, compared with the same value
+// computed at run time.  Folding rounds it to the type's width, and the
+// C backend prints it in that width (`0.33333334`) — but a bare literal is
+// a double in C, so `!=` against a `float` operand compared in double, and
+// 0.33333334 is not 0.3333333432674408.  The literal now carries a cast
+// back to its type.  Through a typed variable the value would be rounded
+// back to float anyway, so every case compares the folded value directly,
+// reaching C by each way a folded value takes: a folded expression, a
+// folded call, a `const` (a `#define`), a field of a constant record.
+//
+// Guards BUG#125 (fixed 2026-11-12).
 
 include "libc/ctypes64"
 include "libc/stdio"
 include "libc/stdlib"
+
+
+type Box = {
+	v: Float32
+}
 
 
 func third (x: Float32) -> Float32 {
@@ -26,6 +39,19 @@ func third (x: Float32) -> Float32 {
 func thirdAtRunTime (x: Float32) -> Float32 {
 	return x / 3.0
 }
+
+func thirdHalf (x: Float16) -> Float16 {
+	return x / 3.0
+}
+
+@impure
+func thirdHalfAtRunTime (x: Float16) -> Float16 {
+	return x / 3.0
+}
+
+
+const thirdConst = third(1.0)
+const box: Box = {v = third(1.0)}
 
 
 func main () -> Int {
@@ -42,6 +68,25 @@ func main () -> Int {
 		return exitFailure
 	}
 	printf("passed: folded call\n")
+
+	if thirdConst != thirdAtRunTime(one) {
+		printf("const thirdConst differs from the same call at run time\n")
+		return exitFailure
+	}
+	printf("passed: folded constant\n")
+
+	if box.v != thirdAtRunTime(one) {
+		printf("box.v differs from the same call at run time\n")
+		return exitFailure
+	}
+	printf("passed: folded field\n")
+
+	var oneHalf: Float16 = 1.0
+	if thirdHalf(1.0) != thirdHalfAtRunTime(oneHalf) {
+		printf("thirdHalf(1.0) differs from the same call at run time\n")
+		return exitFailure
+	}
+	printf("passed: folded Float16\n")
 
 	printf("passed: folded float32\n")
 	return exitSuccess
