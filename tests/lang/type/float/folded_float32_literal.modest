@@ -1,0 +1,50 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// EXPECTED-FAIL(c11): BUG#125 a folded Float32 value is printed as a double literal
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: folded expression
+// EXPECT-OUT: passed: folded call
+// EXPECT-OUT: passed: folded float32
+//
+// A Float32 value known at compile time, compared with the same value
+// computed at run time.  Folding rounds it to binary32 correctly, but the
+// C backend prints it bare (`0.33333334`), which C reads as a double:
+// `==` against a `float` then compares in double, and 0.33333334 is not
+// 0.3333333432674408.  Through a typed variable the value would be
+// rounded back to float, so every case compares the folded value directly.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func third (x: Float32) -> Float32 {
+	return x / 3.0
+}
+
+@impure
+func thirdAtRunTime (x: Float32) -> Float32 {
+	return x / 3.0
+}
+
+
+func main () -> Int {
+	var one: Float32 = 1.0
+
+	if Float32 1.0 / 3.0 != thirdAtRunTime(one) {
+		printf("Float32 1.0 / 3.0 differs from the same division at run time\n")
+		return exitFailure
+	}
+	printf("passed: folded expression\n")
+
+	if third(1.0) != thirdAtRunTime(one) {
+		printf("third(1.0) differs from the same call at run time\n")
+		return exitFailure
+	}
+	printf("passed: folded call\n")
+
+	printf("passed: folded float32\n")
+	return exitSuccess
+}
+
+

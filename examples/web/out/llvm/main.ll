@@ -351,60 +351,58 @@ then_0:
 	br label %endif_0
 endif_0:
 	%3 = insertvalue %SockAddrIn zeroinitializer, %AddressFamily 2, 1
-	%4 = call %Word16 @htons(%Word16 8080)
-	%5 = bitcast %Word16 %4 to %UnsignedShort
-	%6 = insertvalue %SockAddrIn %3, %UnsignedShort %5, 2
-	store %SockAddrIn %6, %SockAddrIn* %serverAddr
-	%7 = bitcast %SockAddrIn* %serverAddr to %SockAddr*
-	%8 = call %Int @bind(%Int %1, %SockAddr* %7, %SocklenT 16)
-	store %Int %8, %Int* %rc
+	%4 = insertvalue %SockAddrIn %3, %UnsignedShort 36895, 2
+	store %SockAddrIn %4, %SockAddrIn* %serverAddr
+	%5 = bitcast %SockAddrIn* %serverAddr to %SockAddr*
+	%6 = call %Int @bind(%Int %1, %SockAddr* %5, %SocklenT 16)
+	store %Int %6, %Int* %rc
 ; if_1
-	%9 = load %Int, %Int* %rc
-	%10 = icmp slt %Int %9, 0
-	br %Bool %10 , label %then_1, label %endif_1
+	%7 = load %Int, %Int* %rc
+	%8 = icmp slt %Int %7, 0
+	br %Bool %8 , label %then_1, label %endif_1
 then_1:
 	call void @perror(%ConstCharStr* bitcast ([19 x i8]* @.str6 to [0 x i8]*))
-	%11 = call %Int @close(%Int %1)
+	%9 = call %Int @close(%Int %1)
 	call void @exit(%Int 1)
 	br label %endif_1
 endif_1:
-	%12 = call %Int @listen(%Int %1, %Int 5)
-	store %Int %12, %Int* %rc
+	%10 = call %Int @listen(%Int %1, %Int 5)
+	store %Int %10, %Int* %rc
 ; if_2
-	%13 = load %Int, %Int* %rc
-	%14 = icmp slt %Int %13, 0
-	br %Bool %14 , label %then_2, label %endif_2
+	%11 = load %Int, %Int* %rc
+	%12 = icmp slt %Int %11, 0
+	br %Bool %12 , label %then_2, label %endif_2
 then_2:
 	call void @perror(%ConstCharStr* bitcast ([21 x i8]* @.str7 to [0 x i8]*))
-	%15 = call %Int @close(%Int %1)
+	%13 = call %Int @close(%Int %1)
 	call void @exit(%Int 1)
 	br label %endif_2
 endif_2:
-	%16 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([32 x i8]* @.str8 to [0 x i8]*), %Nat32 8080)
+	%14 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([32 x i8]* @.str8 to [0 x i8]*), %Nat32 8080)
 ; while_1
 	br label %again_1
 again_1:
 	br %Bool 1 , label %body_1, label %break_1
 body_1:
 	store %SockAddrIn zeroinitializer, %SockAddrIn* %clientAddr
-	%17 = bitcast %SockAddrIn* %clientAddr to %SockAddr*
+	%15 = bitcast %SockAddrIn* %clientAddr to %SockAddr*
 	store %SocklenT 16, %SocklenT* %clientAdrLen
-	%18 = call %Int @accept(%Int %1, %SockAddr* %17, %SocklenT* %clientAdrLen)
+	%16 = call %Int @accept(%Int %1, %SockAddr* %15, %SocklenT* %clientAdrLen)
 ; if_3
-	%19 = icmp slt %Int %18, 0
-	br %Bool %19 , label %then_3, label %endif_3
+	%17 = icmp slt %Int %16, 0
+	br %Bool %17 , label %then_3, label %endif_3
 then_3:
 	call void @perror(%ConstCharStr* bitcast ([25 x i8]* @.str9 to [0 x i8]*))
 	br label %again_1
 	br label %endif_3
 endif_3:
-	call void @handleRequest(%Int %18)
-	%21 = load %Nat32, %Nat32* @pageCounter
-	%22 = add %Nat32 %21, 1
-	store %Nat32 %22, %Nat32* @pageCounter
+	call void @handleRequest(%Int %16)
+	%19 = load %Nat32, %Nat32* @pageCounter
+	%20 = add %Nat32 %19, 1
+	store %Nat32 %20, %Nat32* @pageCounter
 	br label %again_1
 break_1:
-	%23 = call %Int @close(%Int %1)
+	%21 = call %Int @close(%Int %1)
 	ret %Int32 0
 }
 

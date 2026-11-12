@@ -24,16 +24,19 @@ include "libc/stdio"
 include "libc/stdlib"
 
 
+@impure
 func opaque (n: Int32) -> Int32 {
 	return n
 }
 
 
+@impure
 func opaqueNat (n: Nat32) -> Nat32 {
 	return n
 }
 
 
+@impure
 func opaqueNat8 (n: Nat8) -> Nat8 {
 	return n
 }

@@ -62,14 +62,18 @@ var vb: @volatile [32]Bool
 
 
 
+
 @inline
+@impure
 func staticInlineFunc (x: Int32) -> Int32 {
 	return x + 1
 }
 
 
 
+
 @noinline
+@impure
 func staticNoinlineFunc (x: Int32) -> Int32 {
 	return x + 1
 }
@@ -77,6 +81,7 @@ func staticNoinlineFunc (x: Int32) -> Int32 {
 
 
 @inlinehint
+@impure
 func staticInlineHintFunc (x: Int32) -> Int32 {
 	return x + 1
 }

@@ -27,6 +27,7 @@ const negTen: Int32 = -10
 const negThree: Int32 = -3
 
 
+@impure
 func opaque (n: Int32) -> Int32 {
 	return n
 }

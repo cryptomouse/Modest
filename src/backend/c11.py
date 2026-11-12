@@ -514,7 +514,7 @@ def do_cvalue_literal_char(t, v, ctx):
 def do_array_literal_from_citems(items, ctx):
 	initializers = []
 	for item in items:
-		ini = do_cinitializer(item.type, item, ctx=ctx)
+		ini = do_cvalue_initializer(item.type, item, ctx=ctx)
 		ini.nl = item.nl
 		initializers.append(ini)
 	return CValueArray(initializers)
@@ -533,7 +533,7 @@ def do_cvalue_literal_record_from_asset_list(asset, ctx, ctype=None):
 	citems = []
 	for kv in asset:
 		if not kv.value.is_undefined():
-			inititlizer = do_cinitializer(kv.value.type, kv.value, ctx=ctx)
+			inititlizer = do_cvalue_initializer(kv.value.type, kv.value, ctx=ctx)
 			kv = KV(get_id_str(kv), inititlizer, nl=kv.nl)
 			citems.append(kv)
 	return do_cvalue_literal_struct_from_citems(citems=citems, cast_to_ctype=ctype)
@@ -1280,6 +1280,12 @@ def do_cvalue_cons_fixed(x, ctx):
 
 
 def do_cvalue_call(x, ctx, sret=None):
+	# вызов чистой функции, свернутый на этапе компиляции (ct_call):
+	# печатаем его значение - вызов в C не константа, и `#define X f(1)`
+	# не годился бы ни в размер массива, ни в инициализатор глобальной
+	if x.is_immediate() and x.asset != None:
+		return do_cvalue_literal_with_type(x, x.type, ctx)
+
 	cv = doo_call(x.func, x.args, ctx)
 
 	# Массив возвращается через sret-параметр, и в позиции значения буфер
@@ -1948,13 +1954,10 @@ def do_cvalue_bin_expr(x, ctx):
 	assert(False)
 
 
-def do_cinitializer(type, value, ctx, is_macro=False):
-	if value.is_cons():
-		return do_cinitializer_cons(type, value, is_macro, ctx)
-	return do_cvalue(value, ctx=ctx)
+def do_cvalue_initializer(_type, value, ctx, is_macro=False):
+	if not value.is_cons():
+		return do_cvalue(value, ctx=ctx)
 
-
-def do_cinitializer_cons(_type, value, is_macro, ctx):
 	v = value.value
 	to = value.type
 
@@ -2203,7 +2206,7 @@ def do_cstmt_var(x):
 
 	civ = None
 	if not dynamic_init and not init_value.is_undefined() and not init_value.type.is_va_list():
-		civ = do_cinitializer(var_value.type, init_value, ctx=[])
+		civ = do_cvalue_initializer(var_value.type, init_value, ctx=[])
 
 	storage_class = ''
 	if x.hasAttribute('static'):
@@ -2247,7 +2250,7 @@ def do_cstmt_const(x):
 		global func_undef_list
 		func_undef_list.append(id_str)
 		# если точный тип константы неизвестен - печатаем ее как макро
-		iv = do_cinitializer(type, init_value, ctx=[], is_macro=True)
+		iv = do_cvalue_initializer(type, init_value, ctx=[], is_macro=True)
 		macro = CMacroDefValue(id_str, iv)
 		return macro
 
@@ -2259,7 +2262,7 @@ def do_cstmt_const(x):
 
 	civ = None
 	if not dynamic_init:
-		civ = do_cinitializer(type, init_value, ctx=[])
+		civ = do_cvalue_initializer(type, init_value, ctx=[])
 
 	ct = do_ctype(type)
 	if type.is_array() and (dynamic_init or not init_value.is_immediate()):
@@ -2599,7 +2602,7 @@ def do_def_var(x, isdecl=False):
 
 	civ = None
 	if not (x.init_value.is_undefined() or x.init_value.is_default() or is_extern):
-		civ = do_cinitializer(var_value.type, x.init_value, ctx=[])
+		civ = do_cvalue_initializer(var_value.type, x.init_value, ctx=[])
 
 	dv = CStmtDefVar(get_id_str(var_value), do_ctype(var_value.type), initializer=civ, storage_class=storage_class, attributes=x.attributes)
 
@@ -2621,17 +2624,19 @@ def do_def_const(x):
 		return (CRawText(""),)
 
 	id_str = camel_to_upper_snake(get_id_str(x.value))
-	iv = do_cinitializer(x.value.type, x.init_value, ctx=[], is_macro=True)
 
-	if x.init_value.is_cons() and x.init_value.method != 'explicit':
-		if x.init_value.value.type.is_generic() and not x.init_value.type.is_array():
-			if not isinstance(iv, CValueCast):
-				iv = CValueCast(do_ctype(x.value.type), iv)
+	iv = x.init_value
+	civ = do_cvalue_initializer(x.value.type, iv, ctx=[], is_macro=True)
 
-#	if not isinstance(iv, CValueCast):
-#		if not x.init_value.type.is_generic() and not x.init_value.type.is_array():
-#			iv = CValueCast(do_ctype(x.value.type), iv)
-	macro = CMacroDefValue(id_str, iv)
+	if iv.is_cons() and iv.method != 'explicit':
+		if iv.value.type.is_generic() and not iv.type.is_array():
+			if not isinstance(civ, CValueCast):
+				civ = CValueCast(do_ctype(x.value.type), civ)
+
+#	if not isinstance(civ, CValueCast):
+#		if not iv.type.is_generic() and not iv.type.is_array():
+#			civ = CValueCast(do_ctype(x.value.type), civ)
+	macro = CMacroDefValue(id_str, civ)
 	module_undef_list.append(id_str)
 	defined.append(x)
 	return (macro,)

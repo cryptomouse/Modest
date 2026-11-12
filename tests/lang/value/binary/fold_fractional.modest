@@ -30,11 +30,13 @@ include "libc/stdlib"
 
 // The compiler cannot see through a call, so what comes back is a value the
 // backend had to emit and the program had to load.
+@impure
 func opaque (x: Float64) -> Float64 {
 	return x
 }
 
 
+@impure
 func opaque32 (x: Float32) -> Float32 {
 	return x
 }

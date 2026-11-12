@@ -4,20 +4,23 @@
 #include <stdbool.h>
 #include <stdio.h>
 //include "./lib"
-static uint32_t a[10][20];
-static uint32_t k = 10;
-static uint32_t l = 20;
+#define C1 1
+#define C2 2
+
+static int32_t sum(int32_t a, int32_t b) {
+	return a + b;
+}
+#define C3 3
+
+static int32_t init(void) {
+	const int32_t a = 3;
+	printf("sum: %d\n", a);
+	return 0;
+}
 
 int32_t main(void) {
-	void *const p = (void *)a;
-	const uint32_t __MyArray_0 = k;
-	const uint32_t __MyArray_1 = l;
-	typedef uint32_t MyArray[__MyArray_0][__MyArray_1];
-	k = 0;
-	l = 0;
-	uint32_t (*const pa)[__MyArray_1] = (uint32_t (*)[__MyArray_1])p;
-	printf("sizeof(MyArray) = %d\n", sizeof(uint32_t) * __MyArray_1 * __MyArray_0);
-	printf("sizeof(*pa) = %d\n", sizeof(uint32_t) * __MyArray_1 * __MyArray_0);
+	init();
+	const int32_t a = 3;
 	return 0;
 }
 

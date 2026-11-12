@@ -1,0 +1,28 @@
+// TEST: reject
+// EXPECT-ERROR: division by zero
+// EXPECT-ERROR: integer overflow
+// EXPECT-ERROR-COUNT: 2
+//
+// A pure function call with compile-time arguments is folded, so an
+// error in its value is found at compile time, the same way as in a
+// constant expression written inline.
+
+include "libc/ctypes64"
+
+
+func quotient (a: Int32, b: Int32) -> Int32 {
+	return a / b
+}
+
+func square (x: Int32) -> Int32 {
+	return x * x
+}
+
+
+func main () -> Int {
+	let q = quotient(1, 0)
+	let s = square(100000)
+	return 0
+}
+
+

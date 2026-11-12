@@ -6,6 +6,9 @@ pragma do_not_include
 pragma prefix ""
 
 
+// @impure: `twice(21)` would be folded at compile time otherwise, and
+// the test would never reach the body that is not emitted
+@impure
 public func twice (x: Int32) -> Int32 {
 	return x * 2
 }

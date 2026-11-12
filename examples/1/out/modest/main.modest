@@ -3,28 +3,27 @@ include "libc/stdio"
 
 //include "./lib"
 
+const c1 = 1
+const c2 = 2
 
 
-var a: [10][20]Nat32
+func sum (a: Int32, b: Int32) -> Int32 {
+	return a + b
+}
 
-var k: Nat32 = 10
-var l: Nat32 = 20
+const c3: Int32 = sum(c1, c2)
+
+func init () -> Int32 {
+	let a: Int32 = sum(c1, c2)
+	printf("sum: %d\n", a)
+	return 0
+}
 
 
 @nonstatic
 func main () -> Int32 {
-	let p = Ptr &a
-
-	type MyArray = [k][l]Nat32
-
-	k = 0
-	l = 0
-
-	let pa = *MyArray p
-
-	printf("sizeof(MyArray) = %d\n", sizeof(MyArray))
-	printf("sizeof(*pa) = %d\n", sizeof *pa)
-
+	init()
+	let a: Int32 = sum(c1, c2)
 	return 0
 }
 

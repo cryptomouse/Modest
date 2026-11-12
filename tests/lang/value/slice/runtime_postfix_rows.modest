@@ -17,6 +17,7 @@ include "libc/stdio"
 include "libc/stdlib"
 
 
+@impure
 func opaque (n: Int32) -> Int32 {
 	return n
 }

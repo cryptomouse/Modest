@@ -921,3 +921,35 @@ import "./b/point" as pb     // module "b/point", public func two
 - A fix would name the header after the module name when there is one
   (`a_point.h`), with `-o` naming only the `.c`, or let the importer find
   the header by the imported module's own output name.
+
+## BUG#125: C prints a folded Float32 value as a double literal
+
+```modest
+func thirdAtRunTime (x: Float32) -> Float32 { return x / 3.0 }   // @impure
+
+var one: Float32 = 1.0
+if Float32 1.0 / 3.0 != thirdAtRunTime(one) { ... }   // taken in C11
+```
+
+```c
+if (/*(float)1.0 / (float)3.0*/0.33333334 != thirdAtRunTime(one)) {
+```
+
+- Folding rounds the value to binary32 correctly (0.3333333432674408), and
+  `do_cvalue_literal_rational` (`src/backend/c11.py`) prints it in the
+  shortest form for that width — `0.33333334`, with no `f` suffix or
+  `(float)` cast.  C reads it as a double, so the comparison with a `float`
+  operand is done in double and 0.33333334 != 0.3333333432674408.
+- Both ways a folded `FloatX` narrower than 64 bits reaches C go there:
+  a `ValueLiteral` of a concrete float type (`do_cvalue_literal_with_type`)
+  and a folded `ValueBin` (`do_cvalue_bin`).  The latter shows up with any
+  inline constant expression; the former now with every folded call to a
+  pure function returning `Float32` (`ct_call`, `src/semantic.py`).
+- Invisible when the value lands in a typed `let`/`var`/`const` or a
+  `FloatX` parameter: the conversion to `float` rounds it back.  A
+  `ValueCons` to `Float32` already casts (`#define K ((float)0.33333334)`).
+- LLVM is not affected: its constants carry their type.
+- `do_cvalue_float_bits` already does the right thing for its own case —
+  `CValueCast(do_ctype(t), cv)` when the width is not 64; a fix would do
+  the same (or append `f` for Float32) for any concrete `FloatX` literal.
+- Reproducer: `tests/lang/type/float/folded_float32_literal.modest`.

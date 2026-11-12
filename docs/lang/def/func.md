@@ -114,6 +114,10 @@ share one signature.
   [pointer to function](../type/func.md).
 - Inlining is controlled with `@inline` / `@inlinehint` / `@noinline`
   (see [annotations](../annotation.md)).
+- A function whose body is a single `return` over its parameters is pure,
+  and its calls with compile-time arguments are folded
+  (see [compile-time calls](../value/call.md#compile-time-calls));
+  `@impure` turns that off.
 
 ## Example
 

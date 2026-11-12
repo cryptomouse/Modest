@@ -41,6 +41,7 @@ type Buffer = {
 }
 
 
+@impure
 func opaque (n: Nat32) -> Nat32 {
 	return n
 }

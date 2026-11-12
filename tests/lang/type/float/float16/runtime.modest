@@ -45,6 +45,7 @@ type HVec = {
 }
 
 
+@impure
 func take (h: Float16) -> Float16 {
 	return h
 }

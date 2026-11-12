@@ -1573,14 +1573,35 @@ class TypeFunc(Type):
 		return deps
 
 
-	# Чистый тип функции не принимает и не возвращает указатели
+	# Чистый тип функции: нет переменных аргументов, результат не Unit,
+	# и ни параметры, ни результат не несут ссылок наружу (см. type_has_ref)
 	def is_pure_func(t):
-		if t.to.is_pointer():
+		if t.extra_args or t.to.is_unit():
+			return False
+		if type_has_ref(t.to):
 			return False
 		for param in t.params:
-			if param.type.is_pointer():
+			if type_has_ref(param.type):
 				return False
 		return True
+
+
+
+# Тип несёт ссылку на память вне себя: указатель (в том числе спрятанный
+# в поле записи, элементе массива или варианте), функция, va_list,
+# @extern тип. Через такую величину функция может читать или менять
+# чужое состояние. Рекурсия конечна: тип может сослаться на себя
+# только через указатель, а на нём обход останавливается
+def type_has_ref(t):
+	if t.is_pointer() or t.is_func() or t.is_va_list() or t.is_opaque():
+		return True
+	if t.is_array():
+		return type_has_ref(t.of)
+	if t.is_record():
+		return any(type_has_ref(f.type) for f in t.fields)
+	if t.is_variant():
+		return any(type_has_ref(v) for v in t.variants)
+	return False
 
 
 
@@ -2090,6 +2111,67 @@ class Value(Entity):
 		return self.asset == 0
 
 
+	# Выражение чистое, если его значение зависит только от параметров и
+	# констант: не читает переменных, не касается памяти через ссылки и
+	# вызывает только чистые функции. Неизвестный вид значения - нечистый.
+	# (не путать с полем is_pure у ValueFunc - чистота самой функции)
+	def is_pure_expr(self):
+		v = self
+
+		if isinstance(v, ValueCall):
+			f = v.func
+			if isinstance(f, ValueAccessModule):
+				f = f.value
+			if not (isinstance(f, ValueFunc) and f.is_pure):
+				return False
+			if type_has_ref(v.type):
+				return False
+			return all(a.value.is_pure_expr() for a in v.args)
+
+		# ссылка на память - указатель, функция как значение и т.п.;
+		# заодно ловит разыменование и указатель, собранный из числа
+		if v.type == None or v.is_bad() or type_has_ref(v.type):
+			return False
+
+		if isinstance(v, (ValueLiteral, ValueUndefined,
+		                  ValueSizeofType, ValueSizeofValue,
+		                  ValueLengthofType, ValueLengthofValue,
+		                  ValueAlignofType, ValueAlignofValue, ValueOffsetof)):
+			# sizeof и родня своего операнда не вычисляют
+			return True
+
+		if isinstance(v, ValueArray):
+			return all(x.is_pure_expr() for x in v.asset if isinstance(x, Value))
+
+		if isinstance(v, ValueRecord):
+			return all(x.value.is_pure_expr() for x in v.asset)
+
+		if isinstance(v, ValueConst):
+			# параметр или константа; локальных констант в теле из одного
+			# return не бывает
+			return v.is_param() or v.is_global()
+
+		if isinstance(v, (ValueAccessModule, ValueNot, ValueNeg, ValuePos,
+		                  ValueSubexpr, ValueCons)):
+			return v.value.is_pure_expr()
+
+		if isinstance(v, (ValueBin, ValueShl, ValueShr)):
+			return v.left.is_pure_expr() and v.right.is_pure_expr()
+
+		if isinstance(v, ValueAccessRecord):
+			return v.left.is_pure_expr()
+
+		if isinstance(v, ValueIndex):
+			return v.left.is_pure_expr() and v.index.is_pure_expr()
+
+		if isinstance(v, ValueSlice):
+			return all(x.is_pure_expr() for x in (v.left, v.index_from, v.index_to))
+
+		# ValueVar (любая переменная), ValueFunc как значение, ValueRef,
+		# ValueDeref, ValueNew, va_* и всё, что появится потом
+		return False
+
+
 	@staticmethod
 	def print(x, msg="value_print:"):
 		assert(isinstance(x, Value))
@@ -2334,6 +2416,8 @@ class ValueFunc(Value):
 		super().__init__(type=type, ti=ti)
 		self.id = id
 		self.is_pure = False
+		self.pure_retval = None  # выражение под return чистой функции
+		self.param_values = []   # ValueConst параметров (см. create_params)
 		self.usecnt = 0
 		self.typedefs = []
 		self.funcs = []

@@ -46,6 +46,7 @@ func isPoint (p: Point, tag: Word8, x: Int32, y: Int32) -> Bool {
 }
 
 
+@impure
 func takeBrand (b: Brand) -> Brand {
 	return b
 }

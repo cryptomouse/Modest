@@ -131,11 +131,13 @@ func testThroughPointer () -> Bool {
 }
 
 
+@impure
 func wide (n: Int64) -> Int64 {
 	return n
 }
 
 
+@impure
 func real (f: Float64) -> Float64 {
 	return f
 }

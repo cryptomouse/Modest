@@ -204,6 +204,7 @@ func testMixing () -> Bool {
 // or C regroups it into `(sizeof(item) * n) / m`.  `opaque` keeps the two
 // numbers out of the fold, and the division deliberately does not divide
 // evenly - with an even division both groupings agree and prove nothing.
+@impure
 func opaque (n: Size) -> Size {
 	return n
 }

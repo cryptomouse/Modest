@@ -308,21 +308,25 @@ func testFoldedInitializers () -> Bool {
 
 // The compiler cannot see through a call, so what comes back is a value it
 // has to compute at run time — which is the whole point of the comparison.
+@impure
 func opaque (n: Int32) -> Int32 {
 	return n
 }
 
 
+@impure
 func opaque64 (n: Int64) -> Int64 {
 	return n
 }
 
 
+@impure
 func opaqueWord (w: Word32) -> Word32 {
 	return w
 }
 
 
+@impure
 func identity (n: Int32) -> Int32 {
 	return n
 }

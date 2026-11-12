@@ -91,7 +91,7 @@ def ctxCheck(ctx, key, value):
 	return ctx != None and key in ctx and ctx[key] == value
 
 
-from value.cons import value_cons_implicit, value_cons_implicit_check, value_cons_explicit, value_cons_default
+from value.cons import value_cons, value_cons_implicit, value_cons_implicit_check, value_cons_explicit, value_cons_default
 
 
 from symtab import Symtab
@@ -1123,14 +1123,17 @@ def do_value_unary_check(v, op, ctx):
 # `not` - только Bool, `~` - только WordX: две разные операции (docs/lang/value/unary.md)
 def do_value_not(x, ctx):
 	v = do_rvalue(x['value'], ctx=ctx)
+	return do_value_not_op(v, x['ti'], ctx=ctx)
 
+
+def do_value_not_op(v, ti, ctx):
 	if v.is_bad() or v.is_undefined():
 		return v
 
 	if not do_value_unary_check(v, HLIR_VALUE_OP_LOGIC_NOT, ctx=ctx):
-		return ValueBad(ti=x['ti'])
+		return ValueBad(ti=ti)
 
-	nv = ValueNot(v.type, v, ti=x['ti'])
+	nv = ValueNot(v.type, v, ti=ti)
 
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 	if v.is_immediate():
@@ -1143,12 +1146,15 @@ def do_value_not(x, ctx):
 
 def do_value_bitwise_not(x, ctx):
 	v = do_rvalue(x['value'], ctx=ctx)
+	return do_value_bitwise_not_op(v, x['ti'], ctx=ctx)
 
+
+def do_value_bitwise_not_op(v, ti, ctx):
 	if v.is_bad() or v.is_undefined():
 		return v
 
 	if not do_value_unary_check(v, HLIR_VALUE_OP_BITWISE_NOT, ctx=ctx):
-		return ValueBad(ti=x['ti'])
+		return ValueBad(ti=ti)
 
 	# `~` на литерале инвертирует его в его же ширине: у hex-литерала это
 	# ширина записи (~0x0F это 0xF0, ~0xF это 0), у десятичного - по
@@ -1159,11 +1165,11 @@ def do_value_bitwise_not(x, ctx):
 	if v.type.is_integer():
 		if v.asset < 0:
 			error("expected non-negative integer value", v.ti)
-			return ValueBad(ti=x['ti'])
+			return ValueBad(ti=ti)
 		mask = (1 << v.type.width) - 1
-		return value_integer_bits(~v.asset & mask, v, ti=x['ti'])
+		return value_integer_bits(~v.asset & mask, v, ti=ti)
 
-	nv = ValueNot(v.type, v, ti=x['ti'])
+	nv = ValueNot(v.type, v, ti=ti)
 
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 	if v.is_immediate():
@@ -1188,14 +1194,17 @@ def value_integer_bits(num, v, ti):
 
 def do_value_neg(x, ctx):
 	v = do_rvalue(x['value'], ctx=ctx)
+	return do_value_neg_op(v, x['ti'], ctx=ctx)
 
+
+def do_value_neg_op(v, ti, ctx):
 	if v.is_bad() or v.is_undefined():
 		return v
 
 	vtype = v.type
 
 	if not do_value_unary_check(v, HLIR_VALUE_OP_NEG, ctx=ctx):
-		return ValueBad(ti=x['ti'])
+		return ValueBad(ti=ti)
 
 	if not vtype.is_generic():
 		if vtype.is_unsigned():
@@ -1210,7 +1219,7 @@ def do_value_neg(x, ctx):
 		vtype.signed = True
 		vtype.unsigned = False
 
-	nv = ValueNeg(vtype, v, ti=x['ti'])
+	nv = ValueNeg(vtype, v, ti=ti)
 
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 	if v.is_immediate():
@@ -1233,19 +1242,22 @@ def do_value_neg(x, ctx):
 
 def do_value_pos(x, ctx):
 	v = do_rvalue(x['value'], ctx=ctx)
+	return do_value_pos_op(v, x['ti'], ctx=ctx)
 
+
+def do_value_pos_op(v, ti, ctx):
 	if v.is_bad() or v.is_undefined():
 		return v
 
 	vtype = v.type
 
 	if not do_value_unary_check(v, HLIR_VALUE_OP_POS, ctx=ctx):
-		return ValueBad(ti=x['ti'])
+		return ValueBad(ti=ti)
 
 	if vtype.is_unsigned():
 		error("expected value with signed type", v.ti)
 
-	nv = ValuePos(vtype, v, ti=x['ti'])
+	nv = ValuePos(vtype, v, ti=ti)
 
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 	if v.is_immediate():
@@ -1588,52 +1600,142 @@ def do_value_call(x, ctx):
 	nv = ValueCall(ftype.to, fn, sorted_args, ti=x['ti'])
 	nv.stage = HLIR_VALUE_STAGE_RUNTIME
 
-#	if False:
-#		if fn.is_pure and args_is_ct:
-#			ct_call(fn, sorted_args, x['ti'])
-#			# Для композитных пока не делаем! Чет в принтере ломается
-#			if not nv.type.is_unit():
-#				nv.stage = HLIR_VALUE_STAGE_COMPILETIME
-#				if nv.type.is_aggregate():
-#					nv.set_asset([])
-#				else:
-#					nv.set_asset(0)
-
-
-	# (!) Вызов функцией нечистой функции делает ее так же нечистой (!)
-	if cfunc != None and not fn.is_pure:
-		cfunc.is_pure = False
+	# вызов чистой функции с аргументами, известными на этапе компиляции,
+	# сворачиваем (см. ct_call): узел остается вызовом - modest-бэкенду
+	# есть что напечатать, - но получает значение, как свернутый ValueBin
+	if all(a.value.is_immediate() for a in sorted_args):
+		rv = ct_call(fn, [a.value for a in sorted_args], x['ti'])
+		if rv != None:
+			if rv.is_bad():
+				return rv
+			nv.stage = HLIR_VALUE_STAGE_COMPILETIME
+			nv.set_asset(rv.asset)
 
 	return nv
 
 
+
+# Вычисление вызова чистой функции на этапе компиляции.
+# Тело чистой функции - один `return <выражение>` (см. func_is_pure),
+# и оно уже разобрано в HLIR: проходим по дереву этого выражения,
+# подставляя вместо параметров значения аргументов, и пересобираем
+# каждый узел теми же *_op функциями, что строят его при разборе -
+# так свертка (ширина, переполнение, деление на ноль, округление
+# FloatX) ровно та же, что у обычного константного выражения.
+# Возвращает значение вызова (asset - результат), None, если вызов
+# вычислить нельзя (тогда он остается вызовом времени исполнения), или
+# ValueBad, если при вычислении нашлась ошибка (она уже выдана)
+CT_CALL_MAX_DEPTH = 256
+ct_call_depth = 0
+
 def ct_call(fn, args, ti):
-	global csymtab
+	global ct_call_depth
 
-	warning("compile time call not implemented, will returned zero value!", ti)
+	if isinstance(fn, ValueAccessModule):
+		fn = fn.value
+	if not isinstance(fn, ValueFunc) or not fn.is_pure:
+		return None
 
-	csymtab = Symtab(parent=csymtab)
+	# пока что только скаляры: свертка записей и массивов - следующий шаг
+	if fn.type.to.is_aggregate():
+		return None
+	for a in args:
+		if a.type.is_aggregate() or a.asset == None:
+			return None
 
-	#create_params(fn)
-	# 1. Формируем параметры в контексте (!)
-	params = fn.type.params
-	i = 0
-	while i < len(params):
-		#arg = args[i]
-		param = params[i]
-		param_value = ValueConst(param.type, param.id, init_value=ValueUndefined(param.type), ti=param.ti)
-		param_value.storage_class = HLIR_VALUE_STORAGE_CLASS_PARAM
-		param_value.set_asset(args[i].value.asset)  # (!)
-		csymtab.value_add(param.id.str, param_value, is_public=False)
-		i += 1
+	if ct_call_depth >= CT_CALL_MAX_DEPTH:
+		return None
 
-	# 2. Теперь обрабатываем блок функции
+	# параметр -> значение аргумента (ключ - сам ValueConst параметра,
+	# на него и ссылаются узлы тела)
+	env = {}
+	for pv, a in zip(fn.param_values, args):
+		env[id(pv)] = a
 
-	for stmt in fn.definition.stmt.stmts:
-		if stmt.is_stmt_return():
-			print(stmt.value)
+	errcnt0 = get_errcnt()
+	ct_call_depth += 1
+	try:
+		rv = ct_eval(fn.pure_retval, env)
+	finally:
+		ct_call_depth -= 1
 
-	csymtab = csymtab.parent_get()
+	if get_errcnt() != errcnt0:
+		info("in compile-time call of '%s'" % fn.id.str, ti)
+		return ValueBad(type=fn.type.to, ti=ti)
+
+	if rv == None or rv.is_bad() or not rv.is_immediate() or rv.asset == None:
+		return None
+
+	return rv
+
+
+# Значение выражения `v` из тела чистой функции при параметрах из `env`.
+# None - узел вычислить не умеем
+def ct_eval(v, env):
+	# от параметров не зависит - уже свернуто при разборе тела
+	if v.is_immediate():
+		return v
+
+	if isinstance(v, ValueConst) and v.is_param():
+		return env.get(id(v))
+
+	if v.type.is_aggregate():
+		return None
+
+	if isinstance(v, (ValueSubexpr, ValueAccessModule)):
+		return ct_eval(v.value, env)
+
+	if isinstance(v, ValueBin):
+		l = ct_eval(v.left, env)
+		r = ct_eval(v.right, env)
+		if l == None or r == None:
+			return None
+		return do_value_bin_op(v.op, l, r, v.ti, ctx=None)
+
+	if isinstance(v, (ValueShl, ValueShr)):
+		l = ct_eval(v.left, env)
+		r = ct_eval(v.right, env)
+		if l == None or r == None:
+			return None
+		op = HLIR_VALUE_OP_SHL if isinstance(v, ValueShl) else HLIR_VALUE_OP_SHR
+		return do_value_shift_op(op, l, r, v.ti)
+
+	if isinstance(v, (ValueNot, ValueNeg, ValuePos)):
+		a = ct_eval(v.value, env)
+		if a == None:
+			return None
+		if isinstance(v, ValueNeg):
+			return do_value_neg_op(a, v.ti, ctx=None)
+		if isinstance(v, ValuePos):
+			return do_value_pos_op(a, v.ti, ctx=None)
+		# ValueNot - и `not` над Bool, и `~` над WordX
+		if a.type.is_bool():
+			return do_value_not_op(a, v.ti, ctx=None)
+		return do_value_bitwise_not_op(a, v.ti, ctx=None)
+
+	if isinstance(v, ValueCons):
+		a = ct_eval(v.value, env)
+		if a == None:
+			return None
+		method = v.method
+		if method == 'default':
+			method = 'implicit'
+		nv = value_cons(v.type, a, method, v.ti)
+		if nv == None:
+			return ValueBad(ti=v.ti)
+		return nv
+
+	if isinstance(v, ValueCall):
+		args = []
+		for a in v.args:
+			av = ct_eval(a.value, env)
+			if av == None:
+				return None
+			args.append(av)
+		return ct_call(v.func, args, v.ti)
+
+	return None
+
 
 
 def do_rvalue_integral(x, ctx):
@@ -1950,13 +2052,6 @@ def do_value_named(x, ctx):
 		v = ValueBad(ti=x['ti'])
 		csymtab.value_add(id_str, v, is_public=False)
 		return v
-
-	# Если в теле функции происходит доступ к глобальной переменной
-	# значит она не "чистая"
-	if cfunc != None:
-		if v.is_var() and v.is_global():
-			cfunc.is_pure = False
-
 
 	global cdef
 
@@ -3088,6 +3183,7 @@ def create_params(fn):
 	global csymtab
 
 	params = fn.type.params
+	fn.param_values = []
 
 	i = 0
 	while i < len(params):
@@ -3096,6 +3192,7 @@ def create_params(fn):
 		param_value.storage_class = HLIR_VALUE_STORAGE_CLASS_PARAM
 		param_value.stage = HLIR_VALUE_STAGE_RUNTIME
 		csymtab.value_add(param.id.str, param_value, is_public=False)
+		fn.param_values.append(param_value)
 		i += 1
 
 
@@ -3170,6 +3267,9 @@ def def_func2(x, annos):
 	anno_to_attribute(df, annos, 'noinline')
 	anno_to_attribute(df, annos, 'inlinehint')
 	anno_to_attribute(df, annos, 'inline')
+	# @impure: функция не считается чистой, и ее вызов никогда не
+	# сворачивается на этапе компиляции (см. func_is_pure, ct_call)
+	anno_to_attribute(df, annos, 'impure')
 	
 	
 	alignment_anno = pop_anno(annos, 'alignment')
@@ -3195,8 +3295,9 @@ def def_func2(x, annos):
 		cdef = prev_cdef
 		return df
 
-	# not above (!)
-	fn.is_pure = fn.type.is_pure_func()
+	# чистота решается после разбора тела (см. func_is_pure); пока тело
+	# разбирается, функция нечистая - и рекурсивный вызов делает её такой же
+	fn.is_pure = False
 
 	csymtab = Symtab(parent=csymtab)  # create params csymtab
 
@@ -3238,6 +3339,9 @@ def def_func2(x, annos):
 				stmts.append(StmtReturn(retval, ti=stmt.ti))
 
 	df.stmt = stmt
+	fn.is_pure = func_is_pure(fn, stmt) and not df.hasAttribute('impure')
+	if fn.is_pure:
+		fn.pure_retval = func_pure_retval(stmt)
 
 	csymtab = csymtab.parent_get()  # remove params symtab
 
@@ -3249,6 +3353,30 @@ def def_func2(x, annos):
 #		info("pure function", x['ti'])
 
 	return df
+
+
+
+# Чистая функция - та, вызов которой с одними и теми же аргументами можно
+# вычислить на этапе компиляции: её тип чист (Type#is_pure_func), а тело -
+# ровно один `return <выражение>`, и само выражение чисто (Value#is_pure_expr).
+# Функция без тела (внешняя) чистой не бывает: что она делает - неизвестно
+def func_is_pure(fn, body):
+	if body == None or not fn.type.is_func():
+		return False
+	if not fn.type.is_pure_func():
+		return False
+	retval = func_pure_retval(body)
+	if retval == None:
+		return False
+	return retval.is_pure_expr()
+
+
+# Выражение под единственным `return` тела, либо None
+def func_pure_retval(body):
+	stmts = [s for s in body.stmts if not s.is_stmt_comment()]
+	if len(stmts) != 1 or not stmts[0].is_stmt_return():
+		return None
+	return stmts[0].value
 
 
 

@@ -24,6 +24,12 @@ Annotations are written before a definition, or inside a type expression
 | `@inlinehint` | weak inlining hint |
 | `@noinline` | forbid inlining |
 
+### Compile-time evaluation
+
+| | |
+| :-- | :-- |
+| `@impure` | the function is never pure: its calls are not folded at compile time (see [compile-time calls](value/call.md#compile-time-calls)) |
+
 ### Linkage & C interop
 
 | | |

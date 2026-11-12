@@ -37,6 +37,7 @@ var g64: Word64 = Word64 -300
 var regs: Regs
 
 
+@impure
 func pass (w: Word64) -> Word64 {
 	return w
 }

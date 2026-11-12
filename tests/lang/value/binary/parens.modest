@@ -46,31 +46,37 @@ type Boxed = {
 
 // The parentheses only matter for a value the compiler cannot see through,
 // so every operand enters through one of these.
+@impure
 func opaque (n: Int32) -> Int32 {
 	return n
 }
 
 
+@impure
 func opaqueWord (w: Word32) -> Word32 {
 	return w
 }
 
 
+@impure
 func opaqueNat (n: Nat8) -> Nat8 {
 	return n
 }
 
 
+@impure
 func opaqueNat32 (n: Nat32) -> Nat32 {
 	return n
 }
 
 
+@impure
 func opaqueBool (b: Bool) -> Bool {
 	return b
 }
 
 
+@impure
 func opaqueFloat (f: Float64) -> Float64 {
 	return f
 }

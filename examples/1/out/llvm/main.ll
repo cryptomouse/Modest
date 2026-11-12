@@ -11,7 +11,6 @@ target triple = "arm64-apple-macosx27.0.0"
 %Word32 = type i32
 %Word64 = type i64
 %Word128 = type i128
-%Word256 = type i256
 %Char8 = type i8
 %Char16 = type i16
 %Char32 = type i32
@@ -20,20 +19,17 @@ target triple = "arm64-apple-macosx27.0.0"
 %Int32 = type i32
 %Int64 = type i64
 %Int128 = type i128
-%Int256 = type i256
 %Nat8 = type i8
 %Nat16 = type i16
 %Nat32 = type i32
 %Nat64 = type i64
 %Nat128 = type i128
-%Nat256 = type i256
 %Float16 = type half
 %Float32 = type float
 %Float64 = type double
 %Fixed32 = type i32
 %Fixed64 = type i64
 %Size = type i64
-%Pointer = type i8*
 %Str8 = type [0 x %Char8]
 %Str16 = type [0 x %Char16]
 %Str32 = type [0 x %Char32]
@@ -134,43 +130,22 @@ declare void @perror(%ConstCharStr* %str)
 ; end from import "builtin"
 ; -- end print imports 'main' --
 ; -- strings --
-@.str1 = private constant [22 x i8] [i8 115, i8 105, i8 122, i8 101, i8 111, i8 102, i8 40, i8 77, i8 121, i8 65, i8 114, i8 114, i8 97, i8 121, i8 41, i8 32, i8 61, i8 32, i8 37, i8 100, i8 10, i8 0]
-@.str2 = private constant [18 x i8] [i8 115, i8 105, i8 122, i8 101, i8 111, i8 102, i8 40, i8 42, i8 112, i8 97, i8 41, i8 32, i8 61, i8 32, i8 37, i8 100, i8 10, i8 0]
+@.str1 = private constant [9 x i8] [i8 115, i8 117, i8 109, i8 58, i8 32, i8 37, i8 100, i8 10, i8 0]
 ; -- endstrings --
 
 ;include "./lib"
-@a = internal global [10 x [20 x %Nat32]] zeroinitializer
-@k = internal global %Nat32 10
-@l = internal global %Nat32 20
-%main.MyArray = type [0 x [0 x %Nat32]];
+define internal %Int32 @sum(%Int32 %a, %Int32 %b) {
+	%1 = add %Int32 %a, %b
+	ret %Int32 %1
+}
+
+define internal %Int32 @init() {
+	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([9 x i8]* @.str1 to [0 x i8]*), %Int32 3)
+	ret %Int32 0
+}
+
 define %Int32 @main() {
-	%1 = alloca i8*
-	%2 = call i8* @llvm.stacksave() 
-	store i8* %2, i8** %1
-	%3 = bitcast [10 x [20 x %Nat32]]* @a to i8*
-	%4 = load %Nat32, %Nat32* @k
-	%5 = zext %Nat32 %4 to %Size
-	%6 = load %Nat32, %Nat32* @l
-	%7 = zext %Nat32 %6 to %Size
-	store %Nat32 0, %Nat32* @k
-	store %Nat32 0, %Nat32* @l
-	%8 = bitcast i8* %3 to %main.MyArray*
-	%9 = mul %Size %7, 1
-	%10 = mul %Size %7, 4
-	%11 = mul %Size %5, %9
-	%12 = mul %Size %5, %10
-	%13 = mul %Size %7, 1
-	%14 = mul %Size %7, 4
-	%15 = mul %Size %5, %13
-	%16 = mul %Size %5, %14
-	%17 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([22 x i8]* @.str1 to [0 x i8]*), %Size %16)
-	%18 = mul %Size %7, 1
-	%19 = mul %Size %7, 4
-	%20 = mul %Size %5, %18
-	%21 = mul %Size %5, %19
-	%22 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([18 x i8]* @.str2 to [0 x i8]*), %Size %21)
-	%23 = load i8*, i8** %1
-	call void @llvm.stackrestore(i8* %23)
+	%1 = call %Int32 @init()
 	ret %Int32 0
 }
 

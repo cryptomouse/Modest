@@ -1,0 +1,163 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-CODE(c11): #define SQUARED 49
+// EXPECT-CODE(c11): #define NESTED 25
+// EXPECT-CODE(c11): squareAtRunTime(3)
+// EXPECT-OUT: passed: arithmetic
+// EXPECT-OUT: passed: nested calls
+// EXPECT-OUT: passed: truncating division
+// EXPECT-OUT: passed: bitwise
+// EXPECT-OUT: passed: logical
+// EXPECT-OUT: passed: construction
+// EXPECT-OUT: passed: float
+// EXPECT-OUT: passed: array size
+// EXPECT-OUT: passed: impure
+// EXPECT-OUT: passed: compile-time call
+//
+// A call to a pure function (its body is one `return <expression>` over
+// its parameters) with arguments known at compile time is folded into its
+// value.  Each case compares the folded call against the very same call
+// made at run time, through `var` arguments the compiler cannot fold:
+// both have to agree, otherwise folding has its own semantics.  The array
+// size case shows the folded call really is a compile-time value, and
+// `@impure` is the way to keep such a call for run time.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func square (x: Int32) -> Int32 {
+	return x * x
+}
+
+func sumOfSquares (a: Int32, b: Int32) -> Int32 {
+	return square(a) + square(b)
+}
+
+func quotient (a: Int32, b: Int32) -> Int32 {
+	return a / b
+}
+
+func remainder (a: Int32, b: Int32) -> Int32 {
+	return a % b
+}
+
+func mix (a: Word8, b: Word8) -> Word8 {
+	return (a << 4) | ~b
+}
+
+func inRange (x: Int32, lo: Int32, hi: Int32) -> Bool {
+	return x >= lo and x <= hi and not (x == 0)
+}
+
+func negate (x: Int32) -> Int32 {
+	return -x
+}
+
+func widen (x: Int8) -> Int32 {
+	return (Int32 x) * 1000
+}
+
+func third (x: Float32) -> Float32 {
+	return x / 3.0
+}
+
+@impure
+func squareAtRunTime (x: Int32) -> Int32 {
+	return x * x
+}
+
+const squared = square(7)
+const nested = sumOfSquares(3, 4)
+
+
+func main () -> Int {
+	var i3: Int32 = 3
+	var i4: Int32 = 4
+	var i7: Int32 = 7
+	var m10: Int32 = -10
+
+	if squared != square(i7) or squared != 49 {
+		printf("square(7) = %d, expected 49\n", squared)
+		return exitFailure
+	}
+	if negate(5) != negate(i4 + 1) {
+		printf("negate(5) = %d, expected -5\n", negate(5))
+		return exitFailure
+	}
+	printf("passed: arithmetic\n")
+
+	if nested != sumOfSquares(i3, i4) or nested != 25 {
+		printf("sumOfSquares(3, 4) = %d, expected 25\n", nested)
+		return exitFailure
+	}
+	printf("passed: nested calls\n")
+
+	if quotient(-10, 3) != quotient(m10, i3) or quotient(-10, 3) != -3 {
+		printf("quotient(-10, 3) = %d, expected -3\n", quotient(-10, 3))
+		return exitFailure
+	}
+	if remainder(-10, 3) != remainder(m10, i3) or remainder(-10, 3) != -1 {
+		printf("remainder(-10, 3) = %d, expected -1\n", remainder(-10, 3))
+		return exitFailure
+	}
+	printf("passed: truncating division\n")
+
+	var w81: Word8 = 0x81
+	var w0f: Word8 = 0x0F
+	// 0x81 << 4 drops the high nibble: 0x10 | 0xF0
+	if mix(0x81, 0x0F) != mix(w81, w0f) or mix(0x81, 0x0F) != 0xF0 {
+		printf("mix(0x81, 0x0F) = %u, expected 0xF0\n", Nat32 mix(0x81, 0x0F))
+		return exitFailure
+	}
+	printf("passed: bitwise\n")
+
+	var i0: Int32 = 0
+	if inRange(3, 1, 5) != inRange(i3, 1, 5) or not inRange(3, 1, 5) {
+		printf("inRange(3, 1, 5) is false, expected true\n")
+		return exitFailure
+	}
+	if inRange(0, -1, 5) != inRange(i0, -1, 5) or inRange(0, -1, 5) {
+		printf("inRange(0, -1, 5) is true, expected false\n")
+		return exitFailure
+	}
+	printf("passed: logical\n")
+
+	var i8: Int8 = -7
+	if widen(-7) != widen(i8) or widen(-7) != -7000 {
+		printf("widen(-7) = %d, expected -7000\n", widen(-7))
+		return exitFailure
+	}
+	printf("passed: construction\n")
+
+	// through a typed `let`: the C backend prints a bare folded Float32
+	// as a double literal, and `!=` would compare it in double (BUG#125)
+	var f: Float32 = 1.0
+	let folded: Float32 = third(1.0)
+	if folded != third(f) {
+		printf("third(1.0) = %.10f, at run time %.10f\n", Float64 folded, Float64 third(f))
+		return exitFailure
+	}
+	printf("passed: float\n")
+
+	var buf: [square(3)]Int32
+	if lengthof(buf) != 9 {
+		printf("lengthof([square(3)]Int32) = %d, expected 9\n", Int32 lengthof(buf))
+		return exitFailure
+	}
+	printf("passed: array size\n")
+
+	let atRunTime = squareAtRunTime(3)
+	if atRunTime != 9 {
+		printf("squareAtRunTime(3) = %d, expected 9\n", atRunTime)
+		return exitFailure
+	}
+	printf("passed: impure\n")
+
+	printf("passed: compile-time call\n")
+	return exitSuccess
+}
+
+
