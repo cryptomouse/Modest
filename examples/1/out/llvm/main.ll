@@ -134,6 +134,11 @@ declare void @perror(%ConstCharStr* %str)
 ; -- endstrings --
 
 ;include "./lib"
+@lastInput = internal global %Int32 0
+define internal %Int32 @readInput() {
+	ret %Int32 1
+}
+
 define internal %Int32 @sum(%Int32 %a, %Int32 %b) {
 	%1 = add %Int32 %a, %b
 	ret %Int32 %1
@@ -150,3 +155,5 @@ define %Int32 @main() {
 }
 
 
+
+@llvm.used = appending global [2 x i8*] [i8* bitcast (%Int32* @lastInput to i8*), i8* bitcast (%Int32 ()* @readInput to i8*)], section "llvm.metadata"

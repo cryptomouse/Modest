@@ -3485,6 +3485,24 @@ def print_linkage(x, is_decl=False):
 defined_funcs = set()
 declared_funcs = set()
 
+# Определения с атрибутом `used` (`__attribute__((used))` в C): в LLVM у
+# символа такой пометки нет, вместо нее - один на модуль массив @llvm.used
+# с указателями на все такие символы. Определить его можно только один
+# раз, поэтому символы копятся здесь по ходу печати, а сам массив
+# печатает print_llvm_used в конце модуля.
+# Элемент - (тип символа, его имя); тип нужен для bitcast в i8*
+used_symbols = []
+
+def note_used(x, symtype, idStr):
+	if x.hasAttribute('used') and not x.hasAttribute('extern'):
+		used_symbols.append((symtype, idStr))
+
+def print_llvm_used():
+	if used_symbols == []:
+		return
+	items = ["i8* bitcast (%s* @%s to i8*)" % (t, i) for t, i in used_symbols]
+	out("\n@llvm.used = appending global [%d x i8*] [%s], section \"llvm.metadata\"\n" % (len(items), ", ".join(items)))
+
 def collect_defined_funcs(m):
 	for x in m.defs:
 		if x.is_stmt_def_func() and x.stmt != None:
@@ -3510,6 +3528,8 @@ def print_def_func(x):
 
 	if x.stmt == None:
 		return print_decl_func(x)
+
+	note_used(x, str_type_func(ftype), get_id_str(fn))
 
 	# print local typedefs
 	# Они печатаются на уровне модуля как %<func>.<name>, и одноименные
@@ -3715,6 +3735,8 @@ def print_def_var(x, as_extern=False):
 	mod = 'global'
 
 	var = x.value
+	if not is_extern:
+		note_used(x, str_type(var.type), get_id_str(var))
 	out("\n@%s = " % get_id_str(var))
 	print_linkage(x, is_decl=as_extern)
 	out(mod + ' ')
@@ -3973,9 +3995,10 @@ def print_module(m):
 
 
 def run(module, outname):
-	global cmodule, eq_helpers
+	global cmodule, eq_helpers, used_symbols
 	cmodule = module
 	eq_helpers = []
+	used_symbols = []
 	collect_defined_funcs(module)
 	outname = outname + '.ll'
 	output_open(outname)
@@ -4039,6 +4062,7 @@ def run(module, outname):
 
 	print_module(module)
 	print_eq_helpers()
+	print_llvm_used()
 	output_close()
 
 

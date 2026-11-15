@@ -1,0 +1,39 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: used
+// EXPECT-CODE(c11): __attribute__((used))
+// EXPECT-CODE(c11): static int32_t lastInput
+// EXPECT-CODE(c11): __attribute__((used))
+// EXPECT-CODE(c11): static int32_t readInput(void)
+// EXPECT-CODE(llvm): @lastInput = internal global %Int32
+// EXPECT-CODE(llvm): define internal %Int32 @readInput()
+// EXPECT-CODE(llvm): @llvm.used = appending global [2 x i8*] [i8* bitcast (%Int32* @lastInput to i8*), i8* bitcast (%Int32 ()* @readInput to i8*)], section "llvm.metadata"
+//
+// `@used` keeps a definition nobody refers to.  A running program cannot
+// see that, so the output is checked instead (EXPECT-CODE).  C marks each
+// definition with `__attribute__((used))`; LLVM IR has no such mark on a
+// definition, so the backend lists every `@used` symbol in the one
+// `@llvm.used` array of the module.  Without it, a private (`internal`)
+// function or `var` that nothing calls is dropped from the object file
+// from -O1 on.  Neither definition refers to the other, so each one is
+// kept by its own `@used` alone.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+@used
+var lastInput: Int32 = 0
+
+@used
+func readInput () -> Int32 {
+	return 1
+}
+
+
+func main () -> Int {
+	printf("passed: used\n")
+	return exitSuccess
+}
