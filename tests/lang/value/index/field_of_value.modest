@@ -27,7 +27,7 @@ func holderValue () -> Holder {
 	return holder
 }
 
-@impure
+@runtime
 func opaque (n: Int32) -> Int32 {
 	return n
 }

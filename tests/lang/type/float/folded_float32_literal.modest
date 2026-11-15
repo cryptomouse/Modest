@@ -35,7 +35,7 @@ func third (x: Float32) -> Float32 {
 	return x / 3.0
 }
 
-@impure
+@runtime
 func thirdAtRunTime (x: Float32) -> Float32 {
 	return x / 3.0
 }
@@ -44,7 +44,7 @@ func thirdHalf (x: Float16) -> Float16 {
 	return x / 3.0
 }
 
-@impure
+@runtime
 func thirdHalfAtRunTime (x: Float16) -> Float16 {
 	return x / 3.0
 }

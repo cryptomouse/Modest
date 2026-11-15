@@ -590,13 +590,13 @@ Unit value                         // discard a value (suppress warnings)
 
 ### Compile-time evaluation
 ```modest
-@impure                            // never fold calls to this function at compile time
+@runtime                            // never fold calls to this function at compile time
 ```
 
 > A function whose body is one `return <expr>` over its parameters (no
 > pointers in or out, no variables read) is **pure**: a call with
 > compile-time arguments is folded into a constant (`const n = square(3)`,
-> `[square(3)]Int32`). `@impure` keeps such a function a run-time call —
+> `[square(3)]Int32`). `@runtime` keeps such a function a run-time call —
 > e.g. a test helper `func opaque (n: Int32) -> Int32 { return n }`.
 
 ### Linkage & C interop

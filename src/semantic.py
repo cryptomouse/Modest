@@ -3267,9 +3267,9 @@ def def_func2(x, annos):
 	anno_to_attribute(df, annos, 'noinline')
 	anno_to_attribute(df, annos, 'inlinehint')
 	anno_to_attribute(df, annos, 'inline')
-	# @impure: функция не считается чистой, и ее вызов никогда не
+	# @runtime: функция не считается чистой, и ее вызов никогда не
 	# сворачивается на этапе компиляции (см. func_is_pure, ct_call)
-	anno_to_attribute(df, annos, 'impure')
+	anno_to_attribute(df, annos, 'runtime')
 	
 	
 	alignment_anno = pop_anno(annos, 'alignment')
@@ -3339,7 +3339,7 @@ def def_func2(x, annos):
 				stmts.append(StmtReturn(retval, ti=stmt.ti))
 
 	df.stmt = stmt
-	fn.is_pure = func_is_pure(fn, stmt) and not df.hasAttribute('impure')
+	fn.is_pure = func_is_pure(fn, stmt) and not df.hasAttribute('runtime')
 	if fn.is_pure:
 		fn.pure_retval = func_pure_retval(stmt)
 

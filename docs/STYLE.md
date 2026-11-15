@@ -28,9 +28,11 @@ it says so.
   annotations, they are separated by **exactly one empty line** (not one
   or two, as between bare function definitions) — the comment block
   already sets the next function apart.
-- At the end of a file — **two empty lines**, whatever the last line is:
-  the last line is followed by exactly one more newline (`}\n\n`), which an
-  editor shows as two empty lines.
+- At the end of a file, the last line is followed by **exactly one extra
+  newline**: the file ends in `}\n\n` (or `<last line>\n\n`) — not in a
+  single `\n`, as most languages and tools default to, and not in `\n\n\n`.
+  An editor shows this as two empty lines after the last line.
+  `misc/stylecheck.py` checks it (rule `eof`), `--fix` repairs it.
 
 ```modest
 include "libc/ctypes64"

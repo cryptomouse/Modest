@@ -23,7 +23,7 @@ include "libc/stdio"
 include "libc/stdlib"
 
 
-@impure
+@runtime
 func opaque (n: Nat32) -> Nat32 {
 	return n
 }

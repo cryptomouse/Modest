@@ -65,12 +65,12 @@ it came from.
 For now only scalar arguments and results are folded; a call with a
 record or array argument or result stays a run-time call.
 
-`@impure` (see [annotations](../annotation.md)) marks a function as not
+`@runtime` (see [annotations](../annotation.md)) marks a function as not
 pure, so its calls always happen at run time. Tests use it for identity
 helpers that hide a value from the compiler:
 
 ```modest
-@impure
+@runtime
 func opaque (n: Int32) -> Int32 {
 	return n
 }

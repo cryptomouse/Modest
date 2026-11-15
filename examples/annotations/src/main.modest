@@ -54,20 +54,20 @@ var rp: @restrict *Word32
 var vb: @volatile [32]Bool
 
 
-@impure
+@runtime
 @inline
 func staticInlineFunc (x: Int32) -> Int32 {
 	return x + 1
 }
 
 
-@impure
+@runtime
 @noinline
 func staticNoinlineFunc (x: Int32) -> Int32 {
 	return x + 1
 }
 
-@impure
+@runtime
 @inlinehint
 func staticInlineHintFunc (x: Int32) -> Int32 {
 	return x + 1

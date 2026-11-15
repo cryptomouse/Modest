@@ -20,19 +20,19 @@ include "libc/stdio"
 include "libc/stdlib"
 
 
-@impure
+@runtime
 func opaque32 (n: Int32) -> Int32 {
 	return n
 }
 
 
-@impure
+@runtime
 func opaque64 (n: Int64) -> Int64 {
 	return n
 }
 
 
-@impure
+@runtime
 func opaqueNat8 (n: Nat8) -> Nat8 {
 	return n
 }

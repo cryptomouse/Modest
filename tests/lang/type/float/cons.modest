@@ -31,7 +31,7 @@ include "libc/stdio"
 include "libc/stdlib"
 
 
-@impure
+@runtime
 func takesFloat (f: Float64) -> Float64 {
 	return f
 }

@@ -28,7 +28,7 @@ Annotations are written before a definition, or inside a type expression
 
 | | |
 | :-- | :-- |
-| `@impure` | the function is never pure: its calls are not folded at compile time (see [compile-time calls](value/call.md#compile-time-calls)) |
+| `@runtime` | the function is never pure: its calls are not folded at compile time (see [compile-time calls](value/call.md#compile-time-calls)) |
 
 ### Linkage & C interop
 

@@ -12,7 +12,7 @@
 // EXPECT-OUT: passed: construction
 // EXPECT-OUT: passed: float
 // EXPECT-OUT: passed: array size
-// EXPECT-OUT: passed: impure
+// EXPECT-OUT: passed: runtime
 // EXPECT-OUT: passed: compile-time call
 //
 // A call to a pure function (its body is one `return <expression>` over
@@ -21,7 +21,7 @@
 // made at run time, through `var` arguments the compiler cannot fold:
 // both have to agree, otherwise folding has its own semantics.  The array
 // size case shows the folded call really is a compile-time value, and
-// `@impure` is the way to keep such a call for run time.
+// `@runtime` is the way to keep such a call for run time.
 
 include "libc/ctypes64"
 include "libc/stdio"
@@ -64,7 +64,7 @@ func third (x: Float32) -> Float32 {
 	return x / 3.0
 }
 
-@impure
+@runtime
 func squareAtRunTime (x: Int32) -> Int32 {
 	return x * x
 }
@@ -151,7 +151,7 @@ func main () -> Int {
 		printf("squareAtRunTime(3) = %d, expected 9\n", atRunTime)
 		return exitFailure
 	}
-	printf("passed: impure\n")
+	printf("passed: runtime\n")
 
 	printf("passed: compile-time call\n")
 	return exitSuccess

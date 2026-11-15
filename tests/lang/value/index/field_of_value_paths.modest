@@ -35,7 +35,7 @@ func outerValue () -> Outer {
 	return outer
 }
 
-@impure
+@runtime
 func opaque (n: Int32) -> Int32 {
 	return n
 }
