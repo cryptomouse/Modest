@@ -1,0 +1,24 @@
+// A module whose public interface is data, not functions: a variable and
+// a constant array, read and written from `public_data.modest`.
+
+public type Point = @public {
+	x: Int32
+	y: Int32
+}
+
+public var counter: Nat32 = 7
+
+public var point: Point = Point {x = 3, y = 4}
+
+public const table: [4][2]Word8 = [
+	[1, 2]
+	[3, 4]
+	[5, 6]
+	[7, 8]
+]
+
+// what `counter` holds as seen from inside this module
+public func get () -> Nat32 {
+	return counter
+}
+

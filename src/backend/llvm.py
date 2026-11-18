@@ -3738,7 +3738,12 @@ def print_def_var(x, as_extern=False):
 	if not is_extern:
 		note_used(x, str_type(var.type), get_id_str(var))
 	out("\n@%s = " % get_id_str(var))
-	print_linkage(x, is_decl=as_extern)
+	if as_extern:
+		# у глобала без инициализатора линковка обязательно 'external':
+		# `@x = global T` без значения LLVM не принимает
+		out("external ")
+	else:
+		print_linkage(x)
 	out(mod + ' ')
 	print_type(var.type)
 
@@ -3749,7 +3754,8 @@ def print_def_var(x, as_extern=False):
 		else:
 			out(" zeroinitializer")
 
-	if x.hasAttribute('section'):
+	# секция - свойство определения, а не ссылки на чужой символ
+	if x.hasAttribute('section') and not as_extern:
 		section = x.getAttribute('section')
 		out(", section \"%s\"" % section.asset)
 
@@ -3768,10 +3774,33 @@ def print_def_const(x, as_extern=False):
 	# тк доступ к ним может идти в рантайме по индексу;
 	# НО! В константной записи может быть массив! (хз как быть пока)
 	if init_value.type.is_array():
-		out("\n@%s = constant " % get_id_str(x.value))
-		llvm_print_type_value(do_eval(init_value))
+		if as_extern:
+			out("\n@%s = external constant " % get_id_str(x.value))
+			print_type(x.value.type)
+		else:
+			out("\n@%s = constant " % get_id_str(x.value))
+			llvm_print_type_value(do_eval(init_value))
 
 	return
+
+
+
+# Публичные var и const-массив импортированного модуля определены в нем
+# самом, здесь их надо только объявить: `@m_x = external global T`.
+# Один модуль может прийти сюда несколькими путями (напрямую и через
+# другой импорт), а повторное объявление глобала LLVM не примет
+declared_globals = set()
+
+def print_decl_global(x):
+	name = get_id_str(x.value)
+	if name in declared_globals:
+		return
+	declared_globals.add(name)
+
+	if x.is_stmt_def_var():
+		print_def_var(x, as_extern=True)
+	else:
+		print_def_const(x, as_extern=True)
 
 
 
@@ -3947,6 +3976,8 @@ def print_imports(imports):
 				print_def_type(d)
 			elif d.is_stmt_def_func():
 				print_decl_func(d)
+			elif d.is_stmt_def_var() or d.is_stmt_def_const():
+				print_decl_global(d)
 
 		out("\n\n; end from import \"%s\"" % imp.name)
 

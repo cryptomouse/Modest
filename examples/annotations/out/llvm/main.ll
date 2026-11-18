@@ -189,3 +189,5 @@ define %Int32 @main() {
 }
 
 
+
+@llvm.used = appending global [1 x i8*] [i8* bitcast (%Word64* @u to i8*)], section "llvm.metadata"

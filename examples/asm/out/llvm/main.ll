@@ -202,3 +202,5 @@ define %Int @main() {
 }
 
 
+
+@llvm.used = appending global [1 x i8*] [i8* bitcast (void ()* @memoryBarrier to i8*)], section "llvm.metadata"

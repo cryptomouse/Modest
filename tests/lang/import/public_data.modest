@@ -1,0 +1,93 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// LINK: ./_public_data/store.modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: a public var of another module
+// EXPECT-OUT: passed: a public record var of another module
+// EXPECT-OUT: passed: a public const array of another module
+//
+// A public variable or constant array of an imported module is a symbol
+// defined there; the importer has to declare it.  In LLVM that is
+// `@store_counter = external global ...` — the declaration used to be left
+// out, and reading `store.counter` gave "use of undefined value".
+//
+// In C the constant array is a macro in `store.h`, a bare initializer list:
+// indexing it needs a compound literal, `((const uint8_t [4][2])STORE_TABLE)[i]`.
+// A constant of this module got one, an imported one did not.
+//
+// Guards BUG#126 (fixed 2026-11-18).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+import "./_public_data/store"
+
+
+func testVar () -> Bool {
+	if store.counter != 7 {
+		printf("store.counter = %u, expected 7\n", store.counter)
+		return false
+	}
+
+	// written here, seen there: one variable, not a copy
+	store.counter = 42
+	if store.get() != 42 {
+		printf("store.get() = %u, expected 42\n", store.get())
+		return false
+	}
+
+	printf("passed: a public var of another module\n")
+	return true
+}
+
+
+func testRecordVar () -> Bool {
+	store.point.y = 9
+	if store.point.x != 3 or store.point.y != 9 {
+		printf("store.point = {%d, %d}, expected {3, 9}\n", store.point.x, store.point.y)
+		return false
+	}
+
+	printf("passed: a public record var of another module\n")
+	return true
+}
+
+
+func testConstArray () -> Bool {
+	var sum: Nat32 = 0
+	var i = 0
+	while i < 4 {
+		sum = sum + Nat32 store.table[i][1]
+		i = i + 1
+	}
+
+	if sum != 20 {
+		printf("sum of store.table[i][1] = %u, expected 20\n", sum)
+		return false
+	}
+
+	if lengthof(store.table) != 4 {
+		printf("lengthof(store.table) = %u, expected 4\n", Nat32 lengthof(store.table))
+		return false
+	}
+
+	// the whole array, copied
+	let copy = store.table
+	if copy[3][0] != 7 or lengthof(copy) != 4 {
+		printf("copy[3][0] = %u, lengthof(copy) = %u, expected 7, 4\n", Nat32 copy[3][0], Nat32 lengthof(copy))
+		return false
+	}
+
+	printf("passed: a public const array of another module\n")
+	return true
+}
+
+
+func main () -> Int {
+	if not testVar() or not testRecordVar() or not testConstArray() {
+		return exitFailure
+	}
+
+	return exitSuccess
+}
+

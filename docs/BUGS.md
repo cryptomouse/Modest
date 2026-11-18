@@ -923,40 +923,6 @@ import "./b/point" as pb     // module "b/point", public func two
   the header by the imported module's own output name.
 
 
-## BUG#126: LLVM backend does not declare a `public var` read from an imported module
-
-```modest
-// lib.modest
-public var counter: Nat32 = 7
-```
-
-```modest
-// main.modest
-import "lib"
-
-func main () -> Nat32 {
-	return lib.counter
-}
-```
-
-```
-main.ll:62:28: error: use of undefined value '@lib_counter'
-   62 |         %1 = load %Nat32, %Nat32* @lib_counter
-```
-
-- `print_imports` (`src/backend/llvm.py:3928`) walks the imported module's
-  defs and emits only types (`print_def_type`) and functions
-  (`print_decl_func`); there is no branch for `is_stmt_def_var`, so no
-  `@lib_counter = external global %Nat32` is ever printed.
-- The same happens to a `public const` array (a scalar const is folded and
-  does not need a symbol): `public const glyphs: [95][16]Word8 = [...]`,
-  read as `font.glyphs[c][r]` from another module, gives
-  `use of undefined value '@font_glyphs'`.
-- The C backend is fine: the import's header declares the variable.
-- Workaround: hide the variable behind a public getter function.
-- Found 2026-11-18 in a bare-metal ESP32-C6 display driver (`nv3007.width`,
-  a font table).
-
 ## BUG#127: LLVM backend emits an integer as the pointer operand when dereferencing a pointer constant made from an integer
 
 ```modest

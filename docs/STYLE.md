@@ -29,8 +29,7 @@ it says so.
   or two, as between bare function definitions) — the comment block
   already sets the next function apart.
 - At the end of a file, the last line is followed by **exactly one extra
-  newline**: the file ends in `}\n\n` (or `<last line>\n\n`) — not in a
-  single `\n`, as most languages and tools default to, and not in `\n\n\n`.
+  newline**: the file ends in `}\n\n\n` (or `<last line>\n\n\n`) — not just two `\n\n`, as most languages and tools default to.
   An editor shows this as two empty lines after the last line.
   `misc/stylecheck.py` checks it (rule `eof`), `--fix` repairs it.
 

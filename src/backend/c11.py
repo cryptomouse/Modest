@@ -1347,8 +1347,16 @@ def do_cvalue_index(x, ctx):
 	lx = do_cvalue(left)
 	index = do_cvalue(x.index)
 
-	if left.is_const():
-		if left.type.is_generic() or left.is_global():
+	# константа другого модуля ('font.glyphs[c]') приходит обернутой в
+	# ValueAccessModule, а у обертки is_const() уже False: без этого
+	# массив-макрос из чужого .h индексировался без compound literal
+	# (`STORE_TABLE[i]` - индекс у списка инициализаторов)
+	cl = left
+	while cl.is_access_module():
+		cl = cl.value
+
+	if cl.is_const():
+		if cl.type.is_generic() or cl.is_global():
 			if not left.type.is_string():
 				ts = do_ctype(left.type)
 				lx = CValueCast(ts, lx)
