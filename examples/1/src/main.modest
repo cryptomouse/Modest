@@ -24,7 +24,7 @@ func sum (a: Int32, b: Int32) -> Int32 {
 
 const c3 = sum(c1, c2)
 
-func init () -> Int32 {
+func init (x: Int32) -> Int32 {
 	let a = sum(c1, c2)
 	printf("sum: %d\n", a)
 	return 0
@@ -32,7 +32,7 @@ func init () -> Int32 {
 
 
 func main () -> Int32 {
-	init()
+	init(1)
 	let a = sum(c1, c2)
 	return 0
 }

@@ -17,7 +17,6 @@ func readInput () -> Int32 {
 	return 1
 }
 
-
 func sum (a: Int32, b: Int32) -> Int32 {
 	return a + b
 }

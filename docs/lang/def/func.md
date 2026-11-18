@@ -51,6 +51,10 @@ Parameters are [fields](../fields.md): `name: Type`. Additionally:
   `f(b = 2, a = 1)` (see [call](../value/call.md)).
 - **Variadic functions**: a trailing `...` accepts a C-style variable
   argument list (used for C interop, see [va_arg](../va_arg.md)).
+- **Unused parameters**: a parameter the body never reads is a warning
+  (`parameter 'x' is not used`). Mark one that is unused on purpose
+  — a callback stub, a fixed signature — with `@unused` before its type:
+  `x: @unused Int32`. Declarations without a body are not checked.
 
 ```modest
 func greet (name: *Str8 = "World") -> Unit { ... }

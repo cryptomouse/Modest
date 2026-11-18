@@ -2072,8 +2072,8 @@ def do_value_named(x, ctx):
 			cfunc.definition.deps.append(v_upd)
 		return v_upd
 
-#	if 'usecnt' in v:
-#		v['usecnt'] = v['usecnt'] + 1
+	if isinstance(v, ValueConst) and v.is_param():
+		v.usecnt += 1
 
 	if v.is_const() and v.is_global():
 		cdef.deps.append(v)
@@ -3191,6 +3191,7 @@ def create_params(fn):
 		param_value = ValueConst(param.type, param.id, init_value=ValueUndefined(param.type), ti=param.ti)
 		param_value.storage_class = HLIR_VALUE_STORAGE_CLASS_PARAM
 		param_value.stage = HLIR_VALUE_STAGE_RUNTIME
+		param_value.usecnt = 0  # см. check_unused_params
 		csymtab.value_add(param.id.str, param_value, is_public=False)
 		fn.param_values.append(param_value)
 		i += 1
@@ -3314,15 +3315,12 @@ def def_func2(x, annos):
 	if fn.type.extra_args:
 		cmodule_use('use_va_arg')
 
-	# check unuse
-	#for param in params:
-	#	check_unuse(param)
-
 	stmt = None
 
 	if x['stmt'] != None:
 		stmt = do_stmt_block(x['stmt'])
 		check_block(stmt)
+		check_unused_params(fn)
 
 		# check if return present
 		# Если функция возвращает значение, но последний оператор
@@ -3380,18 +3378,13 @@ def func_pure_retval(body):
 
 
 
-def check_unuse(v):
-	if v == None:
-		return
-
-	if not 'usecnt' in v:
-		return
-
-	if v['usecnt'] > 0:
-		return
-
-	id_str = v['id'].str
-	info("value '%s' defined but not used" % id_str, v.ti)
+# Параметр, к которому тело ни разу не обратилось - warning.
+# Намеренно неиспользуемый параметр помечается `x: @unused T`.
+# Функции без тела (объявления) сюда не попадают.
+def check_unused_params(fn):
+	for p in fn.param_values:
+		if p.usecnt == 0 and not p.type.hasAttribute('unused'):
+			warning("parameter '%s' is not used" % p.id.str, p.ti)
 
 
 
@@ -3400,22 +3393,6 @@ def check_block(block):
 	for stmt in block.stmts:
 	#	check_stmt(stmt)
 		pass
-
-
-
-def check_stmt(stmt):
-	return
-	k = stmt['kind']
-	if k == 'let':
-		check_unuse(stmt['init_value'])
-	elif k == 'def_var':
-		check_unuse(stmt['var'])
-	elif k == 'if':
-		check_block(stmt['then'])
-		if stmt['else'] != None:
-			check_stmt(stmt['else'])
-	elif k == 'while':
-		check_block(stmt['stmt'])
 
 
 

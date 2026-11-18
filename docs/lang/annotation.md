@@ -84,7 +84,7 @@ Annotations are written before a definition, or inside a type expression
 | | |
 | :-- | :-- |
 | `@used` | keep symbol even if unreferenced |
-| `@unused` | suppress unused warnings (also on return types: `-> @unused Int`) |
+| `@unused` | suppress unused warnings (on return types: `-> @unused Int`; on parameters: `x: @unused Int`) |
 
 ### Type layout & memory
 

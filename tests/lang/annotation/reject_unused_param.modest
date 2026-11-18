@@ -1,0 +1,37 @@
+// TEST: reject
+// FLAGS: -fparanoid
+// EXPECT-ERROR: parameter 'b' is not used
+// EXPECT-ERROR: func mixed (a: Int32, b: Int32, c: @unused Int32) -> Int32 {
+// EXPECT-ERROR: parameter 'x' is not used
+// EXPECT-ERROR: func ignoresAll (x: Int32) -> Unit {
+// EXPECT-ERROR-COUNT: 2
+//
+// A parameter the body never reads gets a warning (here an error, through
+// -fparanoid); `x: @unused T` marks one that is unused on purpose. A
+// parameter read only inside a nested expression counts as used, and a
+// function without a body (a declaration) is not checked at all.
+
+include "libc/ctypes64"
+
+
+func mixed (a: Int32, b: Int32, c: @unused Int32) -> Int32 {
+	return a
+}
+
+func ignoresAll (x: Int32) -> Unit {
+}
+
+func nested (p: Int32, q: Int32) -> Int32 {
+	if p > 0 {
+		return q + 1
+	}
+	return 0
+}
+
+func declared (n: Int32) -> Int32
+
+func main () -> Int {
+	return mixed(1, 2, 3) + nested(1, 2)
+}
+
+

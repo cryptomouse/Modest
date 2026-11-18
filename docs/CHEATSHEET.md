@@ -655,7 +655,7 @@ Unit value                         // discard a value (suppress warnings)
 ### Symbol lifetime & diagnostics
 ```modest
 @used                              // keep symbol even if unreferenced (prevent dead-code elimination)
-@unused                            // suppress unused-symbol warning
+@unused                            // suppress unused warning (`-> @unused Int`, param `x: @unused Int`)
 ```
 
 > `@deprecated` is planned but not implemented yet — the compiler rejects it
