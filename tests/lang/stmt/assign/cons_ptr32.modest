@@ -1,0 +1,35 @@
+// TEST: build
+// BACKENDS: c11
+// FLAGS: --config=../../../_cfg/ptr32.toml
+// EXPECT-CODE: d[0].next = (uint32_t)&d[1];
+//
+// `WordN &x` on the right of an assignment, on a target whose pointer is
+// N bits wide: the C backend used to drop the construction, and the C
+// compiler refuses a pointer assigned to an integer.  The other
+// constructions an assignment has to keep are in cons.modest.
+// Guards BUG#128 (fixed 2026-11-18).
+
+pragma unsafe
+
+
+type Desc = {
+	buf: Word32
+	next: Word32
+}
+
+
+var d: [2]Desc
+
+
+func link () -> Unit {
+	d[0].buf = unsafe(Word32 &d[0])
+	d[0].next = unsafe(Word32 &d[1])
+}
+
+
+func main () -> Int32 {
+	link()
+	return 0
+}
+
+

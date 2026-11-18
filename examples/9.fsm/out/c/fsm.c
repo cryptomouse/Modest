@@ -52,7 +52,7 @@ fsm_ComplexState fsm_cmdSwitchStage(struct fsm_fsm *self, uint16_t stage) {
 	self->timer = 0;
 	self->timer_expired = false;
 	fsm_ComplexState newState = self->state;
-	newState.stage = stage;
+	newState.stage = (fsm_StageId)stage;
 	return newState;
 }
 
@@ -62,7 +62,7 @@ fsm_ComplexState fsm_cmdNextStage(struct fsm_fsm *self) {
 	const fsm_ComplexState state = self->state;
 	const uint16_t nextStageIndex = (state.stage) + 1;
 	fsm_ComplexState newState = state;
-	newState.stage = nextStageIndex;
+	newState.stage = (fsm_StageId)nextStageIndex;
 	return newState;
 }
 
@@ -71,7 +71,7 @@ fsm_ComplexState fsm_cmdNextStageLimited(struct fsm_fsm *self, uint32_t t) {
 	const fsm_ComplexState state = self->state;
 	const uint16_t nextStageIndex = (state.stage) + 1;
 	fsm_ComplexState newState = state;
-	newState.stage = nextStageIndex;
+	newState.stage = (fsm_StageId)nextStageIndex;
 	return newState;
 }
 

@@ -2165,12 +2165,6 @@ def do_cstmt_assign(x):
 	if left.type.is_array():
 		return do_assign_array(left, right, x.ti)
 
-	if right.is_cons():
-		if not right.value.is_literal():
-			if right.type.is_int() or right.type.is_nat() or right.type.is_word():
-				if right.value.type.width <= 32:
-					right = right.value
-
 	return CStmtAssignment(do_cvalue(left), do_cvalue(right))
 
 

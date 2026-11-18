@@ -1,0 +1,9 @@
+#
+# A 32-bit target laid over cfg/default.toml, for tests that need a
+# pointer as wide as Word32. The code it gives is checked and built by the
+# host clang, never run.
+#
+
+word_width = 32
+size_width = 32
+pointer_width = 32

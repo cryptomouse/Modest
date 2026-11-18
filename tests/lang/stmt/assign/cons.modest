@@ -1,0 +1,128 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: float bits
+// EXPECT-OUT: passed: zero extend
+// EXPECT-OUT: passed: int to nat
+// EXPECT-OUT: passed: fixed descale
+// EXPECT-OUT: passed: assign cons
+//
+// A value construction on the right of an assignment has to give the same
+// value as in a `let` initializer.  Every case here starts from a 32-bit
+// or narrower value, where the C backend used to drop the construction
+// and leave the conversion to C, which does an ordinary numeric one.
+// The pointer case needs a 32-bit target, see cons_ptr32.modest.
+// Guards BUG#128 (fixed 2026-11-18).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Box = {
+	w: Word32
+	n: Nat32
+}
+
+
+var gw32: Word32
+var gw64: Word64
+
+
+func testFloatBits () -> Bool {
+	var f: Float32 = 1.5
+	var box: Box
+
+	// FloatY -> WordX reinterprets the bits: 1.5 is 0x3FC00000, not 1
+	gw32 = Word32 f
+	box.w = Word32 f
+	var w: Word32
+	w = Word32 f
+
+	if gw32 != 0x3FC00000 or box.w != 0x3FC00000 or w != 0x3FC00000 {
+		printf("Word32 1.5 = %x, %x, %x, expected 3fc00000\n", gw32, box.w, w)
+		return false
+	}
+
+	printf("passed: float bits\n")
+	return true
+}
+
+
+func testZeroExtend () -> Bool {
+	var i32: Int32 = -1
+	var i8: Int8 = -1
+
+	// signed -> WordX zero-extends, it does not sign-extend
+	gw64 = Word64 i32
+	gw32 = Word32 i8
+
+	if gw64 != 0xFFFFFFFF {
+		printf("Word64 Int32 -1 = %llx, expected ffffffff\n", gw64)
+		return false
+	}
+	if gw32 != 0xFF {
+		printf("Word32 Int8 -1 = %x, expected ff\n", gw32)
+		return false
+	}
+
+	printf("passed: zero extend\n")
+	return true
+}
+
+
+func testIntToNat () -> Bool {
+	var i: Int32 = -5
+	var box: Box
+
+	// IntY -> NatX applies abs()
+	box.n = Nat32 i
+	var n: Nat64
+	n = Nat64 i
+
+	if box.n != 5 or n != 5 {
+		printf("Nat Int32 -5 = %u, %llu, expected 5\n", box.n, n)
+		return false
+	}
+
+	printf("passed: int to nat\n")
+	return true
+}
+
+
+func testFixedDescale () -> Bool {
+	var x: Fixed32 = 2.5
+	var i: Int32
+	var n: Nat32
+
+	// FixedY -> IntX and NatX remove the scale and truncate toward zero
+	i = Int32 x
+	n = Nat32 x
+
+	if i != 2 or n != 2 {
+		printf("Fixed32 2.5 = %d, %u, expected 2\n", i, n)
+		return false
+	}
+
+	printf("passed: fixed descale\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testFloatBits() and result
+	result = testZeroExtend() and result
+	result = testIntToNat() and result
+	result = testFixedDescale() and result
+
+	if not result {
+		printf("failed: assign cons\n")
+		return exitFailure
+	}
+
+	printf("passed: assign cons\n")
+	return exitSuccess
+}
+
+

@@ -923,38 +923,6 @@ import "./b/point" as pb     // module "b/point", public func two
   the header by the imported module's own output name.
 
 
-## BUG#128: C backend drops the cast in `field = unsafe(WordN &x)` when pointer and integer have the same width
-
-```modest
-pragma unsafe
-
-type Desc = {buf: Word32, next: Word32}
-
-var d: [2]Desc
-
-func main () -> Word32 {
-	let a = unsafe(Word32 &d[1])    // (uint32_t)&d[1]  — correct
-	d[0].buf = a
-	d[0].next = unsafe(Word32 &d[1]) // d[0].next = &d[1];  — cast lost
-	return d[0].next
-}
-```
-
-```
-main.c:11:12: error: incompatible pointer to integer conversion assigning to
-'uint32_t' (aka 'unsigned int') from 'struct main_desc *' [-Wint-conversion]
-```
-
-- Only with a 32-bit target config (`pointer_width = 32`, e.g. an
-  RV32 `--config`). On the 64-bit host the same source keeps the cast, so
-  it looks like a same-width construction being treated as a no-op when the
-  value goes straight into an assignment; the `let` initializer keeps it.
-- Recent clang treats `-Wint-conversion` as an error, so the module does
-  not compile. LLVM is not affected (it emits `ptrtoint`).
-- Workaround: give the field a pointer type (`next: *Desc`) or go through
-  a `let`.
-- Found 2026-11-18 (GDMA descriptor chain on ESP32-C6).
-
 ## BUG#129: C backend drops `volatile` from a pointer-to-array constant
 
 ```modest
