@@ -1,0 +1,53 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: deref pointer constant
+// EXPECT-CODE(llvm): store volatile %Word32 1, %Word32* inttoptr (%Word32 1611239424 to %Word32*)
+// EXPECT-CODE(llvm): load volatile %Word32, %Word32* inttoptr (%Word32 1611239424 to %Word32*)
+// EXPECT-CODE(llvm): load %Word32*, %Word32** inttoptr (%Word32 1611239680 to %Word32**)
+// EXPECT-CODE(llvm): store volatile %Word32 3, %Word32* inttoptr (%Word32 1611239424 to %Word32*)
+// EXPECT-CODE(llvm): store %Word32 4, %Word32* null
+// EXPECT-CODE(llvm): store volatile %Word8 90, %Word8* inttoptr (%Word32 1611239424 to %Word8*)
+// EXPECT-CODE(llvm): load volatile %Word8, %Word8* inttoptr (%Word32 1611239424 to %Word8*)
+//
+// `*p` of a pointer constant made from an integer — a memory-mapped
+// register.  The addresses do not exist on the host, so `poke` is only
+// built, never called, and the LLVM side is checked in the IR: the
+// address has to be an `inttoptr` constant expression of the pointer
+// type, not a bare integer.  Covered: a store and a load through `*`,
+// a pointer to a pointer, `&*` of such a constant, the null address, and
+// a pointer to `Word8` made from a `Word32` address — the pointed-to type
+// and the type of the address are independent.
+// Guards BUG#127 (fixed 2026-11-18).
+
+pragma unsafe
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const reg = unsafe(*@volatile Word32 Word32 0x60099000)
+const regPtr = unsafe(**Word32 Word32 0x60099100)
+const zero = unsafe(*Word32 Word32 0)
+const reg8 = unsafe(*@volatile Word8 Word32 0x60099000)
+
+
+func poke () -> Word32 {
+	*reg = 1
+	let x = *reg
+	**regPtr = 2
+	let p = &*reg
+	*p = 3
+	*zero = 4
+	*reg8 = 0x5A
+	let y = *reg8
+	return x | Word32 (y)
+}
+
+
+func main () -> Int {
+	printf("passed: deref pointer constant\n")
+	return exitSuccess
+}
+

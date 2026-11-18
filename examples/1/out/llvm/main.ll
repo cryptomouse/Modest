@@ -130,30 +130,12 @@ declare void @perror(%ConstCharStr* %str)
 ; end from import "builtin"
 ; -- end print imports 'main' --
 ; -- strings --
-@.str1 = private constant [9 x i8] [i8 115, i8 117, i8 109, i8 58, i8 32, i8 37, i8 100, i8 10, i8 0]
 ; -- endstrings --
-
-;include "./lib"
-@lastInput = internal global %Int32 0
-define internal %Int32 @readInput() {
-	ret %Int32 1
-}
-
-define internal %Int32 @sum(%Int32 %a, %Int32 %b) {
-	%1 = add %Int32 %a, %b
-	ret %Int32 %1
-}
-
-define internal %Int32 @init() {
-	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([9 x i8]* @.str1 to [0 x i8]*), %Int32 3)
-	ret %Int32 0
-}
-
 define %Int32 @main() {
-	%1 = call %Int32 @init()
+	%k = alloca %Word8, align 1
+	%1 = load volatile %Word8, %Word8* inttoptr (%Word32 1611239424 to %Word8*);
+	store volatile %Word8 %1, %Word8* %k
 	ret %Int32 0
 }
 
 
-
-@llvm.used = appending global [2 x i8*] [i8* bitcast (%Int32* @lastInput to i8*), i8* bitcast (%Int32 ()* @readInput to i8*)], section "llvm.metadata"

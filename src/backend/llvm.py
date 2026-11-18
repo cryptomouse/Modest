@@ -648,6 +648,21 @@ def llvm_print_value_inline_cast(x):
 	t = x['type']
 	v = x['value']
 
+	# *p от константного указателя: do_eval перетипизировал результат
+	# llvm_deref в тип объекта (is_adr), а приводим мы по-прежнему к
+	# указателю на него - печатаем `inttoptr (... to T*)`. BUG#127
+	if x['is_adr']:
+		if v['kind'] == 'num' and v['asset'] == 0:
+			out("null")
+			return
+		opcode = 'inttoptr' if not v['type'].is_pointer() else 'bitcast'
+		out("%s (" % opcode)
+		llvm_print_type_value(v)
+		out(" to ")
+		print_type(t)
+		out("*)")
+		return
+
 	if v['kind'] in ['num']:
 		if t.is_pointer():
 			# null - только для нуля, любой другой адрес - через inttoptr
@@ -802,14 +817,14 @@ def llvm_cast(kind, value, to_type):
 	return rv
 
 
-def llvm_2cast(kind, from_type, to_type, value):
-	rv = ll_reg_operation(kind, to_type)
-	print_type(from_type)
-	out(" ")
-	llvm_print_value(value)
-	out(" to ")
-	print_type(to_type)
-	return rv
+# def llvm_2cast(kind, from_type, to_type, value):
+# 	rv = ll_reg_operation(kind, to_type)
+# 	print_type(from_type)
+# 	out(" ")
+# 	llvm_print_value(value)
+# 	out(" to ")
+# 	print_type(to_type)
+# 	return rv
 
 
 def llvm_is_volatile(x):

@@ -923,37 +923,6 @@ import "./b/point" as pb     // module "b/point", public func two
   the header by the imported module's own output name.
 
 
-## BUG#127: LLVM backend emits an integer as the pointer operand when dereferencing a pointer constant made from an integer
-
-```modest
-pragma unsafe
-
-const reg = unsafe(*@volatile Word32 Word32 0x60099000)
-
-func main () -> Word32 {
-	*reg = 0
-	return *reg
-}
-```
-
-```
-main.ll:58:37: error: integer/byte constant must have integer/byte type
-   58 |         store volatile %Word32 0, %Word32* 1611239424
-```
-
-- The folded constant is printed as a bare integer where LLVM needs a
-  pointer; an `inttoptr (i32 1611239424 to %Word32*)` constant expression
-  is missing.
-- Indexing a pointer-to-array constant of the same kind works
-  (`unsafe(*@volatile [64]Word32 Word32 0x60099000)`, then `reg[49] = 0`),
-  and so does field access through a pointer-to-record constant
-  (`mcu.gpio.outW1ts = ...`), so only the direct `*p` of a scalar pointer
-  constant is affected.
-- The C backend is fine (`*REG = 0x0;`, `REG` defined as
-  `((volatile uint32_t *)(uint32_t)0x60099000)`).
-- Workaround: declare a one-element-or-larger array pointer and index it.
-- Found 2026-11-18 (ESP32-C6 `HP_APM_FUNC_CTRL` register).
-
 ## BUG#128: C backend drops the cast in `field = unsafe(WordN &x)` when pointer and integer have the same width
 
 ```modest

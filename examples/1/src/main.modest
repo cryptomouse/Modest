@@ -4,36 +4,10 @@ pragma unsafe
 include "libc/ctypes64"
 include "libc/stdio"
 
-//include "./lib"
-
-const c1 = 1
-const c2 = 2
-
-
-@used
-var lastInput: Int32 = 0
-
-@used
-func readInput () -> Int32 {
-	return 1
-}
-
-func sum (a: Int32, b: Int32) -> Int32 {
-	return a + b
-}
-
-const c3 = sum(c1, c2)
-
-func init (x: Int32) -> Int32 {
-	let a = sum(c1, c2)
-	printf("sum: %d\n", a)
-	return 0
-}
-
+const reg8 = unsafe(*@volatile Word8 Word32 0x60099000)
 
 func main () -> Int32 {
-	init(1)
-	let a = sum(c1, c2)
+	var k = *reg8
 	return 0
 }
 

@@ -3,31 +3,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdio.h>
-//include "./lib"
-#define C1 1
-#define C2 2
-__attribute__((used))
-static int32_t lastInput = 0;
-
-__attribute__((used))
-static int32_t readInput(void) {
-	return 1;
-}
-
-static int32_t sum(int32_t a, int32_t b) {
-	return a + b;
-}
-#define C3 3
-
-static int32_t init(int32_t x) {
-	const int32_t a = 3;
-	printf("sum: %d\n", a);
-	return 0;
-}
+#define REG8 ((volatile uint8_t *)(uint32_t)0x60099000)
 
 int32_t main(void) {
-	init(1);
-	const int32_t a = 3;
 	return 0;
 }
 
