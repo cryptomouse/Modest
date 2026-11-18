@@ -19,7 +19,7 @@ You can contact me by telegram: t.me/@alexbalan.
 
 
 
-[Language documentation](./docs/lang/README.md)
+[Language documentation](https://cryptomouse.github.io/Modest/lang/) ([markdown sources](./docs/lang/README.md))
 
 [Installation](./docs/INSTALL.md)
 
