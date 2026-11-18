@@ -7,6 +7,17 @@ const c1 = 1
 const c2 = 2
 
 
+
+@used
+var lastInput: Int32 = 0
+
+
+@used
+func readInput () -> Int32 {
+	return 1
+}
+
+
 func sum (a: Int32, b: Int32) -> Int32 {
 	return a + b
 }

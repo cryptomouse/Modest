@@ -921,3 +921,137 @@ import "./b/point" as pb     // module "b/point", public func two
 - A fix would name the header after the module name when there is one
   (`a_point.h`), with `-o` naming only the `.c`, or let the importer find
   the header by the imported module's own output name.
+
+
+## BUG#126: LLVM backend does not declare a `public var` read from an imported module
+
+```modest
+// lib.modest
+public var counter: Nat32 = 7
+```
+
+```modest
+// main.modest
+import "lib"
+
+func main () -> Nat32 {
+	return lib.counter
+}
+```
+
+```
+main.ll:62:28: error: use of undefined value '@lib_counter'
+   62 |         %1 = load %Nat32, %Nat32* @lib_counter
+```
+
+- `print_imports` (`src/backend/llvm.py:3928`) walks the imported module's
+  defs and emits only types (`print_def_type`) and functions
+  (`print_decl_func`); there is no branch for `is_stmt_def_var`, so no
+  `@lib_counter = external global %Nat32` is ever printed.
+- The same happens to a `public const` array (a scalar const is folded and
+  does not need a symbol): `public const glyphs: [95][16]Word8 = [...]`,
+  read as `font.glyphs[c][r]` from another module, gives
+  `use of undefined value '@font_glyphs'`.
+- The C backend is fine: the import's header declares the variable.
+- Workaround: hide the variable behind a public getter function.
+- Found 2026-11-18 in a bare-metal ESP32-C6 display driver (`nv3007.width`,
+  a font table).
+
+## BUG#127: LLVM backend emits an integer as the pointer operand when dereferencing a pointer constant made from an integer
+
+```modest
+pragma unsafe
+
+const reg = unsafe(*@volatile Word32 Word32 0x60099000)
+
+func main () -> Word32 {
+	*reg = 0
+	return *reg
+}
+```
+
+```
+main.ll:58:37: error: integer/byte constant must have integer/byte type
+   58 |         store volatile %Word32 0, %Word32* 1611239424
+```
+
+- The folded constant is printed as a bare integer where LLVM needs a
+  pointer; an `inttoptr (i32 1611239424 to %Word32*)` constant expression
+  is missing.
+- Indexing a pointer-to-array constant of the same kind works
+  (`unsafe(*@volatile [64]Word32 Word32 0x60099000)`, then `reg[49] = 0`),
+  and so does field access through a pointer-to-record constant
+  (`mcu.gpio.outW1ts = ...`), so only the direct `*p` of a scalar pointer
+  constant is affected.
+- The C backend is fine (`*REG = 0x0;`, `REG` defined as
+  `((volatile uint32_t *)(uint32_t)0x60099000)`).
+- Workaround: declare a one-element-or-larger array pointer and index it.
+- Found 2026-11-18 (ESP32-C6 `HP_APM_FUNC_CTRL` register).
+
+## BUG#128: C backend drops the cast in `field = unsafe(WordN &x)` when pointer and integer have the same width
+
+```modest
+pragma unsafe
+
+type Desc = {buf: Word32, next: Word32}
+
+var d: [2]Desc
+
+func main () -> Word32 {
+	let a = unsafe(Word32 &d[1])    // (uint32_t)&d[1]  — correct
+	d[0].buf = a
+	d[0].next = unsafe(Word32 &d[1]) // d[0].next = &d[1];  — cast lost
+	return d[0].next
+}
+```
+
+```
+main.c:11:12: error: incompatible pointer to integer conversion assigning to
+'uint32_t' (aka 'unsigned int') from 'struct main_desc *' [-Wint-conversion]
+```
+
+- Only with a 32-bit target config (`pointer_width = 32`, e.g. an
+  RV32 `--config`). On the 64-bit host the same source keeps the cast, so
+  it looks like a same-width construction being treated as a no-op when the
+  value goes straight into an assignment; the `let` initializer keeps it.
+- Recent clang treats `-Wint-conversion` as an error, so the module does
+  not compile. LLVM is not affected (it emits `ptrtoint`).
+- Workaround: give the field a pointer type (`next: *Desc`) or go through
+  a `let`.
+- Found 2026-11-18 (GDMA descriptor chain on ESP32-C6).
+
+## BUG#129: C backend drops `volatile` from a pointer-to-array constant
+
+```modest
+pragma unsafe
+
+const regs = unsafe(*@volatile [4]Word32 Word32 0x60081000)
+
+func main () -> Word32 {
+	regs[1] = 1
+	regs[1] = 2
+	while (regs[0] & 1) != 0 {
+	}
+	return regs[1]
+}
+```
+
+```c
+#define REGS ((uint32_t *)(uint32_t)0x60081000)
+	((uint32_t *)REGS)[1] = 0x1;
+	((uint32_t *)REGS)[1] = 0x2;
+	while ((((uint32_t *)REGS)[0] & 0x1) != 0x0) {
+```
+
+- `volatile` is lost twice: in the `#define` and again in the cast at each
+  use. A scalar pointer constant in the same module keeps it
+  (`#define ONE ((volatile uint32_t *)(uint32_t)0x60081000)`), so the loss
+  is specific to `*@volatile [N]T`: the attribute sits on the array type and
+  is not carried to the element type the C pointer is built from (`do_ctype`
+  in `src/backend/c11.py` adds specs only for the type it is given).
+- Silent miscompilation for memory-mapped I/O: the C compiler may merge the
+  two stores, drop the first, or hoist the load out of the polling loop.
+- LLVM is fine: every access is `store volatile` / `load volatile`.
+- Workaround: build MMIO code with the LLVM backend, or use a
+  pointer-to-record (`*@volatile Regs`) instead of a pointer-to-array.
+- Found 2026-11-18 (ESP32-C6 SPI2/GDMA/PCR register blocks).

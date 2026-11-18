@@ -6,6 +6,14 @@
 //include "./lib"
 #define C1 1
 #define C2 2
+__attribute__((used))
+static int32_t lastInput = 0;
+
+__attribute__((used))
+static int32_t readInput(void) {
+	return 1;
+}
+
 
 static int32_t sum(int32_t a, int32_t b) {
 	return a + b;
