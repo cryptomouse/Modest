@@ -39,12 +39,6 @@ pragma c_include "./sha256.h"
 let bytes = unsafe(*[]Word8 data)
 ```
 
-## `$`-directives
-
-Tokens of the form `$name` are reserved for compiler directives
-(conditional compilation, `$if` / `$else`); this mechanism is currently
-**not implemented** — the historical design is kept in `docs/TODO.md`.
-
 ## See also
 
 - [Annotations](./annotation.md) — per-definition metadata

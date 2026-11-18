@@ -7,7 +7,6 @@
 		{ "include": "#strings" },
 		{ "include": "#chars" },
 		{ "include": "#annotations" },
-		{ "include": "#directives" },
 		{ "include": "#tags" },
 		{ "include": "#numbers" },
 		{ "include": "#function-definition" },
@@ -58,10 +57,6 @@
 		"annotations": {
 			"name": "storage.modifier.annotation.modest",
 			"match": "@[A-Za-z_][A-Za-z0-9_]*"
-		},
-		"directives": {
-			"name": "keyword.control.directive.modest",
-			"match": "\\$[A-Za-z_][A-Za-z0-9_]*"
 		},
 		"tags": {
 			"name": "constant.other.tag.modest",

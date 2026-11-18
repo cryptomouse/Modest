@@ -117,8 +117,8 @@ Design constraints to resolve **before** implementing:
 
 ## Conditional compilation (`$`-directives)
 
-Historical design, currently not implemented (the lexer tokenizes
-`$name`, the parser rejects it at top level):
+Historical design, not implemented; the `$name` token was removed from
+the lexer as unused, so `$` is now a bad symbol:
 
 ```
 $if (<#immediate Bool#>)

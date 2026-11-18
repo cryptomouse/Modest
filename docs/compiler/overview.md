@@ -12,7 +12,7 @@ source.modest → Lexer → Parser → Translator → Backend → out.c / out.ll
 Rule-based tokenizer. Produces a flat list of tuples
 `(class, text, TokenInfo)` where class is `id` / `Id` (capitalized —
 type identifiers are distinguished lexically) / `num` / `str` / `op` /
-`nl` / `annotation` (`@x`) / `directive` (`$x`) / `tag` (`#x`) /
+`nl` / `annotation` (`@x`) / `tag` (`#x`) /
 comments. `TokenInfo` carries file/line/position for diagnostics.
 Newlines are tokens — they terminate statements.
 

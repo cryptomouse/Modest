@@ -167,7 +167,6 @@ class CmLexer(Lexer):
 			self.doOperator1,
 			self.doString,
 			self.doAnnotation,
-			self.doDirective,
 			self.doTag,
 			self.doBadSymbol,
 		)
@@ -400,25 +399,6 @@ class CmLexer(Lexer):
 			s.append(c)
 
 		return ('annotation', ''.join(s))
-
-
-	def doDirective(self):
-		s = self.peep()
-		if s != '$':
-			return False
-
-		self.skip()  # '$'
-
-		s = []
-		while True:
-			sp = self.getTextPosition()
-			c = self.getc()
-			if not isIdChar(c):
-				self.setTextPosition(sp)
-				break
-			s.append(c)
-
-		return ('directive', ''.join(s))
 
 
 	def doLineComment(self):
