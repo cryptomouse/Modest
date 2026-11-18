@@ -22,6 +22,13 @@ read docs/CHEATSHEET.md before writing Modest code
 - `docs/EBNF.txt` — grammar
 - `docs/STYLE.md` — official code style; follow it in every `.modest` file
 
+## Comments
+
+A comment about a tricky problem shows a micro-example (Modest, C or LLVM
+IR, 1–3 lines, often before → after) instead of retelling the code in
+words; prose keeps only the *why*. Only where it pays off, not on plain
+code. Applies to `src/`, tests and `docs/` alike.
+
 ## Build & test
 
 - Compile: `./modest -o <out> -mbackend=c11|llvm|modest <file.modest>` (needs `MODEST_DIR`, `MODEST_LIB` env vars)

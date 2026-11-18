@@ -146,6 +146,23 @@ const enoent: Errno = 2  // No such file or directory
 const esrch: Errno = 3   // No such process
 ```
 
+- When a comment explains something hard to grasp (a non-obvious
+  transformation, a trap, the reason for a workaround), show it with a
+  **micro-example** (one to three lines of Modest, C or LLVM IR, often
+  as a before → after pair) instead of describing the code in words.
+  Keep the prose for what the example cannot show: the *why*.  Plain
+  code does not need an example; add one only where it saves the reader
+  real effort.
+
+```modest
+// The pointer is the register block itself, not a variable holding it:
+//
+//   regs[1] = 1   ->   ((volatile uint32_t *)REGS)[1] = 0x1;
+//
+// so each access reaches the device, and none is merged or dropped
+const regs = unsafe(*@volatile [4]Word32 Word32 0x60081000)
+```
+
 
 ## See also
 

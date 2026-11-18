@@ -1,0 +1,71 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: volatile array pointer
+// EXPECT-CODE(c11): #define REGS ((volatile uint32_t *)
+// EXPECT-CODE(c11): static void setItem(volatile uint32_t *a)
+// EXPECT-CODE(c11): static void setOpen(volatile uint32_t *a)
+// EXPECT-CODE(c11): ((volatile uint32_t *)REGS)[1] = 0x1;
+// EXPECT-CODE(c11): ((volatile uint32_t *)REGS)[1] = 0x2;
+// EXPECT-CODE(c11): volatile uint32_t *p =
+// EXPECT-CODE(llvm): store volatile %Word32 3
+//
+// `@volatile` on the array of `*@volatile [N]T` is on its items, as it is
+// in C.  The C backend prints such a pointer as a pointer to the item:
+//
+//   *@volatile [4]Word32   ->  volatile uint32_t *
+//
+// so the qualifier has to move to the item, in a constant, a variable, a
+// parameter (sized or not) and the cast at each use of a constant.  A
+// running program cannot tell, so the C is checked (EXPECT-CODE).  The
+// constant is never dereferenced: its address is not mapped here.
+// Guards BUG#129 (fixed 2026-11-18).
+
+pragma unsafe
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const regs = unsafe(*@volatile [4]Word32 Word32 0x60081000)
+
+
+func setItem (a: *@volatile [4]Word32) -> Unit {
+	a[2] = 3
+}
+
+func setOpen (a: *@volatile []Word32) -> Unit {
+	a[0] = 4
+}
+
+// the two stores must both stay: a mapped register sees each of them
+func pokeRegs () -> Unit {
+	regs[1] = 1
+	regs[1] = 2
+}
+
+
+func main () -> Int {
+	var ok = true
+	var items: [4]Word32
+
+	var p: *@volatile [4]Word32 = unsafe(*@volatile [4]Word32 &items)
+	p[1] = 5
+	ok = items[1] == 5 and ok
+
+	setItem(p)
+	ok = items[2] == 3 and ok
+
+	setOpen(p)
+	ok = items[0] == 4 and ok
+
+	if not ok {
+		printf("failed: volatile array pointer\n")
+		return exitFailure
+	}
+
+	printf("passed: volatile array pointer\n")
+	return exitSuccess
+}
+

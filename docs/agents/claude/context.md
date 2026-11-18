@@ -68,6 +68,12 @@ source.modest
 - `is_lvalue` on Value = can appear on left side of assignment
 - Backends never call `error()` — all errors come from `semantic.py`
 - `Id` has per-backend aliases: `id.c`, `id.llvm`, `id.cm` — set all three when creating a new named entity
+- A comment about a tricky problem shows a **micro-example** (Modest, C or
+  LLVM IR, 1–3 lines, often before → after) rather than retelling the code
+  in words; the prose keeps only the *why*. Only where it pays off, not on
+  plain code. Applies to `src/`, test headers and `docs/BUGS.md` alike; see
+  `do_ctype_item` in `src/backend/c11.py` and the Comments section of
+  `docs/STYLE.md`
 
 ## Existing docs (language-level)
 

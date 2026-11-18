@@ -220,9 +220,24 @@ def do_ctype_pointer(t, specs=[]):
 		return CTypePointer(to=CTypeIdentifier("void"), specifiers=specs)
 
 	if need_ptr_to_item_instead_of_ptr_to_array(to):
-		return CTypePointer(to=do_ctype(to.of), specifiers=specs)
+		return CTypePointer(to=do_ctype_item(to), specifiers=specs)
 
 	return CTypePointer(to=do_ctype(to), specifiers=specs)
+
+
+# Тип элемента массива - с квалификаторами самого массива (BUG#129):
+#
+#   *@volatile [4]Word32   ->  volatile uint32_t *    (а не uint32_t *)
+#
+# Квалификатор массива в C и есть квалификатор его элементов, так что когда
+# указатель на массив печатается указателем на элемент (или параметр-массив -
+# массивом без него), квалификатор переезжает на элемент. restrict - нет:
+# к не-указателю он в C неприменим
+def do_ctype_item(t):
+	item = do_ctype(t.of)
+	quals = [q for q in ctype_qualifiers(t) if q != 'restrict']
+	item.specifiers = item.specifiers + [q for q in quals if q not in item.specifiers]
+	return item
 
 
 # преобразуем Modest TypeFunc -> CIR TypeFunc
@@ -334,6 +349,10 @@ def do_def_type_variant(t):
 	return result
 
 
+def ctype_qualifiers(t):
+	return [q for q in ('const', 'volatile', 'restrict') if t.hasAttribute(q)]
+
+
 # преобразуем Modest Type -> CIR Type
 def do_ctype(t, is_param=False):
 	assert(isinstance(t, Type))
@@ -343,12 +362,9 @@ def do_ctype(t, is_param=False):
 			# Только для параметров функции!
 			if t.is_pointer_to_array():
 				if not need_ptr_to_item_instead_of_ptr_to_array(t.to):
-					return CTypeArray(item_type=do_ctype(t.to.of), size=do_ctype_array_volume(t.to))
+					return CTypeArray(item_type=do_ctype_item(t.to), size=do_ctype_array_volume(t.to))
 
-	specs = []
-	if t.hasAttribute('const'):    specs.append('const')
-	if t.hasAttribute('volatile'): specs.append('volatile')
-	if t.hasAttribute('restrict'): specs.append('restrict')
+	specs = ctype_qualifiers(t)
 
 	if is_named(t): return do_ctype_named(t, specs=specs)
 	if t.is_pointer(): return do_ctype_pointer(t, specs=specs)
@@ -3370,7 +3386,7 @@ def do_cvalue_addr_of(x, parr_relax=False):
 			cv = CValueCast(CTypePointer(do_ctype(x.type)), cv)
 
 		if parr_relax and x.type.is_array():
-			cv = CValueCast(CTypePointer(do_ctype(x.type.of)), cv)
+			cv = CValueCast(CTypePointer(do_ctype_item(x.type)), cv)
 
 	return cv
 
