@@ -1,0 +1,10 @@
+// A module whose public aliases fail to resolve, for
+// reject_bad_alias_import.modest; `bad_alias.n` names the module from
+// inside itself, which a module cannot do.
+
+public const n: Nat32 = 4
+
+public type Undefined = Zzz
+public type BadVolume = [bad_alias.n]Int32
+type Hidden = Zzz
+

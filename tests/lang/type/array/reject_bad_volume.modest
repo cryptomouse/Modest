@@ -1,0 +1,31 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// EXPECT-ERROR: undefined value 'globalSize'
+// EXPECT-ERROR: undefined value 'localSize'
+// EXPECT-ERROR: undefined value 'initSize'
+// EXPECT-ERROR-COUNT: 3
+//
+// An array whose size fails to evaluate is a bad type, not an array: it
+// used to stay a `[bad]T`, counted as sized (its volume is not undefined)
+// while the volume held no number, so padding a literal out to the size
+// crashed the compiler right after the real error was reported:
+//
+//	var a: [localSize]Int32
+//	a = [1, 2]   // TypeError: '<' between int and None
+//
+// Each bad size is reported once, and nothing cascades from the array.
+
+include "libc/ctypes64"
+
+
+var globalTable: [globalSize]Int32 = [1, 2]
+
+
+func main () -> Int {
+	var a: [localSize]Int32
+	a = [1, 2]
+
+	var b: [initSize]Int32 = [3]
+	return 0
+}
+

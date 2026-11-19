@@ -554,8 +554,9 @@ def do_type_named(x, anno, ctx):
 			error("access to private type", x['ti'])
 			return TypeBad(x['ti'])
 
-		if t.is_incompleted():
-			t = type_update_incompleted(module, t, id_str)
+		# импорт уже разобран целиком (рекурсивный запрещен), а плохой
+		# алиас в нем - TypeBad: недоопределенным тип отсюда не приходит
+		assert not t.is_incompleted()
 
 	else:
 		global csymtab
@@ -628,8 +629,12 @@ def do_type_array(x, anno, ctx):
 
 	volume = do_rvalue_integral(x['size'], ctx=ctx)
 
+	# размер не вычислился - сам тип плохой: массив с bad-размером считался
+	# бы sized (volume не undefined), а volume.asset у него None
+	#	var a: [zz]Int32
+	#	a = [1, 2]   // дополнение нулями до None -> падение компилятора
 	if volume.is_bad():
-		return TypeArray(of, volume, ti=x['ti'])
+		return TypeBad(x['ti'])
 
 	if not volume.is_undefined():
 		if volume.is_runtime():
@@ -2494,6 +2499,10 @@ def do_stmt_type(x):
 	nt.id = definition.id
 	df = def_type_common(x, nt)
 	if df == None or df.is_stmt_bad():
+		# плохой тип тоже регистрируем, иначе `var a: L` ниже - еще
+		# одна ошибка "undefined type"
+		if nt.is_bad():
+			csymtab.type_add(x['id']['str'], nt, is_public=False)
 		return StmtBad(x['ti'])
 	df.id.llvm = cfunc.id.str + '.' + df.id.str
 	csymtab.type_add(df.id.str, nt, is_public=False)
@@ -2818,7 +2827,17 @@ def def_type_common(x, nt):
 				else:
 					f.access_level = HLIR_ACCESS_LEVEL_PRIVATE
 
+	# правая часть плохая - имя становится плохим типом, а не остается
+	# недоопределенным: иначе каждое его использование - еще одна ошибка,
+	# а из другого модуля - падение (BUG#130)
+	#	type A = Zzz   // error: undefined type
+	#	var a: A       // молча, как с ValueBad
+	# definition сохраняем: по нему проверяется доступ (a.T приватный?)
 	if ty.is_bad():
+		nt.update(TypeBad(x['ti']))
+		nt.definition = definition
+		nt.module = cmodule
+		nt.ti_def = id.ti
 		cdef = prev_cdef
 		return StmtBad(x['ti'])
 
@@ -3652,26 +3671,6 @@ def process_module(idStr, sourcename, ast):
 
 	return m
 
-
-
-def type_update_incompleted(module, t, idStr):
-	print("type_update_incompleted('%s', '%s')" % (module.id, idStr))
-
-	for x in module.ast:
-		if x['isa'] != 'ast_definition':
-			continue
-
-		if x['id']['str'] != idStr:
-			continue
-
-		#v = csymtab.value_get(idStr)
-		print("- UPDATED!")
-		tx = do_type(x['type'], ctx=None)
-		t.update(tx)
-
-		return tx
-
-	return t
 
 
 def value_update_incompleted_type(module, v, idStr):

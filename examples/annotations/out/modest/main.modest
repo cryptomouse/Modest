@@ -39,8 +39,8 @@ var ext_arr: []Int32
 
 
 
-@alignment()
 @section()
+@alignment()
 var x: Word32
 
 

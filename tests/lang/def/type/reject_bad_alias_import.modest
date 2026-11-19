@@ -1,0 +1,35 @@
+// TEST: reject
+// BACKENDS: c11, llvm, modest
+// LINK: ./_fixture/bad_alias.modest
+// EXPECT-ERROR: undefined type
+// EXPECT-ERROR: undefined value 'bad_alias'
+// EXPECT-ERROR: undefined type
+// EXPECT-ERROR: access to private type
+// EXPECT-ERROR-COUNT: 4
+//
+// A bad alias used from another module is as silent as in its own, any
+// number of times.  It used to stay incomplete, and the first use
+// re-evaluated it in the importer's scope, wiping its definition — so the
+// second use crashed the compiler:
+//
+//	var x: bad_alias.Undefined
+//	var y: bad_alias.Undefined   // AttributeError: 'NoneType' ... 'access_level'
+//
+// Only a real error is added: a private type stays private even when bad.
+//
+// Guards BUG#130 (fixed 2026-11-19).
+
+include "libc/ctypes64"
+
+import "./_fixture/bad_alias"
+
+
+func main () -> Int {
+	var x: bad_alias.Undefined
+	var y: bad_alias.Undefined
+	var p = *bad_alias.BadVolume nil
+	var s = sizeof(bad_alias.BadVolume)
+	var h: bad_alias.Hidden
+	return 0
+}
+
