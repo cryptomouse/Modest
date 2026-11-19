@@ -3596,6 +3596,13 @@ def print_def_func(x):
 	if x.hasAttribute('noinline'):
 		out(" noinline")
 
+	# после атрибутов функции, перед телом:
+	#   define internal %Int32 @f() noinline section ".fast" align 16 {
+	if x.hasAttribute('section'):
+		out(" section \"%s\"" % x.getAttribute('section').asset)
+	if x.hasAttribute('alignment'):
+		out(" align %d" % x.getAttribute('alignment').asset)
+
 	#
 	# Добавляем параметры в локальную таблицу
 	#

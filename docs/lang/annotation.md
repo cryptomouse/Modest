@@ -95,6 +95,7 @@ Annotations are written before a definition, or inside a type expression
 | `@volatile` | volatile qualifier |
 | `@restrict` | restrict qualifier |
 | `@section("name")` | linker section |
+| `@section("name", alignment=N)` | linker section and alignment, a shorthand for `@section("name") @alignment(N)` |
 | `@branded` | nominal type (see [branded](./type/branded.md)) |
 | `@fraction(N)` | in a type, before `FixedX` (`x: @fraction(16) Fixed32`): N fractional bits, the binary point (applied by the fold and at run time alike; remaining limitations in BUG#25) |
 

@@ -3117,13 +3117,7 @@ def def_var_common(x, annos):
 
 	cdef = prev_cdef
 
-	alignment_anno = pop_anno(annos, 'alignment')
-	if alignment_anno != None:
-		definition.addAttribute("alignment", do_value(alignment_anno['args'][0]['value'], ctx=None))
-
-	section_anno = pop_anno(annos, 'section')
-	if section_anno != None:
-		definition.addAttribute("section", do_value(section_anno['args'][0]['value'], ctx=None))
+	def_set_placement(definition, annos)
 
 	anno_to_attribute(definition, annos, 'nonstatic')
 
@@ -3273,13 +3267,7 @@ def def_func2(x, annos):
 	anno_to_attribute(df, annos, 'runtime')
 	
 	
-	alignment_anno = pop_anno(annos, 'alignment')
-	if alignment_anno != None:
-		df.addAttribute("alignment", do_value(alignment_anno['args'][0]['value'], ctx=None))
-
-	section_anno = pop_anno(annos, 'section')
-	if section_anno != None:
-		df.addAttribute("section", do_value(section_anno['args'][0]['value'], ctx=None))
+	def_set_placement(df, annos)
 
 
 	if fn.type.is_bad():
@@ -3887,6 +3875,39 @@ def def_has_body(df, x):
 
 # Бэкенды (из -mbackend), у которых есть выходные имена символов
 OUTPUT_NAME_BACKENDS = ['c11', 'llvm']
+
+
+
+# @alignment(N) и @section("name", alignment=N) на определении. Именованный
+# alignment= - сокращение для отдельной @alignment, ради одной аннотации там,
+# где нужны обе:
+#   @section(".dma", alignment=32)  ==  @section(".dma") @alignment(32)
+# Если указаны оба, побеждает отдельная @alignment (их совпадение
+# пока не проверяется)
+def def_set_placement(df, annos):
+	alignment = None
+
+	section_anno = pop_anno(annos, 'section')
+	if section_anno != None:
+		args = section_anno['args']
+		if args == [] or args[0]['key'] != None or args[0]['value']['kind'] != 'string':
+			error("@section expects the section name as its first argument", section_anno['ti'])
+		else:
+			df.addAttribute("section", do_value(args[0]['value'], ctx=None))
+			for arg in args[1:]:
+				if arg['key'] == None:
+					error("@section: arguments after the name must be named, like alignment=16", arg['ti'])
+				elif arg['key']['str'] == 'alignment':
+					alignment = do_value(arg['value'], ctx=None)
+				else:
+					error("unknown argument '%s' in @section" % arg['key']['str'], arg['ti'])
+
+	alignment_anno = pop_anno(annos, 'alignment')
+	if alignment_anno != None:
+		alignment = do_value(alignment_anno['args'][0]['value'], ctx=None)
+
+	if alignment != None:
+		df.addAttribute("alignment", alignment)
 
 
 # Разбирает @alias/@extern: ("name") или ("name", backend="c11"|"llvm").

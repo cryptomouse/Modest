@@ -1,0 +1,46 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: section
+// EXPECT-CODE(c11): __attribute__((section("__DATA,.dma"), aligned(32)))
+// EXPECT-CODE(c11): static uint8_t dmaBuf[64]
+// EXPECT-CODE(c11): __attribute__((section("__DATA,.plain")))
+// EXPECT-CODE(c11): __attribute__((section("__TEXT,.fast"), aligned(16)))
+// EXPECT-CODE(llvm): @dmaBuf = internal global [64 x %Word8] zeroinitializer, section "__DATA,.dma", align 32
+// EXPECT-CODE(llvm): @plain = internal global %Int32 7, section "__DATA,.plain"
+// EXPECT-CODE(llvm): define internal %Int32 @fast() section "__TEXT,.fast" align 16 {
+//
+// `alignment=` in @section is a shorthand for a separate @alignment:
+//   @section(".dma", alignment=32)  ==  @section(".dma") @alignment(32)
+// Placement is invisible to a running program, so the generated code is
+// checked; the program itself only proves the symbols are usable.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+@section("__DATA,.dma", alignment=32)
+var dmaBuf: [64]Word8
+
+@section("__DATA,.plain")
+var plain: Int32 = 7
+
+@section("__TEXT,.fast", alignment=16)
+func fast () -> Int32 {
+	return 35
+}
+
+
+func main () -> Int {
+	dmaBuf[0] = 1
+	if Int32 dmaBuf[0] + plain + fast() != 43 {
+		printf("dmaBuf + plain + fast() != 43\n")
+		return exitFailure
+	}
+
+	printf("passed: section\n")
+	return exitSuccess
+}
+
+

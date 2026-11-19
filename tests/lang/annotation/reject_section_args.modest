@@ -1,0 +1,29 @@
+// TEST: reject
+// BACKENDS: c11
+// EXPECT-ERROR: @section expects the section name as its first argument
+// EXPECT-ERROR: @section: arguments after the name must be named
+// EXPECT-ERROR: unknown argument 'align' in @section
+// EXPECT-ERROR-COUNT: 3
+//
+// The arguments of @section: the section name first, anything after it
+// named.  In order: no name, only `alignment=`; a positional alignment;
+// `align=` instead of `alignment=`.
+
+include "libc/ctypes64"
+
+
+@section(alignment=16)
+var a: Int32
+
+@section("__DATA,.b", 16)
+var b: Int32
+
+@section("__DATA,.c", align=16)
+var c: Int32
+
+
+func main () -> Int {
+	return 0
+}
+
+

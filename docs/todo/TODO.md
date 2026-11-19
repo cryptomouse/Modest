@@ -256,3 +256,14 @@ into the attribute: the definition loop in `semantic.py` maps only
 `anno_to_attribute(df, annos, 'deprecated')` there (and for types in
 `def_type_global`), plus a test per definition kind. When done, return
 it to `docs/CHEATSHEET.md`.
+
+## `@section(..., alignment=N)` together with `@alignment(M)`
+
+Deferred (Alex, 2026-11-19): when both are given, the separate
+`@alignment` silently wins. Intended: an error whenever both are present,
+even if N == M, so there is never a question of which one counts.
+
+```modest
+@section(".dma", alignment=32) @alignment(16)   // today: align 16, no diagnostic
+var buf: [64]Word8
+```

@@ -670,7 +670,8 @@ Unit value                         // discard a value (suppress warnings)
 @volatile                          // volatile memory
 @restrict                          // restrict qualifier (pointers/arrays)
 @alignment(N)                      // set alignment to N bytes (C: __attribute__((aligned(N))), LLVM: align N)
-@section("segment, section")       // place symbol in a specific linker section
+@section("segment,section")        // place symbol in a specific linker section
+@section("name", alignment=N)      // same + alignment, a shorthand for @section("name") @alignment(N)
 @fraction(N)                       // in a type, before FixedX: N fractional bits — `x: @fraction(16) Fixed32`; limitations in BUG#25
 ```
 
@@ -707,8 +708,11 @@ var table: [256]Word8  // kept even if never referenced
 @alignment(8)
 var alignedBuf: [64]Word8
 
-@section("__DATA, .xdata")
+@section("__DATA,.xdata")
 var xdata: [16]Word8
+
+@section("__DATA,.dma", alignment=32)   // == @section("__DATA,.dma") @alignment(32)
+var dmaBuf: [64]Word8
 
 type Vec2 = @public {
 	x: Float32
