@@ -1,0 +1,61 @@
+{#
+Left column: the site nav tree. Only the section holding the current page is
+unfolded (<details open>); the current page lists its own headings below it.
+Keeps the stock toc.html wrapper (.bs-sidebar, #toc-collapse): base.js makes
+it sticky, Bootstrap's ScrollSpy highlights the heading being read, and on a
+narrow screen it folds behind the toggler.
+#}
+
+{#- page.toc is [H1 → [H2, ...]]: the H1 repeats the page title, so its
+    children are listed instead -#}
+{%- macro page_toc() %}
+    {%- set items = page.toc.items[0].children if page.toc.items|length == 1 and page.toc.items[0].level == 1 else page.toc.items %}
+    {%- if items %}
+        <ul class="nav flex-column page-toc">
+        {%- for item in items %}{{ toc_item(item) }}{% endfor %}
+        </ul>
+    {%- endif %}
+{%- endmacro %}
+
+{%- macro toc_item(item) %}
+    {%- if item.level <= config.theme.navigation_depth %}
+        <li class="nav-item"><a href="{{ item.url }}" class="nav-link">{{ item.title }}</a>
+        {%- if item.children and item.level < config.theme.navigation_depth %}
+            <ul class="nav flex-column">
+            {%- for child in item.children %}{{ toc_item(child) }}{% endfor %}
+            </ul>
+        {%- endif %}
+        </li>
+    {%- endif %}
+{%- endmacro %}
+
+{%- macro nav_tree(items) %}
+    <ul class="nav flex-column">
+    {%- for it in items %}
+        {%- if it.children %}
+            <li class="nav-item site-section">
+                <details{% if it.active %} open{% endif %}>
+                    <summary>{{ it.title }}</summary>
+                    {{ nav_tree(it.children) }}
+                </details>
+            </li>
+        {%- else %}
+            <li class="nav-item site-page">
+                <a href="{{ it.url|url }}" class="site-link{% if it.active %} current" aria-current="page{% endif %}">{{ it.title }}</a>
+                {%- if it.active and page %}{{ page_toc() }}{% endif %}
+            </li>
+        {%- endif %}
+    {%- endfor %}
+    </ul>
+{%- endmacro %}
+
+<div class="navbar-expand-md bs-sidebar hidden-print affix" role="complementary">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggler collapsed" data-bs-toggle="collapse" data-bs-target="#toc-collapse" title="{% trans %}Table of Contents{% endtrans %}">
+            <span class="fa fa-angle-down"></span>
+        </button>
+    </div>
+    <div id="toc-collapse" class="navbar-collapse collapse card bg-body-tertiary site-nav">
+        {{ nav_tree(nav) }}
+    </div>
+</div>

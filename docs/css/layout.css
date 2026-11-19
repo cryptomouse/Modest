@@ -1,2 +1,71 @@
-/* windmill caps the article at 700px; widen it by 20% */
-.wm-page-content { max-width: 840px; }
+/* mkdocs-bootswatch ships Bootstrap 4 CSS, while MkDocs 1.6 templates use
+   Bootstrap 5 names:  ms-md-auto → no such class, the links stick to the
+   brand;  var(--bs-primary) → undefined. Hence BS4 vars (--primary, --gray)
+   below and the margin rule here. */
+@media (min-width: 768px) {
+    .navbar .ms-md-auto { margin-left: auto; }
+}
+
+/* navbar 25% lower than yeti's 3.40625rem */
+:root { --navbar-h: 2.55rem; }
+.navbar.fixed-top { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.navbar .navbar-brand { padding-top: 0.3rem; padding-bottom: 0.3rem; }
+.navbar .navbar-nav .nav-link { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
+.bs-sidebar.affix { top: calc(var(--navbar-h) + 20px); }
+
+/* Left site nav built by misc/mkdocs/theme/sidebar.html */
+
+.bs-sidebar.card.site-nav {
+    /* scrolls on its own instead of being cut off at 90% of the page */
+    max-height: calc(100vh - var(--navbar-h) - 40px);
+    padding: 8px 0;
+    font-size: 0.9rem;
+}
+.site-nav > .nav { padding: 0; }
+
+.site-nav ul { list-style: none; padding-left: 0; }
+.site-nav ul ul { padding-left: 0.9em; }
+
+/* section headers: a native <details>, so no JS is needed to fold them */
+.site-nav summary {
+    padding: 3px 12px;
+    font-weight: 600;
+    cursor: pointer;
+    list-style-position: inside;
+}
+.site-nav summary:hover { color: var(--primary); }
+
+.site-nav a.site-link {
+    display: block;
+    padding: 3px 12px 3px 16px;
+    color: inherit;
+    text-decoration: none;
+    border-left: 3px solid transparent;
+}
+.site-nav a.site-link:hover { color: var(--primary); }
+.site-nav a.site-link.current {
+    font-weight: 600;
+    color: var(--primary);
+    border-left-color: var(--primary);
+}
+
+/* headings of the current page, nested under its entry: italic and hung on a
+   guide line, so they read as parts of that page, not as separate pages */
+.bs-sidebar .site-nav .page-toc {
+    margin: 2px 0 6px 19px;
+    border-left: 1px solid #ddd;
+}
+.bs-sidebar .site-nav .page-toc a.nav-link {
+    padding: 2px 10px;
+    font-weight: normal;
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--gray);
+    border-right: 0;
+}
+.bs-sidebar .site-nav .page-toc a.nav-link:hover,
+.bs-sidebar .site-nav .page-toc a.nav-link.active {
+    color: var(--primary);
+    border-right: 0;
+}

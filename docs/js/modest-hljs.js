@@ -1,7 +1,7 @@
 // Syntax highlighting for code blocks (highlight.js + custom Modest grammar).
 // Pygments has no Modest lexer, so highlighting is done client-side for every
 // language; colours come from the docco theme (mkdocs.yml extra_css).
-// The theme's own old hljs is switched off by hljs-theme-off.js.
+// The theme's own hljs is off (mkdocs.yml: highlightjs: false).
 
 hljs.registerLanguage('modest', function (hljs) {
   return {

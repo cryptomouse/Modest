@@ -8,7 +8,12 @@ docs_dir: docs
 site_dir: site
 
 theme:
-  name: windmill
+  name: yeti
+  # navbar: site name + links; site nav on the left (misc/mkdocs/theme/)
+  custom_dir: misc/mkdocs/theme
+  navigation_depth: 3
+  # code is coloured by docs/js/modest-hljs.js, not by the theme's hljs
+  highlightjs: false
 
 markdown_extensions:
   - tables
@@ -29,7 +34,6 @@ markdown_extensions:
 
 # Pygments has no Modest lexer: code blocks are highlighted client-side
 extra_javascript:
-  - js/hljs-theme-off.js
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/llvm.min.js
   - js/modest-hljs.js

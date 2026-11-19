@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{#
+Overrides of the yeti (mkdocs-bootswatch) theme, wired in by
+`theme.custom_dir` in mkdocs.yml.
+
+The stock layout puts the site nav into navbar dropdowns and the page TOC on
+the left. Here the navbar keeps only the site name and the right-hand links
+(search, prev/next, GitHub); the site nav moves to the left, with the current
+page's TOC nested under its entry.
+#}
+
+{%- block site_nav %}{% endblock %}
+
+{%- block content %}
+    <div class="col-md-3">{% include "sidebar.html" %}</div>
+    <div class="col-md-9" role="main">{% include "content.html" %}</div>
+{%- endblock %}
