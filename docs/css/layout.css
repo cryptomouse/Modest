@@ -107,6 +107,11 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
    The 20px doesn't collapse into the H1's margin: .col-md-9 is a flex item. */
 [role="main"] > h1 { margin-top: calc(2.25rem - 20px); }
 
+/* list items a bit apart (Bootstrap packs them line to line); a nested list
+   gets the same gap from the text of its own item */
+[role="main"] li + li,
+[role="main"] li > :is(ul, ol) { margin-top: 0.3rem; }
+
 /* Path above the H1, built by misc/mkdocs/theme/breadcrumbs.html */
 .breadcrumbs {
     margin-bottom: 0.3rem;
