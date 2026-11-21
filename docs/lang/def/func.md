@@ -6,7 +6,7 @@ Binds an [identifier](../identifier.md) to a function with the given
 ## Form
 
 ```
-func <#identifier#> (<#parameters#>) -> <#return_type#> {
+func <#identifier#> <#FuncType#> {
 	<#statements#>
 }
 ```
