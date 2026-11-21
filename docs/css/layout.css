@@ -18,13 +18,6 @@
 :root { --navbar-h: 2.28rem; }
 .navbar.fixed-top { padding-top: 0.1rem; padding-bottom: 0.1rem; }
 .navbar .navbar-brand { padding-top: 0.16rem; padding-bottom: 0.16rem; }
-/* mascot after the site name; not taller than the brand's line (1.758rem),
-   so the navbar keeps its height */
-.navbar-brand .brand-mascot {
-    height: 1.28rem;
-    margin-left: 0.4rem;
-    vertical-align: -0.2rem;
-}
 .navbar .navbar-nav .nav-link { padding-top: 0.4rem; padding-bottom: 0.4rem; }
 html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
 .bs-sidebar.affix { top: calc(var(--navbar-h) + 20px); }

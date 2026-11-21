@@ -12,9 +12,9 @@ page's TOC nested under its entry.
 
 {%- block site_nav %}{% endblock %}
 
-{#- site name followed by the mascot, Modest Mouse (white, for the blue navbar) #}
+{#- the site name only: no mascot, it made the project look like a toy #}
 {%- block site_name %}
-                <a class="navbar-brand" href="{{ nav.homepage.url|url }}">{{ config.site_name }}<img class="brand-mascot" src="{{ 'res/img/modest-mouse.svg'|url }}" alt=""></a>
+                <a class="navbar-brand" href="{{ nav.homepage.url|url }}">{{ config.site_name }}</a>
 {%- endblock %}
 
 {%- block content %}
