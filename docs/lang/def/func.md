@@ -12,13 +12,10 @@ func <#identifier#> <#FuncType#> {
 ```
 
 The return type is mandatory; use `Unit` for functions returning nothing.
-A definition without a body is a *declaration* — it names a function
-defined elsewhere, and is marked `@extern` when it is a symbol outside the
-module (see [annotations](../annotation.md)).  `@alias`, which renames a
-function in the output, needs a body.
+A non-`Unit` function must end with `return`; otherwise the compiler warns
+(`expected return operator at end`) and returns a default value.
 
-The opening `{` may be written right after the signature or alone on the
-next line — a single newline between them is allowed:
+The opening `{` may also stand alone on the next line:
 
 ```modest
 func foo () -> Unit
@@ -27,47 +24,43 @@ func foo () -> Unit
 }
 ```
 
-Whether a definition is a declaration is decided by what follows that one
-newline: `{` continues it as a body, anything else (another `func`, EOF,
-...) ends it as a bodyless declaration. Only one newline is skipped this
-way — a blank line before `{` still ends the declaration.
+Only one newline is allowed there — after a blank line `{` no longer
+belongs to the signature.
+
+## Declarations
+
+A definition without a body is a *declaration* of a function defined
+outside the module; mark it `@extern` (see [annotations](../annotation.md)).
+It is not a forward declaration: a function may be called before its
+definition, and declaring it again in the same module is a redefinition.
+`@alias`, which renames a function in the output, needs a body.
 
 ```modest
-func bar () -> Int32  // declaration — next line isn't '{'
-func baz () -> Int32  // declaration
+@extern
+public func printf (format: *Str8, ...) -> Int
 ```
-
-The `:` before the signature is required. Omitting it (`func name (...)  ->
-...`) still compiles for backward compatibility but raises a warning —
-write new code with the colon.
 
 ## Parameters
 
 Parameters are [fields](../fields.md): `name: Type`. Additionally:
 
-- **Default values**: `name: Type = value`. The argument may then be omitted
-  at the call site.
+- **Default values**: `name: Type = value` — the argument may be omitted.
 - **Named arguments**: any call may pass arguments by name:
   `f(b = 2, a = 1)` (see [call](../value/call.md)).
-- **Variadic functions**: a trailing `...` accepts a C-style variable
-  argument list (used for C interop, see [va_arg](../va_arg.md)).
-- **Unused parameters**: a parameter the body never reads is a warning
-  (`parameter 'x' is not used`). Mark one that is unused on purpose
-  — a callback stub, a fixed signature — with `@unused` before its type:
-  `x: @unused Int32`. Declarations without a body are not checked.
+- **Variadic**: a trailing `...` accepts C-style varargs
+  (see [va_arg](../va_arg.md)).
+- **Unused parameters** give a warning (`parameter 'x' is not used`);
+  mark an intentionally unused one with `@unused`: `x: @unused Int32`.
 
 ```modest
 func greet (name: *Str8 = "World") -> Unit { ... }
-
-@extern
-public func printf (format: *Str8, ...) -> @unused Int
 ```
 
 ## Nested functions
 
-A function may be defined inside another function. It is an ordinary
-function whose name is local to the enclosing body — it does **not**
-capture variables (no closures). Local `type` definitions are also allowed.
+A function may be defined inside another one. Its name is local to the
+enclosing body, and it does **not** capture variables (no closures).
+Local `type` definitions are allowed too.
 
 ```modest
 func main () -> Int {
@@ -81,15 +74,13 @@ func main () -> Int {
 ## Signature from a named function type
 
 ```
-func <#identifier#> <#FuncType#> {
+func <#identifier#> <#FuncTypeName#> {
 	<#statements#>
 }
 ```
 
-Instead of spelling out `(params) -> Return` inline, the parameter list and
-return type can be borrowed from a predeclared [function
-type](../type/func.md). Parameter names come from the type, so they don't
-need to be repeated at every definition that shares the same shape:
+The signature may be taken from a named [function type](../type/func.md)
+(not a pointer to one); parameter names come from the type:
 
 ```modest
 type FailHandler = (code: Int32) -> Unit
@@ -97,41 +88,19 @@ type FailHandler = (code: Int32) -> Unit
 func onDiskFail FailHandler {
 	printf("disk failed with code %d\n", code)
 }
-
-func onNetworkFail FailHandler {
-	printf("network failed with code %d\n", code)
-}
 ```
 
-`<#FuncType#>` must resolve to a function type — not a pointer to one.
-
-This form is useful for a handful of definitions that repeat the exact same
-callback shape, but at the cost of hiding the parameter list at the
-definition site — a reader must look up the type to see what's being
-passed in. Prefer the inline form unless several definitions genuinely
-share one signature.
+This hides the parameter list from the reader, so use it only when several
+definitions genuinely share one signature.
 
 ## Notes
 
 - The program entry point is `func main () -> Int`.
-- A function's address is taken with `&name` and stored in a
+- `&name` takes the function's address as a
   [pointer to function](../type/func.md).
-- Inlining is controlled with `@inline` / `@inlinehint` / `@noinline`
+- Inlining: `@inline` / `@inlinehint` / `@noinline`
   (see [annotations](../annotation.md)).
-- A function whose body is a single `return` over its parameters is pure,
-  and its calls with compile-time arguments are folded
-  (see [compile-time calls](../value/call.md#compile-time-calls));
+- A function whose body is a single `return`, with no pointers in its
+  parameters or result, is pure: its calls with compile-time arguments are
+  folded (see [compile-time calls](../value/call.md#compile-time-calls)).
   `@runtime` turns that off.
-
-## Example
-
-```modest
-func sum (a: Int32, b: Int32) -> Int32 {
-	return a + b
-}
-
-func main () -> Int {
-	printf("%d\n", sum(10, 20))
-	return 0
-}
-```
