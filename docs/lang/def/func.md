@@ -12,6 +12,25 @@ func <#identifier#> <#FuncType#> {
 ```
 
 The return type is mandatory; use `Unit` for functions returning nothing.
+
+A non-`Unit` function must end with `return`; otherwise the compiler warns
+(`expected return operator at end`) and returns a default value.
+
+```modest
+func sum (a: Int32, b: Int32) -> Int32 {
+	return a + b
+}
+
+// the opening `{` may also stand alone on the next line
+func hello () -> Unit
+{
+	printf("hello\n")
+}
+```
+
+Only one newline is allowed before `{` — after a blank line it no longer
+belongs to the signature.
+
 `<#FuncType#>` may also be the name of a function type — parameter names
 then come from the type:
 
@@ -22,21 +41,6 @@ func onDiskFail FailHandler {
 	printf("disk failed with code %d\n", code)
 }
 ```
-
-A non-`Unit` function must end with `return`; otherwise the compiler warns
-(`expected return operator at end`) and returns a default value.
-
-The opening `{` may also stand alone on the next line:
-
-```modest
-func foo () -> Unit
-{
-	...
-}
-```
-
-Only one newline is allowed there — after a blank line `{` no longer
-belongs to the signature.
 
 ## Parameters
 
