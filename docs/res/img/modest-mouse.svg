@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="Modest mouse">
+  <defs>
+    <mask id="cut" maskUnits="userSpaceOnUse" x="0" y="0" width="64" height="64">
+      <rect x="0" y="0" width="64" height="64" fill="#fff"/>
+      <!-- gap between ears and head -->
+      <path d="M32 15c13 0 20 9 20 19 0 9-7 16-12 21-3 3-5 4-8 4s-5-1-8-4c-5-5-12-12-12-21 0-10 7-19 20-19z" fill="none" stroke="#000" stroke-width="3"/>
+      <!-- inner ears -->
+      <ellipse cx="11.8" cy="14.3" rx="5" ry="5.5" fill="#000"/>
+      <ellipse cx="52.2" cy="14.3" rx="5" ry="5.5" fill="#000"/>
+      <!-- eyes -->
+      <circle cx="23" cy="33.5" r="4.3" fill="#000"/>
+      <circle cx="41" cy="33.5" r="4.3" fill="#000"/>
+      <!-- nose -->
+      <ellipse cx="32" cy="54" rx="2.8" ry="2.1" fill="#000"/>
+    </mask>
+  </defs>
+  <g fill="#fff" mask="url(#cut)">
+    <ellipse cx="12.5" cy="15" rx="10" ry="10.5"/>
+    <ellipse cx="51.5" cy="15" rx="10" ry="10.5"/>
+    <path d="M32 15c13 0 20 9 20 19 0 9-7 16-12 21-3 3-5 4-8 4s-5-1-8-4c-5-5-12-12-12-21 0-10 7-19 20-19z"/>
+  </g>
+  <!-- eye highlights -->
+  <circle cx="24.4" cy="32" r="1.4" fill="#fff"/>
+  <circle cx="42.4" cy="32" r="1.4" fill="#fff"/>
+  <!-- whiskers -->
+  <g stroke="#fff" stroke-width="1.4" stroke-linecap="round" fill="none">
+    <path d="M20 47 L4 44"/>
+    <path d="M21 49.5 L5 51.5"/>
+    <path d="M44 47 L60 44"/>
+    <path d="M43 49.5 L59 51.5"/>
+  </g>
+</svg>

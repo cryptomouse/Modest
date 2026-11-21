@@ -267,3 +267,112 @@ even if N == M, so there is never a question of which one counts.
 @section(".dma", alignment=32) @alignment(16)   // today: align 16, no diagnostic
 var buf: [64]Word8
 ```
+
+## Packages: one API module as the only way out
+
+Design intent (Alex, 2026-11-21): the level above modules. Nothing is
+implemented yet. Today there is only "file = module", `import`/`include`,
+and `private`/`public`.
+
+**Package = a directory with `modest.toml` at its root.** Subdirectories
+only organise files and do not form their own packages. Without a
+`modest.toml`, the whole project is one unnamed package, so existing
+programs keep working as they do now.
+
+```
+mathlib/
+  modest.toml        # [package] name = "mathlib"
+  mathlib.modest     # the API module: import "mathlib"
+  vec.modest         # mathlib/vec
+  detail/simd.modest # mathlib/detail/simd
+```
+
+**Visibility stays two-level.** There is no `internal`. `public` always
+means "exported from the module". The package is a closed box, and its
+only exit is the API module, the file named after the package. A
+package user sees only what is `public` in that file. Anything `public`
+in another module of the package is visible inside the package only.
+
+```modest
+// mathlib/vec.modest
+public func add (a: Vec2, b: Vec2) -> Vec2 { … }  // visible in mathlib only
+
+// mathlib/mathlib.modest
+import "./vec"
+public use vec.Vec2, vec.add   // now visible outside as mathlib.add
+public func version () -> Word32 { … }  // may also define things itself
+```
+
+Rules:
+
+- **`public use` re-exports without making a copy.** `mathlib.Vec2` and
+  `vec.Vec2` are the same type, not an alias-made new type. Otherwise a
+  user's `mathlib.Vec2` would not be compatible with the package's own
+  `Vec2`.
+- **The existing "public may not expose private" check extends to the
+  package.** What is public in the API module may not expose a type that
+  is not visible outside. If `mathlib.add` returns `vec.Vec2`, then
+  `Vec2` must be re-exported as well, or it is an error.
+- **Importing a non-API module of another package is an error**, and
+  the message names the fix:
+  `'vec' is internal to package 'mathlib'; use import "mathlib"`.
+- **The first import-path segment is a package name**: the package's
+  own name or a dependency listed in `modest.toml`. Then `MODEST_LIB` is
+  searched, so `libc` is also a package. Importing an undeclared package
+  is an error.
+- **The module name comes from its path inside the package**
+  (`mathlib/detail/simd`). Inside a package, `module "…"` is redundant.
+- **Symbols carry the package prefix**: `mathlib_vec_add`. Two packages
+  that both have a `vec` module do not clash at link time. A re-export
+  keeps the original symbol. A shorter C name such as `mathlib_add` is an
+  opt-in through `@alias`.
+- **No cycles between packages**, the same as between modules.
+
+Build output for a package:
+
+```
+libmathlib.a            # or .o / .ll
+include/mathlib.h       # from the API module only: the public C header
+mathlib.modi            # interface for Modest importers (no sources needed)
+```
+
+Non-API modules produce internal headers that are not installed. When the
+package is built as one unit, their symbols can become `static`.
+
+Dependencies, minimal version:
+
+- Sources are `path` and `git` (tag or commit) only, with no central
+  registry.
+- `modest.lock` records exact commits.
+- `modest vendor` copies dependencies into the tree. Embedded builds are
+  often required to be reproducible and offline.
+- One version of each package per build. Two copies would produce two
+  `fixedpt_q16_mul` symbols, so a version conflict is an error for the
+  user to resolve.
+
+Explicitly out of scope:
+
+- A `package` keyword in sources. The file system and `modest.toml`
+  define the package.
+- Implicit module initialization, such as Go's `init()` or C++ static
+  constructors. Initialization is an explicit `pkg.init()` call from
+  `main`.
+- Per-package features or conditional compilation. `cfg/*.toml` and
+  pragmas cover that.
+- Workspaces with several packages in one toml.
+
+Selective import is a related, independent idea. It would replace
+`include` for Modest modules and leave `include` to C bindings:
+
+```modest
+import "geo/point" (Point, make)   // only these names, unqualified
+```
+
+Suggested order: `modest.toml` with `name` plus the API-module rule →
+package prefix and module name from the path → `public use` →
+`[dependencies]` (`path`, then `git` with lock) → `.modi` interfaces.
+The non-trivial part is making `public use` keep the identity of what it
+re-exports.
+
+Open: how tests reach package internals. One option is a `[test]` section
+in toml that gives test modules package-level visibility.
