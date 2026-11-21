@@ -13,9 +13,13 @@
 @media (min-width: 992px)  { .container { max-width: 1056px; } }
 @media (min-width: 1200px) { .container { max-width: 1254px; } }
 
-/* navbar height = the brand, the tallest item (1.171875rem font × 1.5):
-   0.1·2 + 0.16·2 + 1.758 ≈ 2.28rem, ⅕ lower than the previous 2.86rem */
-:root { --navbar-h: 2.28rem; }
+/* navbar text ~15% larger than yeti's (links 0.82rem, brand 1.17rem) */
+.navbar { font-size: 0.95rem; }
+.navbar .navbar-brand { font-size: 1.35rem; }
+
+/* navbar height = the brand, the tallest item (1.35rem font × 1.5):
+   0.1·2 + 0.16·2 + 2.025 ≈ 2.55rem */
+:root { --navbar-h: 2.55rem; }
 .navbar.fixed-top { padding-top: 0.1rem; padding-bottom: 0.1rem; }
 .navbar .navbar-brand { padding-top: 0.16rem; padding-bottom: 0.16rem; }
 .navbar .navbar-nav .nav-link { padding-top: 0.4rem; padding-bottom: 0.4rem; }
