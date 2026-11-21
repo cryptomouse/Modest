@@ -6,13 +6,6 @@ The type of a function: its parameter list and return type.
 
 ```
 (<#parameters#>) -> <#return_type#>      // function type
-*(<#parameters#>) -> <#return_type#>     // pointer to function
-```
-
-```modest
-() -> Unit
-(a: Int32, b: Int32) -> Int32
-*(payload: Ptr) -> Unit  // pointer to function
 ```
 
 ## Semantics
