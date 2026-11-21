@@ -12,6 +12,17 @@ func <#identifier#> <#FuncType#> {
 ```
 
 The return type is mandatory; use `Unit` for functions returning nothing.
+`<#FuncType#>` may also be the name of a function type — parameter names
+then come from the type:
+
+```modest
+type FailHandler = (code: Int32) -> Unit
+
+func onDiskFail FailHandler {
+	printf("disk failed with code %d\n", code)
+}
+```
+
 A non-`Unit` function must end with `return`; otherwise the compiler warns
 (`expected return operator at end`) and returns a default value.
 
@@ -26,19 +37,6 @@ func foo () -> Unit
 
 Only one newline is allowed there — after a blank line `{` no longer
 belongs to the signature.
-
-## Declarations
-
-A definition without a body is a *declaration* of a function defined
-outside the module; mark it `@extern` (see [annotations](../annotation.md)).
-It is not a forward declaration: a function may be called before its
-definition, and declaring it again in the same module is a redefinition.
-`@alias`, which renames a function in the output, needs a body.
-
-```modest
-@extern
-public func printf (format: *Str8, ...) -> Int
-```
 
 ## Parameters
 
@@ -71,27 +69,18 @@ func main () -> Int {
 }
 ```
 
-## Signature from a named function type
+## Declarations
 
-```
-func <#identifier#> <#FuncTypeName#> {
-	<#statements#>
-}
-```
-
-The signature may be taken from a named [function type](../type/func.md)
-(not a pointer to one); parameter names come from the type:
+A definition without a body is a *declaration* of a function defined
+outside the module; mark it `@extern` (see [annotations](../annotation.md)).
+It is not a forward declaration: a function may be called before its
+definition, and declaring it again in the same module is a redefinition.
+`@alias`, which renames a function in the output, needs a body.
 
 ```modest
-type FailHandler = (code: Int32) -> Unit
-
-func onDiskFail FailHandler {
-	printf("disk failed with code %d\n", code)
-}
+@extern
+public func printf (format: *Str8, ...) -> Int
 ```
-
-This hides the parameter list from the reader, so use it only when several
-definitions genuinely share one signature.
 
 ## Notes
 
