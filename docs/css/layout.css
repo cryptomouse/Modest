@@ -33,9 +33,11 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
     max-height: calc(100vh - var(--navbar-h) - 40px);
     padding: 8px 0;
     font-size: 0.9rem;
-    /* yeti's cards are square; the same radius as code blocks (code.css) */
-    border-radius: 6px;
 }
+/* yeti's cards are square; the same radius as code blocks (code.css).
+   The card is the inner #toc-collapse, not .bs-sidebar itself:
+     <div class="bs-sidebar affix"><div class="collapse card site-nav"> */
+.bs-sidebar .site-nav { border-radius: 4px; }
 .site-nav > .nav { padding: 0; }
 
 .site-nav ul { list-style: none; padding-left: 0; }

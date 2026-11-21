@@ -7,4 +7,4 @@ pre, code { tab-size: 4; -moz-tab-size: 4; }
 [role="main"] pre { margin-top: 1.5rem; margin-bottom: 1.5rem; }
 
 /* rounded like the site nav card (layout.css), not yeti's square corners */
-pre { border-radius: 6px; }
+pre { border-radius: 4px; }
