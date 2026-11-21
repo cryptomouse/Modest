@@ -19,7 +19,7 @@ public type Anon = {
 	b: Hidden
 }
 
-public type Rec = record {
+public type Rec = {
 	public c: *Hidden  // first
 	public d: Hidden
 }

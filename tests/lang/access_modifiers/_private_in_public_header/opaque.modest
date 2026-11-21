@@ -3,19 +3,19 @@
 
 type Hidden = Int32
 
-type Node = record {
+type Node = {
 	next: *Node
 	v: Hidden
 }
 
-type Pair = record {
+type Pair = {
 	a: Node
 	b: [2]Hidden
 }
 
-public type Opaque = record {
+public type Opaque = {
 	p: Pair
-	q: record {
+	q: {
 		x: Hidden
 		n: *Node
 	}

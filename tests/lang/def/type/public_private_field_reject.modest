@@ -7,11 +7,11 @@
 // default — they are skipped, not a stop). The error is reported once,
 // at the offending field, and names the record.
 
-type Hidden = record {
+type Hidden = {
 	x: Int32
 }
 
-public type R = record {
+public type R = {
 	private a: Hidden
 	b: Hidden
 	public c: Hidden

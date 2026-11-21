@@ -6,12 +6,12 @@ include "libc/ctypes64"
 
 type Hidden = Int32
 
-type Node = record {
+type Node = {
 	v: Hidden
 	next: *Node
 }
 
-public type Shape = record {
+public type Shape = {
 	n: Node
 	k: Hidden
 }

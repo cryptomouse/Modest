@@ -30,13 +30,13 @@ public type Alias = Hidden
 public type PtrHidden = *Hidden
 public type Nested = *[2]*Hidden
 
-public type RecExplicit = record {
+public type RecExplicit = {
 	public x: Hidden
 }
-public type RecAnno = @public record {
+public type RecAnno = @public {
 	y: Hidden  // @public
 }
-public type RecAnon = record {
+public type RecAnon = {
 	public r: {
 		z: Hidden  // anonymous
 	}

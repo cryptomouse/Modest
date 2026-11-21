@@ -21,12 +21,12 @@ type Hidden = Int32
 public type Num = Int32
 public type Num2 = Num                     // public on public
 
-public type Opaque = record {
+public type Opaque = {
 	h: Hidden                              // private by default
 	private k: *Hidden
 }
 
-public type Point = @public record {
+public type Point = @public {
 	x: Num
 	private tag: Hidden                    // `private` overrides @public
 }

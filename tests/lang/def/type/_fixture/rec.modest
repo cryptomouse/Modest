@@ -2,7 +2,7 @@
 //
 // A public named record whose field has no access modifier.
 
-public type R = record {
+public type R = {
 	x: Int32
 }
 

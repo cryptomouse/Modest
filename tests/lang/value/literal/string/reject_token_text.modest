@@ -8,7 +8,7 @@
 // used to compare the bare text of the token, took "}" for the end of the
 // record, and the compiler went on to crash in the backend.
 
-type Rec = record {
+type Rec = {
 	a: Int32 "}"
 	b: Int32
 }

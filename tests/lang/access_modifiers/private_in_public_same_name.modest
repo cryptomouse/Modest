@@ -19,7 +19,7 @@ import "./_private_in_public_same_name/shape"
 
 type Hidden = Int64
 
-type Node = record {
+type Node = {
 	w: Hidden
 	tag: Char8
 }
