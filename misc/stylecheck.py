@@ -9,7 +9,7 @@
 Generated sources (anything under an `out/` directory) are skipped.
 
 Rules:
-    eof        the file ends with exactly two newlines          [fixable]
+    eof        the file ends with exactly three newlines        [fixable]
     trail      no trailing whitespace                           [fixable]
     indent     indentation is tabs only                         [fixable]
     comment    an inline comment is 2+ spaces away, no tabs     [fixable]
@@ -314,10 +314,10 @@ def check(f, rules, fix):
 
 	text = '\n'.join(lines) + '\n'
 	tail = len(f.text) - len(f.text.rstrip('\n'))
-	if tail != 2:
-		err(len(f.lines), 'eof', f'the file ends with {tail} newline(s), need 2 (`}}\\n\\n`)')
+	if tail != 3:
+		err(len(f.lines), 'eof', f'the file ends with {tail} newline(s), need 3 (`}}\\n\\n\\n`)')
 	if 'eof' in active:
-		text = text.rstrip('\n') + '\n\n'
+		text = text.rstrip('\n') + '\n\n\n'
 	else:
 		text = text.rstrip('\n') + '\n' * tail
 

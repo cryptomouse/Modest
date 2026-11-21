@@ -12,7 +12,7 @@ The type of a function: its parameter list and return type.
 ```modest
 () -> Unit
 (a: Int32, b: Int32) -> Int32
-*(payload: Ptr) -> Unit                  // pointer to function
+*(payload: Ptr) -> Unit  // pointer to function
 ```
 
 ## Semantics
@@ -40,7 +40,7 @@ func on_event (payload: Ptr) -> Unit {
 var handler: Handler = &on_event
 
 func main () -> Int {
-	handler(nil)              // call through pointer
+	handler(nil)  // call through pointer
 	return 0
 }
 ```

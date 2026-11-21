@@ -18,8 +18,11 @@ func afterType (x: Int32 @inline) -> Int32 {
 	return 0
 }
 
+
 func withArgs (x: Fixed32 @fraction(16)) -> Unit {
 }
 
 func number (p: Int32, 5) -> Unit {
 }
+
+

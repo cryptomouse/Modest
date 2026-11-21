@@ -167,3 +167,4 @@ public func spin_lock (s: *PThreadSpinlockT) -> Int
 public func spin_unlock (s: *PThreadSpinlockT) -> Int
 //public func getcpuclockid (p: PThreadT, c: *ClockIdT) -> Int
 
+

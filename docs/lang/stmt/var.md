@@ -26,11 +26,11 @@ var <#id1#>, <#id2#>, ... : <#type_expression#>
 func main () -> Int {
 	var flag: Bool = false
 	var counter: Int32 = 0
-	var x, y: Float64           // both start at 0.0
+	var x, y: Float64  // both start at 0.0
 
 	x = 1.0
 	y = 2.0
-	Unit flag; Unit counter     // discard (suppress unused warnings)
+	Unit flag; Unit counter  // discard (suppress unused warnings)
 	printf("%f\n", x + y)
 	return 0
 }

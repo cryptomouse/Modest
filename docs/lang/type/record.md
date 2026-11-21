@@ -9,9 +9,9 @@ A *record* is a composite type with named fields (`struct` in C).
 ```
 
 ```modest
-{x: Int32, y: Int32}      // inline form
+{x: Int32, y: Int32}  // inline form
 
-type Point = {            // newline-separated form
+type Point = {  // newline-separated form
 	x: Int32
 	y: Int32
 }
@@ -65,7 +65,7 @@ type Color = @layout("union") {
 
 type Header = @layout("packed") {
 	tag: Word8
-	len: Nat32          // offset 1, no padding
+	len: Nat32  // offset 1, no padding
 }
 ```
 

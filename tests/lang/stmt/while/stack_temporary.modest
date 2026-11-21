@@ -35,7 +35,6 @@ type Vec2 = {
 	y: Int32
 }
 
-
 // Enough iterations that one slot of 8 bytes each is far past a usual
 // 8 MiB stack.
 const iterations: Int32 = 4000000
@@ -126,3 +125,5 @@ func main () -> Int {
 	printf("passed: stack temporary\n")
 	return exitSuccess
 }
+
+

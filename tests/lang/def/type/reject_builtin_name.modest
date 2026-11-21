@@ -16,3 +16,5 @@
 type Size = {w: Int32, h: Int32}
 type Bool = Int32
 public type Str8 = [8]Char8
+
+

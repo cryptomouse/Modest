@@ -39,3 +39,5 @@ func main () -> Int {
 	printf("passed: same basename\n")
 	return exitSuccess
 }
+
+

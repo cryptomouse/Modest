@@ -160,3 +160,4 @@ struct stat {
 /* is whiteout */
 @alias("S_ISWHT", backend="c11") public func sIswht (m: ModeT) -> Bool { return m & sIfmt == sIfwht }
 
+

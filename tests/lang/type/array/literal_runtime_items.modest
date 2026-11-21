@@ -33,7 +33,6 @@ type Outer = {
 	k: Int16
 }
 
-
 var n: Int32 = 5
 var m: Int32 = 9
 
@@ -134,3 +133,5 @@ func main () -> Int {
 	printf("passed: array literal of run-time items\n")
 	return exitSuccess
 }
+
+

@@ -55,9 +55,9 @@ type at the use site.
 ## Examples
 
 ```modest
-var x: Nat32 = 0x2A          // 42
+var x: Nat32 = 0x2A              // 42
 var f: Float64 = 3.14
-var s: *Str8 = "Hello!\n"    // string handled through pointer
+var s: *Str8 = "Hello!\n"        // string handled through pointer
 var e: *Str8 = "\x48\x69\u{21}"  // "Hi!"
 var c: Char8 = "A"
 var a: [3]Int32 = [1, 2, 3]

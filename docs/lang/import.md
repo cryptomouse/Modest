@@ -54,9 +54,9 @@ names.  That is what lets two modules with the same file name, such as
 ## Examples
 
 ```modest
-include "libc/stdio"          // printf, unqualified
-import "misc/sha256"          // namespace sha256
-import "./engine" as eng      // relative path, renamed
+include "libc/stdio"      // printf, unqualified
+import "misc/sha256"      // namespace sha256
+import "./engine" as eng  // relative path, renamed
 
 func main () -> Int {
 	var h: sha256.Hash

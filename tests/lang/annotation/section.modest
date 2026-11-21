@@ -26,6 +26,7 @@ var dmaBuf: [64]Word8
 @section("__DATA,.plain")
 var plain: Int32 = 7
 
+
 @section("__TEXT,.fast", alignment=16)
 func fast () -> Int32 {
 	return 35

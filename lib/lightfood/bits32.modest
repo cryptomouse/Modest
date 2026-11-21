@@ -51,3 +51,4 @@ public func check (x: Word32, no: Nat8) -> Bool {
 	return x & mask != 0
 }
 
+

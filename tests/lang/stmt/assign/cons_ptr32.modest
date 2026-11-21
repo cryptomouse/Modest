@@ -17,7 +17,6 @@ type Desc = {
 	next: Word32
 }
 
-
 var d: [2]Desc
 
 

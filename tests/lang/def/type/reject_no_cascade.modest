@@ -13,9 +13,13 @@
 
 include "libc/ctypes64"
 
+
 type Empty =
 type NoName = (Int32) -> Int
+
 
 func main () -> Int {
 	return 0
 }
+
+

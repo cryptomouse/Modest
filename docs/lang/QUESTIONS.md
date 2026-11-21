@@ -48,7 +48,7 @@ func maybe (a: Int32) -> Int32 {
 	}
 }
 
-printf("%d\n", maybe(0))    // 0 everywhere
+printf("%d\n", maybe(0))  // 0 everywhere
 ```
 
 That makes the behaviour uniform, but it does not answer the question —
@@ -69,13 +69,13 @@ decided:
   	} else {
   		return 0
   	}
-  }                          // warning, though no path falls through
+  }  // warning, though no path falls through
 
   func spin () -> Int32 {
   	while true {
   		return 1
   	}
-  }                          // warning, though the body cannot be left
+  }  // warning, though the body cannot be left
   ```
 
 - **The default value is the language's, not a backend's.** It is built
@@ -93,7 +93,7 @@ decided:
   	if a > 0 {
   		return Marked {tag = 1, n = 2}
   	}
-  }                          // falls through to Marked {} = {7, 0}
+  }  // falls through to Marked {} = {7, 0}
   ```
 
   Covered by `tests/lang/stmt/return/basic.modest`.
@@ -187,7 +187,7 @@ The library already writes the numeric-ordering idiom for `Word`, and it
 is the one this question would extend to `Char`:
 
 ```modest
-if Nat32 x <= Nat32 0x0000007F {          // lib/misc/utf.modest
+if Nat32 x <= Nat32 0x0000007F {  // lib/misc/utf.modest
 ```
 
 ### Options
@@ -257,7 +257,7 @@ func mark (v: Bool) -> Bool {
 }
 
 calls = 0
-let r = mark(false) and mark(true)     // c11: calls = 1    llvm: calls = 2
+let r = mark(false) and mark(true)  // c11: calls = 1    llvm: calls = 2
 ```
 
 Each backend inherits the behaviour of what it emits, and neither chose it:
@@ -337,8 +337,8 @@ Everything bitwise is on level 4 with no order inside it, and a chain that
 mixes two kinds is refused ([`value/README.md`](./value/README.md)):
 
 ```modest
-let m = a | b & c        // error: required parentheses
-let m = (a | b) & c      // says which one
+let m = a | b & c    // error: required parentheses
+let m = (a | b) & c  // says which one
 ```
 
 That refusal is what makes the question cheap to leave open: since no
@@ -480,7 +480,7 @@ they differ?
 ```modest
 var a: [n]Int32
 var b: [m]Int32
-a = b      // n != m?
+a = b  // n != m?
 ```
 
 A VLA and a fixed array are already decided: they are different types

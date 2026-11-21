@@ -17,7 +17,7 @@ type <#identifier#> = <#type_expression#>
   [`@branded`](../type/generic.md):
 
   ```modest
-  type Meters = @branded Float64   // not mixable with plain Float64
+  type Meters = @branded Float64  // not mixable with plain Float64
   ```
 
 - Recursive types need no forward declaration — all module-level type names

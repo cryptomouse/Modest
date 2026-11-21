@@ -24,7 +24,6 @@ type Box = {
 	n: Nat32
 }
 
-
 var gw32: Word32
 var gw64: Word64
 

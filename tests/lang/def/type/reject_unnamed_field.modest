@@ -2,8 +2,8 @@
 // EXPECT-ERROR: invalid field definition: expected 'name: Type', got type 'Int32'
 // EXPECT-ERROR: type OnlyType = {Int32}
 // EXPECT-ERROR: type SecondType = {x: Int32, Int32}
-// EXPECT-ERROR: func onlyType(Int32) -> Int32 {
-// EXPECT-ERROR: func secondType(a: Int32, Int32) -> Int32 {
+// EXPECT-ERROR: func onlyType (Int32) -> Int32 {
+// EXPECT-ERROR: func secondType (a: Int32, Int32) -> Int32 {
 // EXPECT-ERROR-COUNT: 4
 //
 // A type name where a record field or a function parameter is expected
@@ -12,17 +12,21 @@
 
 include "libc/ctypes64"
 
+
 type OnlyType = {Int32}
 type SecondType = {x: Int32, Int32}
 
-func onlyType(Int32) -> Int32 {
+
+func onlyType (Int32) -> Int32 {
 	return 0
 }
 
-func secondType(a: Int32, Int32) -> Int32 {
+func secondType (a: Int32, Int32) -> Int32 {
 	return 0
 }
 
 func main () -> Int {
 	return 0
 }
+
+

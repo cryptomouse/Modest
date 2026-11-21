@@ -105,3 +105,5 @@ func main () -> Int {
 	printf("passed: structural literal commas\n")
 	return exitSuccess
 }
+
+

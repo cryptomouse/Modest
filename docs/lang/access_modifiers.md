@@ -64,10 +64,11 @@ public type Arr = [4]Hidden             // error
 public func f (p: {x: Hidden}) -> Unit  // error: anonymous field is public
 public func g () -> *Hidden             // error
 
-public type Opaque = record {
-	h: Hidden                           // ok: private field
+public type Opaque = {
+	h: Hidden  // ok: private field
 }
-public func make (v: Int32) -> Opaque { // ok: Hidden only in the body
+
+public func make (v: Int32) -> Opaque {  // ok: Hidden only in the body
 	var h: Hidden = v
 	return {h = h}
 }
@@ -88,17 +89,17 @@ defined outside the module
 ## Examples
 
 ```modest
-public func api () -> Unit { ... }     // visible to importers, emits m_api
-func helper () -> Unit { ... }         // private by default
+public func api () -> Unit { ... }  // visible to importers, emits m_api
+func helper () -> Unit { ... }      // private by default
 
-public type Point = @public {          // type and its fields public
+public type Point = @public {  // type and its fields public
 	x: Float64
 	y: Float64
 }
 
 type Conn = {
-	fd: Int                            // private field: hidden from importers
-	public state: Nat8                 // explicitly public field
+	fd: Int             // private field: hidden from importers
+	public state: Nat8  // explicitly public field
 }
 ```
 

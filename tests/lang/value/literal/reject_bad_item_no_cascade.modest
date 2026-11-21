@@ -20,9 +20,13 @@ func take (a: Int32, b: Int32 = 0) -> Int32 {
 	return a
 }
 
+
 func f () -> Unit {
 	let r = take({x = )}, 2)
+
 	let a = take([1, )], 2)
 	let w = {a = 1, b = [1, )]}
 	let v = take(w, 1)
 }
+
+

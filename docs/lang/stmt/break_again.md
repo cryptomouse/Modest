@@ -26,6 +26,6 @@ while true {
 		printf("enter a positive number: ")
 		again
 	}
-	break          // got a valid value
+	break  // got a valid value
 }
 ```

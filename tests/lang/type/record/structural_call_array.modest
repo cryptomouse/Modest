@@ -59,3 +59,5 @@ func main () -> Int {
 	printf("passed: structural call array\n")
 	return exitSuccess
 }
+
+

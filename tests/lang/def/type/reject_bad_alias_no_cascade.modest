@@ -19,6 +19,7 @@
 
 include "libc/ctypes64"
 
+
 type A = Zzz
 type B = [nosuch]Int32
 
@@ -35,4 +36,5 @@ func main () -> Int {
 	c = 1
 	return 0
 }
+
 

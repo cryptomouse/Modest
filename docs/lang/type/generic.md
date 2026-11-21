@@ -58,12 +58,12 @@ implicitly construct a value of the required concrete type.
 ## Examples
 
 ```modest
-const n = 42                // Integer
-var a: Int8 = n             // fits: ok
-var b: Float64 = n          // Integer -> Float64
-var w: Word16 = n           // Integer -> Word16
+const n = 42        // Integer
+var a: Int8 = n     // fits: ok
+var b: Float64 = n  // Integer -> Float64
+var w: Word16 = n   // Integer -> Word16
 
-var buf: [256]Word8 = []    // zero-filled
+var buf: [256]Word8 = []  // zero-filled
 var v: [4]Int32 = [1, 2, 3, 4]
 var p: Point = {x = 1, y = 2}
 ```

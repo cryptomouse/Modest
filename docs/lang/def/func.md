@@ -33,8 +33,8 @@ newline: `{` continues it as a body, anything else (another `func`, EOF,
 way — a blank line before `{` still ends the declaration.
 
 ```modest
-func bar () -> Int32   // declaration — next line isn't '{'
-func baz () -> Int32   // declaration
+func bar () -> Int32  // declaration — next line isn't '{'
+func baz () -> Int32  // declaration
 ```
 
 The `:` before the signature is required. Omitting it (`func name (...)  ->

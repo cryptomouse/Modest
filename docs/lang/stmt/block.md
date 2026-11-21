@@ -39,7 +39,7 @@ if a > b
 {
 	...
 }
-else            // experimental
+else  // experimental
 {
 	...
 }
@@ -49,9 +49,9 @@ else            // experimental
 
 ```modest
 func main () -> Int {
-	var x: Int32 = 1          // visible to end of function
+	var x: Int32 = 1   // visible to end of function
 	if x > 0 {
-		let y = x * 2         // visible to end of this branch
+		let y = x * 2  // visible to end of this branch
 		printf("%d\n", y)
 	}
 	return 0

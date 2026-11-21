@@ -33,3 +33,5 @@ public func opaque_new (v: Int32) -> Opaque {
 public func opaque_sum (o: *Opaque) -> Int32 {
 	return o.p.a.v + o.p.b[0] + o.p.b[1] + o.q.x
 }
+
+

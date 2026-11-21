@@ -35,13 +35,13 @@ const <#identifier#>: <#type_expression#> = <#value_expression#>
 ## Examples
 
 ```modest
-const one = 1                  // generic Integer
-const two = one + 1            // constant expressions fold
-const pi: Float64 = 3.14159    // concrete type
+const one = 1                // generic Integer
+const two = one + 1          // constant expressions fold
+const pi: Float64 = 3.14159  // concrete type
 const message = "Hello!\n"
 
-const a: Int8 = one              // Integer adapts to Int8
-const b: Nat64 = one             // ... and to Nat64
+const a: Int8 = one   // Integer adapts to Int8
+const b: Nat64 = one  // ... and to Nat64
 
 public const answer: Int32 = 42  // public + explicit type: concrete, OK
 public const bad = 42            // error: public constant must have a non-generic type

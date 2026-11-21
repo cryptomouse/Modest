@@ -70,15 +70,15 @@ Target-width aliases (resolved from target config): `Int`, `Nat`, `Word`,
 
 ```modest
 var flag: Bool = true
-var mask: Word8 = 0x0F | 0x40      // bitwise on Word
-var count: Nat32 = 0               // arithmetic on Nat
+var mask: Word8 = 0x0F | 0x40  // bitwise on Word
+var count: Nat32 = 0           // arithmetic on Nat
 var ratio: Float64 = 1.5
 
 count = count + 1
 mask = mask << 2
 
-var fx: Fixed32 = 3.14             // 16.16 fixed-point
-var fx12: @fraction(12) Fixed32    // 20.12 fixed-point
+var fx: Fixed32 = 3.14           // 16.16 fixed-point
+var fx12: @fraction(12) Fixed32  // 20.12 fixed-point
 ```
 
 ## See also

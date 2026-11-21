@@ -30,7 +30,6 @@ type Point = {
 	y: Int32
 }
 
-
 // Enough iterations that one slot of 4 bytes each is far past a usual
 // 8 MiB stack.
 const iterations: Int32 = 4000000
@@ -120,3 +119,5 @@ func main () -> Int {
 	printf("passed: stack local\n")
 	return exitSuccess
 }
+
+

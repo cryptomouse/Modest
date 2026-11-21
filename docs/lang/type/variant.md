@@ -15,8 +15,8 @@ which alternative is active.
 ```
 
 ```modest
-Int or Error            // two alternatives
-Int or Error or Nil     // three alternatives
+Int or Error         // two alternatives
+Int or Error or Nil  // three alternatives
 ```
 
 Variant types are anonymous; give them a name with a `type` definition:
@@ -50,12 +50,12 @@ const errorNone = Error 0
 const errorSome = Error 1
 
 func divide (a: Int, b: Int) -> Int or Error {
-	if b == 0 { return errorSome }   // Error wraps implicitly
-	return Int a / b                 // Int wraps implicitly
+	if b == 0 { return errorSome }  // Error wraps implicitly
+	return Int a / b                // Int wraps implicitly
 }
 
 func main () -> Int {
-	var r = divide(10, 2)   // r : Int or Error
+	var r = divide(10, 2)  // r : Int or Error
 	// inspection via `when` is not yet available
 	return 0
 }

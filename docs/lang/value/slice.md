@@ -35,8 +35,8 @@ Selects a contiguous sub-array `[from, to)`.
 
 ```modest
 var a: [5]Int32 = [1, 2, 3, 4, 5]
-let mid = a[1:4]              // [2, 3, 4]
-let second = a[1:4][1]        // 3
+let mid = a[1:4]        // [2, 3, 4]
+let second = a[1:4][1]  // 3
 a[0:2] = [2]Int32 [9, 9]
 ```
 

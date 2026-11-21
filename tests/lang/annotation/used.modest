@@ -27,6 +27,7 @@ include "libc/stdlib"
 @used
 var lastInput: Int32 = 0
 
+
 @used
 func readInput () -> Int32 {
 	return 1
@@ -37,3 +38,5 @@ func main () -> Int {
 	printf("passed: used\n")
 	return exitSuccess
 }
+
+

@@ -13,10 +13,10 @@ there is **no array decay**.
 ```
 
 ```modest
-[10]Int32         // ten Int32
-[2][3]Int32       // 2 x 3 matrix (array of arrays)
-[]Char8           // unsized array of bytes/chars
-*[]Int32          // pointer to unsized array
+[10]Int32    // ten Int32
+[2][3]Int32  // 2 x 3 matrix (array of arrays)
+[]Char8      // unsized array of bytes/chars
+*[]Int32     // pointer to unsized array
 ```
 
 ## Semantics
@@ -53,9 +53,9 @@ one is `expected integral value`.
 
 ```modest
 func fill (mem: *Unit, n: Nat32) -> Unit {
-	var buf: [n]Word8                // n elements on the stack, zero-filled
-	type Grid = [n][2 * n]Word8      // a named VLA type
-	let rows = *Grid mem             // a pointer to one
+	var buf: [n]Word8            // n elements on the stack, zero-filled
+	type Grid = [n][2 * n]Word8  // a named VLA type
+	let rows = *Grid mem         // a pointer to one
 	rows[1][7] = buf[n - 1]
 }
 ```
@@ -88,8 +88,8 @@ func fill (mem: *Unit, n: Nat32) -> Unit {
   type Row = [k]Nat32
   var a: [k]Nat32
   k = 0
-  sizeof(Row)        // 40
-  lengthof(a)        // 10
+  sizeof(Row)  // 40
+  lengthof(a)  // 10
   ```
 
   A VLA type written inside an expression (`sizeof([k]Nat32)`, a
@@ -123,9 +123,9 @@ func fill (mem: *Unit, n: Nat32) -> Unit {
   ```modest
   var vla: [n]Int32
   var fixed: [4]Int32
-  fixed = vla              // error: cannot implicitly construct `[4]Int32` from `[n]Int32`
-  fixed = vla[0:4]         // ok
-  vla[0:4] = fixed         // ok
+  fixed = vla       // error: cannot implicitly construct `[4]Int32` from `[n]Int32`
+  fixed = vla[0:4]  // ok
+  vla[0:4] = fixed  // ok
   ```
 
 - Two VLAs are copied into each other by value, like any array; their
@@ -151,20 +151,20 @@ handled through a pointer:
 ```modest
 var s: *Str8 = "Hello World!\n"
 printf(s)
-let c = s[0]              // Char8 'H'
+let c = s[0]  // Char8 'H'
 ```
 
 ## Examples
 
 ```modest
-func sum (v: *[]Int32, n: Nat32) -> Int32 {   // explicit by-reference
+func sum (v: *[]Int32, n: Nat32) -> Int32 {  // explicit by-reference
 	var s: Int32 = 0
 	var k: Nat32 = 0
 	while k < n { s += v[k]; k += 1 }
 	return s
 }
 
-func maxOf (v: [5]Int32) -> Int32 {           // parameter by value
+func maxOf (v: [5]Int32) -> Int32 {  // parameter by value
 	var m: Int32 = v[0]
 	var k: Nat32 = 1
 	while k < lengthof(v) {
@@ -174,7 +174,7 @@ func maxOf (v: [5]Int32) -> Int32 {           // parameter by value
 	return m
 }
 
-func makeTriple (x: Int32) -> [3]Int32 {      // returned by value
+func makeTriple (x: Int32) -> [3]Int32 {  // returned by value
 	var r: [3]Int32 = [x, x + 1, x + 2]
 	return r
 }
@@ -183,12 +183,12 @@ func main () -> Int {
 	var a: [5]Int32 = [1, 2, 3, 4, 5]
 	a[0] = 10
 	printf("sum = %d\n", sum(&a, lengthof(a)))
-	printf("max = %d\n", maxOf(a))    // a copied into the parameter
+	printf("max = %d\n", maxOf(a))  // a copied into the parameter
 
 	var t: [3]Int32 = makeTriple(10)  // t = [10, 11, 12]
 
-	var b: [5]Int32 = []              // zero-filled
-	b = a                             // copy by value
+	var b: [5]Int32 = []  // zero-filled
+	b = a                 // copy by value
 	return 0
 }
 ```

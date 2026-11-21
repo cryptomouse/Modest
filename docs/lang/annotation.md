@@ -130,16 +130,16 @@ func min (a: Int32, b: Int32) -> Int32 {
 func myAlloc (size: Nat64) -> Ptr
 
 @alias("INT8_MIN", backend="c11")
-const int8MinValue: Int8 = -128   // a C macro: the value is known here too
+const int8MinValue: Int8 = -128  // a C macro: the value is known here too
 
 @used @section("__DATA,.table")
 var table: [256]Word8 = []
 
 @extern
-var environ: []Ptr   // an extern global may leave the array unsized
+var environ: []Ptr  // an extern global may leave the array unsized
 
 @extern("FILE")
-type CFile           // opaque: only *CFile is usable
+type CFile  // opaque: only *CFile is usable
 
 type Packet = @layout("packed") {
 	tag: Word8

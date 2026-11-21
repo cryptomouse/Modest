@@ -13,3 +13,5 @@ public type Point = {
 public func make (x: Int32, y: Int32) -> Point {
 	return {x = x, y = y}
 }
+
+

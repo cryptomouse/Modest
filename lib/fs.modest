@@ -28,8 +28,8 @@ public const kindError = Kind 255       // cannot tell: no permission, etc.
 public const pathMax = Nat32 1024
 
 // errno values (Darwin) that mean "there is nothing at the path"
-const errNoent = Int32 2   // ENOENT: no such file or directory
-const errNotdir = Int32 20 // ENOTDIR: a path component is not a directory
+const errNoent = Int32 2    // ENOENT: no such file or directory
+const errNotdir = Int32 20  // ENOTDIR: a path component is not a directory
 
 // errno location on Darwin; libc/errno binds the glibc one (BUG#107)
 @extern("__error")
@@ -208,4 +208,5 @@ public func removeAll (path: *Str8) -> Bool {
 	}
 	return unlink(path) == 0
 }
+
 

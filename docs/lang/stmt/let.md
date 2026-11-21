@@ -24,13 +24,13 @@ let <#identifier#>: <#type_expression#> = <#value_expression#>
 
 ```modest
 func mid (a: Int32, b: Int32) -> Int32 {
-	let sum = a + b            // runtime value, type Int32
+	let sum = a + b  // runtime value, type Int32
 	let half: Int32 = sum / 2
 	return half
 }
 ```
 
 ```modest
-let msg = *Str8 "ready\n"      // typed string pointer
+let msg = *Str8 "ready\n"  // typed string pointer
 printf(msg)
 ```

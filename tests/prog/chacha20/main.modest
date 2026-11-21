@@ -129,3 +129,4 @@ func test0 () -> Bool {
 	return *bptr == testResult
 }
 
+

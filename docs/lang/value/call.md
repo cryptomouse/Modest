@@ -54,8 +54,8 @@ func square (x: Int32) -> Int32 {
 	return x * x
 }
 
-const nine = square(3)          // 9, no call at run time
-var buf: [square(3)]Int32       // [9]Int32
+const nine = square(3)     // 9, no call at run time
+var buf: [square(3)]Int32  // [9]Int32
 ```
 
 An error in the folded value — division by zero, overflow — is reported
@@ -83,15 +83,15 @@ func area (w: Int32, h: Int32 = 1) -> Int32 {
 	return w * h
 }
 
-let a1 = area(3, 4)              // positional
-let a2 = area(h = 4, w = 3)      // named, any order
-let a3 = area(5)                 // default h = 1
+let a1 = area(3, 4)          // positional
+let a2 = area(h = 4, w = 3)  // named, any order
+let a3 = area(5)             // default h = 1
 
 type Op = *(a: Int32, b: Int32) -> Int32
 func add (a: Int32, b: Int32) -> Int32 { return a + b }
 
 var op: Op = &add
-let s = op(1, 2)                 // call through pointer
+let s = op(1, 2)  // call through pointer
 ```
 
 ## See also

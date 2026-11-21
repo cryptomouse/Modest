@@ -87,5 +87,5 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
 /* gap before every section of the page, the first one included (it adds to
    the space under the navbar); paragraphs keep Bootstrap's 1rem.
    rem, not em: the same gap before an h2 and an h4.  The p's 1rem bottom
-   margin collapses into it, so the gap is 3rem, not 4rem. */
-[role="main"] > :is(h1, h2, h3, h4, h5, h6) { margin-top: 3rem; }
+   margin collapses into it, so the gap is 2.25rem, not 3.25rem. */
+[role="main"] > :is(h1, h2, h3, h4, h5, h6) { margin-top: 2.25rem; }

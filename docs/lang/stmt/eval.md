@@ -19,7 +19,7 @@ Evaluates an expression for its side effects; the result is discarded.
 
 ```modest
 func hi () -> Unit {
-	printf("Hi there!\n")     // result of printf discarded
+	printf("Hi there!\n")  // result of printf discarded
 }
 
 func foo () -> Unit {
@@ -27,7 +27,7 @@ func foo () -> Unit {
 }
 
 func handler (payload: Ptr) -> Unit {
-	Unit payload          // explicitly discard unused parameter
+	Unit payload  // explicitly discard unused parameter
 }
 
 ```

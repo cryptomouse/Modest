@@ -45,17 +45,17 @@ shifts binds tighter than the others — and a chain that mixes two of them
 is therefore **refused** rather than grouped:
 
 ```modest
-let m = a | b & c        // error: required parentheses
-let m = (a | b) & c      // one reading
-let m = a | (b & c)      // the other, and they differ
+let m = a | b & c    // error: required parentheses
+let m = (a | b) & c  // one reading
+let m = a | (b & c)  // the other, and they differ
 ```
 
 Operators of the same kind chain freely, since there the grouping changes
 nothing that needs deciding; `<<` and `>>` count as one kind:
 
 ```modest
-s ^ 0x0F ^ 0x30          // (s ^ 0x0F) ^ 0x30
-x >> 1 >> 2              // (x >> 1) >> 2
+s ^ 0x0F ^ 0x30  // (s ^ 0x0F) ^ 0x30
+x >> 1 >> 2      // (x >> 1) >> 2
 ```
 
 Because a mixed chain never compiles, no program can depend on how the
@@ -66,8 +66,8 @@ Level 3 is flat in the same way: two comparisons may not be chained without
 parentheses either.
 
 ```modest
-let ok = a == b < c      // error: required parentheses
-let ok = a == b == c     // and so is a chain of equalities
+let ok = a == b < c   // error: required parentheses
+let ok = a == b == c  // and so is a chain of equalities
 ```
 
 The left-associative reading of such a chain always compares the `Bool` that
@@ -79,12 +79,12 @@ refused in the parser rather than left to the types.
 Binding examples (lower level = binds tighter):
 
 ```modest
-w & mask == 0            // (w & mask) == 0   — bitwise tighter than ==
-a == 1 and b == 2        // (a == 1) and (b == 2)
-w << 3 == 0x18           // (w << 3) == 0x18
-w << n * 2               // w << (n * 2)      — `*` tighter than the shift
-10 - 3 - 2               // (10 - 3) - 2 = 5  — left-associative
-Word64 b << 8            // (Word64 b) << 8   — construction tighter still
+w & mask == 0      // (w & mask) == 0   — bitwise tighter than ==
+a == 1 and b == 2  // (a == 1) and (b == 2)
+w << 3 == 0x18     // (w << 3) == 0x18
+w << n * 2         // w << (n * 2)      — `*` tighter than the shift
+10 - 3 - 2         // (10 - 3) - 2 = 5  — left-associative
+Word64 b << 8      // (Word64 b) << 8   — construction tighter still
 ```
 
 ## Evaluation order
@@ -116,10 +116,10 @@ When both operands run, the left one runs first.
 ```modest
 func area (w: Int32, h: Int32) -> Int32 { return w * h }
 
-area(h = next(), w = next())      // h gets the first next(), w the second
-let r: Point = {y = next(), x = next()}   // y first, then x
-let d = next() - next()           // left operand first
-row[next()] = next()              // the index gets the first next()
+area(h = next(), w = next())             // h gets the first next(), w the second
+let r: Point = {y = next(), x = next()}  // y first, then x
+let d = next() - next()                  // left operand first
+row[next()] = next()                     // the index gets the first next()
 ```
 
 ## Value categories

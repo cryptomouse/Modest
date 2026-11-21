@@ -9,3 +9,4 @@ pragma c_include "assert.h"
 
 public func assert (cond: Bool) -> Unit
 
+

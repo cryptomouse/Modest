@@ -24,9 +24,12 @@ public type Rec = record {
 	public d: Hidden
 }
 
+
 public func fn (
 	p: Hidden,
 	q: Hidden
 ) -> Hidden {
 	return 0
 }
+
+

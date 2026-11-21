@@ -33,7 +33,7 @@ value identifier that happens to be a **C keyword** produces C that does
 not compile:
 
 ```modest
-func double (n: Int32) -> Int32 {     // -> int32_t double(int32_t n)
+func double (n: Int32) -> Int32 {  // -> int32_t double(int32_t n)
 	return n * 2
 }
 ```
@@ -72,7 +72,7 @@ var counter: Int32
 func doWork () -> Unit {
 }
 
-type _Handle = Int32     // underscores skipped: H decides the class
+type _Handle = Int32  // underscores skipped: H decides the class
 var _tmp: _Handle = 0
 ```
 

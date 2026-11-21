@@ -129,3 +129,5 @@ func main () -> Int {
 	printf("passed: array literal into a VLA\n")
 	return exitSuccess
 }
+
+

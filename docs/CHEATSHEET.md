@@ -16,20 +16,20 @@ Quick reference for writing Modest code.
 
 ### Base Types
 ```modest
-Integer                            // compile-time type for integer literals — implicitly cast to IntX, NatX, WordX, FloatX, FixedX
-Rational                           // compile-time type for rational literals — implicitly cast to FloatX, FixedX
-Unit                               // void (empty type)
-Bool                               // true, false
-Int8, Int16, Int32, Int64, Int128  // signed integers
-Nat8, Nat16, Nat32, Nat64, Nat128  // unsigned integers
+Integer                                 // compile-time type for integer literals — implicitly cast to IntX, NatX, WordX, FloatX, FixedX
+Rational                                // compile-time type for rational literals — implicitly cast to FloatX, FixedX
+Unit                                    // void (empty type)
+Bool                                    // true, false
+Int8, Int16, Int32, Int64, Int128       // signed integers
+Nat8, Nat16, Nat32, Nat64, Nat128       // unsigned integers
 Word8, Word16, Word32, Word64, Word128  // bitwise integers
-Char8, Char16, Char32              // characters
-Float16, Float32, Float64          // floating point (Float16 needs a target that has it)
-Fixed32, Fixed64                   // fixed-point — experimental; remaining limitations in BUG#25
-Str8, Str16, Str32                 // aliases for: []Char8, []Char16, []Char32 (string values are passed as *Str8)
-Byte                               // builtin byte type
-Size                               // target size type (like size_t)
-Ptr                                // alias for *Unit (untyped pointer)
+Char8, Char16, Char32                   // characters
+Float16, Float32, Float64               // floating point (Float16 needs a target that has it)
+Fixed32, Fixed64                        // fixed-point — experimental; remaining limitations in BUG#25
+Str8, Str16, Str32                      // aliases for: []Char8, []Char16, []Char32 (string values are passed as *Str8)
+Byte                                    // builtin byte type
+Size                                    // target size type (like size_t)
+Ptr                                     // alias for *Unit (untyped pointer)
 ```
 
 > `Int`, `Nat`, `Char`, `Float`, `Double`, `Str`, ... are **not** builtin —
@@ -51,12 +51,12 @@ These are sometimes called **generic** types internally.
 | `GenericRecord`    | `{x=1, y=2}`              | record with same fields         |
 
 ```modest
-let n = 42             // type is Integer (compile-time), not Int32
-var i: Int32 = n       // Integer implicitly cast to Int32
-var f: Float64 = n     // Integer implicitly cast to Float64
+let n = 42           // type is Integer (compile-time), not Int32
+var i: Int32 = n     // Integer implicitly cast to Int32
+var f: Float64 = n   // Integer implicitly cast to Float64
 
-let pi = 3.14          // type is Rational
-var g: Float32 = pi    // Rational implicitly cast to Float32
+let pi = 3.14        // type is Rational
+var g: Float32 = pi  // Rational implicitly cast to Float32
 ```
 
 > `Rational` is an exact fraction, not a float — see
@@ -64,19 +64,19 @@ var g: Float32 = pi    // Rational implicitly cast to Float32
 
 ### Composite Types
 ```modest
-[N]Type                            // fixed array: [10]Int32
-[N][M]Type                         // multi-dimensional: [2][3]Int32
-[n]Type                            // VLA: n is a run-time integer; local only, never inside a field/param/result/variant
-[]Type                             // unsized array (compile-time only, always behind pointer)
-*Type                              // pointer: *Int32, **Int32
-*Unit                              // untyped pointer (any type)
-{field1: Type1, field2: Type2}     // anonymous record
-type Name = Type                   // type alias
-type Name = {f1: T1, f2: T2}       // named record
-type Name = @branded Type          // branded type (newtype pattern)
-() -> Unit                         // function type: no params, no return
-(a: Int32, b: Int32) -> Int32      // function type: two params, return value
-*() -> Unit                        // pointer to function
+[N]Type                         // fixed array: [10]Int32
+[N][M]Type                      // multi-dimensional: [2][3]Int32
+[n]Type                         // VLA: n is a run-time integer; local only, never inside a field/param/result/variant
+[]Type                          // unsized array (compile-time only, always behind pointer)
+*Type                           // pointer: *Int32, **Int32
+*Unit                           // untyped pointer (any type)
+{field1: Type1, field2: Type2}  // anonymous record
+type Name = Type                // type alias
+type Name = {f1: T1, f2: T2}    // named record
+type Name = @branded Type       // branded type (newtype pattern)
+() -> Unit                      // function type: no params, no return
+(a: Int32, b: Int32) -> Int32   // function type: two params, return value
+*() -> Unit                     // pointer to function
 ```
 
 > There is no field with a function type — use a pointer to function instead.
@@ -131,6 +131,7 @@ func noReturn () -> Unit {
 // signature can also be borrowed from a named function type; params come
 // from the type
 type FailHandler = (code: Int32) -> Unit
+
 func onDiskFail FailHandler {
 	printf("disk failed with code %d\n", code)
 }
@@ -161,10 +162,10 @@ func onDiskFail FailHandler {
 >
 > ```modest
 > func f (n: Int32, p: Point, a: [2]Int32) -> Int32 {
-> 	n = 1        // error: expected lvalue
-> 	p.x = 1      // error: expected mutable value
-> 	a[0] = 1     // error: expected mutable value
-> 	var m = n    // this is how you get something writable
+> 	n = 1      // error: expected lvalue
+> 	p.x = 1    // error: expected mutable value
+> 	a[0] = 1   // error: expected mutable value
+> 	var m = n  // this is how you get something writable
 > 	m = 1
 > 	return m
 > }
@@ -172,15 +173,15 @@ func onDiskFail FailHandler {
 
 ### Variables & Constants
 ```modest
-var x: Int32                       // no initializer: default value of the type (0, false, nil, all fields zero)
-var x: Int32 = 10                  // with initial value
-var x = 10                         // type inferred from value
-var x, y, z: Int32                 // multiple vars of same type
+var x: Int32                 // no initializer: default value of the type (0, false, nil, all fields zero)
+var x: Int32 = 10            // with initial value
+var x = 10                   // type inferred from value
+var x, y, z: Int32           // multiple vars of same type
 
-const max = 100                    // module-level constant (type inferred)
-const pi: Float64 = 3.14159        // with explicit type
+const max = 100              // module-level constant (type inferred)
+const pi: Float64 = 3.14159  // with explicit type
 
-let local = 42                     // immutable binding — only inside functions
+let local = 42               // immutable binding — only inside functions
 ```
 
 > `let` is only allowed inside function bodies. For module-level values use `var` or `const`.
@@ -194,7 +195,7 @@ let local = 42                     // immutable binding — only inside function
 type Point = {x: Float64, y: Float64}
 type IntPtr = *Int32
 type CStr = *Char8
-type Meters = @branded Float64        // newtype (incompatible with Float64)
+type Meters = @branded Float64  // newtype (incompatible with Float64)
 type Packed = @layout("packed") {a: Bool, b: Int32}
 type Volatile = @volatile Word32
 ```
@@ -204,11 +205,11 @@ type Volatile = @volatile Word32
 ### include vs import
 
 ```modest
-include "libc/stdio"     // paste module into current namespace (no prefix)
-                         // used for C bindings and lib modules
+include "libc/stdio"  // paste module into current namespace (no prefix)
+                      // used for C bindings and lib modules
 
-import "mymodule"        // import with namespace prefix
-                         // used for your own Modest source modules
+import "mymodule"     // import with namespace prefix
+                      // used for your own Modest source modules
 ```
 
 ```modest
@@ -222,21 +223,21 @@ utils.doSomething()
 ```
 
 ```modest
-module "geo/point"       // optional, first line of the file: the module's name
-                         // its last part must be the file name (point.modest)
-                         // public symbols become geo_point_<name> in C/LLVM
-                         // (default prefix: the source basename, point_)
+module "geo/point"  // optional, first line of the file: the module's name
+                    // its last part must be the file name (point.modest)
+                    // public symbols become geo_point_<name> in C/LLVM
+                    // (default prefix: the source basename, point_)
 ```
 
 ### Common includes
 ```modest
-include "libc/ctypes64"   // C-named aliases: Int, Long, Float, Double, SizeT, Str, Char, ...
-include "libc/stdio"      // printf, scanf, fopen, fclose
-include "libc/stdlib"     // malloc, free, exit
-include "libc/string"     // strcpy, strlen, memcpy
-include "libc/math"       // sin, cos, sqrt, pow
-include "libc/socket"     // socket, bind, connect, send, recv
-include "libc/unistd"     // read, write, close
+include "libc/ctypes64"  // C-named aliases: Int, Long, Float, Double, SizeT, Str, Char, ...
+include "libc/stdio"     // printf, scanf, fopen, fclose
+include "libc/stdlib"    // malloc, free, exit
+include "libc/string"    // strcpy, strlen, memcpy
+include "libc/math"      // sin, cos, sqrt, pow
+include "libc/socket"    // socket, bind, connect, send, recv
+include "libc/unistd"    // read, write, close
 ```
 
 ### Pragmas
@@ -244,11 +245,11 @@ include "libc/unistd"     // read, write, close
 Module-level directives; each takes effect from its line to the end of the file.
 
 ```modest
-pragma unsafe                 // allow unsafe(...) constructions in this module
-pragma prefix "p"             // output-symbol prefix for this module ("" disables it)
-pragma c_include "header.h"   // emit #include "header.h" in C output
-pragma do_not_include         // importers do not #include this module's header
-pragma c_no_print             // omit this module's definitions from C output
+pragma unsafe                // allow unsafe(...) constructions in this module
+pragma prefix "p"            // output-symbol prefix for this module ("" disables it)
+pragma c_include "header.h"  // emit #include "header.h" in C output
+pragma do_not_include        // importers do not #include this module's header
+pragma c_no_print            // omit this module's definitions from C output
 ```
 
 
@@ -283,8 +284,8 @@ printf(
 > Blank lines and comments after the trailing operator are fine — annotate the
 > terms of a long expression to their right:
 > ```modest
-> let v = a |      // low bits
-> 	(a << 8)     // next byte
+> let v = a |   // low bits
+> 	(a << 8)  // next byte
 > ```
 > The same goes after `(`, before `)` and after the `=` of `let`/`var`/assignment.
 
@@ -336,8 +337,8 @@ if condition {
 ```modest
 while condition {
 	// ...
-	break                          // exit loop
-	again                          // continue (next iteration)
+	break  // exit loop
+	again  // continue (next iteration)
 }
 ```
 
@@ -345,9 +346,9 @@ while condition {
 ```modest
 x = 10
 arr[i] = value
-arr[1:4] = [1, 2, 3]              // slice assignment
-ptr.field = 5                     // auto-deref field write
-*ptr = 100                        // dereference write
+arr[1:4] = [1, 2, 3]  // slice assignment
+ptr.field = 5         // auto-deref field write
+*ptr = 100            // dereference write
 ```
 
 > Not assignable: `let` bindings, `const`, and function parameters
@@ -355,11 +356,11 @@ ptr.field = 5                     // auto-deref field write
 
 ### Compound Assignment
 ```modest
-i += 1                            // there is no ++ / --: this is how you count
+i += 1                  // there is no ++ / --: this is how you count
 x -= y; x *= y; x /= y; x %= y
-w &= m; w |= m; w ^= m            // WordX only, like the operators themselves
+w &= m; w |= m; w ^= m  // WordX only, like the operators themselves
 w <<= n; w >>= n
-arr[f()] += 1                     // f() is called once
+arr[f()] += 1           // f() is called once
 ```
 
 > `x op= y` is `x = x op y` with `x` evaluated once: the same operator and
@@ -370,7 +371,7 @@ arr[f()] += 1                     // f() is called once
 ### Return
 ```modest
 return value
-return                             // for Unit functions
+return  // for Unit functions
 ```
 
 ### Inline Assembly
@@ -407,22 +408,22 @@ __asm("add %0, %1, %2", [["=r", sum]], [["r", a], ["r", b]], ["cc"])  // text, o
 ### Arithmetic
 ```modest
 a + b, a - b, a * b, a / b, a % b
--a                                 // negation
+-a  // negation
 ```
 
 ### Comparison
 ```modest
-a == b, a != b                     // any two values of the same type
-a < b, a > b, a <= b, a >= b       // ordering: IntX, NatX, FloatX only
+a == b, a != b                // any two values of the same type
+a < b, a > b, a <= b, a >= b  // ordering: IntX, NatX, FloatX only
 ```
 
 > `==` and `!=` are defined for **every** type, as long as both sides have the
 > same type — records, arrays, pointers, `Bool` and `Word*` included:
 >
 > ```modest
-> if a == b { ... }              // Point == Point — field by field
-> if hash == expected { ... }    // [32]Word8 == [32]Word8 — element by element
-> if p == nil { ... }            // pointer against nil
+> if a == b { ... }            // Point == Point — field by field
+> if hash == expected { ... }  // [32]Word8 == [32]Word8 — element by element
+> if p == nil { ... }          // pointer against nil
 > ```
 >
 > Ordering is the narrow one: `<` `>` `<=` `>=` need a type that carries a
@@ -440,9 +441,9 @@ not a
 
 ### Bitwise — Word* types only
 ```modest
-w & m, w | m, w ^ m                // and, or, xor — both operands WordX
-~w                                 // bitwise not
-w << n, w >> n                     // shifts: left WordX (or a hex literal); right NatX or a non-negative literal
+w & m, w | m, w ^ m  // and, or, xor — both operands WordX
+~w                   // bitwise not
+w << n, w >> n       // shifts: left WordX (or a hex literal); right NatX or a non-negative literal
 ```
 
 > Bit manipulation is only defined for `Word*` types — this is a deliberate split:
@@ -465,12 +466,12 @@ w << n, w >> n                     // shifts: left WordX (or a hex literal); rig
 
 ### Unary / Special
 ```modest
-&x                                 // address of
-*ptr                               // dereference
-sizeof(Type)  sizeof(value)        // size in bytes
-alignof(Type) alignof(value)       // alignment in bytes
-lengthof(ArrayType)                // number of elements in array type
-offsetof(RecordType.field)         // byte offset of field
+&x                            // address of
+*ptr                          // dereference
+sizeof(Type)  sizeof(value)   // size in bytes
+alignof(Type) alignof(value)  // alignment in bytes
+lengthof(ArrayType)           // number of elements in array type
+offsetof(RecordType.field)    // byte offset of field
 ```
 > These fold at compile time into a value that carries the width it needs,
 > so it goes into any `NatX` that fits — `var x: Nat16 = sizeof(T)` — and
@@ -479,11 +480,11 @@ offsetof(RecordType.field)         // byte offset of field
 
 ### Access
 ```modest
-arr[i]                             // index (element)
-arr[i:j]                           // slice (sub-array)
-record.field                       // field access
-ptr.field                          // auto-deref field access (no -> needed)
-func(args)                         // call
+arr[i]        // index (element)
+arr[i:j]      // slice (sub-array)
+record.field  // field access
+ptr.field     // auto-deref field access (no -> needed)
+func(args)    // call
 ```
 
 ### Precedence
@@ -534,13 +535,13 @@ Explicit type construction — not a cast. Takes a value of type A and produces 
 Syntax: `TargetType sourceValue`
 
 ```modest
-Int32 10                           // integer literal → Int32
-Float64 3.14                       // rational literal → Float64
-Nat8 0xFF                          // integer literal → Nat8
-unsafe(*Int32 ptr)                 // pointer reinterpretation (needs pragma unsafe)
-Point {x = 1, y = 2}               // record construction
-[4]Int32 [1, 2, 3]                 // explicit array (fills remaining with 0)
-Unit value                         // discard a value (suppress warnings)
+Int32 10              // integer literal → Int32
+Float64 3.14          // rational literal → Float64
+Nat8 0xFF             // integer literal → Nat8
+unsafe(*Int32 ptr)    // pointer reinterpretation (needs pragma unsafe)
+Point {x = 1, y = 2}  // record construction
+[4]Int32 [1, 2, 3]    // explicit array (fills remaining with 0)
+Unit value            // discard a value (suppress warnings)
 ```
 
 ### Construction rules
@@ -583,14 +584,14 @@ Unit value                         // discard a value (suppress warnings)
 
 ### Inlining
 ```modest
-@inline                            // suggest inlining to backend
-@inlinehint                        // weak inline hint (weaker than @inline)
-@noinline                          // forbid inlining
+@inline      // suggest inlining to backend
+@inlinehint  // weak inline hint (weaker than @inline)
+@noinline    // forbid inlining
 ```
 
 ### Compile-time evaluation
 ```modest
-@runtime                            // never fold calls to this function at compile time
+@runtime  // never fold calls to this function at compile time
 ```
 
 > A function whose body is one `return <expr>` over its parameters (no
@@ -601,13 +602,13 @@ Unit value                         // discard a value (suppress warnings)
 
 ### Linkage & C interop
 ```modest
-@extern                            // declaration of a symbol defined elsewhere (no body)
-@extern("symbol_name")             // ... under a different symbol name
-@extern("name", backend="llvm")    // ... symbol name for one backend ("c11" or "llvm")
-@alias("name")                     // definition emitted under another name (all backends)
-@alias("name", backend="c11")      // output name for one backend ("c11" or "llvm")
-@c_no_print                        // keep the definition out of C output (the C side already has it)
-@cbyvalue                          // on a const: print its literal value at each use (C backend only)
+@extern                          // declaration of a symbol defined elsewhere (no body)
+@extern("symbol_name")           // ... under a different symbol name
+@extern("name", backend="llvm")  // ... symbol name for one backend ("c11" or "llvm")
+@alias("name")                   // definition emitted under another name (all backends)
+@alias("name", backend="c11")    // output name for one backend ("c11" or "llvm")
+@c_no_print                      // keep the definition out of C output (the C side already has it)
+@cbyvalue                        // on a const: print its literal value at each use (C backend only)
 ```
 
 > **`@extern` is for declarations, `@alias` for definitions.** A body —
@@ -625,13 +626,13 @@ Unit value                         // discard a value (suppress warnings)
 >
 > ```modest
 > @extern("malloc")
-> func myAlloc (size: Size) -> Ptr          // declaration: links to malloc
+> func myAlloc (size: Size) -> Ptr  // declaration: links to malloc
 >
 > @alias("INT8_MIN", backend="c11")
-> const int8MinValue: Int8 = -128           // definition: C code says INT8_MIN
+> const int8MinValue: Int8 = -128   // definition: C code says INT8_MIN
 >
 > @extern("SDL_Window")
-> public type Window                        // opaque C type: no right side
+> public type Window                // opaque C type: no right side
 > ```
 >
 > **Extern type** — `@extern type T` (no `=`) declares an opaque C type: only
@@ -654,8 +655,8 @@ Unit value                         // discard a value (suppress warnings)
 
 ### Symbol lifetime & diagnostics
 ```modest
-@used                              // keep symbol even if unreferenced (prevent dead-code elimination)
-@unused                            // suppress unused warning (`-> @unused Int`, param `x: @unused Int`)
+@used    // keep symbol even if unreferenced (prevent dead-code elimination)
+@unused  // suppress unused warning (`-> @unused Int`, param `x: @unused Int`)
 ```
 
 > `@deprecated` is planned but not implemented yet — the compiler rejects it
@@ -663,16 +664,16 @@ Unit value                         // discard a value (suppress warnings)
 
 ### Type layout & memory
 ```modest
-@branded                           // newtype wrapper (nominal typing)
-@layout("packed")                  // packed struct (no padding)
-@layout("union")                   // union-style record (all fields at offset 0)
-@layout("exact")                   // exact layout (no reordering/padding changes)
-@volatile                          // volatile memory
-@restrict                          // restrict qualifier (pointers/arrays)
-@alignment(N)                      // set alignment to N bytes (C: __attribute__((aligned(N))), LLVM: align N)
-@section("segment,section")        // place symbol in a specific linker section
-@section("name", alignment=N)      // same + alignment, a shorthand for @section("name") @alignment(N)
-@fraction(N)                       // in a type, before FixedX: N fractional bits — `x: @fraction(16) Fixed32`; limitations in BUG#25
+@branded                       // newtype wrapper (nominal typing)
+@layout("packed")              // packed struct (no padding)
+@layout("union")               // union-style record (all fields at offset 0)
+@layout("exact")               // exact layout (no reordering/padding changes)
+@volatile                      // volatile memory
+@restrict                      // restrict qualifier (pointers/arrays)
+@alignment(N)                  // set alignment to N bytes (C: __attribute__((aligned(N))), LLVM: align N)
+@section("segment,section")    // place symbol in a specific linker section
+@section("name", alignment=N)  // same + alignment, a shorthand for @section("name") @alignment(N)
+@fraction(N)                   // in a type, before FixedX: N fractional bits — `x: @fraction(16) Fixed32`; limitations in BUG#25
 ```
 
 ### Access control
@@ -711,7 +712,7 @@ var alignedBuf: [64]Word8
 @section("__DATA,.xdata")
 var xdata: [16]Word8
 
-@section("__DATA,.dma", alignment=32)   // == @section("__DATA,.dma") @alignment(32)
+@section("__DATA,.dma", alignment=32)  // == @section("__DATA,.dma") @alignment(32)
 var dmaBuf: [64]Word8
 
 type Vec2 = @public {
@@ -733,7 +734,7 @@ The full rules are in the [Style Guide](./STYLE.md); in short:
 - Tabs for indentation; `{` on the same line as its header; `} else {`
 - `func name (params)` in a definition, `name(args)` in a call
 - One empty line between top-level blocks, one or two between function definitions, **two** after the `include`/`import` section and before the first function; a function with a body is never written right under the previous definition
-- The file ends with two empty lines (`}\n\n`)
+- The file ends with exactly one extra newline (`}\n\n\n`) — two empty lines in the editor
 - Two spaces before an inline `//` comment
 
 
@@ -900,11 +901,11 @@ By default, symbol names are emitted as-is. Module imports add a prefix for publ
 ```modest
 // module: utils
 
-public func greet () -> Unit { ... }   // emitted as: utils_greet
-private func helper () -> Unit { ... } // emitted as: helper  (private, no prefix)
+public func greet () -> Unit { ... }    // emitted as: utils_greet
+private func helper () -> Unit { ... }  // emitted as: helper  (private, no prefix)
 
 @extern("printf")
-public func myPrint (s: Str8) -> Unit  // emitted as: printf
+public func myPrint (s: Str8) -> Unit   // emitted as: printf
 ```
 
 > `public` marks a symbol as public (visible to importers). The module name becomes a prefix in the output.

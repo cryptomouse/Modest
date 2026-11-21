@@ -35,7 +35,7 @@ func mid (a: Int32, b: Int32) -> Int32 {
 
 func log (enabled: Bool, msg: *Str8) -> Unit {
 	if not enabled {
-		return            // early exit
+		return  // early exit
 	}
 	printf("%s\n", msg)
 }

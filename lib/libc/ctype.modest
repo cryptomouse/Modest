@@ -52,3 +52,4 @@ public func toascii (x: Int) -> Int
 public func toupper (x: Int) -> Int
 public func tolower (x: Int) -> Int
 
+

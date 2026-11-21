@@ -41,10 +41,10 @@ let first = a[0]
 a[4] = 50
 
 var p: *[]Int32 = &a
-p[1] = 20                     // auto-deref
+p[1] = 20  // auto-deref
 
 var m: [2][3]Int32 = [[1, 2, 3], [4, 5, 6]]
-let x = m[1][2]               // 6
+let x = m[1][2]  // 6
 ```
 
 ## See also

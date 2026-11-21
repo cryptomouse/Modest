@@ -34,8 +34,8 @@ type Seconds = @branded Float64
 var m: Meters = Meters 5.0
 var s: Seconds = Seconds 1.0
 
-m = m + m                  // operations inherited
-m = Meters (Float64 s)     // deliberate conversion: two explicit steps
+m = m + m               // operations inherited
+m = Meters (Float64 s)  // deliberate conversion: two explicit steps
 // m = s                   // error: different brands
 // m = 5.0                 // error: construct explicitly
 

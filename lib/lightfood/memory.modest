@@ -107,3 +107,4 @@ public func eq (mem0: Ptr, mem1: Ptr, len: Nat64) -> Bool {
 	return true
 }
 
+

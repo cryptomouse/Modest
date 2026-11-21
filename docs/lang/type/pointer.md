@@ -9,10 +9,10 @@ A *pointer* holds the address of a value of a known type.
 ```
 
 ```modest
-*Int32        // pointer to Int32
-**Int32       // pointer to pointer
-*[]Char8      // pointer to unsized char array (string)
-Ptr           // built-in alias for *Unit (free pointer)
+*Int32    // pointer to Int32
+**Int32   // pointer to pointer
+*[]Char8  // pointer to unsized char array (string)
+Ptr       // built-in alias for *Unit (free pointer)
 ```
 
 ## Semantics
@@ -27,8 +27,8 @@ Ptr           // built-in alias for *Unit (free pointer)
   reinterpret the pointer as a byte array first:
 
   ```modest
-  let bytes = unsafe(*[]Word8 p)    // view memory as bytes
-  let q = &bytes[4]                 // "p + 4"
+  let bytes = unsafe(*[]Word8 p)  // view memory as bytes
+  let q = &bytes[4]               // "p + 4"
   ```
 
 - **Free pointer** `*Unit` (alias `Ptr`) accepts the address of a value
@@ -46,15 +46,15 @@ Ptr           // built-in alias for *Unit (free pointer)
 ```modest
 var a: Int32 = 0
 var p: *Int32 = &a
-*p = 10                       // a == 10
+*p = 10  // a == 10
 
 type Node = {next: *Node, data: Int32}
 var n: Node = {next = nil, data = 1}
 var pn: *Node = &n
-pn.data = 2                   // auto-deref, no (*pn).data
+pn.data = 2  // auto-deref, no (*pn).data
 
 func handler (payload: Ptr) -> Unit {
-	let ctx = *Node payload   // typed view of a free pointer
+	let ctx = *Node payload  // typed view of a free pointer
 	printf("%d\n", ctx.data)
 }
 ```

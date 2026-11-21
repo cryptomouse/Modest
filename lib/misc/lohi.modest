@@ -40,3 +40,4 @@ public func hi128 (x: Word128) -> Word64 {
 	return Word64 (x >> 64)
 }
 
+

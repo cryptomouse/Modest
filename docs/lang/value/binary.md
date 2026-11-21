@@ -65,14 +65,14 @@
 ```modest
 var a: Int32 = 10
 var b: Int32 = 3
-let q = a / b                  // 3
-let r = a % b                  // 1
+let q = a / b  // 3
+let r = a % b  // 1
 
 const whole: Float64 = 22 / 7    // 3.0 — both operands are Integer
 const exact: Float64 = 22.0 / 7  // 3.142857… — one operand is Rational
 
 var w: Word8 = 0x0F
-let m = (w << 4) | (w & 0x3)   // bit manipulation
+let m = (w << 4) | (w & 0x3)  // bit manipulation
 
 let inRange = x >= lo and x <= hi
 

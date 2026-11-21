@@ -14,41 +14,41 @@ A few constants are bound directly at module scope, not under the
 `builtin.` namespace:
 
 ```modest
-true, false          // Bool
-nil                  // untyped null pointer
+true, false  // Bool
+nil          // untyped null pointer
 ```
 
 ## Reference
 
 ```modest
 // compiler
-builtin.compiler.name                 // string
-builtin.compiler.version.major        // Nat32
-builtin.compiler.version.minor        // Nat32
-builtin.compiler.version.patch        // Nat32
+builtin.compiler.name           // string
+builtin.compiler.version.major  // Nat32
+builtin.compiler.version.minor  // Nat32
+builtin.compiler.version.patch  // Nat32
 
 // target: widths in bits (cfg/*.toml)
-builtin.target.wordWidth              // word_width
+builtin.target.wordWidth          // word_width
 builtin.target.pointerWidth
 builtin.target.charWidth
 builtin.target.intWidth
 builtin.target.floatWidth
-builtin.target.rationalPrecision      // decimal digits — see below
+builtin.target.rationalPrecision  // decimal digits — see below
 
 // target: identity (branded string constants for comparison)
 builtin.target.name
-builtin.target.arch       // compare with: archX86, archX86_64, archArm,
-                          //   archAarch64, archRiscv32, archRiscv64
-builtin.target.os         // osLinux, osMacos, ...
-builtin.target.abi        // abiSysV, abiEabi, ...
-builtin.target.endian     // endianLittle, endianBig
+builtin.target.arch    // compare with: archX86, archX86_64, archArm,
+                       //   archAarch64, archRiscv32, archRiscv64
+builtin.target.os      // osLinux, osMacos, ...
+builtin.target.abi     // abiSysV, abiEabi, ...
+builtin.target.endian  // endianLittle, endianBig
 
 // target-width type aliases (word_width, integer_width)
 builtin.Word, builtin.Int, builtin.Nat
 
 // IEEE 754 specials: generic Float
-builtin.nan                           // quiet NaN
-builtin.inf                           // +infinity; -builtin.inf for -infinity
+builtin.nan  // quiet NaN
+builtin.inf  // +infinity; -builtin.inf for -infinity
 ```
 
 Everything under `builtin.target` comes from the target settings in
@@ -108,7 +108,7 @@ if builtin.target.endian == builtin.target.endianLittle {
 	printf("little-endian\n")
 }
 
-var w: builtin.Word                   // target word width
+var w: builtin.Word  // target word width
 
 printf("rational precision: %d digits\n", Int32 builtin.target.rationalPrecision)
 ```

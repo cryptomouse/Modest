@@ -15,11 +15,12 @@ public type Y = Int
 public type X = {
 	a: LocalInt
 	public b: LocalInt
-    c: LocalInt
+	c: LocalInt
 }
 
 
 // public func f (p: {x: LocalInt}) -> Unit {
 
 // }
+
 

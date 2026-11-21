@@ -28,6 +28,7 @@ include "libc/stdlib"
 
 var counter: Nat32
 
+
 func tick () -> Nat32 {
 	let n = counter
 	counter += 1
@@ -94,4 +95,5 @@ func main () -> Int {
 	printf("passed: eval order\n")
 	return exitSuccess
 }
+
 

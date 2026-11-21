@@ -31,12 +31,12 @@ decided by the context: read, assignment target, or address-of
 type Point = {x: Int32, y: Int32}
 
 var pt: Point = {x = 1, y = 2}
-pt.x = 10                     // assignment target
-let sum = pt.x + pt.y         // read
-var px: *Int32 = &pt.x        // address of the field
+pt.x = 10               // assignment target
+let sum = pt.x + pt.y   // read
+var px: *Int32 = &pt.x  // address of the field
 
 var pp: *Point = &pt
-pp.y = 20                     // auto-deref
+pp.y = 20  // auto-deref
 ```
 
 ## See also

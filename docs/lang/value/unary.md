@@ -56,13 +56,13 @@ var flag: Bool = false
 flag = not flag
 
 var mask: Word8 = 0x0F
-mask = ~mask                  // 0xF0
+mask = ~mask  // 0xF0
 
 var x: Int32 = 5
 let neg = -x
 
 var p: *Int32 = &x
-*p = 10                       // x == 10
+*p = 10  // x == 10
 ```
 
 ## See also

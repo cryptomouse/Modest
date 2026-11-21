@@ -38,9 +38,9 @@ offsetof(<#Type.field#>)                        // field offset in bytes
 type Buf = [16]Word8
 type Header = {tag: Word8, len: Nat32}
 
-const bufBytes = sizeof(Buf)            // 16
-const bufLen   = lengthof(Buf)          // 16
-const lenOff   = offsetof(Header.len)   // 4 (with default layout)
+const bufBytes = sizeof(Buf)           // 16
+const bufLen   = lengthof(Buf)         // 16
+const lenOff   = offsetof(Header.len)  // 4 (with default layout)
 
 var a: [5]Int32 = []
 var i: Nat32 = 0
@@ -49,8 +49,8 @@ while i < lengthof(a) {
 	i += 1
 }
 
-var small: Nat8 = sizeof(Buf)           // fits, no construction needed
-var size = sizeof(Buf)                  // Size: nothing to take a type from
+var small: Nat8 = sizeof(Buf)  // fits, no construction needed
+var size = sizeof(Buf)         // Size: nothing to take a type from
 ```
 
 ## See also

@@ -37,17 +37,17 @@ var <#id1#>, <#id2#>, ... : <#type_expression#>                      // several 
 ## Examples
 
 ```modest
-var x: Int16                   // no initializer: starts at 0
-var y = 10                     // Integer literal -> target Int
+var x: Int16       // no initializer: starts at 0
+var y = 10         // Integer literal -> target Int
 var z: Int32 = 20
-var r, g, b: Nat8              // three variables of one type
+var r, g, b: Nat8  // three variables of one type
 
 @extern
-var environ: []Ptr             // size comes from outside; only extern may do this
+var environ: []Ptr  // size comes from outside; only extern may do this
 
 func main () -> Int {
-	var local: Int32           // starts at 0, like the global above
-	local = 5                  // and is an ordinary variable afterwards
+	var local: Int32  // starts at 0, like the global above
+	local = 5         // and is an ordinary variable afterwards
 
 	printf("%hd %d %d %d\n", x, y, z, local)
 	return 0

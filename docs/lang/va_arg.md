@@ -61,7 +61,7 @@ func log (format: *Str8, ...) -> Unit {
 }
 
 func main () -> Int {
-	printf("%d\n", sum(3, 10, 20, 30))   // 60
+	printf("%d\n", sum(3, 10, 20, 30))  // 60
 	log("k = %d, s = %s\n", 42, "hi")
 	return 0
 }

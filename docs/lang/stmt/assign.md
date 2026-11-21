@@ -12,11 +12,11 @@ expression — it produces no value and cannot be chained.
 ## Lvalues
 
 ```modest
-x = 10                   // variable
-arr[i] = 10              // array element
-arr[1:4] = [3]Int32 [1, 2, 3]   // slice (copies elements)
-p.field = 10             // record field (auto-deref through pointer)
-*p = 10                  // pointed-to value
+x = 10                         // variable
+arr[i] = 10                    // array element
+arr[1:4] = [3]Int32 [1, 2, 3]  // slice (copies elements)
+p.field = 10                   // record field (auto-deref through pointer)
+*p = 10                        // pointed-to value
 ```
 
 The right-hand side is implicitly [constructed](../value/cons.md) to the
@@ -37,11 +37,11 @@ first (see [evaluation order](../value/README.md#evaluation-order)).
 ```modest
 var i: Nat32 = 0
 while i < n {
-	i += 1               // there is no `++` / `--`
+	i += 1  // there is no `++` / `--`
 }
 
-w |= 0x80                // w: Word8
-arr[next()] += 10        // next() is called once
+w |= 0x80          // w: Word8
+arr[next()] += 10  // next() is called once
 ```
 
 - The operator follows its own rules unchanged — both sides one type

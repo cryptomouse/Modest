@@ -17,7 +17,7 @@ unsafe(<#type#> <#value_expression#>)    // unsafe
 Int32 x
 Float64 (a + b)
 *Point nil
-unsafe(Nat64 p)          // pointer address as integer
+unsafe(Nat64 p)  // pointer address as integer
 ```
 
 The value starts on the line of the type: a type left alone at the end of
@@ -98,16 +98,16 @@ Key behaviors:
 
 ```modest
 var i: Int32 = 5
-var f: Float64 = Float64 i        // numeric conversion
-var w: Word32 = Word32 i          // zero-extending reinterpret
-var b: Bool = i != 0              // no Bool construction
+var f: Float64 = Float64 i  // numeric conversion
+var w: Word32 = Word32 i    // zero-extending reinterpret
+var b: Bool = i != 0        // no Bool construction
 
-var a: [10]Int32 = [10]Int32 [1, 2, 3]   // tail zero-filled
-var p: Point3D = Point3D {x = 1}         // y, z zero-filled
+var a: [10]Int32 = [10]Int32 [1, 2, 3]  // tail zero-filled
+var p: Point3D = Point3D {x = 1}        // y, z zero-filled
 
-pragma unsafe                      // module opts into unsafe
-let addr = unsafe(Nat64 &i)        // pointer -> address
-let q = unsafe(*Float32 &i)        // reinterpret pointee
+pragma unsafe                // module opts into unsafe
+let addr = unsafe(Nat64 &i)  // pointer -> address
+let q = unsafe(*Float32 &i)  // reinterpret pointee
 ```
 
 ## See also

@@ -25,3 +25,4 @@ public func shape_sum (s: *Shape) -> Int32 {
 	return s.n.v + s.k
 }
 
+
