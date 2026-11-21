@@ -89,3 +89,13 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
    rem, not em: the same gap before an h2 and an h4.  The p's 1rem bottom
    margin collapses into it, so the gap is 2.25rem, not 3.25rem. */
 [role="main"] > :is(h1, h2, h3, h4, h5, h6) { margin-top: 2.25rem; }
+
+/* Path above the H1, built by misc/mkdocs/theme/breadcrumbs.html */
+.breadcrumbs {
+    margin-bottom: 0.3rem;
+    font-size: 0.85rem;
+    color: var(--gray);
+}
+.breadcrumbs a { color: inherit; text-decoration: none; }
+.breadcrumbs a:hover { color: var(--primary); text-decoration: underline; }
+.breadcrumbs .sep { margin: 0 0.4em; color: #bbb; }

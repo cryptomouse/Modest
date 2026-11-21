@@ -1,0 +1,31 @@
+{#
+Path above the page's H1:   Modest / Language reference / Types
+
+A nav section has no URL of its own, so a crumb links to the section's index
+page (its README.md, listed first) and stays plain text when there is none
+(Lexical, Module, Misc). The current page is left out: its H1 follows. When
+the page IS a section's index, that section is the current page and is
+left out too:   lang/type/README.md → Modest / Language reference
+#}
+
+{%- if page and page.ancestors %}
+    {%- set crumbs = [] %}
+    {%- for sec in page.ancestors|reverse %}
+        {%- set first = sec.children[0] if sec.children else none %}
+        {%- set index = first if first and first.is_page and first.is_index else none %}
+        {%- if not (index and index == page) %}
+            {%- set _ = crumbs.append((sec.title, index)) %}
+        {%- endif %}
+    {%- endfor %}
+<nav class="breadcrumbs" aria-label="Breadcrumb">
+    <a href="{{ nav.homepage.url|url }}">{{ config.site_name }}</a>
+    {%- for title, index in crumbs %}
+    <span class="sep">/</span>
+        {%- if index %}
+    <a href="{{ index.url|url }}">{{ title }}</a>
+        {%- else %}
+    <span>{{ title }}</span>
+        {%- endif %}
+    {%- endfor %}
+</nav>
+{%- endif %}

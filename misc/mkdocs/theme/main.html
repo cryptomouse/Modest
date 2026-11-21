@@ -19,5 +19,5 @@ page's TOC nested under its entry.
 
 {%- block content %}
     <div class="col-md-3">{% include "sidebar.html" %}</div>
-    <div class="col-md-9" role="main">{% include "content.html" %}</div>
+    <div class="col-md-9" role="main">{% include "breadcrumbs.html" %}{% include "content.html" %}</div>
 {%- endblock %}
