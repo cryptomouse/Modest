@@ -21,6 +21,7 @@ read docs/CHEATSHEET.md before writing Modest code
 - `docs/lang/` — per-feature language documentation
 - `docs/EBNF.txt` — grammar
 - `docs/STYLE.md` — official code style; follow it in every `.modest` file
+- `docs/DOCS_STYLE.md` — how to write pages under `docs/`
 
 ## Comments
 

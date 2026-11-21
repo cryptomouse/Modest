@@ -28,8 +28,8 @@ func sum (a: Int32, b: Int32) -> Int32
 }
 ```
 
-⚠️ Only one newline is allowed before `{` — after a blank line it no longer
-belongs to the signature.
+> Only one newline is allowed before `{` — after a blank line it no longer
+> belongs to the signature.
 
 `<#FuncType#>` may also be the name of a function type — parameter names
 then come from the type:
@@ -77,14 +77,17 @@ func main () -> Int {
 
 A definition without a body is a *declaration* of a function defined
 outside the module; mark it `@extern` (see [annotations](../annotation.md)).
-It is not a forward declaration: a function may be called before its
-definition, and declaring it again in the same module is a redefinition.
-`@alias`, which renames a function in the output, needs a body.
 
 ```modest
 @extern
 public func printf (format: *Str8, ...) -> Int
 ```
+
+> Notes:
+>
+> - It is not a forward declaration: a function may be called before its
+>   definition, and declaring it again in the same module is a redefinition.
+> - `@alias`, which renames a function in the output, needs a body.
 
 ## Notes
 
