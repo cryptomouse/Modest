@@ -24,13 +24,13 @@ The type of a function: its parameter list and return type.
 ## Examples
 
 ```modest
-type Handler = *(payload: Ptr) -> Unit
+type Handler = (payload: Ptr) -> Unit
 
 func on_event (payload: Ptr) -> Unit {
 	printf("event!\n")
 }
 
-var handler: Handler = &on_event
+var handler: *Handler = &on_event
 
 func main () -> Int {
 	handler(nil)  // call through pointer
