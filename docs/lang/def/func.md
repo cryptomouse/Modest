@@ -17,18 +17,18 @@ A non-`Unit` function must end with `return`; otherwise the compiler warns
 (`expected return operator at end`) and returns a default value.
 
 ```modest
-func sum (a: Int32, b: Int32) -> Int32 {
-	return a + b
+func hello () -> Unit {
+	printf("hello\n")
 }
 
 // the opening `{` may also stand alone on the next line
-func hello () -> Unit
+func sum (a: Int32, b: Int32) -> Int32
 {
-	printf("hello\n")
+	return a + b
 }
 ```
 
-Only one newline is allowed before `{` — after a blank line it no longer
+⚠️ Only one newline is allowed before `{` — after a blank line it no longer
 belongs to the signature.
 
 `<#FuncType#>` may also be the name of a function type — parameter names
