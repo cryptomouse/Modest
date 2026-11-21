@@ -5,7 +5,7 @@ The type of a function: its parameter list and return type.
 ## Form
 
 ```
-(<#parameters#>) -> <#return_type#>      // function type
+(<#parameters#>) -> <#return_type#>
 ```
 
 ## Semantics
