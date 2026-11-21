@@ -1,2 +1,7 @@
 /* code blocks keep their tabs (superfences preserve_tabs); show them 4 wide */
 pre, code { tab-size: 4; -moz-tab-size: 4; }
+
+/* code blocks ½ further from the text around them: Bootstrap's 16px gap
+   (1rem bottom margin of the block above / of the pre) → 24px; the block
+   above's 1rem collapses into the 1.5rem top margin, it does not add up */
+[role="main"] pre { margin-top: 1.5rem; margin-bottom: 1.5rem; }

@@ -84,5 +84,8 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
     border-right: 0;
 }
 
-/* paragraphs of the page ⅓ further apart: Bootstrap's 1rem → 1.333rem */
-[role="main"] p { margin-bottom: 1.333rem; }
+/* gap before every section of the page; paragraphs keep Bootstrap's 1rem.
+   rem, not em: the same gap before an h2 and an h4.  The p's 1rem bottom
+   margin collapses into it, so the gap is 3rem, not 4rem.  The page title
+   (first child) stays at the top. */
+[role="main"] > :is(h1, h2, h3, h4, h5, h6):not(:first-child) { margin-top: 3rem; }
