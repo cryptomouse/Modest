@@ -83,3 +83,6 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
     color: var(--primary);
     border-right: 0;
 }
+
+/* paragraphs of the page ⅓ further apart: Bootstrap's 1rem → 1.333rem */
+[role="main"] p { margin-bottom: 1.333rem; }
