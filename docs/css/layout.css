@@ -26,19 +26,22 @@
 html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
 .bs-sidebar.affix { top: calc(var(--navbar-h) + 20px); }
 
-/* Left site nav built by misc/mkdocs/theme/sidebar.html */
-
-.bs-sidebar.card.site-nav {
-    /* scrolls on its own instead of being cut off at 90% of the page */
-    max-height: calc(100vh - var(--navbar-h) - 40px);
-    padding: 8px 0;
-    font-size: 0.9rem;
-}
-/* yeti's cards are square; the same radius as code blocks (code.css).
+/* Left site nav built by misc/mkdocs/theme/sidebar.html.
    The card is the inner #toc-collapse, not .bs-sidebar itself:
      <div class="bs-sidebar affix"><div class="collapse card site-nav"> */
-.bs-sidebar .site-nav { border-radius: 4px; }
-.site-nav > .nav { padding: 0; }
+
+.bs-sidebar .site-nav {
+    /* scrolls on its own instead of running past the bottom of the window */
+    max-height: calc(100vh - var(--navbar-h) - 40px);
+    overflow-y: auto;
+    padding: 8px 0;
+    font-size: 0.9rem;
+    /* yeti's cards are square; the same radius as code blocks (code.css) */
+    border-radius: 4px;
+}
+/* .bs-sidebar first: outweighs base.css's padded
+   .bs-sidebar > .navbar-collapse > .nav, the card's 8px is enough */
+.bs-sidebar .site-nav > .nav { padding: 0; }
 
 .site-nav ul { list-style: none; padding-left: 0; }
 .site-nav ul ul { padding-left: 0.9em; }
