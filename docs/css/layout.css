@@ -110,7 +110,7 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
 /* list items a bit apart (Bootstrap packs them line to line); a nested list
    gets the same gap from the text of its own item */
 [role="main"] li + li,
-[role="main"] li > :is(ul, ol) { margin-top: 0.3rem; }
+[role="main"] li > :is(ul, ol) { margin-top: 0.5rem; }
 
 /* Path above the H1, built by misc/mkdocs/theme/breadcrumbs.html */
 .breadcrumbs {
