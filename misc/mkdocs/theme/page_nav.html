@@ -1,0 +1,22 @@
+{#
+Previous / next page at the bottom of the page, named by their titles:
+    ← Variable Definition                    Statements →
+Replaces the stock navbar buttons: the navbar shows the path instead.
+#}
+
+{%- if page and (page.previous_page or page.next_page) %}
+<nav class="page-nav" aria-label="Previous and next page">
+    {%- if page.previous_page %}
+    <a class="prev" rel="prev" href="{{ page.previous_page.url|url }}">
+        <span class="dir">Previous</span>
+        <span class="title"><i class="fa fa-arrow-left"></i> {{ page.previous_page.title }}</span>
+    </a>
+    {%- endif %}
+    {%- if page.next_page %}
+    <a class="next" rel="next" href="{{ page.next_page.url|url }}">
+        <span class="dir">Next</span>
+        <span class="title">{{ page.next_page.title }} <i class="fa fa-arrow-right"></i></span>
+    </a>
+    {%- endif %}
+</nav>
+{%- endif %}

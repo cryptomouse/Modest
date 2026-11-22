@@ -5,19 +5,26 @@ Overrides of the yeti (mkdocs-bootswatch) theme, wired in by
 `theme.custom_dir` in mkdocs.yml.
 
 The stock layout puts the site nav into navbar dropdowns and the page TOC on
-the left. Here the navbar keeps only the site name and the right-hand links
-(search, prev/next, GitHub); the site nav moves to the left, with the current
-page's TOC nested under its entry.
+the left. Here the navbar keeps the site name followed by the page's path,
+and the right-hand links (search, GitHub); the site nav moves to the left,
+with the current page's TOC nested under its entry; prev/next go to the
+bottom of the page.
 #}
 
 {%- block site_nav %}{% endblock %}
 
-{#- the site name only: no mascot, it made the project look like a toy #}
+{#- the site name, no mascot (it made the project look like a toy), and the
+    path; outside .navbar-collapse, so a narrow screen keeps it #}
 {%- block site_name %}
+                <div class="navbar-path">
                 <a class="navbar-brand" href="{{ nav.homepage.url|url }}">{{ config.site_name }}</a>
+                {%- include "breadcrumbs.html" %}
+                </div>
 {%- endblock %}
+
+{%- block next_prev %}{% endblock %}
 
 {%- block content %}
     <div class="col-md-3">{% include "sidebar.html" %}</div>
-    <div class="col-md-9" role="main">{% include "breadcrumbs.html" %}{% include "content.html" %}</div>
+    <div class="col-md-9" role="main">{% include "content.html" %}{% include "page_nav.html" %}</div>
 {%- endblock %}

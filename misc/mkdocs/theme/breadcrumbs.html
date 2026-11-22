@@ -1,10 +1,11 @@
 {#
-Path above the page's H1:   Modest / Language reference / Types
+Path in the navbar, right after the site name (the first crumb):
+    Modest / Language reference / Types
 
 A nav section has no URL of its own, so a crumb links to the section's index
 page (its README.md, listed first) and stays plain text when there is none
-(Lexical, Module, Misc). The current page is left out: its H1 follows. When
-the page IS a section's index, that section is the current page and is
+(Lexical, Module, Misc). The current page is left out: its H1 opens the page.
+When the page IS a section's index, that section is the current page and is
 left out too:   lang/type/README.md → Modest / Language reference
 #}
 
@@ -17,15 +18,20 @@ left out too:   lang/type/README.md → Modest / Language reference
             {%- set _ = crumbs.append((sec.title, index)) %}
         {%- endif %}
     {%- endfor %}
+    {%- if crumbs %}
+{#- no whitespace between the tags: it renders as a space everywhere but
+    before the first "/" (start of the block), so that gap looked smaller:
+      Modest/ Lang / Defs  →  Modest / Lang / Defs
+    the gaps are the .sep margins alone #}
 <nav class="breadcrumbs" aria-label="Breadcrumb">
-    <a href="{{ nav.homepage.url|url }}">{{ config.site_name }}</a>
-    {%- for title, index in crumbs %}
+        {%- for title, index in crumbs -%}
     <span class="sep">/</span>
-        {%- if index %}
+            {%- if index -%}
     <a href="{{ index.url|url }}">{{ title }}</a>
-        {%- else %}
+            {%- else -%}
     <span>{{ title }}</span>
-        {%- endif %}
-    {%- endfor %}
+            {%- endif -%}
+        {%- endfor -%}
 </nav>
+    {%- endif %}
 {%- endif %}
