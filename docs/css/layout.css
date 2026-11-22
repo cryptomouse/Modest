@@ -147,6 +147,14 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
     background-color: rgba(0, 140, 186, 0.04);
 }
 
+/* row under the cursor (base.js adds .table-hover) in the same blue, 3× the
+   stripe, instead of Bootstrap's grey rgba(0,0,0,.075). The 2nd selector
+   outweighs the stripe rule above, or striped rows wouldn't react at all */
+[role="main"] .table-hover tbody tr:hover,
+[role="main"] .table-hover.table-striped tbody tr:nth-of-type(odd):hover {
+    background-color: rgba(0, 140, 186, 0.12);
+}
+
 /* Path in the navbar after the site name, built by
    misc/mkdocs/theme/breadcrumbs.html:   Modest / Language reference / Types
    On a narrow navbar it is cut with "…" rather than wrapped to a 2nd line. */
