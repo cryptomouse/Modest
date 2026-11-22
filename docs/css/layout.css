@@ -27,13 +27,13 @@ html { font-size: 103%; }
 :root { --navbar-h: 2.55rem; }
 .navbar.fixed-top { padding-top: 0.1rem; padding-bottom: 0.1rem; }
 /* yeti's #008cba, see-through; the blur keeps the page text scrolling under
-   it from showing through sharply. Over white a plain rgba(#008cba, .75)
-   washes out to rgb(64,169,203): the backdrop is dimmed and the blue deepened
-   so the mix stays near the original:
-     .75·rgb(0,135,180) + .25·(.75·white) ≈ rgb(48,149,183)
+   it from showing through sharply. Over white a plain rgba(#008cba, .5)
+   washes out to rgb(128,198,221): the backdrop is dimmed and the blue
+   deepened so the mix stays closer to the original:
+     .5·rgb(0,135,180) + .5·(.75·white) ≈ rgb(96,163,186)
    !important: Bootstrap's .bg-primary is !important itself */
 .navbar.fixed-top.bg-primary {
-    background-color: rgba(0, 135, 180, 0.75) !important;
+    background-color: rgba(0, 135, 180, 0.5) !important;
     -webkit-backdrop-filter: blur(6px) brightness(0.75);
     backdrop-filter: blur(6px) brightness(0.75);
 }
