@@ -18,7 +18,8 @@ theme:
 markdown_extensions:
   - tables
   - toc:
-      permalink: true
+      # link to the heading on hover: a pale "#" (docs/css/layout.css), not ¶
+      permalink: "#"
       # GitHub-style anchors, so `file.md#heading` links work on github.com too
       slugify: !!python/object/apply:pymdownx.slugs.slugify
         kwds:

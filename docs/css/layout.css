@@ -116,6 +116,15 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
    The 20px doesn't collapse into the H1's margin: .col-md-9 is a flex item. */
 [role="main"] > h1 { margin-top: calc(2.25rem - 20px); }
 
+/* the "#" link after a heading on hover (mkdocs.yml: toc permalink): pale
+   and light, a hint rather than part of the title, like the left nav's "#" */
+[role="main"] .headerlink {
+    font-weight: normal;
+    color: #bbb;
+    text-decoration: none;
+}
+[role="main"] .headerlink:hover { color: var(--primary); }
+
 /* list items a bit apart (Bootstrap packs them line to line); a nested list
    gets the same gap from the text of its own item */
 [role="main"] li + li,

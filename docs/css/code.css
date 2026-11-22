@@ -23,3 +23,14 @@ pre {
     border-color: rgba(0, 140, 186, 0.18);
     border-radius: 3px;
 }
+
+/* keywords and literals (true, false, nil) pink-violet, a counterpoint to
+   the navbar blue, instead of docco's brown #954121 */
+.hljs-keyword, .hljs-literal { color: #b8327a; }
+
+/* comments grey instead of docco's teal #408080; still italic. #656d76
+   keeps ~5:1 contrast on the blue-tinted block background */
+.hljs-comment, .hljs-quote { color: #656d76; }
+
+/* no bold anywhere in code: docco makes function names and @directives 700 */
+.hljs-title, .hljs-meta { font-weight: normal; }

@@ -22,7 +22,10 @@ hljs.registerLanguage('modest', function (hljs) {
       { scope: 'string', begin: "'", end: "'", contains: [hljs.BACKSLASH_ESCAPE] },
       { scope: 'number', begin: /\b(0[xX][0-9a-fA-F_]+|0[bB][01_]+|\d[\d_]*(\.\d[\d_]*)?([eE][+-]?\d+)?)\b/ },
       { scope: 'meta', begin: /@[a-z_][A-Za-z0-9_]*/ },
-      { begin: [/\bfunc\s+/, /[a-z_][A-Za-z0-9_]*/], beginScope: { 2: 'title.function' } },
+      // this match takes `func` out of the keywords list's reach, so it needs
+      // its own scope 1, or it is left plain:
+      //   func <span class="hljs-title function_">sum</span>   (before)
+      { begin: [/\bfunc\s+/, /[a-z_][A-Za-z0-9_]*/], beginScope: { 1: 'keyword', 2: 'title.function' } },
       { scope: 'type', begin: /\b[A-Z][A-Za-z0-9_]*/ }
     ]
   };
