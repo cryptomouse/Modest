@@ -6,6 +6,11 @@
     .navbar .ms-md-auto { margin-left: auto; }
 }
 
+/* everything 3% larger: all sizes are rem, so this one rule scales text,
+   code, headings, navbar and spacing alike (body 15px → 15.45px). In %,
+   not px, to keep following the reader's browser font setting */
+html { font-size: 103%; }
+
 /* page (and navbar) 10% wider than Bootstrap's 540/720/960/1140px; a
    max-width above the viewport is harmless: .container is width:100% */
 @media (min-width: 576px)  { .container { max-width: 594px; } }
