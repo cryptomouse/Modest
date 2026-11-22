@@ -49,10 +49,7 @@ hooks:
 # pages left out of nav (agents/, raw_errors.md, ...) are still built and linkable
 nav:
   - Home: README.md
-  - Install: INSTALL.md
-  - Usage: USAGE.md
   - Cheat sheet: CHEATSHEET.md
-  - Style guide: STYLE.md
   - Language reference:
     - lang/README.md
     - Lexical:
@@ -108,7 +105,7 @@ nav:
       - lang/va_arg.md
       - Undefined behavior: UB.md
     - Open questions: lang/QUESTIONS.md
-  - Grammar (EBNF): EBNF.txt
+    - Grammar (EBNF): EBNF.txt
   - Compiler:
     - compiler/README.md
     - compiler/usage.md
@@ -121,3 +118,6 @@ nav:
     - Doubts: DOUBTS.md
     - Design TODO: todo/TODO.md
     - todo/c_output_analyse.md
+  - Install: INSTALL.md
+  - Usage: USAGE.md
+  - Style guide: STYLE.md
