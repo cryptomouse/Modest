@@ -4,10 +4,10 @@ A *definition* binds an identifier to an entity. There are four kinds:
 
 | Definition | Form | Page |
 | :-- | :-- | :-- |
-| Type — alias / named type | `type Name = T` | [type](./type.md) |
-| Constant — compile-time value | `const name = v` | [const](./const.md) |
-| Variable — mutable storage | `var name: T = v` | [var](./var.md) |
-| Function | `func name (params) -> T { }` | [func](./func.md) |
+| #1 Type — alias / named type | `type Name = T` | [type](./type.md) |
+| #2 Constant — compile-time value | `const name = v` | [const](./const.md) |
+| #3 Variable — mutable storage | `var name: T = v` | [var](./var.md) |
+| #4 Function | `func name (params) -> T { }` | [func](./func.md) |
 
 Every module-level definition may carry an access modifier (`public` /
 `private`, see [access modifiers](../access_modifiers.md)) and
@@ -19,6 +19,8 @@ definition may refer to entities defined later in the file — no forward
 declarations are needed.
 
 ```modest
+// All four available kinds of definitions
+
 type Point = {x: Int32, y: Int32}
 
 const origin = Point {x = 0, y = 0}
