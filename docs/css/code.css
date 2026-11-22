@@ -24,10 +24,13 @@ pre {
     border-radius: 3px;
 }
 
-/* keywords, literals (true, false, nil) and annotations (@inline)
-   pink-violet, a counterpoint to the navbar blue, instead of docco's
-   brown #954121 */
-.hljs-keyword, .hljs-literal, .hljs-meta { color: #b8327a; }
+/* keywords and literals (true, false, nil) pink-violet, a counterpoint to
+   the navbar blue, instead of docco's brown #954121 */
+.hljs-keyword, .hljs-literal { color: #b8327a; }
+
+/* annotations (@inline) the same pink-violet, 30% paler: a hint beside
+   the declaration, not part of it */
+.hljs-meta { color: #cd70a2; }
 
 /* types (Int32, Point) in the link blue (yeti's a { color }) instead of
    docco's navy #19469d */
