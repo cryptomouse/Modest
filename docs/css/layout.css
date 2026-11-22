@@ -116,6 +116,10 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
    margin collapses into it, so the gap is 2.25rem, not 3.25rem. */
 [role="main"] > :is(h1, h2, h3, h4, h5, h6) { margin-top: 2.25rem; }
 
+/* headings in a muted blue of the navbar's family, darker than the link
+   blue #008cba, so they don't read as clickable */
+[role="main"] :is(h1, h2, h3, h4, h5, h6) { color: #1d4f66; }
+
 /* the H1 gets the same 2.25rem of blank space above it: the theme's 20px
    margin of body > .container is already there, so the H1 adds the rest.
    The 20px doesn't collapse into the H1's margin: .col-md-9 is a flex item. */
