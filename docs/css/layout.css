@@ -30,12 +30,14 @@ html { font-size: 103%; }
    it from showing through sharply. Over white a plain rgba(#008cba, .5)
    washes out to rgb(128,198,221): the backdrop is dimmed and the blue
    deepened so the mix stays closer to the original:
-     .5·rgb(0,135,180) + .5·(.6·white) ≈ rgb(77,144,167)
+     .5·rgb(0,135,180) + .5·(.65·white) ≈ rgb(83,150,173)
    !important: Bootstrap's .bg-primary is !important itself */
 .navbar.fixed-top.bg-primary {
     background-color: rgba(0, 135, 180, 0.5) !important;
-    -webkit-backdrop-filter: blur(6px) brightness(0.6);
+    -webkit-backdrop-filter: blur(6px) brightness(0.65);
     backdrop-filter: blur(6px) brightness(0.65);
+    /* a soft shadow below: the glass seems to hover over the page */
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 .navbar .navbar-brand { padding-top: 0.16rem; padding-bottom: 0.16rem; }
 .navbar .navbar-nav .nav-link { padding-top: 0.4rem; padding-bottom: 0.4rem; }
