@@ -356,8 +356,8 @@ ptr.field = 5         // auto-deref field write
 
 ### Compound Assignment
 ```modest
-i += 1                  // there is no ++ / --: this is how you count
-x -= y; x *= y; x /= y; x %= y
+i += 1; x -= y;         // there is no ++ / --: this is how you count
+x *= y; x /= y; x %= y
 w &= m; w |= m; w ^= m  // WordX only, like the operators themselves
 w <<= n; w >>= n
 arr[f()] += 1           // f() is called once
