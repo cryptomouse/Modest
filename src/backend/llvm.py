@@ -3079,14 +3079,18 @@ def print_stmt_break(x):
 
 
 def print_stmt_return(x):
-	# VLA требует чтобы стек был сохранен в начале работы функции
-	# (see: print_def_func) и восстановлен перед возвратом из нее
-	if fctx['stackptr'] != None:
-		stackrestore(fctx['stackptr'])
+	# VLA: the stack saved at the start of the function (see print_def_func)
+	# is restored only after the return value is computed (and, for sret,
+	# stored), since it may read the array:
+	#   %r = load i32, i32* %vla_elem ; stackrestore(%sp) ; ret i32 %r
+	def release():
+		if fctx['stackptr'] != None:
+			stackrestore(fctx['stackptr'])
 
 	if x.value != None and not x.value.type.is_unit():
 		v = do_reval(x.value)
 		if not need_sret(fctx['func'].type):
+			release()
 			lo("ret ")
 			llvm_print_type_value(v)
 			reg_get()  # for LLVM
@@ -3097,6 +3101,7 @@ def print_stmt_return(x):
 		p2retval = llvm_value_reg("0", TypePointer(to))
 		llvm_store(p2retval, v)
 
+	release()
 	lo("ret void")
 	reg_get()  # for LLVM
 	return None

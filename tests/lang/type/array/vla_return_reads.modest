@@ -1,0 +1,55 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: return reads a VLA
+//
+// A function with a VLA restores the stack on every return - after the
+// return value is computed, since it may read the array:
+//   %r = load i32, i32* %elem ; stackrestore(%sp) ; ret i32 %r
+// Restored first, the array is freed stack: `clobber()` in the return
+// value then lays its own frame over it before `a[n - 1]` is read.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+@runtime
+func opaque32 (n: Int32) -> Int32 {
+	return n
+}
+
+
+// fills a frame of its own with -1, over whatever stack is free
+@noinline
+func clobber () -> Int32 {
+	var junk: [256]Int32
+	var i: Int32 = 0
+	while i < 256 {
+		junk[i] = -1
+		i += 1
+	}
+	return opaque32(junk[opaque32(0)]) + 1
+}
+
+
+func last (n: Int32) -> Int32 {
+	var a: [n]Int32
+	var i: Int32 = 0
+	while i < n {
+		a[i] = i * 10
+		i += 1
+	}
+	return clobber() + a[n - 1]
+}
+
+
+func main () -> Int {
+	let r = last(opaque32(5))
+	if r != 40 {
+		printf("last(5) = %d, expected 40\n", r)
+		return exitFailure
+	}
+	printf("passed: return reads a VLA\n")
+	return exitSuccess
+}
