@@ -121,6 +121,12 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
 [role="main"] li + li,
 [role="main"] li > :is(ul, ol) { margin-top: 0.5rem; }
 
+/* table stripes (base.js adds .table-striped) tinted with the navbar blue
+   instead of Bootstrap's grey rgba(0,0,0,.05):  #f2f2f2 → ≈ #f5fafc */
+[role="main"] .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 140, 186, 0.04);
+}
+
 /* Path in the navbar after the site name, built by
    misc/mkdocs/theme/breadcrumbs.html:   Modest / Language reference / Types
    On a narrow navbar it is cut with "…" rather than wrapped to a 2nd line. */
