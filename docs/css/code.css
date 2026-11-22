@@ -24,9 +24,14 @@ pre {
     border-radius: 3px;
 }
 
-/* keywords and literals (true, false, nil) pink-violet, a counterpoint to
-   the navbar blue, instead of docco's brown #954121 */
-.hljs-keyword, .hljs-literal { color: #b8327a; }
+/* keywords, literals (true, false, nil) and annotations (@inline)
+   pink-violet, a counterpoint to the navbar blue, instead of docco's
+   brown #954121 */
+.hljs-keyword, .hljs-literal, .hljs-meta { color: #b8327a; }
+
+/* types (Int32, Point) in the link blue (yeti's a { color }) instead of
+   docco's navy #19469d */
+.hljs-type { color: #008cba; }
 
 /* comments grey instead of docco's teal #408080; still italic. #656d76
    keeps ~5:1 contrast on the blue-tinted block background */

@@ -24,6 +24,16 @@ bottom of the page.
 
 {%- block next_prev %}{% endblock %}
 
+{#- a plain "GitHub" link to the repo home, instead of the stock "Edit on
+    GitHub" link to the page's source #}
+{%- block repo %}
+                        {%- if config.repo_url %}
+                            <li class="nav-item">
+                                <a href="{{ config.repo_url }}" class="nav-link"><i class="fa-brands fa-github"></i> GitHub</a>
+                            </li>
+                        {%- endif %}
+{%- endblock %}
+
 {%- block content %}
     <div class="col-md-3">{% include "sidebar.html" %}</div>
     <div class="col-md-9" role="main">{% include "content.html" %}{% include "page_nav.html" %}</div>
