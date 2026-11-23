@@ -2,6 +2,30 @@
 
 Quick reference for writing Modest code.
 
+## Not in Modest
+
+Modest looks like Swift/Go/C, but these do **not** exist — reach for the
+replacement instead:
+
+| Not in Modest | Write instead |
+|---|---|
+| `for`, `do … while` | `while cond { … }`, `while true { … break }` |
+| `continue` | `again` |
+| `switch` / `match` | `if … else if … else` |
+| `enum` | branded integer + constants ([Enum Idiom](#enum-idiom)) |
+| `c ? a : b` | `if` / `else` |
+| `i++`, `--i` | `i += 1`, `i -= 1` (a statement, not an expression) |
+| `&&` `\|\|` `!` | `and` `or` `not` |
+| `p->f` | `p.f` (auto-deref) |
+| `(T)x` casts | value construction `T x`; reinterpreting needs `unsafe(T x)` |
+| char literal `'A'` | `Char8 'A'` (`'A'` alone is a string) |
+| implicit widening `Int32 + Int64` | `Int64 a + b` — both operands one type |
+| `&` `\|` `^` `<<` on `Int`/`Nat` | convert to `WordX` first: `Word32 n & 0xFF` |
+| `+` `-` `<` on `Word` | convert to `NatX` / `IntX` first |
+| `int`, `Int`, `Float` builtin | `Int32`, `Float64`, … (`Int` etc. come from `include "libc/ctypes64"`) |
+| array decays to pointer | arrays are values; pass `&arr` as `*[]T` |
+| generics, methods, `defer`, `goto`, exceptions, macros | — |
+
 ## Types
 
 > Type identifiers always start with a capital letter.
@@ -102,6 +126,17 @@ type Name = @branded Type       // branded type (newtype pattern)
 | `{x = 10, y = 20}` | `GenericRecord` | compile-time; converts to matching record type |
 | `nil` | `*Unit` | null pointer |
 
+```modest
+1_000_000                      // `_` separates digits (decimal and hex)
+"tab\t quote\" \x41 \u{263A}"  // escapes: \n \t \r \a \b \v \f \\ \" \' \xHH (one byte) \u{H..H} (→ UTF-8)
+// line comment
+/* block comment */
+```
+
+> **Strings**: a literal goes where a `*Str8` (`*[]Char8`) is expected —
+> that is what `printf` and the libc bindings take. It does **not** go into
+> `*Char8`: `cannot implicitly construct '*Char8' from 'String'`.
+
 ## Definitions
 
 > **Access modifiers:** `public` and `private` can be applied to any definition.
@@ -120,7 +155,7 @@ func add (a: Int32, b: Int32) -> Int32 {
 	return a + b
 }
 
-func main () -> Int {
+func main () -> Int32 {
 	return 0
 }
 
@@ -135,6 +170,14 @@ type FailHandler = (code: Int32) -> Unit
 func onDiskFail FailHandler {
 	printf("disk failed with code %d\n", code)
 }
+
+// default parameter values and named arguments
+func area (w: Int32, h: Int32 = 1) -> Int32 {
+	return w * h
+}
+
+// area(3)             — h takes its default 1
+// area(h = 4, w = 3)  — named arguments, any order; may mix with positional
 ```
 
 > **Variadic functions** (C varargs ABI): `...` as the last parameter, the
@@ -186,7 +229,7 @@ let local = 42               // immutable binding — only inside functions
 
 > `let` is only allowed inside function bodies. For module-level values use `var` or `const`.
 
-> `var` always gets a concrete type: declared explicitly, inferred from the initializer, or — for generic literals (`var i = 0`) — the target default type (Integer → Int, Rational → Float). `const` and `let` retain the compile-time generic type of their initializer.
+> `var` always gets a concrete type: declared explicitly, inferred from the initializer, or — for generic literals (`var i = 0`) — the target default type set by `integer_width` / `float_width` in `cfg/*.toml` (`Int32` and `Float64` in `cfg/default.toml`). `const` and `let` retain the compile-time generic type of their initializer.
 
 > **`public const` must have a non-generic type** — give it an explicit type annotation or construct a branded value; a private/default `const` may stay generic.
 
@@ -198,7 +241,17 @@ type CStr = *Char8
 type Meters = @branded Float64  // newtype (incompatible with Float64)
 type Packed = @layout("packed") {a: Bool, b: Int32}
 type Volatile = @volatile Word32
+
+type Config = {
+	port: Nat16 = 8080  // field default: used when a literal omits the field
+	verbose: Bool       // no default: the type's default (false)
+}
+let c: Config = {verbose = true}  // c.port == 8080
 ```
+
+> **Variant** `A or B` (tagged union, `type Result = Int32 or Error`) is
+> experimental, C11 backend only, and its value cannot be inspected yet —
+> see [variant](lang/type/variant.md).
 
 ## Modules
 
@@ -220,6 +273,10 @@ printf("hello\n")
 // with import — use module prefix:
 import "utils"
 utils.doSomething()
+
+// rename the namespace:
+import "./engine" as eng
+eng.start()
 ```
 
 ```modest
@@ -239,6 +296,21 @@ include "libc/math"      // sin, cos, sqrt, pow
 include "libc/socket"    // socket, bind, connect, send, recv
 include "libc/unistd"    // read, write, close
 ```
+
+### Built-in constants
+
+Every module sees the `builtin` namespace — compile-time facts about the
+compiler and the target (from `cfg/*.toml`):
+
+```modest
+builtin.target.pointerWidth  // in bits; also wordWidth, intWidth, floatWidth, charWidth
+builtin.target.arch          // compare with builtin.target.archX86_64, .archArm, ...
+builtin.target.os            // .osLinux, .osMacos, .osNoos, ...
+builtin.Int, builtin.Nat, builtin.Word  // target-width types (no include needed)
+builtin.compiler.version.major
+```
+
+See [built-in constants](lang/builtin_constants.md) for the full list.
 
 ### Pragmas
 
@@ -340,6 +412,11 @@ while condition {
 	break  // exit loop
 	again  // continue (next iteration)
 }
+
+while true {  // endless loop / do-while: test and break inside
+	// ...
+	if done { break }
+}
 ```
 
 ### Assignment
@@ -356,11 +433,11 @@ ptr.field = 5         // auto-deref field write
 
 ### Compound Assignment
 ```modest
-i += 1; x -= y;         // there is no ++ / --: this is how you count
-x *= y; x /= y; x %= y
-w &= m; w |= m; w ^= m  // WordX only, like the operators themselves
-w <<= n; w >>= n
-arr[f()] += 1           // f() is called once
+i += 1         // there is no ++ / --: this is how you count
+x -= y         // also *=  /=  %=
+w |= m         // also &=  ^=  — WordX only, like the operators themselves
+w <<= n        // also >>=
+arr[f()] += 1  // f() is called once
 ```
 
 > `x op= y` is `x = x op y` with `x` evaluated once: the same operator and
@@ -473,10 +550,13 @@ alignof(Type) alignof(value)  // alignment in bytes
 lengthof(ArrayType)           // number of elements in array type
 offsetof(RecordType.field)    // byte offset of field
 ```
-> These fold at compile time into a value that carries the width it needs,
+> `sizeof` / `alignof` / `lengthof` / `offsetof` fold at compile time into a value that carries the width it needs,
 > so it goes into any `NatX` that fits — `var x: Nat16 = sizeof(T)` — and
 > mixes with any numeric variable. With no type to take, it becomes `Size`
 > (`var x = sizeof(T)`). Of a VLA, the size is a run-time `Size`.
+
+> `new(value)` (experimental) copies an aggregate value (record or array)
+> to the heap via `malloc` and gives a pointer: `let p = new(Point {x = 1, y = 2})`.
 
 ### Access
 ```modest
@@ -804,44 +884,55 @@ func main () -> Int {
 }
 ```
 
-### Arrays
+### Arrays and Loops
 ```modest
-var arr: [5]Int32 = [1, 2, 3, 4, 5]
-var first = arr[0]    // 1
-var slice = arr[1:3]  // sub-array [2, 3]
+include "libc/ctypes64"
+include "libc/stdio"
 
-var i: Int32 = 0
-while i < 5 {
-	printf("%d\n", arr[i])
-	i += 1
-}
-```
 
-### Loop with While
-```modest
-func sum (n: Int32) -> Int32 {
+// an array of any length arrives as a pointer to an unsized array + its length
+func sum (p: *[]Int32, n: Size) -> Int32 {
 	var total: Int32 = 0
-	var i: Int32 = 0
+	var i: Size = 0
 	while i < n {
-		total += i
+		total += p[i]  // indexing works through *[]T, not through *T
 		i += 1
 	}
 	return total
+}
+
+
+func main () -> Int {
+	var arr: [5]Int32 = [1, 2, 3, 4, 5]
+	let first = arr[0]    // 1
+	let part = arr[1:3]   // sub-array [2, 3]
+	let copy = arr        // arrays are values: this copies all 5 elements
+
+	printf("%d %d\n", first, part[1])
+	printf("sum = %d\n", sum(&arr, lengthof(arr)))  // &arr: *[5]Int32 → *[]Int32
+	return 0
 }
 ```
 
 ### Pointer to Function
 ```modest
+include "libc/ctypes64"
+include "libc/stdio"
+
+
 type Handler = *(payload: *Unit) -> Unit
 
 
-func onEvent (payload: *Unit) -> Unit {
+func onEvent (payload: @unused *Unit) -> Unit {
 	printf("event!\n")
 }
 
 
-var handler: Handler = &onEvent
-handler(nil)
+func main () -> Int {
+	var handler: Handler = &onEvent
+	handler(nil)
+	return 0
+}
 ```
 
 ### Enum Idiom
@@ -901,11 +992,11 @@ By default, symbol names are emitted as-is. Module imports add a prefix for publ
 ```modest
 // module: utils
 
-public func greet () -> Unit { ... }    // emitted as: utils_greet
-private func helper () -> Unit { ... }  // emitted as: helper  (private, no prefix)
+public func greet () -> Unit { ... }     // emitted as: utils_greet
+private func helper () -> Unit { ... }   // emitted as: helper  (private, no prefix)
 
-@extern("printf")
-public func myPrint (s: Str8) -> Unit   // emitted as: printf
+@extern("log_write")
+public func logWrite (s: *Str8) -> Unit  // emitted as: log_write
 ```
 
 > `public` marks a symbol as public (visible to importers). The module name becomes a prefix in the output.
@@ -948,3 +1039,6 @@ modest -o fmt -mbackend=modest main.modest     # re-emit Modest source (fmt.mode
 
 modest -o main -mbackend=c11 -fparanoid main.modest   # warnings as errors
 ```
+
+> The compiler needs `MODEST_DIR` (the repository root) and `MODEST_LIB`
+> (where `include`d modules live, normally `$MODEST_DIR/lib`) in the environment.

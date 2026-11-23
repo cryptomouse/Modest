@@ -1,4 +1,5 @@
 // examples/0/src/main.modest
+
 pragma unsafe
 
 include "libc/ctypes64"
@@ -9,5 +10,4 @@ func main () -> Int32 {
 	var k: Int32 = Int32 2
 	return 0
 }
-
 

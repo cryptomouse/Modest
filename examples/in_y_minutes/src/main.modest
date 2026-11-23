@@ -1,35 +1,39 @@
-// tests/in_y_minutes/src/main.modest
+// examples/in_y_minutes/src/main.modest
 //
 // Modest in Y minutes — a fast tour of the language.
 // Full reference: docs/CHEATSHEET.md
-
+//
 // This is a line comment. There are no block comments.
+// Lines marked `// error: ...` are commented out: they show what the
+// compiler rejects and why.
 
 include "libc/ctypes64"  // Int32, Nat32, Float64, ... — type aliases
 include "libc/stdio"     // printf
 include "libc/math"      // sqrt
 
-
 // `include` pastes a module's names directly into scope — used for C
 // bindings and library modules. `import "mymodule"` instead requires a
 // `mymodule.` prefix on every name it brings in (see docs/lang).
+
+// allows unsafe(...) below, from this line to the end of the file
+pragma unsafe
 
 
 // --- Types ------------------------------------------------------------------
 //
 // PascalCase for types, camelCase for everything else. Base types: Bool,
 // IntX/NatX/WordX (8/16/32/64/128 — signed/unsigned/bitwise), CharX (8/16/32),
-// FloatX (32/64), Str8/Str16/Str32 (= []CharX), Int/Nat/Word (target width).
+// FloatX (32/64), Str8/Str16/Str32 (= []CharX). Int/Nat/Float/... are
+// C-named aliases from libc/ctypes64.
 
-// directive type binds a new name to an existing type,
-// but does not create a distinct type. For distinct types, use `@branded` annotation (newtype idiom).
+// record; fields one per line need no commas
 type Point = {
 	x: Float64
 	y: Float64
 }
 
-// newtype: distinct from Float64, not just an alias
-type Meters = @branded Float64
+type Celsius = Float64          // alias: Celsius and Float64 mix freely
+type Meters = @branded Float64  // newtype: distinct, never mixes with Float64
 
 // enum idiom — Modest has no `enum` keyword
 type Color = @branded Nat8
@@ -37,19 +41,25 @@ const colorRed   = Color 0
 const colorGreen = Color 1
 const colorBlue  = Color 2
 
-// function type
-// You cannot create a variable of a function type directly,
-// but you can create a pointer to a function type.
+// function type: no variable of it, only a pointer to it (*Action)
 type Action = () -> Unit
 
 
-// --- Functions ----------------------------------------------------------------
+// --- Globals ----------------------------------------------------------------
+
+const maxUsers = 100             // compile-time constant, keeps the generic type
+public const version: Nat32 = 1  // public: visible to importers; needs an explicit type
+var callCount: Nat32 = 0         // mutable global; `let` is for function bodies only
+
+
+// --- Functions --------------------------------------------------------------
 
 @inline
 func distance (a: Point, b: Point) -> Float64 {
+	// a.x = 0.0  // error: expected mutable value (parameters are immutable)
 	let dx = a.x - b.x
 	let dy = a.y - b.y
-	return sqrt(dx*dx + dy*dy)
+	return sqrt(dx * dx + dy * dy)
 }
 
 
@@ -57,46 +67,82 @@ func sum (n: Int32) -> Int32 {
 	var total: Int32 = 0
 	var i: Int32 = 0
 	while i < n {
-		total = total + i
-		i += 1
+		total += i
+		i += 1  // no ++ / --
 	}
 	return total
 }
 
 
+// signature borrowed from the function type Action
 func announce Action {
-	printf("modest says hi\n")
+	callCount += 1
+	printf("modest says hi (call #%u)\n", callCount)
 }
 
 
-func main () -> Int {
+func tourValues () -> Unit {
 	// literals carry a compile-time type, resolved at the use site
-	let n = 42       // Integer  -> converts to IntX / NatX / WordX / FloatX / CharX
+	let n = 42        // Integer  -> converts to IntX / NatX / WordX / FloatX
 	let pi = 3.14159  // Rational -> converts to FloatX
 	var i32: Int32 = n
 	var f64: Float64 = pi
+	printf("i32 = %d, f64 = %f\n", i32, f64)
 
-	// var / let / const
-	var counter = 10                    // var: concrete type (Integer -> default Int here)
-	counter = 20                        // mutable
-	let fixed = 30                      // let: immutable, function-local only
+	// var / let
+	var counter = 10  // var: concrete type (Integer -> default Int)
+	counter = 20      // mutable
+	let fixed = 30    // let: immutable
+	// fixed = 31     // error: expected lvalue
+	printf("counter + fixed = %d\n", counter + fixed)
 
 	// value construction — Modest has no casts, only explicit construction
-	var w: Word64 = Word64 1 << 63
-	var asInt: Int64 = Int64 w          // WordX -> IntX, same width, safe
-	printf("w = %llx -> asInt = %lld\n", w, asInt)
+	let a = Int32 1
+	let b = Int64 2
+	// let c = a + b  // error: different types 'Int32' & 'Int64' in operation
+	let c = Int64 a + b
+	printf("c = %lld\n", c)
 
-	var height = Meters 1.8
+	let height = Meters 1.8
+	// let h: Float64 = height  // error: type mismatch Float64 & Meters
 	printf("height = %f\n", Float64 height)
+
+	// narrowing is unsafe: needs `pragma unsafe` and unsafe(...)
+	let big: Nat32 = 200
+	let small = unsafe(Nat8 big)
+	printf("small = %u\n", small)
 
 	// strings & characters
 	let greeting: *Str8 = "Hello, Modest!"
 	let initial: Char8 = "M"
 	printf("%s (starts with %c)\n", greeting, initial)
+}
 
-	// arrays & slices — arrays are value types: passed/returned/assigned by value
+
+func tourBits () -> Unit {
+	// bitwise ops — Word* types only; Int*/Nat* have no bitwise ops
+	var u: Word32 = 0x0f
+	var v: Word32 = 0x33
+	printf("u | v = %x\n", u | v)
+
+	// a hex literal is as wide as it is written
+	var narrow: Word32 = ~0x0F          // 0xF0, not 0xFFFFFFF0
+	var full: Word32 = ~0x0000000F      // 0xFFFFFFF0
+	printf("~0x0F = %x, ~0x0000000F = %x\n", narrow, full)
+
+	var w: Word64 = Word64 1 << 63      // construction binds tighter than <<
+	var asInt: Int64 = Int64 w          // WordX -> IntX, same width, safe
+	printf("w = %llx -> asInt = %lld\n", w, asInt)
+}
+
+
+func tourData () -> Unit {
+	// arrays are values: assigned, passed and returned by copy (no decay)
 	var arr: [5]Int32 = [1, 2, 3, 4, 5]
-	var slice = arr[1:3]  // sub-array [2, 3]
+	var copy = arr
+	copy[0] = 100
+	printf("arr[0] = %d, copy[0] = %d\n", arr[0], copy[0])  // 1, 100
+
 	var i: Nat32 = 0
 	while i < lengthof(arr) {
 		printf("%d ", arr[i])
@@ -104,28 +150,43 @@ func main () -> Int {
 	}
 	printf("\n")
 
-	// records & pointers
+	// records; == works on any type, field by field
 	let origin = Point {x = 0.0, y = 0.0}
 	let corner = Point {x = 3.0, y = 4.0}
-	printf("distance = %f\n", distance(origin, corner))
-
-	var p = corner
-	var pp = &p
-	pp.x = 99.0  // auto-deref field write through pointer
-	printf("p.x = %f\n", p.x)
-
-	// enum idiom
-	var c = colorGreen
-	if c == colorGreen {
-		printf("color is green\n")
+	if origin != corner {
+		printf("distance = %f\n", distance(origin, corner))
 	}
 
-	// bitwise ops — Word* types only; Int*/Nat* have no bitwise ops
-	var u: Word32 = 0x0f
-	var v: Word32 = 0x33
-	printf("u | v = %x\n", u | v)
+	// pointers
+	var p = corner
+	var pp = &p
+	pp.x = 99.0                       // auto-deref: no ->
+	*pp = Point {x = 1.0, y = 2.0}    // explicit dereference
+	printf("p = (%f, %f)\n", p.x, p.y)
 
-	// while / again (= continue)
+	var none: *Point = nil
+	if none == nil {
+		printf("none is nil\n")
+	}
+
+	// indexing through a pointer needs a pointer to array, *[]T
+	let pa = *[]Int32 &arr
+	printf("pa[1] = %d\n", pa[1])
+}
+
+
+func tourControl () -> Unit {
+	// if / else if / else — no switch
+	let c = colorGreen
+	if c == colorRed {
+		printf("red\n")
+	} else if c == colorGreen {
+		printf("green\n")
+	} else {
+		printf("blue\n")
+	}
+
+	// while is the only loop (no for); again = continue
 	var k = 0
 	while k < 5 {
 		k += 1
@@ -135,9 +196,8 @@ func main () -> Int {
 		printf("k = %d\n", k)
 	}
 
-	// while / break
 	var j = 0
-	while 1 > 0 {
+	while true {
 		if j == 2 {
 			break
 		}
@@ -146,19 +206,25 @@ func main () -> Int {
 	}
 
 	// logical ops: and / or / not (no &&, ||, !)
-	if i32 > 0 and not (counter < 0) {
+	if j > 0 and not (k < 0) {
 		printf("logic works\n")
 	}
 
 	// function pointers
 	var cb: *Action = &announce
 	cb()
-
-	// sizeof / lengthof
-	printf("sizeof(Point) = %lu\n", sizeof(Point))
-	printf("sum(0..5) = %d\n", sum(5))
-
-	return 0
+	cb()
 }
 
+
+func main () -> Int {
+	tourValues()
+	tourBits()
+	tourData()
+	tourControl()
+
+	printf("sizeof(Point) = %lu\n", sizeof(Point))
+	printf("sum(0..5) = %d\n", sum(5))
+	return 0
+}
 

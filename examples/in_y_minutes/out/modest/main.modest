@@ -1,9 +1,6 @@
 include "libc/ctypes64"
 include "libc/stdio"
-include "libc/math"
-
-// This is a line comment. There are no block comments. // sqrt
-
+include "libc/math" // sqrt
 
 // `include` pastes a module's names directly into scope — used for C
 // bindings and library modules. `import "mymodule"` instead requires a
@@ -14,17 +11,17 @@ include "libc/math"
 //
 // PascalCase for types, camelCase for everything else. Base types: Bool,
 // IntX/NatX/WordX (8/16/32/64/128 — signed/unsigned/bitwise), CharX (8/16/32),
-// FloatX (32/64), Str8/Str16/Str32 (= []CharX), Int/Nat/Word (target width).
+// FloatX (32/64), Str8/Str16/Str32 (= []CharX). Int/Nat/Float/... are
+// C-named aliases from libc/ctypes64.
 
-// directive type binds a new name to an existing type,
-// but does not create a distinct type. For distinct types, use `@branded` annotation (newtype idiom).
+// record; fields one per line need no commas
 type Point = {
 	x: Float64
 	y: Float64
 }
 
-// newtype: distinct from Float64, not just an alias
-type Meters = @branded Float64
+type Celsius = Float64// alias: Celsius and Float64 mix freely
+type Meters = @branded Float64 // newtype: distinct, never mixes with Float64
 
 // enum idiom — Modest has no `enum` keyword
 type Color = @branded Nat8
@@ -32,13 +29,18 @@ const colorRed = Color 0
 const colorGreen = Color 1
 const colorBlue = Color 2
 
-// function type
-// You cannot create a variable of a function type directly,
-// but you can create a pointer to a function type.
+// function type: no variable of it, only a pointer to it (*Action)
 type Action = () -> Unit
 
 
-// --- Functions ----------------------------------------------------------------
+// --- Globals ----------------------------------------------------------------
+
+const maxUsers = 100// compile-time constant, keeps the generic type
+public const version: Nat32 = 1// public: visible to importers; needs an explicit type
+var callCount: Nat32 = 0 // mutable global; `let` is for function bodies only
+
+
+// --- Functions --------------------------------------------------------------
 
 
 @inline
@@ -53,38 +55,66 @@ func sum (n: Int32) -> Int32 {
 	var total: Int32 = 0
 	var i: Int32 = 0
 	while i < n {
-		total = total + i
+		total += i
 		i += 1
 	}
 	return total
 }
 
 
+// signature borrowed from the function type Action
 func announce Action {
-	printf("modest says hi\n")
+	callCount += 1
+	printf("modest says hi (call #%u)\n", callCount)
 }
 
 
-@nonstatic
-func main () -> Int {
+func tourValues () -> Unit {
 	let n = 42
 	let pi = 3.14159
 	var i32: Int32 = n
 	var f64: Float64 = pi
+	printf("i32 = %d, f64 = %f\n", i32, f64)
 	var counter: Int32 = 10
 	counter = 20
 	let fixed = 30
-	var w: Word64 = Word64 1 << 63
-	var asInt = Int64 w
-	printf("w = %llx -> asInt = %lld\n", w, asInt)
+	printf("counter + fixed = %d\n", counter + fixed)
+	let a = Int32 1
+	let b = Int64 2
+	let c: Int64 = Int64 a + b
+	printf("c = %lld\n", c)
 
-	var height = Meters 1.8
+	let height = Meters 1.8
 	printf("height = %f\n", Float64 height)
+	let big: Nat32 = 200
+	let small: Nat8 = unsafe(Nat8 big)
+	printf("small = %u\n", small)
 	let greeting: *Str8 = "Hello, Modest!"
 	let initial: Char8 = "M"
 	printf("%s (starts with %c)\n", greeting, initial)
+}
+
+
+func tourBits () -> Unit {
+	var u: Word32 = 0x0F
+	var v: Word32 = 0x33
+	printf("u | v = %x\n", u | v)
+	var narrow: Word32 = 0xF0
+	var full: Word32 = 0xFFFFFFF0
+	printf("~0x0F = %x, ~0x0000000F = %x\n", narrow, full)
+
+	var w: Word64 = Word64 1 << 63
+	var asInt = Int64 w
+	printf("w = %llx -> asInt = %lld\n", w, asInt)
+}
+
+
+func tourData () -> Unit {
 	var arr: [5]Int32 = [1, 2, 3, 4, 5]
-	var slice: [3 - 1]Int32 = arr[1:3]
+	var copy: [5]Int32 = arr
+	copy[0] = 100
+	printf("arr[0] = %d, copy[0] = %d\n", arr[0], copy[0])
+
 	var i: Nat32 = 0
 	while i < lengthof(arr) {
 		printf("%d ", arr[i])
@@ -93,19 +123,33 @@ func main () -> Int {
 	printf("\n")
 	let origin = Point {x = 0.0, y = 0.0}
 	let corner = Point {x = 3.0, y = 4.0}
-	printf("distance = %f\n", distance(origin, corner))
-
+	if origin != corner {
+		printf("distance = %f\n", distance(origin, corner))
+	}
 	var p: Point = corner
 	var pp: *Point = &p
 	pp.x = 99.0
-	printf("p.x = %f\n", p.x)
-	var c: Color = colorGreen
-	if c == colorGreen {
-		printf("color is green\n")
+	*pp = Point {x = 1.0, y = 2.0}
+	printf("p = (%f, %f)\n", p.x, p.y)
+
+	var none: *Point = nil
+	if none == nil {
+		printf("none is nil\n")
 	}
-	var u: Word32 = 0x0F
-	var v: Word32 = 0x33
-	printf("u | v = %x\n", u | v)
+	let pa = *[]Int32 &arr
+	printf("pa[1] = %d\n", pa[1])
+}
+
+
+func tourControl () -> Unit {
+	let c: Color = colorGreen
+	if c == colorRed {
+		printf("red\n")
+	} else if c == colorGreen {
+		printf("green\n")
+	} else {
+		printf("blue\n")
+	}
 	var k: Int32 = 0
 	while k < 5 {
 		k += 1
@@ -114,22 +158,33 @@ func main () -> Int {
 		}
 		printf("k = %d\n", k)
 	}
+
 	var j: Int32 = 0
-	while 1 > 0 {
+	while true {
 		if j == 2 {
 			break
 		}
 		printf("j = %d\n", j)
 		j += 1
 	}
-	if i32 > 0 and not (counter < 0) {
+	if j > 0 and not (k < 0) {
 		printf("logic works\n")
 	}
 	var cb: *Action = &announce
 	cb()
+	cb()
+}
+
+
+@nonstatic
+func main () -> Int {
+	tourValues()
+	tourBits()
+	tourData()
+	tourControl()
+
 	printf("sizeof(Point) = %lu\n", sizeof(Point))
 	printf("sum(0..5) = %d\n", sum(5))
-
 	return 0
 }
 
