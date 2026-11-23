@@ -11,7 +11,7 @@ replacement instead:
 |---|---|
 | `for`, `do … while` | `while cond { … }`, `while true { … break }` |
 | `continue` | `again` |
-| `switch` / `match` | `if … else` |
+| `switch` / `match` | `if … else if … else` |
 | `enum` | branded integer + constants ([Enum Idiom](#enum-idiom)) |
 | `c ? a : b` | `if` / `else` |
 | `i++`, `--i` | `i += 1`, `i -= 1` (a statement, not an expression) |
