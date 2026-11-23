@@ -51,7 +51,7 @@ Char8, Char16, Char32                   // characters
 Float16, Float32, Float64               // floating point (Float16 needs a target that has it)
 Fixed32, Fixed64                        // fixed-point — experimental; remaining limitations in BUG#25
 Str8, Str16, Str32                      // aliases for: []Char8, []Char16, []Char32 (string values are passed as *Str8)
-Byte                                    // alias of Word8
+Byte                                    // alias for Word8
 Size                                    // target size type (like size_t)
 Ptr                                     // alias for *Unit (untyped pointer)
 ```
