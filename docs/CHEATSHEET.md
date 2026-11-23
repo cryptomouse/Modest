@@ -241,6 +241,7 @@ type CStr = *[]Char8
 type Meters = @branded Float64  // newtype (incompatible with Float64)
 type Packed = @layout("packed") {a: Bool, b: Int32}
 type Volatile = @volatile Word32
+type Matrix = *[][]Float64      // pointer to a 2D array of unknown size (see below)
 
 type Config = {
 	port: Nat16 = 8080  // field default: used when a literal omits the field
@@ -248,6 +249,15 @@ type Config = {
 }
 let c: Config = {verbose = true}  // c.port == 8080
 ```
+
+> **A pointer to a multi-dimensional unsized array** (`*[][]T`) can be
+> created, stored and passed around, but **not indexed** — the row size is unknown.
+> Convert it to a concrete `*[m][n]T` first:
+>
+> ```modest
+> m[1][2]                   // error: cannot index an array of unsized array
+> let a = *[2][3]Float64 m  // a[1][2] is fine
+> ```
 
 > **Variant** `A or B` (tagged union, `type Result = Int32 or Error`) is
 > experimental, C11 backend only, and its value cannot be inspected yet —
