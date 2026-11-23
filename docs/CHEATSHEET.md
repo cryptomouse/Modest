@@ -553,13 +553,14 @@ w << n, w >> n       // shifts: left WordX (or a hex literal); right NatX or a n
 
 ### Unary / Special
 ```modest
-&x                            // address of
-*ptr                          // dereference
-sizeof(Type)  sizeof(value)   // size in bytes
-alignof(Type) alignof(value)  // alignment in bytes
-lengthof(ArrayType)           // number of elements in array type
-offsetof(RecordType.field)    // byte offset of field
+&x                             // address of
+*ptr                           // dereference
+sizeof(Type), sizeof(value)    // size in bytes
+alignof(Type), alignof(value)  // alignment in bytes
+lengthof(ArrayType)            // number of elements in array type
+offsetof(RecordType.field)     // byte offset of field
 ```
+
 > `sizeof` / `alignof` / `lengthof` / `offsetof` fold at compile time into a value that carries the width it needs,
 > so it goes into any `NatX` that fits — `var x: Nat16 = sizeof(T)` — and
 > mixes with any numeric variable. With no type to take, it becomes `Size`
