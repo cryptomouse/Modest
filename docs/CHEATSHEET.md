@@ -11,16 +11,16 @@ replacement instead:
 |---|---|
 | `for`, `do … while` | `while cond { … }`, `while true { … break }` |
 | `continue` | `again` |
-| `switch` / `match` | `if … else if … else` |
+| `switch` / `match` | `if … else` |
 | `enum` | branded integer + constants ([Enum Idiom](#enum-idiom)) |
 | `c ? a : b` | `if` / `else` |
 | `i++`, `--i` | `i += 1`, `i -= 1` (a statement, not an expression) |
-| `&&` `\|\|` `!` | `and` `or` `not` |
+| `&&` `||` `!` | `and` `or` `not` |
 | `p->f` | `p.f` (auto-deref) |
 | `(T)x` casts | value construction `T x`; reinterpreting needs `unsafe(T x)` |
 | char literal `'A'` | `Char8 'A'` (`'A'` alone is a string) |
 | implicit widening `Int32 + Int64` | `Int64 a + b` — both operands one type |
-| `&` `\|` `^` `<<` on `Int`/`Nat` | convert to `WordX` first: `Word32 n & 0xFF` |
+| `&` `|` `^` `<<` on `Int`/`Nat` | convert to `WordX` first: `Word32 n & 0xFF` |
 | `+` `-` `<` on `Word` | convert to `NatX` / `IntX` first |
 | `int`, `Int`, `Float` builtin | `Int32`, `Float64`, … (`Int` etc. come from `include "libc/ctypes64"`) |
 | array decays to pointer | arrays are values; pass `&arr` as `*[]T` |
@@ -51,7 +51,7 @@ Char8, Char16, Char32                   // characters
 Float16, Float32, Float64               // floating point (Float16 needs a target that has it)
 Fixed32, Fixed64                        // fixed-point — experimental; remaining limitations in BUG#25
 Str8, Str16, Str32                      // aliases for: []Char8, []Char16, []Char32 (string values are passed as *Str8)
-Byte                                    // builtin byte type
+Byte                                    // alias of Word8
 Size                                    // target size type (like size_t)
 Ptr                                     // alias for *Unit (untyped pointer)
 ```
