@@ -237,7 +237,7 @@ let local = 42               // immutable binding — only inside functions
 ```modest
 type Point = {x: Float64, y: Float64}
 type IntPtr = *Int32
-type CStr = *Char8
+type CStr = *[]Char8
 type Meters = @branded Float64  // newtype (incompatible with Float64)
 type Packed = @layout("packed") {a: Bool, b: Int32}
 type Volatile = @volatile Word32
