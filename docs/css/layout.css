@@ -118,9 +118,25 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
    margin collapses into it, so the gap is 2rem, not 3rem. */
 [role="main"] > :is(h1, h2, h3, h4, h5, h6) { margin-top: 2rem; }
 
-/* headings in a muted blue of the navbar's family, darker than the link
-   blue #008cba, so they don't read as clickable */
-[role="main"] :is(h1, h2, h3, h4, h5, h6) { color: #1d4f66; }
+/* headings in the slate blue of the mascot mouse on the logo
+   (docs/modest_logo_cropped_blue_mouse.png); greyer than the link blue
+   #008cba, so they don't read as clickable */
+[role="main"] :is(h1, h2, h3, h4, h5, h6) { color: #5d7187; }
+
+/* yeti sets headings in Open Sans Light (300), thinner than the 400 body
+   text, so a pale heading gets lost above a near-black paragraph. The body
+   weight keeps them light yet visible (600, 500, 450 lost the elegance) */
+[role="main"] :is(h1, h2, h3, h4, h5, h6) { font-weight: 400; }
+
+/* headings scaled by one factor, keeping yeti's proportions between levels:
+   h2 1.875rem → 1.875·1.05 ≈ 1.97rem.  1 = yeti's own sizes */
+:root { --heading-scale: 1; }
+[role="main"] h1 { font-size: calc(2.34375rem  * var(--heading-scale)); }
+[role="main"] h2 { font-size: calc(1.875rem    * var(--heading-scale)); }
+[role="main"] h3 { font-size: calc(1.640625rem * var(--heading-scale)); }
+[role="main"] h4 { font-size: calc(1.40625rem  * var(--heading-scale)); }
+[role="main"] h5 { font-size: calc(1.171875rem * var(--heading-scale)); }
+[role="main"] h6 { font-size: calc(0.9375rem   * var(--heading-scale)); }
 
 /* the H1 gets 2.25rem of blank space above it: the theme's 20px
    margin of body > .container is already there, so the H1 adds the rest.
