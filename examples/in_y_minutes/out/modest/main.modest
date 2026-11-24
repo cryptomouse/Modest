@@ -1,10 +1,21 @@
-include "libc/ctypes64"
-include "libc/stdio"
-include "libc/math" // sqrt
+// examples/in_y_minutes/src/main.modest
+//
+// Modest in Y minutes — a fast tour of the language.
+// Full reference: docs/CHEATSHEET.md
+//
+// This is a line comment. There are no block comments.
+// Lines marked `// error: ...` are commented out: they show what the
+// compiler rejects and why.
+
+include "libc/ctypes64"  // Int32, Nat32, Float64, ... — type aliases
+include "libc/stdio"  // printf
+include "libc/math"  // sqrt
 
 // `include` pastes a module's names directly into scope — used for C
 // bindings and library modules. `import "mymodule"` instead requires a
-// `mymodule.` prefix on every name it brings in (see docs/lang). // allows unsafe(...) below, from this line to the end of the file
+// `mymodule.` prefix on every name it brings in (see docs/lang).
+
+pragma unsafe  // allows unsafe(...) below, from this line to the end of the file
 
 
 // --- Types ------------------------------------------------------------------
@@ -20,8 +31,8 @@ type Point = {
 	y: Float64
 }
 
-type Celsius = Float64// alias: Celsius and Float64 mix freely
-type Meters = @branded Float64 // newtype: distinct, never mixes with Float64
+type Celsius = Float64  // alias: Celsius and Float64 mix freely
+type Meters = @branded Float64  // newtype: distinct, never mixes with Float64
 
 // enum idiom — Modest has no `enum` keyword
 type Color = @branded Nat8
@@ -35,9 +46,9 @@ type Action = () -> Unit
 
 // --- Globals ----------------------------------------------------------------
 
-const maxUsers = 100// compile-time constant, keeps the generic type
-public const version: Nat32 = 1// public: visible to importers; needs an explicit type
-var callCount: Nat32 = 0 // mutable global; `let` is for function bodies only
+const maxUsers = 100  // compile-time constant, keeps the generic type
+public const version: Nat32 = 1  // public: visible to importers; needs an explicit type
+var callCount: Nat32 = 0  // mutable global; `let` is for function bodies only
 
 
 // --- Functions --------------------------------------------------------------

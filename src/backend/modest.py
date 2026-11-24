@@ -1038,18 +1038,30 @@ def print_import(x):
 
 
 def print_directive(x):
-	if isinstance(x, StmtDirectiveInsert):
-		return '\npragma insert "%s"' % x.text
+	if isinstance(x, StmtDirectivePragma):
+		name, args = x.name, x.args
 	elif isinstance(x, StmtDirectiveCInclude):
-		return ""
+		name, args = 'c_include', [x.c_name]
+	elif isinstance(x, StmtDirectiveInsert):
+		name, args = 'insert', [x.text]
+	else:
+		return "// directive: %s" % str(x)
 
-	return "\n// directive: %s" % str(x)
-	#if x.is_stmt_import():
-	#	m = m.module
-	#	ss.append('import "%s"' % m.)
-	#if isinstance(x, StmtDirectiveCInclude):
-	#	ss.append("@c_include \"%s\"" % x.c_name)
+	ss = ["pragma ", name]
+	if args != []:
+		ss.append(" ")
+		ss.append(", ".join(str_literal_string([ord(c) for c in a]) for a in args))
+	return ''.join(ss)
 
+
+
+# what goes before a top-level comment: its line breaks, or — when it
+# trails the previous line (nl == 0) — the two spaces of the style guide:
+#   include "libc/stdio"  // printf
+def str_comment_lead(nl):
+	if nl > 0:
+		return str_newline(n=nl)
+	return "  "
 
 
 def str_top_level_stmt2(x):
@@ -1057,18 +1069,17 @@ def str_top_level_stmt2(x):
 
 	ss = []
 	if x.comment != None:
-		ss.append(str_newline(n=x.comment.nl))
+		ss.append(str_comment_lead(x.comment.nl))
 		ss.append(str_stmt_comment(x.comment))
 
-	if not x.is_stmt_directive():
-		# nl == 0: shares the line with the previous definition — a trailing
-		# comment, or a definition separated from it by ';'
-		if x.nl > 0:
-			ss.append(str_newline(n=x.nl))
-		elif x.is_stmt_comment():
-			ss.append(" ")
-		else:
-			ss.append("; ")
+	# nl == 0: shares the line with the previous definition — a trailing
+	# comment, or a definition separated from it by ';'
+	if x.nl > 0:
+		ss.append(str_newline(n=x.nl))
+	elif x.is_stmt_comment():
+		ss.append(str_comment_lead(0))
+	else:
+		ss.append("; ")
 
 	for a in x.attributes:
 		v = x.attributes[a]
@@ -1117,14 +1128,22 @@ def run(module, fname):
 		ss.append(str_top_level_stmt2(x))
 
 	# каждый top-level оператор печатает отступ перед собой, поэтому первый
-	# из них открывает файл пустыми строками
+	# из них открывает файл пустыми строками — их срезаем, но запоминаем:
+	# после шапки файла они и есть расстояние до первого определения
+	nl_first = 0
 	if ss != []:
-		ss[0] = ss[0].lstrip(nl_symbol).removeprefix("; ").removeprefix(" ")
+		first = ss[0].lstrip(nl_symbol)
+		nl_first = len(ss[0]) - len(first)
+		ss[0] = first.removeprefix("; ").lstrip(" ")
 
 	# the module name sets the prefix of public symbols, so dropping it
 	# would change the module's ABI
 	if module.name != None:
 		ss.insert(0, 'module "%s"\n\n' % module.name)
+		nl_first = 1
+
+	if module.header_comment != None:
+		ss.insert(0, str_stmt_comment(module.header_comment) + nl_symbol * max(nl_first, 1))
 
 	dirname = os.path.dirname(fname)
 	if dirname != '':

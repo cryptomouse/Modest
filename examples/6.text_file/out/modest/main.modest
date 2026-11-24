@@ -1,8 +1,10 @@
-include "libc/libc"
+// examples/6.text_file/main.modest
 
 //include "libc/ctypes64"
 //include "libc/stdio"
 // не ищет в public include
+
+include "libc/libc"
 //public include "libc/stdio"
 
 

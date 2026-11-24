@@ -7,6 +7,14 @@
 #if !defined(LENGTHOF)
 #define LENGTHOF(x) (sizeof(x) / sizeof((x)[0]))
 #endif
+// examples/in_y_minutes/src/main.modest
+//
+// Modest in Y minutes — a fast tour of the language.
+// Full reference: docs/CHEATSHEET.md
+//
+// This is a line comment. There are no block comments.
+// Lines marked `// error: ...` are commented out: they show what the
+// compiler rejects and why.
 // sqrt
 // `include` pastes a module's names directly into scope — used for C
 // bindings and library modules. `import "mymodule"` instead requires a

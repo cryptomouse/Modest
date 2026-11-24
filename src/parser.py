@@ -2464,11 +2464,12 @@ class Parser:
 
 		while self.skipnl():
 			spaceline_cnt += 1
+		# the comment that opens the file is its header: it belongs to the
+		# file, not to the definition under it (see Module.header_comment)
 		comm = self.parse_if_comment()
 		if comm != None:
 			comm['nl'] = spaceline_cnt
 			spaceline_cnt = 0
-			#output.append(comm)
 		while self.skipnl():
 			spaceline_cnt += 1
 		if self.match('module'):
@@ -2479,9 +2480,13 @@ class Parser:
 				'isa': 'ast_directive',
 				'kind': 'module',
 				'line': module_str,
+				'comment': comm,
 				'ti': ti
 			}
 			output.append(module_directive)
+		elif comm != None:
+			comm['header'] = True
+			output.append(comm)
 
 
 		annotations = []

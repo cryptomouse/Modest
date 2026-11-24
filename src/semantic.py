@@ -3527,29 +3527,51 @@ def do_directive_pragma(x) -> StmtDirective | None:
 	id = x['id']['str']
 	args = x['args']
 
+	# a pragma that only switches a setting still gets a node:
+	# -mbackend=modest prints it back from there
 	y = None
 	if id == 'do_not_include':
 		cmodule.addAttribute('do_not_include')
+		y = StmtDirectivePragma(id, [], x['ti'])
 	elif id == 'c_include':
 		y = StmtDirectiveCInclude(args[0]['str'], x['ti'])
 	elif id == 'c_no_print':
 		cmodule.addAttribute('c_no_print')
+		y = StmtDirectivePragma(id, [], x['ti'])
 	elif id == 'feature':
 		cmodule.addAttribute(args[0])
 	elif id == 'unsafe':
 		cmodule.addAttribute('unsafe')
+		y = StmtDirectivePragma(id, [], x['ti'])
 	elif id == 'insert':
-		y = StmtDirectiveInsert(args[0], x['ti'])
+		y = StmtDirectiveInsert(args[0]['str'], x['ti'])
 	elif id == 'prefix':
 		if args[0]['kind'] != 'string':
 			error("expected string literal", args[0]['ti'])
 			return None
 		prefix = args[0]['str']
 		global_prefix = prefix
+		y = StmtDirectivePragma(id, [prefix], x['ti'])
 	else:
 		error("unknown pragma '%s'" % id, x['ti'])
 
 	return y
+
+
+# A directive (import, include, pragma) goes into the module's defs with
+# the blank lines and the comment above it, and keeps its place there, so
+# that -mbackend=modest prints the head of a file back as it was written:
+#   pragma unsafe  // why
+#   include "libc/stdio"
+# The node is remembered on the AST node: the pragmas and comments before
+# the first definition are placed in step 0 of translate(), with the
+# imports, and def_phase2() must not place them a second time.
+def add_top_level_directive(y, x):
+	y.nl = x['nl']
+	if x.get('comment') != None:
+		y.comment = do_stmt_comment(x['comment'])
+	cmodule.defs.append(y)
+	x['stmt'] = y
 
 
 def translate(abspath):
@@ -3604,6 +3626,8 @@ def do_directive_module(x):
 		error("module name \"%s\" does not match the file name: expected it to end in \"%s\"" % (name, cmodule.id), x['line']['ti'])
 		return
 	cmodule.name = name
+	if x.get('comment') != None:
+		cmodule.header_comment = do_stmt_comment(x['comment'])
 	global_prefix = name.replace('/', '_') + '_'
 
 
@@ -3639,18 +3663,21 @@ def process_module(idStr, sourcename, ast):
 				y = do_import(x)
 			elif x['kind'] == 'include':
 				y = do_import(x)
+			elif x['kind'] == 'pragma':
+				y = do_directive(x)
 
-			#y = do_directive(x)
 			if y != None:
-				cmodule.defs.append(y)
+				add_top_level_directive(y, x)
 		elif isa == 'ast_comment':
-			#y = do_stmt_comment(x)
-			pass
+			# a comment between the imports stays between them
+			y = do_stmt_comment(x)
+			if x.get('header'):
+				cmodule.header_comment = y
+			else:
+				cmodule.defs.append(y)
+			x['stmt'] = y
 		else:
 			break
-
-		#if y != None:
-		#	cmodule.defs.append(y)
 
 		i += 1
 
@@ -3797,13 +3824,15 @@ def def_phase2(ast):
 			cmodule.defs.append(df)
 
 		elif isa == 'ast_comment':
-			comment = do_stmt_comment(x)
-			cmodule.defs.append(comment)
+			if not 'stmt' in x:  # placed in step 0 of translate()
+				cmodule.defs.append(do_stmt_comment(x))
 
 		elif isa == 'ast_directive':
+			# again even if step 0 has placed it: `prefix` must be in
+			# effect for the definitions that follow it
 			y = do_directive(x)
-			if y != None:
-				cmodule.defs.append(y)
+			if y != None and not 'stmt' in x:
+				add_top_level_directive(y, x)
 
 	return
 

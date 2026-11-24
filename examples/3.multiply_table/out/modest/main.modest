@@ -1,3 +1,5 @@
+// examples/3.multiply_table/src/main.modest
+
 include "libc/ctypes64"
 include "libc/stdio"
 

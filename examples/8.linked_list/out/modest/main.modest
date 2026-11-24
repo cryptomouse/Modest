@@ -1,6 +1,10 @@
+// examples/8.linked_list/src/main.modest
+
+
 include "libc/ctypes64"
 include "libc/stdlib"
 include "libc/stdio"
+
 import "list"
 
 

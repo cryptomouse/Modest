@@ -1,3 +1,5 @@
+// examples/8.linked_list/linked_list.cm
+
 include "libc/ctypes64"
 include "libc/stdlib"
 include "libc/stdio"

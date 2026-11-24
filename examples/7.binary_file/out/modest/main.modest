@@ -1,3 +1,5 @@
+// examples/7.binary_file/main.modest
+
 include "libc/ctypes64"
 include "libc/string"
 include "libc/stdio"

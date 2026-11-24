@@ -301,7 +301,14 @@ declare %LongDouble @fmal(%LongDouble %a, %LongDouble %b, %LongDouble %c)
 @.str24 = private constant [13 x i8] [i8 108, i8 111, i8 103, i8 105, i8 99, i8 32, i8 119, i8 111, i8 114, i8 107, i8 115, i8 10, i8 0]
 @.str25 = private constant [21 x i8] [i8 115, i8 105, i8 122, i8 101, i8 111, i8 102, i8 40, i8 80, i8 111, i8 105, i8 110, i8 116, i8 41, i8 32, i8 61, i8 32, i8 37, i8 108, i8 117, i8 10, i8 0]
 @.str26 = private constant [16 x i8] [i8 115, i8 117, i8 109, i8 40, i8 48, i8 46, i8 46, i8 53, i8 41, i8 32, i8 61, i8 32, i8 37, i8 100, i8 10, i8 0]
-; -- endstrings --; sqrt
+; -- endstrings --; examples/in_y_minutes/src/main.modest
+;
+; Modest in Y minutes — a fast tour of the language.
+; Full reference: docs/CHEATSHEET.md
+;
+; This is a line comment. There are no block comments.
+; Lines marked `// error: ...` are commented out: they show what the
+; compiler rejects and why.; sqrt
 
 ; `include` pastes a module's names directly into scope — used for C
 ; bindings and library modules. `import "mymodule"` instead requires a

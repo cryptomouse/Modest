@@ -493,11 +493,6 @@ func main () -> Int32 {
   `print_directive` in the module loop is commented out
   (`src/backend/c11.py`, `elif x.is_stmt_directive()`), and the LLVM
   backend has no handling for it at all.
-- The node also stores the whole argument AST, not its text:
-  `StmtDirectiveInsert(args[0], ...)` instead of `args[0]['str']`.  The
-  `modest` backend, the only one that prints it, gives
-  `pragma insert "{'isa': 'ast_value', 'kind': 'string', ...}"` — a
-  round trip through `-mbackend=modest` breaks the source.
 - Documented in `docs/lang/directive.md` as working.
 - No test covers it.
 

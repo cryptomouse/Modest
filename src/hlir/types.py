@@ -194,6 +194,11 @@ class Module:
 	def __init__(self, id_str, ast, symtab, defs, sourcename):
 		self.id = id_str
 		self.name = None    # from `module "..."`; None when the source has none
+		# the comment that opens the source, above `module "..."` if any;
+		# only -mbackend=modest prints it — a test's header would otherwise
+		# land in the C and LLVM output, where its EXPECT-CODE lines would
+		# find themselves
+		self.header_comment = None
 		self.sourcename = sourcename
 		self.ast = ast
 		#self.prefix = idStr
@@ -543,10 +548,20 @@ class StmtDirective(Stmt):
 
 
 
+# a pragma that only switches a module setting — `unsafe`, `prefix`, ...
+# The setting itself lives on the module; this node only keeps the pragma
+# in its place among the definitions, for -mbackend=modest to print back.
+class StmtDirectivePragma(StmtDirective):
+	def __init__(self, name, args, ti=None, nl=1):
+		super().__init__(ti, nl)
+		self.name = name
+		self.args = args  # the string literal arguments, as text
+
+
+
 class StmtDirectiveCInclude(StmtDirective):
 	def __init__(self, s, ti=None, nl=1):
 		super().__init__(ti, nl)
-		self.nl = 1
 		self.c_name = s
 		self.is_local = s[0:2] == './'
 

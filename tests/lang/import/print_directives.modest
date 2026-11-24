@@ -1,0 +1,47 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: print directives
+// EXPECT-CODE(modest): pragma unsafe  // allows unsafe(...) below
+// EXPECT-CODE(modest): include "libc/ctypes64"  // Int, Nat8
+// EXPECT-CODE(modest): include "libc/stdio"
+// EXPECT-CODE(modest): include "libc/stdlib"  // exitSuccess
+// EXPECT-CODE(modest): // a comment between the imports
+// EXPECT-CODE(modest): import "libc/string"
+// EXPECT-CODE(modest): pragma c_include "stdint.h"
+// EXPECT-CODE(modest): pragma prefix "pd"  // with an argument
+// EXPECT-CODE(modest): const answer = 42  // trails a definition
+//
+// `-mbackend=modest` prints the head of a file back as it was written:
+// every pragma in its place, and the comments on the directives with
+// them.  It used to drop the pragmas that only switch a setting
+// (`unsafe`, `prefix`, ...), the comments on `include` / `import`, and to
+// glue a trailing comment to its line:
+//   include "libc/stdio"// printf
+
+pragma unsafe  // allows unsafe(...) below
+include "libc/ctypes64"  // Int, Nat8
+include "libc/stdio"
+include "libc/stdlib"  // exitSuccess
+
+// a comment between the imports
+import "libc/string"
+
+pragma c_include "stdint.h"
+pragma prefix "pd"  // with an argument
+const answer = 42  // trails a definition
+
+
+func main () -> Int {
+	let big: Nat32 = answer
+	let small = unsafe(Nat8 big)
+	if small != 42 or string.strlen("modest") != 6 {
+		printf("failed: print directives\n")
+		return exitFailure
+	}
+
+	printf("passed: print directives\n")
+	return exitSuccess
+}
+
+

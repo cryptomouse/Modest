@@ -361,7 +361,7 @@ def do_case(t, backend, workdir):
 	want = t.expect_code.get(backend, []) + t.expect_code.get('*', [])
 	if want:
 		with open(generated[0], encoding='utf-8') as f:
-			code_text = f.read()
+			code_text = without_header(f.read())
 		missing = find_in_order(code_text, want)
 		if missing is not None:
 			n, line = missing
@@ -406,6 +406,19 @@ def do_case(t, backend, workdir):
 		return result(FAIL, 'output missing %r' % want, where + last_output(out), out)
 
 	return result(PASS)
+
+
+def without_header(code):
+	"""`code` without the test's own header.  The `modest` backend prints
+	the source's header back, and the header is where the expectations are
+	written: `// EXPECT-CODE(modest): module "x"` would find itself.  So
+	the comment block the code opens with goes, and so does any line that
+	quotes an EXPECT-CODE elsewhere — real code never does."""
+	lines = code.splitlines(keepends=True)
+	i = 0
+	while i < len(lines) and lines[i].lstrip().startswith('//'):
+		i += 1
+	return ''.join(l for l in lines[i:] if 'EXPECT-CODE' not in l)
 
 
 def find_in_order(text, wanted):
