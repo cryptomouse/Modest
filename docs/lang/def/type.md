@@ -12,35 +12,35 @@ type <#identifier#> = <#type_expression#>
 ## Semantics
 
 - The type system is *structural*: a defined name is an alias, fully
-  compatible with its right-hand side and with any structurally equal type.
-  To obtain a nominal (incompatible) type, add
-  [`@branded`](../type/generic.md):
+    compatible with its right-hand side and with any structurally equal type.
+    To obtain a nominal (incompatible) type, add
+    [`@branded`](../type/generic.md):
 
-  ```modest
-  type Meters = @branded Float64  // not mixable with plain Float64
-  ```
+    ```modest
+    type Meters = @branded Float64  // not mixable with plain Float64
+    ```
 
 - Recursive types need no forward declaration — all module-level type names
-  are visible before definitions are processed:
+    are visible before definitions are processed:
 
-  ```modest
-  type Node = {
-  	next: *Node
-  	data: Ptr
-  }
-  ```
+    ```modest
+    type Node = {
+    	next: *Node
+    	data: Ptr
+    }
+    ```
 
 - Type definitions are allowed inside function bodies; the name is then
-  local to the body.
+    local to the body.
 - A module-level type may not take the name of a builtin type (`Bool`,
-  `Size`, `Byte`, `Int32`, `Str8`, `Ptr`, ...): `type Size = {...}` is
-  rejected with *redefinition of builtin type `Size`*. A local type may —
-  it hides the builtin inside its block. `Word`, `Int` and `Nat` are not
-  covered: they are meant to be redefined, e.g. `libc/ctypes64` makes `Int`
-  a C alias (`type Int = Int32`).
+    `Size`, `Byte`, `Int32`, `Str8`, `Ptr`, ...): `type Size = {...}` is
+    rejected with *redefinition of builtin type `Size`*. A local type may —
+    it hides the builtin inside its block. `Word`, `Int` and `Nat` are not
+    covered: they are meant to be redefined, e.g. `libc/ctypes64` makes `Int`
+    a C alias (`type Int = Int32`).
 - Layout and qualifiers are controlled with annotations on the right-hand
-  side: `@layout("packed" | "union" | "exact")`, `@alignment(N)`,
-  `@volatile`, `@const` (see [annotations](../annotation.md)).
+    side: `@layout("packed" | "union" | "exact")`, `@alignment(N)`,
+    `@volatile`, `@const` (see [annotations](../annotation.md)).
 
 ## Extern types
 

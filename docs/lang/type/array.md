@@ -61,75 +61,75 @@ func fill (mem: *Unit, n: Nat32) -> Unit {
 ```
 
 - **Local only.** A VLA type may appear in a function body: a `var`,
-  a `let`, a local `type`, a construction (`*[n]Int32 p`), `sizeof` /
-  `lengthof`. Anywhere else it is `non local VLA are forbidden`:
-  - a module-level `var`, `const` or `type`;
-  - a function parameter or result — by value or through a pointer
-    (`a: [n]Int32`, `p: *[n]Int32`, `-> [n]Int32`). A bound naming another
-    parameter (`p: *[m]Int32` after `m: Nat32`) is `undefined value 'm'`.
-    Pass a pointer to an unsized array and the length beside it instead:
-    `func sum (v: *[]Int32, n: Nat32)`.
+    a `let`, a local `type`, a construction (`*[n]Int32 p`), `sizeof` /
+    `lengthof`. Anywhere else it is `non local VLA are forbidden`:
+    - a module-level `var`, `const` or `type`;
+    - a function parameter or result — by value or through a pointer
+      (`a: [n]Int32`, `p: *[n]Int32`, `-> [n]Int32`). A bound naming another
+      parameter (`p: *[m]Int32` after `m: Nat32`) is `undefined value 'm'`.
+      Pass a pointer to an unsized array and the length beside it instead:
+      `func sum (v: *[]Int32, n: Nat32)`.
 - **Not in a record, function type or variant.** Even in a function body
-  a VLA may not be a record field, a parameter or result of a function
-  type, or a variant member — by value or through a pointer — since there
-  is no declaration to take its lengths at: `VLA in a record field is
-  forbidden` (likewise `in a function type`, `in a variant`). Arrays and
-  pointers may wrap a VLA: `[i][j]T`, `[3][n]T`, `*[n]T`. And the
-  other way round is fine — an array of records `[n]Point`, or a record
-  holding `*[]Int32`.
+    a VLA may not be a record field, a parameter or result of a function
+    type, or a variant member — by value or through a pointer — since there
+    is no declaration to take its lengths at: `VLA in a record field is
+    forbidden` (likewise `in a function type`, `in a variant`). Arrays and
+    pointers may wrap a VLA: `[i][j]T`, `[3][n]T`, `*[n]T`. And the
+    other way round is fine — an array of records `[n]Point`, or a record
+    holding `*[]Int32`.
 - **The length is taken once, where the declaration runs.** A local
-  `type`, `var` or `let` evaluates its bounds at that point, and the type
-  keeps those values for the rest of its scope — as `typedef` and VLA
-  declarations do in C. Changing the variables afterwards changes neither
-  the size nor the layout, and a bound with side effects runs once:
+    `type`, `var` or `let` evaluates its bounds at that point, and the type
+    keeps those values for the rest of its scope — as `typedef` and VLA
+    declarations do in C. Changing the variables afterwards changes neither
+    the size nor the layout, and a bound with side effects runs once:
 
-  ```modest
-  var k: Nat32 = 10
-  type Row = [k]Nat32
-  var a: [k]Nat32
-  k = 0
-  sizeof(Row)  // 40
-  lengthof(a)  // 10
-  ```
+    ```modest
+    var k: Nat32 = 10
+    type Row = [k]Nat32
+    var a: [k]Nat32
+    k = 0
+    sizeof(Row)  // 40
+    lengthof(a)  // 10
+    ```
 
-  A VLA type written inside an expression (`sizeof([k]Nat32)`, a
-  construction passed straight to a call) is evaluated where it stands.
-  Each declaration takes its own values: a `type` redeclared in a nested
-  block, or a second `var a: [k]Nat32` after `k` changed, gets the bounds
-  current at *its* declaration.
+    A VLA type written inside an expression (`sizeof([k]Nat32)`, a
+    construction passed straight to a call) is evaluated where it stands.
+    Each declaration takes its own values: a `type` redeclared in a nested
+    block, or a second `var a: [k]Nat32` after `k` changed, gets the bounds
+    current at *its* declaration.
 - `sizeof` and `lengthof` of a VLA are a run-time `Size` (see
-  [sizeof](../value/sizeof.md)); indexing and slicing work as for any
-  array. Only some dimensions may be run-time, in any position:
-  `[n][3]Int32`, `[3][n]Int32`.
+    [sizeof](../value/sizeof.md)); indexing and slicing work as for any
+    array. Only some dimensions may be run-time, in any position:
+    `[n][3]Int32`, `[3][n]Int32`.
 - **Initialization.** A VLA variable starts zero-filled; `= []` says the
-  same explicitly. A generic array literal goes into a VLA in a `var`, a
-  `let`, an assignment or an explicit construction (`[n]Int32 [1, 2]`),
-  and so does a literal of rows into an array with a VLA inside
-  (`[2][n]Int32`, `[n][m]Int32`). Its lengths are known at compile time
-  and the VLA's only at run time, so the lengths are not compared: at
-  every level as many items are copied as both have, and the rest is
-  zero-filled — nothing is read or written past either end. Whether a
-  literal of another length should be an error is not decided yet —
-  QUESTION#7. A row that is a VLA value rather than a literal
-  (`[r, r]`) is not supported yet — BUG#116.
+    same explicitly. A generic array literal goes into a VLA in a `var`, a
+    `let`, an assignment or an explicit construction (`[n]Int32 [1, 2]`),
+    and so does a literal of rows into an array with a VLA inside
+    (`[2][n]Int32`, `[n][m]Int32`). Its lengths are known at compile time
+    and the VLA's only at run time, so the lengths are not compared: at
+    every level as many items are copied as both have, and the rest is
+    zero-filled — nothing is read or written past either end. Whether a
+    literal of another length should be an error is not decided yet —
+    QUESTION#7. A row that is a VLA value rather than a literal
+    (`[r, r]`) is not supported yet — BUG#116.
 - **A VLA and a fixed array are different types**, even when the lengths
-  happen to be equal: their lengths could only be compared at run time.
-  Neither is copied into the other — not by assignment, initialization,
-  argument passing, nor explicit construction (`[4]Int32 vla`) — and a
-  pointer to one is not a pointer to the other (`*[n]T` vs `*[4]T`, the
-  same as `*[5]T` vs `*[4]T`).  Go through a slice, whose length is
-  stated where it is written:
+    happen to be equal: their lengths could only be compared at run time.
+    Neither is copied into the other — not by assignment, initialization,
+    argument passing, nor explicit construction (`[4]Int32 vla`) — and a
+    pointer to one is not a pointer to the other (`*[n]T` vs `*[4]T`, the
+    same as `*[5]T` vs `*[4]T`).  Go through a slice, whose length is
+    stated where it is written:
 
-  ```modest
-  var vla: [n]Int32
-  var fixed: [4]Int32
-  fixed = vla       // error: cannot implicitly construct `[4]Int32` from `[n]Int32`
-  fixed = vla[0:4]  // ok
-  vla[0:4] = fixed  // ok
-  ```
+    ```modest
+    var vla: [n]Int32
+    var fixed: [4]Int32
+    fixed = vla       // error: cannot implicitly construct `[4]Int32` from `[n]Int32`
+    fixed = vla[0:4]  // ok
+    vla[0:4] = fixed  // ok
+    ```
 
 - Two VLAs are copied into each other by value, like any array; their
-  lengths are not compared — QUESTION#7.
+    lengths are not compared — QUESTION#7.
 
 ## Strings
 

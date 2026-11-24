@@ -58,45 +58,45 @@ knowing before deciding, because both are consequences of not having
 decided:
 
 - **The check is syntactic, not flow-based.** It asks whether the last
-  statement of the body is a `return`, nothing more. So a function whose
-  every path demonstrably returns still gets the warning — and an
-  unreachable `return` appended after it:
+    statement of the body is a `return`, nothing more. So a function whose
+    every path demonstrably returns still gets the warning — and an
+    unreachable `return` appended after it:
 
-  ```modest
-  func sign (a: Int32) -> Int32 {
-  	if a > 0 {
-  		return 1
-  	} else {
-  		return 0
-  	}
-  }  // warning, though no path falls through
+    ```modest
+    func sign (a: Int32) -> Int32 {
+    	if a > 0 {
+    		return 1
+    	} else {
+    		return 0
+    	}
+    }  // warning, though no path falls through
 
-  func spin () -> Int32 {
-  	while true {
-  		return 1
-  	}
-  }  // warning, though the body cannot be left
-  ```
+    func spin () -> Int32 {
+    	while true {
+    		return 1
+    	}
+    }  // warning, though the body cannot be left
+    ```
 
 - **The default value is the language's, not a backend's.** It is built
-  in the frontend, exactly as a written `T {}` / `T []` / `0` would be,
-  which is why a record return type gets its fields' own defaults rather
-  than zeroed storage:
+    in the frontend, exactly as a written `T {}` / `T []` / `0` would be,
+    which is why a record return type gets its fields' own defaults rather
+    than zeroed storage:
 
-  ```modest
-  type Marked = {
-  	tag: Int32 = 7
-  	n: Int32
-  }
+    ```modest
+    type Marked = {
+    	tag: Int32 = 7
+    	n: Int32
+    }
 
-  func makeMarked (a: Int32) -> Marked {
-  	if a > 0 {
-  		return Marked {tag = 1, n = 2}
-  	}
-  }  // falls through to Marked {} = {7, 0}
-  ```
+    func makeMarked (a: Int32) -> Marked {
+    	if a > 0 {
+    		return Marked {tag = 1, n = 2}
+    	}
+    }  // falls through to Marked {} = {7, 0}
+    ```
 
-  Covered by `tests/lang/stmt/return/basic.modest`.
+    Covered by `tests/lang/stmt/return/basic.modest`.
 
 ### Options
 
@@ -263,18 +263,18 @@ let r = mark(false) and mark(true)  // c11: calls = 1    llvm: calls = 2
 Each backend inherits the behaviour of what it emits, and neither chose it:
 
 - The C backend emits `mark(false) && mark(true)`, and C's `&&` is
-  short-circuiting by definition — the second call does not happen.
+    short-circuiting by definition — the second call does not happen.
 - The LLVM backend emits the two calls as instructions and then an `and`
-  of their results:
+    of their results:
 
-  ```llvm
-  %2 = call %Bool @mark(%Bool 0)
-  %3 = call %Bool @mark(%Bool 1)
-  %4 = and %Bool %2, %3
-  ```
+    ```llvm
+    %2 = call %Bool @mark(%Bool 0)
+    %3 = call %Bool @mark(%Bool 1)
+    %4 = and %Bool %2, %3
+    ```
 
-  Both calls happen, always. Short-circuiting in LLVM IR needs branches
-  and a `phi`, which is a shape the backend does not build today.
+    Both calls happen, always. Short-circuiting in LLVM IR needs branches
+    and a `phi`, which is a shape the backend does not build today.
 
 `docs/lang/value/binary.md` says only that `and` / `or` take Bool operands
 and give a Bool.

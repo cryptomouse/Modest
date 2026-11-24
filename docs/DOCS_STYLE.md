@@ -34,6 +34,21 @@ Without that line MkDocs (Python-Markdown) does not see a list and glues
 the items into one paragraph — GitHub and editor previews still show a
 list, so the error goes unnoticed. Nested items need a 4-space indent.
 
+The same 4 spaces hold for anything else inside a list item after its
+first paragraph — a code block, a second paragraph. With 2 the block
+falls out of the list and splits it in two:
+
+````markdown
+- item text:
+
+    ```modest
+    let x = 1
+    ```
+````
+
+(with a 2-space indent the HTML is `</li></ul><pre>…</pre><ul>`; with 4
+the `<pre>` stays inside the `<li>`, aligned with its text).
+
 
 ## Warnings
 

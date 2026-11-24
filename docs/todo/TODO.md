@@ -32,22 +32,22 @@ mismatch in trans (or at parse time) with a clear message:
 Design intent (Alex, 2026-06-11):
 
 - A string literal contains **exactly** the characters written — no
-  implicit terminator.
+    implicit terminator.
 - The terminator appears at *construction* of a zero-terminated array.
-  `@zarray` marks an array type as zero-terminated; constructing a value
-  of such type appends the terminator.
+    `@zarray` marks an array type as zero-terminated; constructing a value
+    of such type appends the terminator.
 - The built-in string types should carry the attribute:
 
-  ```modest
-  type Str8  = @zarray []Char8
-  type Str16 = @zarray []Char16
-  type Str32 = @zarray []Char32
-  ```
+    ```modest
+    type Str8  = @zarray []Char8
+    type Str16 = @zarray []Char16
+    type Str32 = @zarray []Char32
+    ```
 
 - Consequences:
-  - `*Str8 "xxx"` → array of 4 chars (terminator appended by
-    construction);
-  - `[]Char8 "xxx"` → array of exactly 3 chars, **no** terminator.
+    - `*Str8 "xxx"` → array of 4 chars (terminator appended by
+      construction);
+    - `[]Char8 "xxx"` → array of exactly 3 chars, **no** terminator.
 
 Status: the `@zarray` annotation is recognized by the compiler
 (`hlir/types.py`), but the built-in `Str*` types do not carry it yet;
@@ -67,20 +67,20 @@ frame_warn         = 256   # 3. estimated locals total per function
 ```
 
 1. **By-value copy** (param / return / assignment of a large value) —
-   "you are copying needlessly"; fix: pass `*[N]T` / `*[]T`.
+    "you are copying needlessly"; fix: pass `*[N]T` / `*[]T`.
 
-   ```
-   warning: array of 4096 bytes passed by value (threshold 64);
-            consider *[N]T
-   ```
+    ```
+    warning: array of 4096 bytes passed by value (threshold 64);
+             consider *[N]T
+    ```
 
 2. **Stack object** — "you are spending the budget"; a large local may
-   be intentional but must be visible; fix: move to a global / pool.
+    be intentional but must be visible; fix: move to a global / pool.
 
 3. **Frame size** — sum of locals per function. Honest *lower-bound
-   estimate* only: actual layout, spills and alignment are decided by
-   the C compiler, and VLAs are unbounded at compile time (warn on VLA
-   presence separately?). Embedded analogue: GCC `-fstack-usage`.
+    estimate* only: actual layout, spills and alignment are decided by
+    the C compiler, and VLAs are unbounded at compile time (warn on VLA
+    presence separately?). Embedded analogue: GCC `-fstack-usage`.
 
 Future extension: frame estimates + call graph + recursion ban =
 statically provable max stack depth for the whole program — a rare and
