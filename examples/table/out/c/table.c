@@ -19,6 +19,9 @@ void table_print(table_Table *table) {
 	const uint32_t __sz_0 = table->nCols;
 	uint32_t sz[__sz_0];
 	__builtin_bzero(&sz, sizeof(uint32_t) * __sz_0);
+	//
+	// calculate max length (in chars) of column
+	//
 	if (table->header != NULL) {
 		i = 0;
 		while (i < table->nCols) {
@@ -46,6 +49,9 @@ void table_print(table_Table *table) {
 		sz[i] = sz[i] + 2;
 		i += 1;
 	}
+	//
+	// print table
+	//
 	separator(sz, table->nCols);
 	if (table->header != NULL) {
 		printRow(table->header, sz, table->nCols);

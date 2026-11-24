@@ -214,6 +214,10 @@ define void @table_print(%table_Table* %table) {
 	%30 = trunc %Size %29 to %Nat32
 	%31 = bitcast %Nat32* %27 to i8*
 	call void (i8*, i8, i32, i1) @llvm.memset.p0.i32(i8* %31, i8 0, %Nat32 %30, i1 0)
+
+	;
+	; calculate max length (in chars) of column
+	;
 ; if_0
 	%32 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 0
 	%33 = load %table_Row*, %table_Row** %32
@@ -362,6 +366,10 @@ body_4:
 	store %Nat32 %125, %Nat32* %i
 	br label %again_4
 break_4:
+
+	;
+	; print table
+	;
 	%126 = bitcast [0 x %Nat32]* %27 to [0 x %Nat32]*
 	%127 = getelementptr %table_Table, %table_Table* %table, %Int32 0, %Int32 3
 	%128 = load %Nat32, %Nat32* %127

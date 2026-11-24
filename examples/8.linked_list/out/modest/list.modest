@@ -114,6 +114,7 @@ public func node_data_get (node: *Node) -> Ptr {
 
 
 public func node_insert_right (left: *Node, new_right: *Node) -> Unit {
+	//printf("node_insert_right\n")
 
 	let old_right: *Node = left.next
 	left.next = new_right
@@ -139,6 +140,7 @@ public func node_get (list: *List, pos: Int32) -> *Node {
 	var node: *Node
 
 	if pos >= 0 {
+		// go forward
 		node = list.head
 		let n = Nat32 pos
 
@@ -152,6 +154,7 @@ public func node_get (list: *List, pos: Int32) -> *Node {
 			i += 1
 		}
 	} else {
+		// go backward
 		node = list.tail
 		let n: Nat32 = (Nat32 -pos) - 1
 

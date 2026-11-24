@@ -463,8 +463,10 @@ class StmtDefFunc(StmtDef):
 class StmtBlock(Stmt):
 	def __init__(self, stmts, ti=None, nl=1):
 		super().__init__(ti, nl)
-		# количество пустых строк перед закрывающей скобкой блока
 		self.stmts = stmts
+		# the comments after the last statement, before '}' — kept out of
+		# stmts, where the last statement is checked to be a return
+		self.end_comments = []
 
 
 

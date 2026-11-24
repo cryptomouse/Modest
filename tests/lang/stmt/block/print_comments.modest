@@ -1,0 +1,60 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: print comments
+// EXPECT-CODE(modest): func countDown (n: Int32) -> Int32 {  // trails the header
+// EXPECT-CODE(modest): // stands alone: a blank line follows
+// EXPECT-CODE(modest): // goes with `var`
+// EXPECT-CODE(modest): = n  // trails `var`
+// EXPECT-CODE(modest): // goes with `while`, apart from the comment above
+// EXPECT-CODE(modest): x -= 1  // last in the loop
+// EXPECT-CODE(modest): /* a block comment */
+// EXPECT-CODE(modest): return 1  // trails a return
+// EXPECT-CODE(modest): // after the last statement
+// EXPECT-CODE(modest): return x  // the last return
+// EXPECT-CODE(modest): // the end of the body
+//
+// `-mbackend=modest` keeps the comments inside a body: above a statement,
+// on its own, trailing a line, after the last statement.  It used to drop
+// them all, along with the blank lines above them.
+//
+// A comment after the last statement is not a statement: `return x  //
+// the last return` stays the last one, so no "expected return operator at
+// end" and no second return.  A trailing comment does not swallow the
+// comment line under it.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+func countDown (n: Int32) -> Int32 {  // trails the header
+	// stands alone: a blank line follows
+
+	// goes with `var`
+	var x = n  // trails `var`
+	// goes with `while`, apart from the comment above
+	while x > 10 {
+		x -= 1  // last in the loop
+	}
+
+	/* a block comment */
+	if x == 3 {
+		return 1  // trails a return
+		// after the last statement
+	}
+	return x  // the last return
+	// the end of the body
+}
+
+
+func main () -> Int {
+	if countDown(15) != 10 or countDown(3) != 1 {
+		printf("failed: print comments\n")
+		return exitFailure
+	}
+
+	printf("passed: print comments\n")
+	return exitSuccess
+}
+

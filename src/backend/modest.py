@@ -891,6 +891,9 @@ def str_stmt_block(s):
 	indent_up()
 	for stmt in s.stmts:
 		ss.append(str_stmt(stmt))
+	for c in s.end_comments:
+		ss.append(str_comment_lead_indent(c.nl))
+		ss.append(str_stmt_comment(c))
 	indent_down()
 	ss.append(str_nl_indent(nl_end_e))
 	ss.append("}")
@@ -986,16 +989,27 @@ def str_stmt_asm(x):
 	return ''.join(ss)
 
 
+# what goes before a comment inside a body: its line breaks and the
+# indent, or the two spaces when it trails the line before it (nl == 0)
+#   i += 1  // no ++
+def str_comment_lead_indent(nl):
+	if nl > 0:
+		return str_nl_indent(nl)
+	return "  "
+
+
 def str_stmt(x):
 	assert(isinstance(x, Stmt))
 
 	ss = []
 	if x.comment != None:
-		ss.append(str_nl_indent(x.comment.nl))
+		ss.append(str_comment_lead_indent(x.comment.nl))
 		ss.append(str_stmt_comment(x.comment))
 
 	if x.nl > 0:
 		ss.append(str_nl_indent(x.nl))
+	elif x.is_stmt_comment():
+		ss.append(str_comment_lead_indent(0))
 	else:
 		ss.append("; ")
 

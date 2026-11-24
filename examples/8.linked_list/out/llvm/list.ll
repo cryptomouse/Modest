@@ -288,6 +288,7 @@ endif_0:
 }
 
 define void @list_node_insert_right(%list_Node* %left, %list_Node* %new_right) {
+	;printf("node_insert_right\n")
 	%1 = getelementptr %list_Node, %list_Node* %left, %Int32 0, %Int32 0
 	%2 = load %list_Node*, %list_Node** %1
 	%3 = getelementptr %list_Node, %list_Node* %left, %Int32 0, %Int32 0

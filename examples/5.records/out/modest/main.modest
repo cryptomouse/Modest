@@ -22,7 +22,6 @@ var line: Line = {
 }
 
 
-
 @inline
 func max (a: Double, b: Double) -> Double {
 	if a > b {
@@ -30,7 +29,6 @@ func max (a: Double, b: Double) -> Double {
 	}
 	return b
 }
-
 
 @inline
 func min (a: Double, b: Double) -> Double {
@@ -58,6 +56,8 @@ func lineLength (line: Line) -> Double {
 
 func ptr_example () -> Unit {
 	let ptr_p = *Point malloc(sizeof(Point))
+
+	// access by pointer
 	ptr_p.x = 10
 	ptr_p.y = 20
 
@@ -67,6 +67,7 @@ func ptr_example () -> Unit {
 
 @nonstatic
 func main () -> Int {
+	// by value
 	let len: Double = lineLength(line)
 	printf("line length = %f\n", len)
 

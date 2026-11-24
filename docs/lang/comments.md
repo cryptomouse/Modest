@@ -16,8 +16,9 @@ Comments are for the reader — they do not affect compilation.
 - `/* ... */` may span several lines. Block comments do **not** nest —
   the first `*/` closes the comment.
 - Comments are not carried into the output. Exception: the `modest`
-  pretty-printer backend preserves module-level `//` comments.
-  (Planned: full pass-through for the `c11` and `modest` backends —
+  pretty-printer backend preserves them — at the top level and inside
+  bodies, with the blank lines around them.
+  (Planned: full pass-through for the `c11` backend —
   see [TODO](../todo/TODO.md).)
 - Unicode is allowed in comments (and string literals) — but not in
   [identifiers](./identifier.md).

@@ -35,6 +35,7 @@ static void list_print_backward(struct list_list *lst) {
 int main(void) {
 	printf("linked list example\n");
 	struct list_list *const list0 = list_create();
+	//list0.size  // access to private field of record
 	if (list0 == NULL) {
 		printf("error: cannot create list");
 		return 1;

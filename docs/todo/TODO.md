@@ -6,9 +6,11 @@ Design intent (Alex, 2026-07-08): the `c11` and `modest` backends should
 carry source comments into the output text; the `llvm` backend is not
 required to.
 
-Status: currently comments are dropped by `c11` entirely, and `modest`
-preserves only module-level `//` comments. `docs/lang/comments.md`
-documents the current behavior. To be fixed.
+Status: `modest` carries them all, at the top level and inside bodies
+(2026-11-24). `c11` prints only the comments that stand on their own
+(a blank line under them); a comment above or trailing a definition or
+a statement is dropped. `docs/lang/comments.md` documents the current
+behavior. To be fixed for `c11`.
 
 ## Identifier-class errors: parser → trans
 

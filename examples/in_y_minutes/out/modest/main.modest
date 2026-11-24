@@ -53,9 +53,9 @@ var callCount: Nat32 = 0  // mutable global; `let` is for function bodies only
 
 // --- Functions --------------------------------------------------------------
 
-
 @inline
 func distance (a: Point, b: Point) -> Float64 {
+	// a.x = 0.0  // error: expected mutable value (parameters are immutable)
 	let dx: Float64 = a.x - b.x
 	let dy: Float64 = a.y - b.y
 	return sqrt(dx * dx + dy * dy)
@@ -67,7 +67,7 @@ func sum (n: Int32) -> Int32 {
 	var i: Int32 = 0
 	while i < n {
 		total += i
-		i += 1
+		i += 1  // no ++ / --
 	}
 	return total
 }
@@ -81,25 +81,37 @@ func announce Action {
 
 
 func tourValues () -> Unit {
-	let n = 42
-	let pi = 3.14159
+	// literals carry a compile-time type, resolved at the use site
+	let n = 42  // Integer  -> converts to IntX / NatX / WordX / FloatX
+	let pi = 3.14159  // Rational -> converts to FloatX
 	var i32: Int32 = n
 	var f64: Float64 = pi
 	printf("i32 = %d, f64 = %f\n", i32, f64)
-	var counter: Int32 = 10
-	counter = 20
-	let fixed = 30
+
+	// var / let
+	var counter: Int32 = 10  // var: concrete type (Integer -> default Int)
+	counter = 20  // mutable
+	let fixed = 30  // let: immutable
+	// fixed = 31     // error: expected lvalue
 	printf("counter + fixed = %d\n", counter + fixed)
+
+	// value construction — Modest has no casts, only explicit construction
 	let a = Int32 1
 	let b = Int64 2
+	// let c = a + b  // error: different types 'Int32' & 'Int64' in operation
 	let c: Int64 = Int64 a + b
 	printf("c = %lld\n", c)
 
 	let height = Meters 1.8
+	// let h: Float64 = height  // error: type mismatch Float64 & Meters
 	printf("height = %f\n", Float64 height)
+
+	// narrowing is unsafe: needs `pragma unsafe` and unsafe(...)
 	let big: Nat32 = 200
 	let small: Nat8 = unsafe(Nat8 big)
 	printf("small = %u\n", small)
+
+	// strings & characters
 	let greeting: *Str8 = "Hello, Modest!"
 	let initial: Char8 = "M"
 	printf("%s (starts with %c)\n", greeting, initial)
@@ -107,24 +119,28 @@ func tourValues () -> Unit {
 
 
 func tourBits () -> Unit {
+	// bitwise ops — Word* types only; Int*/Nat* have no bitwise ops
 	var u: Word32 = 0x0F
 	var v: Word32 = 0x33
 	printf("u | v = %x\n", u | v)
-	var narrow: Word32 = 0xF0
-	var full: Word32 = 0xFFFFFFF0
+
+	// a hex literal is as wide as it is written
+	var narrow: Word32 = 0xF0  // 0xF0, not 0xFFFFFFF0
+	var full: Word32 = 0xFFFFFFF0  // 0xFFFFFFF0
 	printf("~0x0F = %x, ~0x0000000F = %x\n", narrow, full)
 
-	var w: Word64 = Word64 1 << 63
-	var asInt = Int64 w
+	var w: Word64 = Word64 1 << 63  // construction binds tighter than <<
+	var asInt = Int64 w  // WordX -> IntX, same width, safe
 	printf("w = %llx -> asInt = %lld\n", w, asInt)
 }
 
 
 func tourData () -> Unit {
+	// arrays are values: assigned, passed and returned by copy (no decay)
 	var arr: [5]Int32 = [1, 2, 3, 4, 5]
 	var copy: [5]Int32 = arr
 	copy[0] = 100
-	printf("arr[0] = %d, copy[0] = %d\n", arr[0], copy[0])
+	printf("arr[0] = %d, copy[0] = %d\n", arr[0], copy[0])  // 1, 100
 
 	var i: Nat32 = 0
 	while i < lengthof(arr) {
@@ -132,27 +148,34 @@ func tourData () -> Unit {
 		i += 1
 	}
 	printf("\n")
+
+	// records; == works on any type, field by field
 	let origin = Point {x = 0.0, y = 0.0}
 	let corner = Point {x = 3.0, y = 4.0}
 	if origin != corner {
 		printf("distance = %f\n", distance(origin, corner))
 	}
+
+	// pointers
 	var p: Point = corner
 	var pp: *Point = &p
-	pp.x = 99.0
-	*pp = Point {x = 1.0, y = 2.0}
+	pp.x = 99.0  // auto-deref: no ->
+	*pp = Point {x = 1.0, y = 2.0}  // explicit dereference
 	printf("p = (%f, %f)\n", p.x, p.y)
 
 	var none: *Point = nil
 	if none == nil {
 		printf("none is nil\n")
 	}
+
+	// indexing through a pointer needs a pointer to array, *[]T
 	let pa = *[]Int32 &arr
 	printf("pa[1] = %d\n", pa[1])
 }
 
 
 func tourControl () -> Unit {
+	// if / else if / else — no switch
 	let c: Color = colorGreen
 	if c == colorRed {
 		printf("red\n")
@@ -161,11 +184,13 @@ func tourControl () -> Unit {
 	} else {
 		printf("blue\n")
 	}
+
+	// while is the only loop (no for); again = continue
 	var k: Int32 = 0
 	while k < 5 {
 		k += 1
 		if k == 3 {
-			again
+			again  // skip the print for k == 3
 		}
 		printf("k = %d\n", k)
 	}
@@ -178,9 +203,13 @@ func tourControl () -> Unit {
 		printf("j = %d\n", j)
 		j += 1
 	}
+
+	// logical ops: and / or / not (no &&, ||, !)
 	if j > 0 and not (k < 0) {
 		printf("logic works\n")
 	}
+
+	// function pointers
 	var cb: *Action = &announce
 	cb()
 	cb()

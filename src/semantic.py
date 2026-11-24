@@ -2763,6 +2763,9 @@ def do_stmt_block(x):
 		if not s.is_stmt_bad():
 			block.stmts.append(s)
 
+	for c in x.get('end_comments', []):
+		block.end_comments.append(do_stmt_comment(c))
+
 	csymtab = csymtab.parent_get()
 
 	return block

@@ -77,6 +77,7 @@ void *list_node_data_get(struct list_node *node) {
 }
 
 void list_node_insert_right(struct list_node *left, struct list_node *new_right) {
+	//printf("node_insert_right\n")
 	struct list_node *const old_right = left->next;
 	left->next = new_right;
 	if (old_right != NULL) {

@@ -1273,11 +1273,11 @@ class Parser:
 				return v
 
 
-	def parse_if_comment(self):
+	def parse_if_comment(self, merge=True):
 		if self.token_class_is('comment-block'):
 			return self.parse_comment_block()
 		elif self.token_class_is('comment-line'):
-			return self.parse_comment_line()
+			return self.parse_comment_line(merge)
 		return None
 
 
@@ -1980,41 +1980,36 @@ class Parser:
 		ti = self.textInfo()
 		#print('stmt_block')
 
-		comment = None
 		spaceline_cnt = 0
 		self.skip_nl_before_brace()
 		brace_ti = self.textInfo()
 		self.need("{")
 		stmts = []
+		# the comments after the last statement: they stay out of `stmts`,
+		# where the last statement is checked to be a `return`
+		#   return x  // done
+		#   }
+		end_comments = []
 		while True:
-			#self.skip_tokens_class(['nl'])
-
-#			spaceline_cnt = self.skip_blanks()
-
-#			if spaceline_cnt > 0:
-#				if comment:
-#					stmts.append(comment)
-#					comment = None
-#
-#			if self.match('}'):
-#				if comment != None:
-#					stmts.append(comment)
-#					comment = None
-#				break
-
 			s = None
 
 			ca = self.parse_comments_annotations()
-			#if ca[1] != []:
-			#	print(ca[1])
-			#comment = ca[0]
+			comments = ca[0]
 			spaceline_cnt = ca[2]
 
 			if self.match('}'):
-				if comment != None:
-					stmts.append(comment)
-					comment = None
+				end_comments = comments
 				break
+
+			# The comment right above a statement goes with it, as at the
+			# top level; the ones further up, cut off from it by a blank
+			# line, stand on their own.
+			comment = None
+			if comments != [] and spaceline_cnt == 1:
+				comment = comments.pop()
+			for c in comments:
+				c['anno'] = []
+				stmts.append(c)
 
 			# nothing past the end of the file can close the block: a statement
 			# parsed there would not move and be re-parsed forever (BUG#79)
@@ -2035,17 +2030,6 @@ class Parser:
 				s = self.stmt_return()
 			elif self.look('var'):
 				s = self.stmt_var()
-			elif self.token_class_is('comment-block'):
-				s = self.parse_comment_block()
-#				comment = self.parse_comment_block()
-#				comment['nl'] = spaceline_cnt
-#				spaceline_cnt = 0
-#				continue
-				s = self.parse_comment_line()
-#				comment = self.parse_comment_line()
-#				comment['nl'] = spaceline_cnt
-#				spaceline_cnt = 0
-#				continue
 			elif self.look('again'):
 				s = self.stmt_again()
 			elif self.look('break'):
@@ -2062,8 +2046,7 @@ class Parser:
 				s = self.stmt_expr_value()
 
 			if s != None:
-				if isinstance(s, list) or s['isa'] != 'ast_comment':
-					self.need_stmt_end(errcnt)
+				self.need_stmt_end(errcnt)
 
 				if isinstance(s, list):
 					s[0]['nl'] = spaceline_cnt
@@ -2076,18 +2059,13 @@ class Parser:
 					s['anno'] = ca[1]
 					stmts.append(s)
 
-			elif comment != None:
-				#print("STANDALONE COMMENT")
-				stmts.append(comment)
-				comment = None
-
-			comment = None
 			spaceline_cnt = 0
 
 		return {
 			'isa': 'ast_stmt',
 			'kind': 'block',
 			'stmts': stmts,
+			'end_comments': end_comments,
 			'anno': [],
 			'nl': 0,
 			'ti': ti
@@ -2110,7 +2088,8 @@ class Parser:
 		while not self.is_end():
 			nl_cnt = self.skip_seps()
 
-			comm = self.parse_if_comment()
+			# nl_cnt == 0: the comment trails the line before it
+			comm = self.parse_if_comment(merge=nl_cnt > 0)
 			if comm != None:
 				comm['nl'] = nl_cnt
 				comments.append(comm)
@@ -2366,13 +2345,17 @@ class Parser:
 			self.skip1()
 
 
-	def parse_comment_line(self):
+	# merge=False for a comment that trails a line of code: the comment
+	# lines under it start a comment of their own
+	#   let n = 30  // trails `let`
+	#   // about the next statement
+	def parse_comment_line(self, merge=True):
 		ti = self.textInfo()
 		x = self.gettok()
 		lines = [x]
 		#pos = self.getpos()
 		# Связываем все идущие под ряд линейные комментарии в один
-		while not self.is_end():
+		while merge and not self.is_end():
 			pos = self.getpos()
 			if self.match("\n"):
 				if self.token_class_is('comment-line'):
@@ -2492,10 +2475,11 @@ class Parser:
 		annotations = []
 		#comments = []
 		while not self.is_end():
+			# the blank lines before a definition are the ones above its
+			# first annotation; ca[1] also counts the line break that ends
+			# each annotation, and gave '@inline' an extra blank line
 			ca = self.parse_annotations(nl_cnt=spaceline_cnt)
-			#comments.extend(ca[0])
 			annotations.extend(ca[0])
-			spaceline_cnt = ca[1]
 
 			access_modifier = self.parse_access_modifier()
 
@@ -2521,12 +2505,18 @@ class Parser:
 			elif self.look('type'):
 				x = self.parse_def_type()
 			elif self.token_class_is('comment-block'):
+				if self.comment != None:
+					output.append(self.comment)
 				self.comment = self.parse_comment_block()
 				self.comment['nl'] = spaceline_cnt
 				spaceline_cnt = 0
 				continue
 			elif self.token_class_is('comment-line'):
-				self.comment = self.parse_comment_line()
+				# a comment that trails a definition (spaceline_cnt == 0)
+				# stands alone; so does one with another comment under it
+				if self.comment != None:
+					output.append(self.comment)
+				self.comment = self.parse_comment_line(merge=spaceline_cnt > 0)
 				self.comment['nl'] = spaceline_cnt
 				spaceline_cnt = 0
 				continue
@@ -2566,6 +2556,11 @@ class Parser:
 			self.comment = None
 			annotations = []
 			spaceline_cnt = 0
+
+		# the comment the file ends with has no definition to go with
+		if self.comment != None:
+			output.append(self.comment)
+			self.comment = None
 
 		return output
 

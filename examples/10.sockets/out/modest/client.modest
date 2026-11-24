@@ -1,3 +1,7 @@
+/* thx: https://github.com/pshashipreetham/File-Transfer-Using-TCP-Socket-in-C-Socket-Programming */
+
+pragma unsafe
+
 include "libc/ctypes64"
 include "libc/stdio"
 include "libc/stdlib"

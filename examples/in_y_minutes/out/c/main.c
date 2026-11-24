@@ -7,14 +7,6 @@
 #if !defined(LENGTHOF)
 #define LENGTHOF(x) (sizeof(x) / sizeof((x)[0]))
 #endif
-// examples/in_y_minutes/src/main.modest
-//
-// Modest in Y minutes — a fast tour of the language.
-// Full reference: docs/CHEATSHEET.md
-//
-// This is a line comment. There are no block comments.
-// Lines marked `// error: ...` are commented out: they show what the
-// compiler rejects and why.
 // sqrt
 // `include` pastes a module's names directly into scope — used for C
 // bindings and library modules. `import "mymodule"` instead requires a
@@ -75,6 +67,7 @@ static void tourValues(void) {
 	int32_t counter = 10;
 	counter = 20;
 	#define fixed 30
+	// let: immutable
 	printf("counter + fixed = %d\n", counter + fixed);
 	const int32_t a = 1;
 	const int64_t b = 2;
@@ -111,6 +104,7 @@ static void tourData(void) {
 	__builtin_memcpy(&copy, &arr, sizeof(int32_t [5]));
 	copy[0] = 100;
 	printf("arr[0] = %d, copy[0] = %d\n", arr[0], copy[0]);
+	// 1, 100
 	uint32_t i = 0;
 	while (i < LENGTHOF(arr)) {
 		printf("%d ", arr[i]);

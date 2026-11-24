@@ -254,6 +254,8 @@ define %Int @main() {
 	%i = alloca %Int32, align 4
 	%1 = call %Int (%ConstCharStr*, ...) @printf(%ConstCharStr* bitcast ([21 x i8]* @.str5 to [0 x i8]*))
 	%2 = call %list_List* @list_create()
+
+	;list0.size  // access to private field of record
 ; if_0
 	%3 = icmp eq %list_List* %2, null
 	br %Bool %3 , label %then_0, label %endif_0
