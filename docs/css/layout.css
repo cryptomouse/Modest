@@ -180,20 +180,3 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
     font-weight: 700;
 }
 .navbar-path .navbar-brand + .breadcrumbs { margin-right: 1rem; }
-
-/* Previous / next page at the bottom, built by misc/mkdocs/theme/page_nav.html:
-     Previous                          Next
-     ← Variable Definition       Statements →   */
-.page-nav {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-top: 3rem;
-    padding-top: 1rem;
-    border-top: 1px solid #dee2e6;
-}
-.page-nav a { display: flex; flex-direction: column; text-decoration: none; }
-.page-nav a.next { margin-left: auto; text-align: right; }
-.page-nav .dir { font-size: 0.8rem; color: var(--gray); }
-.page-nav .title { font-weight: 600; }
-.page-nav a:hover .title { text-decoration: underline; }

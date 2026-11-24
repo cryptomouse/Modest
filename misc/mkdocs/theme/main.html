@@ -7,8 +7,8 @@ Overrides of the yeti (mkdocs-bootswatch) theme, wired in by
 The stock layout puts the site nav into navbar dropdowns and the page TOC on
 the left. Here the navbar keeps the site name followed by the page's path,
 and the right-hand links (search, GitHub); the site nav moves to the left,
-with the current page's TOC nested under its entry; prev/next go to the
-bottom of the page.
+with the current page's TOC nested under its entry. No prev/next links:
+the docs are a reference, not read cover to cover.
 #}
 
 {%- block site_nav %}{% endblock %}
@@ -36,5 +36,5 @@ bottom of the page.
 
 {%- block content %}
     <div class="col-md-3">{% include "sidebar.html" %}</div>
-    <div class="col-md-9" role="main">{% include "content.html" %}{% include "page_nav.html" %}</div>
+    <div class="col-md-9" role="main">{% include "content.html" %}</div>
 {%- endblock %}
