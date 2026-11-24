@@ -1,8 +1,8 @@
 // A binding module that includes `libc/ctypes64` and then defines `UIDT`
 // once more, the same way.  Used by `include_same_type.modest`.
 
-pragma do_not_include
-pragma prefix ""
+pragma do_not_include  // a trailing comment ends a pragma with no arguments
+pragma prefix ""       // ... and one with an argument
 
 include "libc/ctypes64"
 

@@ -305,7 +305,7 @@ declare %LongDouble @fmal(%LongDouble %a, %LongDouble %b, %LongDouble %c)
 
 ; `include` pastes a module's names directly into scope — used for C
 ; bindings and library modules. `import "mymodule"` instead requires a
-; `mymodule.` prefix on every name it brings in (see docs/lang).
+; `mymodule.` prefix on every name it brings in (see docs/lang).; allows unsafe(...) below, from this line to the end of the file
 
 
 ; --- Types ------------------------------------------------------------------

@@ -2425,12 +2425,11 @@ class Parser:
 		x = self.gettok()  # 'pragma'
 		id = self.parse_identifier() # pragma 'name'
 
+		# a trailing comment ends the arguments, as it ends any statement:
+		# `pragma unsafe  // why` has none
 		args = []
-		while not self.look_sep():
-			if self.is_end():
-				break
-			a = self.expr_value()
-			args.append(a)
+		while not (self.look_sep() or self.is_comment() or self.is_end()):
+			args.append(self.expr_value())
 			if not self.match(","):
 				break
 

@@ -10,7 +10,7 @@
 // folding can hide what the address came out as.
 // Guards BUG#82 (fixed 2026-11-01).
 
-pragma unsafe
+pragma unsafe  // a trailing comment must not be read as an argument
 
 include "libc/ctypes64"
 include "libc/stdio"
