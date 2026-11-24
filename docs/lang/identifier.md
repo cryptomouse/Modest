@@ -3,7 +3,7 @@
 An identifier names a type or a value. The case of its first letter
 decides which — lexically, before parsing.
 
-## Form
+## Syntax
 
 ```
 '_'* <#lowercase_letter#> (<#letter#> | <#digit#> | '_')*    // value identifier

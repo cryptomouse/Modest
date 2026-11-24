@@ -3,7 +3,7 @@
 Embeds target assembly into a function body. Maps directly to GCC
 extended asm (`__asm__ volatile` in the C backend, `call asm` in LLVM).
 
-## Form
+## Syntax
 
 ```
 __asm(<#asm_text#>)

@@ -16,7 +16,7 @@ Restarts the nearest enclosing loop: jumps back to the condition check
 There are no loop labels; `break` and `again` always refer to the
 innermost loop.
 
-## Example
+## Examples
 
 ```modest
 var n: Int32 = 0

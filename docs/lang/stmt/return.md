@@ -2,7 +2,7 @@
 
 Stops execution of the current function and returns a value.
 
-## Form
+## Syntax
 
 ```
 return <#value_expression#>    // function returns non-Unit

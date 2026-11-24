@@ -1,6 +1,6 @@
 # Unary Operations
 
-## Form
+## Syntax
 
 ```
 <#operator#> <#value_expression#>

@@ -2,7 +2,7 @@
 
 Creates mutable storage bound to an [identifier](../identifier.md).
 
-## Form
+## Syntax
 
 ```
 var <#identifier#>: <#type_expression#>                              // no initializer

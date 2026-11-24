@@ -3,7 +3,7 @@
 Binds an [identifier](../identifier.md) to a function with the given
 [function type](../type/func.md) and body.
 
-## Form
+## Syntax
 
 ```
 func <#identifier#> <#FuncType#> {

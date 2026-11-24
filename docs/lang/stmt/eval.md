@@ -2,7 +2,7 @@
 
 Evaluates an expression for its side effects; the result is discarded.
 
-## Form
+## Syntax
 
 ```
 <#value_expression#>

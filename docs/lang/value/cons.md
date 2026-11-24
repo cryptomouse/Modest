@@ -6,7 +6,7 @@ value. Construction is *implicit* (at assignment, initialization, call,
 return), *explicit* (written in code) or *unsafe* (explicit, requires the
 `unsafe` keyword at the use site and `pragma unsafe` in the module).
 
-## Form
+## Syntax
 
 ```
 <#type#> <#value_expression#>            // explicit

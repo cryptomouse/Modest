@@ -2,7 +2,7 @@
 
 Primitive built-in types.
 
-## Form
+## Syntax
 
 | Type | Size (bytes) | Operations | Description |
 | :--- | :-: | :--- | :--- |

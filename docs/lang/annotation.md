@@ -4,7 +4,7 @@ An *annotation* is the source form that attaches *attributes* to a
 definition or a type expression and influences translation. The attribute
 is a property of the entity itself; the annotation is how it is written.
 
-## Form
+## Syntax
 
 ```
 @<#name#>

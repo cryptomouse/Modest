@@ -2,7 +2,7 @@
 
 Selects a contiguous sub-array `[from, to)`.
 
-## Form
+## Syntax
 
 ```
 <#array_value#>[<#from#> : <#to#>]

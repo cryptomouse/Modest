@@ -20,7 +20,7 @@ var <#id1#>, <#id2#>, ... : <#type_expression#>
 - The variable is visible from its definition to the end of the enclosing
   block.
 
-## Example
+## Examples
 
 ```modest
 func main () -> Int {

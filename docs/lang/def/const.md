@@ -3,7 +3,7 @@
 Binds an [identifier](../identifier.md) to a compile-time value. A constant
 occupies no storage; its value is substituted at each use site.
 
-## Form
+## Syntax
 
 ```
 const <#identifier#> = <#value_expression#>

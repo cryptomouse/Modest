@@ -3,7 +3,7 @@
 Stores a value into an lvalue. Assignment is a statement, not an
 expression — it produces no value and cannot be chained.
 
-## Form
+## Syntax
 
 ```
 <#lvalue#> = <#value_expression#>

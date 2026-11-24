@@ -3,7 +3,7 @@
 Bring another module's public definitions into the current module —
 under a namespace (`import`) or directly (`include`).
 
-## Form
+## Syntax
 
 ```
 import <#"path"#> [as <#identifier#>]

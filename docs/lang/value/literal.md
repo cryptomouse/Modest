@@ -4,7 +4,7 @@ A literal denotes a value directly. Most literals have a
 [generic type](../type/generic.md) that adapts to the required concrete
 type at the use site.
 
-## Form
+## Syntax
 
 | Literal | Examples | Type |
 | :--- | :--- | :--- |

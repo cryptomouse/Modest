@@ -4,7 +4,7 @@ A *pragma* is a module-level directive: it configures translation of the
 current module. Pragmas take effect from their position to the end of
 the file.
 
-## Form
+## Syntax
 
 ```
 pragma <#name#> [<#arguments#>]

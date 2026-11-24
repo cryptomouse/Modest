@@ -5,7 +5,7 @@ itself — a *place*, not a copy of its value; what happens to it is
 decided by the context: read, assignment target, or address-of
 (`&pt.x`).
 
-## Form
+## Syntax
 
 ```
 <#record_value#>.<#field#>

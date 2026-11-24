@@ -3,7 +3,7 @@
 Compile-time queries of size, alignment and layout. All fold to
 immediate values.
 
-## Form
+## Syntax
 
 ```
 sizeof(<#type#>)        sizeof(<#value#>)       // size in bytes

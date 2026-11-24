@@ -2,7 +2,7 @@
 
 A *record* is a composite type with named fields (`struct` in C).
 
-## Form
+## Syntax
 
 ```
 { <#field#>, <#field#>, ... }       // field: name: Type

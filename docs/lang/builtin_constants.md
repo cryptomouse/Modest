@@ -101,7 +101,7 @@ NaN is unordered: it is unequal to every value, itself included, so
 operand are `false`, `!=` is `true` — the same at run time and when the
 comparison is folded at compile time.
 
-## Example
+## Examples
 
 ```modest
 if builtin.target.endian == builtin.target.endianLittle {

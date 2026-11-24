@@ -4,7 +4,7 @@ A *field* pairs a name with a type and, optionally, a value. Fields are
 the building blocks of definitions (`var`, `const`, `let`), function
 parameters and record types.
 
-## Form
+## Syntax
 
 ```
 <#identifier#>: <#type_expression#>

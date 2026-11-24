@@ -8,7 +8,7 @@ A *variant* (discriminated union, tagged union) is a type whose value holds
 exactly one of several alternative types at a time; a runtime tag records
 which alternative is active.
 
-## Form
+## Syntax
 
 ```
 <#TypeA#> or <#TypeB#> or ...

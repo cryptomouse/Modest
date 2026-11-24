@@ -1,6 +1,6 @@
 # Binary Operations
 
-## Form
+## Syntax
 
 ```
 <#left#> <#operator#> <#right#>

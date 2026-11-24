@@ -3,7 +3,7 @@
 Repeats its body while a `Bool` condition holds. `while` is the only loop
 construct in Modest (there is no `for`).
 
-## Form
+## Syntax
 
 ```
 while <#condition#> {

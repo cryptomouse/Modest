@@ -4,7 +4,7 @@ Designates an element of an array by position. The expression denotes
 the element itself — a *place*; the context decides what happens to it:
 read, assignment target, or address-of (`&a[i]`).
 
-## Form
+## Syntax
 
 ```
 <#array_value#>[<#index#>]

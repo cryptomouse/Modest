@@ -4,7 +4,7 @@ A *generic type* is the compile-time type of a literal or constant
 expression. Generic values exist only at compile time; at a use site they
 implicitly construct a value of the required concrete type.
 
-## Form
+## Syntax
 
 | Generic type | Produced by | Implicitly converts to |
 | :--- | :--- | :--- |

@@ -2,7 +2,7 @@
 
 The type of a function: its parameter list and return type.
 
-## Form
+## Syntax
 
 ```
 (<#parameters#>) -> <#return_type#>

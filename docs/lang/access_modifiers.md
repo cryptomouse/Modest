@@ -3,7 +3,7 @@
 `public` and `private` control whether a definition is visible to
 importing modules.
 
-## Form
+## Syntax
 
 ```
 public <#definition#>

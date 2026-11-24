@@ -4,7 +4,7 @@
 representation and operations, but not interchangeable with the parent
 (the "newtype" pattern).
 
-## Form
+## Syntax
 
 ```
 type <#identifier#> = @branded <#type_expression#>

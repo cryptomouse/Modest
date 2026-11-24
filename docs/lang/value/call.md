@@ -2,7 +2,7 @@
 
 Invokes a function — directly or through a pointer to function.
 
-## Form
+## Syntax
 
 ```
 <#function#>(<#arguments#>)

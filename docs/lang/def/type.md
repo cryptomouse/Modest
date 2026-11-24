@@ -2,7 +2,7 @@
 
 Binds an [identifier](../identifier.md) to a [type](../type/README.md).
 
-## Form
+## Syntax
 
 ```
 type <#identifier#> = <#type_expression#>

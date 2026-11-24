@@ -4,7 +4,7 @@ An *array* is a fixed-length, contiguous sequence of elements of one
 type, indexed from zero. An array is an ordinary value type — unlike C,
 there is **no array decay**.
 
-## Form
+## Syntax
 
 ```
 [<#length#>]<#element_type#>     // fixed array; length is a compile-time constant

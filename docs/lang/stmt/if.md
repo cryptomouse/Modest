@@ -2,7 +2,7 @@
 
 Executes one of its branches depending on a `Bool` condition.
 
-## Form
+## Syntax
 
 ```
 if <#condition#> {
@@ -34,7 +34,7 @@ if <#condition1#> {
   `}` is experimental — see [block](./block.md).
 - `else if` chains may be arbitrarily long; the final `else` is optional.
 
-## Example
+## Examples
 
 ```modest
 if a > b {

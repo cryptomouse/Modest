@@ -45,7 +45,7 @@ else  // experimental
 }
 ```
 
-## Example
+## Examples
 
 ```modest
 func main () -> Int {

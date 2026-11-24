@@ -8,7 +8,7 @@ How to write pages under `docs/`. Modest code inside them follows
 
 Where it applies, a page describes one construct in this order:
 
-1. **Form** — the syntax.
+1. **Syntax** — how it is written.
 2. **Semantics** — what it means and how it behaves.
 3. **Examples**.
 

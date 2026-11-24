@@ -2,7 +2,7 @@
 
 A *pointer* holds the address of a value of a known type.
 
-## Form
+## Syntax
 
 ```
 *<#type_expression#>

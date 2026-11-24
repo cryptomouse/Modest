@@ -3,7 +3,7 @@
 Binds an identifier to a value, immutably. Allowed only inside function
 bodies; the module-level analogue is [`const`](../def/const.md).
 
-## Form
+## Syntax
 
 ```
 let <#identifier#> = <#value_expression#>

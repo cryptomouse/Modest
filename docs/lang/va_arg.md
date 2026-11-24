@@ -4,7 +4,7 @@
 The extra arguments are read through a `__VA_List` value and the
 `__va_*` builtins.
 
-## Form
+## Syntax
 
 ```
 func <#name#> (<#params#>, ...) -> <#type#>

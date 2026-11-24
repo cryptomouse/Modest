@@ -2,7 +2,7 @@
 
 Comments are for the reader — they do not affect compilation.
 
-## Form
+## Syntax
 
 ```
 // <#any text — to end of line#>
