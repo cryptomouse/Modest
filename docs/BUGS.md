@@ -496,38 +496,6 @@ func main () -> Int32 {
 - Documented in `docs/lang/directive.md` as working.
 - No test covers it.
 
-## BUG#92: `@nonstatic` is rejected on a `func`, and the `modest` backend writes it there
-
-```modest
-func main () -> Int32 {
-	return 0
-}
-```
-
-`-mbackend=modest` re-emits this as
-
-```modest
-@nonstatic
-func main () -> Int32 {
-	return 0
-}
-```
-
-and compiling that output fails with `annotation 'nonstatic' not defined`.
-
-- `@nonstatic` is turned into an attribute only for a global `var`
-  (`def_var_common`, `src/semantic.py`).  The definition loop that handles
-  annotations common to all definitions maps only `extern`, `alias`, `c_no_print`,
-  `used`, `unused` and reports everything else, so on a `func`, `const` or
-  `type` it is an error.
-- The compiler itself sets the attribute on `main` (`def_func2`), and the
-  `modest` backend prints every attribute it finds — so its output for any
-  program with `main` does not compile.
-- Either accept `@nonstatic` on a `func` (the C backend already honours the
-  attribute there) or keep the `modest` backend from printing an attribute
-  the compiler added itself.
-- No test covers it.
-
 ## BUG#93: A function type with an unnamed parameter is rejected by accident, with a generic message
 
 ```modest
@@ -916,3 +884,27 @@ import "./b/point" as pb     // module "b/point", public func two
 - A fix would name the header after the module name when there is one
   (`a_point.h`), with `-o` naming only the `.c`, or let the importer find
   the header by the imported module's own output name.
+
+
+## BUG#131: `-mbackend=modest` writes the type of a `var`/`let` by its own rule, not as written
+
+```modest
+var counter = 10                   // -> var counter: Int32 = 10
+let c = colorGreen                 // -> let c: Color = colorGreen
+var f: Word32 = Word32 ~0x0F       // -> var f = Word32 ~0x0F
+var asInt: Int64 = Int64 w         // -> var asInt = Int64 w
+```
+
+- The source form is lost in both directions: an inferred type gets written
+  out, and a written one is dropped when the initializer is an explicit
+  construction.  The output compiles to the same program, but it is not the
+  source a formatter should give back.
+- `str_stmt_def` (`src/backend/modest.py`) prints `: Type` whenever the
+  type is not generic, unless the initializer is an explicit construction
+  (`is_cons()` with `method == 'explicit'`).  Whether the source had a type
+  is not in the HLIR at all: `do_stmt_var` / `do_stmt_let` and their global
+  counterparts (`src/semantic.py`) take the declared type or the
+  initializer's, and do not remember which.
+- A fix would mark the definition when its type is written in the source
+  and print `: Type` by that mark alone.
+- Same for a global `var`/`const`.  Found on `examples/in_y_minutes`.

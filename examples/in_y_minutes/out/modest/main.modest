@@ -216,7 +216,6 @@ func tourControl () -> Unit {
 }
 
 
-@nonstatic
 func main () -> Int {
 	tourValues()
 	tourBits()

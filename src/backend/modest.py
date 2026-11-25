@@ -794,20 +794,31 @@ def str_ast_annotation(a):
 	return s
 
 
-def str_annotation(a, params):
-	if a in ['const', 'zarray']:
-		return ''
+# an annotation as the parser gave it (StmtDef.annotations):
+#   @alias("my_twice", backend="c11")
+def str_annotation(a):
+	if a['args'] == []:
+		return "@" + a['kind']
+	return "@%s(%s)" % (a['kind'], ", ".join(str_annotation_arg(x) for x in a['args']))
 
-	sstr = ""
-	if not params in [None, {}, []]:
-		sstr += '('
-		if isinstance(params, dict):
-			pass
-		else:
-			pass
-			#sstr += str_value(params)
-		sstr += ')'
-	return "@" + a + sstr
+
+def str_annotation_arg(arg):
+	s = ""
+	if arg['key'] != None:
+		s = arg['key']['str'] + "="
+	v = arg['value']
+	if v['kind'] == 'string':
+		return s + str_literal_string([ord(c) for c in v['str']])
+	# a number keeps its spelling (0x10 stays 0x10), an id is its name
+	return s + v['str']
+
+
+def str_annotations(x, sep):
+	ss = []
+	for a in getattr(x, 'annotations', []):
+		ss.append(str_annotation(a))
+		ss.append(sep)
+	return ''.join(ss)
 
 
 def str_stmt_type(x):
@@ -1016,6 +1027,7 @@ def str_stmt(x):
 	else:
 		ss.append("; ")
 
+	ss.append(str_annotations(x, str_nl_indent()))
 	ss.append(str_stmt2(x))
 	return ''.join(ss)
 
@@ -1098,10 +1110,7 @@ def str_top_level_stmt2(x):
 	else:
 		ss.append("; ")
 
-	for a in x.attributes:
-		v = x.attributes[a]
-		ss.append(str_annotation(a, v))
-		ss.append("\n")
+	ss.append(str_annotations(x, "\n"))
 
 	if isinstance(x, StmtDef):
 		if x.access_level == HLIR_ACCESS_LEVEL_PUBLIC:

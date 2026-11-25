@@ -1,0 +1,53 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: print annotations
+// EXPECT-CODE(llvm): define %Int32 @helper(
+// EXPECT-CODE(modest): @alignment(8)
+// EXPECT-CODE(modest): @section("__DATA,.dma", alignment=32)
+// EXPECT-CODE(modest): @alias("print_annotations_twice", backend="c11")
+// EXPECT-CODE(modest): @nonstatic
+// EXPECT-CODE(modest): func helper () -> Int32 {
+//
+// `-mbackend=modest` prints the annotations of a definition as they were
+// written, with their arguments, and nothing the compiler adds on its own.
+// It used to print the attributes the annotations had turned into:
+// `@alignment()` and `@section()` with no arguments, `@extern` without the
+// name, no `@alias` at all — and `@nonstatic` on every `main`, which the
+// compiler sets there itself, so its output did not compile.
+//
+// `@nonstatic` is accepted on a `func` too: `helper` is not `internal`.
+//
+// Guards BUG#92 (fixed 2026-11-25).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+@alignment(8)
+var buf: [64]Word8
+
+@section("__DATA,.dma", alignment=32)
+var dmaBuf: [64]Word8
+
+@alias("print_annotations_twice", backend="c11")
+func twice (x: Int32) -> Int32 {
+	return x * 2
+}
+
+@nonstatic
+func helper () -> Int32 {
+	return 7
+}
+
+
+func main () -> Int {
+	if twice(21) != 42 or helper() != 7 {
+		printf("failed: print annotations\n")
+		return exitFailure
+	}
+
+	printf("passed: print annotations\n")
+	return exitSuccess
+}
+

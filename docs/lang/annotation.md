@@ -41,7 +41,7 @@ Annotations are written before a definition, or inside a type expression
 | `@alias("name", backend="c11"\|"llvm")` | output name for one backend |
 | `@c_no_print` | keep the definition out of C output: the C side already has it (a header) |
 | `@cbyvalue` | on a `const`: print its literal value at each use site instead of the identifier (C backend only) |
-| `@nonstatic` | on a global `var`: suppress `static` in C output (rejected on a `func` — BUG#92) |
+| `@nonstatic` | on a global `var` or a `func`: suppress `static` in C output (`internal` in LLVM) |
 
 > **`@extern` declares, `@alias` renames a definition.** Whether there is a
 > body decides which one fits: the block of a `func`, the initializer of a

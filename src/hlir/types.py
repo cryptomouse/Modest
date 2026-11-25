@@ -425,6 +425,11 @@ class StmtDef(Stmt):
 		self.id = id
 		self.access_level = HLIR_ACCESS_LEVEL_PRIVATE
 		self.nl = nl
+		# the annotations written on the definition, raw from the parser:
+		# -mbackend=modest prints them back as they were written.  What
+		# they mean is in attributes, along with what the compiler adds
+		# on its own (`nonstatic` on main) — that must not be printed
+		self.annotations = []
 
 
 

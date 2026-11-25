@@ -2746,6 +2746,8 @@ def do_stmt(x):
 
 	assert(s != None)
 	s.nl = x['nl']
+	if isinstance(s, StmtDef):
+		s.annotations = x['anno']
 
 	if 'comment' in x and x['comment'] != None:
 		s.comment = do_stmt_comment(x['comment'])
@@ -3292,6 +3294,7 @@ def def_func2(x, annos):
 	anno_to_attribute(df, annos, 'noinline')
 	anno_to_attribute(df, annos, 'inlinehint')
 	anno_to_attribute(df, annos, 'inline')
+	anno_to_attribute(df, annos, 'nonstatic')
 	# @runtime: функция не считается чистой, и ее вызов никогда не
 	# сворачивается на этапе компиляции (см. func_is_pure, ct_call)
 	anno_to_attribute(df, annos, 'runtime')
@@ -3798,6 +3801,8 @@ def def_phase2(ast):
 			assert(df != None)
 			if df.is_stmt_bad():
 				continue
+
+			df.annotations = x.get('anno') or []
 
 			# handle common annotations for all definitions
 

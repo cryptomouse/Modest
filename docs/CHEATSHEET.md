@@ -775,7 +775,8 @@ type Vec2 = @public {x: Float32, y: Float32}  // on a named record: fields witho
 > `@const`, `@zarray`, `@no_print` / `@ll_no_print` show up
 > in compiler internals, but are not accepted in source (`annotation '...' not
 > defined`). To keep a module out of C output use `pragma c_no_print`.
-> `@nonstatic` (no `static` in C output) works on a global `var` only (BUG#92).
+> `@nonstatic` (no `static` in C output, no `internal` in LLVM) works on a
+> global `var` and on a `func`.
 
 ### Examples
 ```modest
