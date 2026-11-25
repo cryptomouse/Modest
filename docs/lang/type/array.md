@@ -253,5 +253,5 @@ copying is real, only expressed in C terms.
 
 ## See also
 
-- [Slice](../value/slice.md), [Index](../value/access.md)
+- [Slice](../value/slice.md), [Index](../value/_index.md)
 - [sizeof / lengthof](../value/sizeof.md)
