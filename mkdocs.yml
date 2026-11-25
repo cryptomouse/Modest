@@ -39,7 +39,8 @@ extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/llvm.min.js
   - js/modest-hljs.js
 extra_css:
-  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/docco.min.css  - css/code.css
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/docco.min.css
+  - css/code.css
   - css/layout.css
 
 hooks:
