@@ -370,8 +370,14 @@ def do_case(t, backend, workdir):
 			return result(FAIL, 'generated code missing %r' % line, where)
 
 	if backend in GENERATE_ONLY:
-		# Nothing to link or run — reaching here means the backend accepted
-		# the module.  (A round-trip check belongs here later.)
+		# Nothing to link or run: the `modest` backend is the formatter, and
+		# what it gives back must be a fixed point — modest accepts it, and
+		# formatting it once more changes nothing.  A formatter that drops
+		# or rewrites something (`let p: Ptr = &gv` -> `let p = &gv`, a
+		# different type) shows up as the second pass disagreeing.
+		problem = round_trip(t, generated[0], workdir)
+		if problem is not None:
+			return result(FAIL, problem[0], problem[1])
 		return result(PASS)
 
 	# 2. backend source -> executable
@@ -406,6 +412,44 @@ def do_case(t, backend, workdir):
 		return result(FAIL, 'output missing %r' % want, where + last_output(out), out)
 
 	return result(PASS)
+
+
+def round_trip(t, generated, workdir):
+	"""None if `generated` (the formatter's output for test `t`) formats
+	to itself; otherwise (what went wrong, lines to show).
+
+	It is compiled in place of the test: under the test's own name (a
+	`module "..."` must match it) and next to the test's `_*` fixtures,
+	which its relative imports (`import "./_lib/point"`) look for."""
+	rt = os.path.join(workdir, 'round_trip')
+	shutil.rmtree(rt, ignore_errors=True)
+	os.makedirs(rt)
+	srcdir = os.path.dirname(os.path.abspath(t.path))
+	for entry in os.listdir(srcdir):
+		if entry.startswith('_'):
+			os.symlink(os.path.join(srcdir, entry), os.path.join(rt, entry))
+	src = os.path.join(rt, os.path.basename(t.path))
+	shutil.copy(generated, src)
+
+	again = os.path.join(rt, 'again')
+	cmd = [MODEST] + t.flags + ['-o', again, '-mbackend=modest', src]
+	code, out = run(cmd, rt, TIMEOUT_COMPILE)
+	if code != 0:
+		err = first_error(out)
+		return ('modest refused its own output', [err] if err else last_output(out))
+
+	with open(generated, encoding='utf-8') as f:
+		first = f.read().splitlines()
+	with open(again + '.modest', encoding='utf-8') as f:
+		second = f.read().splitlines()
+	for n, (a, b) in enumerate(zip(first, second), 1):
+		if a != b:
+			return ('formatting the output again changed line %d' % n,
+			        ['was:   ' + a.strip(), 'now:   ' + b.strip(), 'in ' + generated])
+	if len(first) != len(second):
+		return ('formatting the output again changed its length: %d -> %d lines'
+		        % (len(first), len(second)), ['in ' + generated])
+	return None
 
 
 def without_header(code):

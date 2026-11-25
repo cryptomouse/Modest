@@ -106,7 +106,11 @@ parentheses — `EXPECTED-FAIL(llvm): ...` marks the test broken under LLVM
 only, and it still has to pass everywhere else.
 
 `modest` is a valid backend here, but it emits Modest source rather than
-something clang can link, so for it a test stops after code generation.
+something clang can link, so for it a test stops after code generation —
+with a round trip instead: the output, compiled in place of the test,
+must format to itself.  modest has to accept it, and the second pass must
+give back the same text, line for line.  A formatter that drops or
+rewrites something shows up as the two passes disagreeing.
 
 ### Linking other modules
 

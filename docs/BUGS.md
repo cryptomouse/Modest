@@ -893,12 +893,17 @@ var counter = 10                   // -> var counter: Int32 = 10
 let c = colorGreen                 // -> let c: Color = colorGreen
 var f: Word32 = Word32 ~0x0F       // -> var f = Word32 ~0x0F
 var asInt: Int64 = Int64 w         // -> var asInt = Int64 w
+let p: Ptr = &gv                   // -> let p = &gv
 ```
 
 - The source form is lost in both directions: an inferred type gets written
-  out, and a written one is dropped when the initializer is an explicit
-  construction.  The output compiles to the same program, but it is not the
-  source a formatter should give back.
+  out, and a written one is dropped.  Mostly the output is the same
+  program in other words, but not always: `p` above is a `Ptr` in the
+  source and an `*Int32` in the output — the formatter changed its type.
+- The round trip in `tests/run.py` catches it: formatting the output once
+  more writes the type back (`let p: *Int32 = &gv`).  Coverage:
+  `tests/lang/type/pointer/free_pointer_eq.modest`, marked
+  `EXPECTED-FAIL(modest)`.
 - `str_stmt_def` (`src/backend/modest.py`) prints `: Type` whenever the
   type is not generic, unless the initializer is an explicit construction
   (`is_cons()` with `method == 'explicit'`).  Whether the source had a type

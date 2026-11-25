@@ -244,6 +244,22 @@ def str_type(t):
 	return str_type2(t)
 
 
+# A type from a module brought in by `import` is named through it, as in
+# the source: `sha256.Hash`.  The type itself does not keep how it was
+# reached, so the prefix comes from the import of its module.  An
+# `include`d module has no prefix, nor does the implicit `builtin` one.
+def str_type_import_prefix(t):
+	# cmodule is None when a diagnostic names a type before any output
+	df = t.definition
+	module = getattr(df, 'module', None)
+	if cmodule == None or module == None or module == cmodule:
+		return ""
+	for imp in cmodule.imports.values():
+		if imp.module == module and imp.impline != "builtin":
+			return imp.name + "."
+	return ""
+
+
 def str_type2(t):
 	assert(isinstance(t, Type))
 
@@ -257,7 +273,7 @@ def str_type2(t):
 	# Если тип связан с идентификатором - распечатаем его
 	id_str = get_id_str(t)
 	if id_str != None:
-		return id_str
+		return str_type_import_prefix(t) + id_str
 
 	# Если у типа нет связанного идентификатора
 	# распечатаем полное выражение типа
@@ -670,8 +686,9 @@ def str_value_literal(x, ctx):
 	return "<str_value_literal:%s>" % str(x)
 
 
+# sizeof takes parentheses, like a call: `sizeof x` does not parse
 def str_value_sizeof_value(x, ctx):
-	return "sizeof " + str_value(x.ofvalue)
+	return "sizeof(" + str_value(x.ofvalue) + ")"
 
 def str_value_sizeof_type(x, ctx):
 	return "sizeof(" + str_type(x.oftype) + ')'
@@ -775,7 +792,7 @@ def str_value(x, ctx=[], parent_expr=None):
 def str_ast_value(x):
 	k = x['kind']
 	if k == 'string':
-		return '"' + x['str'] + '"'
+		return str_literal_string([ord(c) for c in x['str']])
 	elif k in ['number', 'id']:
 		return x['str']
 	return '?'
@@ -794,29 +811,12 @@ def str_ast_annotation(a):
 	return s
 
 
-# an annotation as the parser gave it (StmtDef.annotations):
-#   @alias("my_twice", backend="c11")
-def str_annotation(a):
-	if a['args'] == []:
-		return "@" + a['kind']
-	return "@%s(%s)" % (a['kind'], ", ".join(str_annotation_arg(x) for x in a['args']))
-
-
-def str_annotation_arg(arg):
-	s = ""
-	if arg['key'] != None:
-		s = arg['key']['str'] + "="
-	v = arg['value']
-	if v['kind'] == 'string':
-		return s + str_literal_string([ord(c) for c in v['str']])
-	# a number keeps its spelling (0x10 stays 0x10), an id is its name
-	return s + v['str']
-
-
+# the annotations written on a definition (StmtDef.annotations), each
+# followed by `sep`
 def str_annotations(x, sep):
 	ss = []
 	for a in getattr(x, 'annotations', []):
-		ss.append(str_annotation(a))
+		ss.append(str_ast_annotation(a))
 		ss.append(sep)
 	return ''.join(ss)
 

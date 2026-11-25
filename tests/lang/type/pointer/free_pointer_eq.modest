@@ -6,6 +6,7 @@
 // EXPECT-OUT: passed: record with Ptr field
 // EXPECT-OUT: passed: Ptr to typed pointer
 // EXPECT-OUT: passed: free pointer eq
+// EXPECTED-FAIL(modest): BUG#131 the formatter drops `: Ptr` from `let p: Ptr = &gv`
 //
 // `Ptr` is `*Unit`.  The builtin is marked generic (so that it converts
 // implicitly to any `*X`, like `void *`), but as a type it must still be
