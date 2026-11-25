@@ -6,11 +6,15 @@ there is **no array decay**.
 
 ## Syntax
 
+### Form
+
 ```
 [<#length#>]<#element_type#>     // fixed array; length is a compile-time constant
 [<#n#>]<#element_type#>          // variable-length array (VLA); n is a run-time integer, local only
 []<#element_type#>               // unsized array: length not part of the type
 ```
+
+### Instances
 
 ```modest
 [10]Int32    // ten Int32

@@ -10,9 +10,13 @@ which alternative is active.
 
 ## Syntax
 
+### Form
+
 ```
 <#TypeA#> or <#TypeB#> or ...
 ```
+
+### Instances
 
 ```modest
 Int or Error         // two alternatives

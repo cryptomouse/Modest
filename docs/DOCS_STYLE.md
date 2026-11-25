@@ -10,7 +10,18 @@ Where it applies, a page describes one construct in this order:
 
 1. **Syntax** — how it is written.
 2. **Semantics** — what it means and how it behaves.
-3. **Examples**.
+3. **Examples** — working code.
+
+When Syntax shows concrete records besides the template, it splits in
+two subsections:
+
+- **Form** (`### Form`) — the template with `<#placeholders#>`, plus the
+  rules of writing it;
+- **Instances** (`### Instances`) — concrete records of that form, not
+  programs: `[10]Int32`, `*[]Char8`.
+
+A Syntax made of the template alone stays without subsections. The
+names keep away from *Examples*: one page, one `#examples` anchor.
 
 
 ## Notes

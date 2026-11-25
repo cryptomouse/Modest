@@ -8,16 +8,11 @@ return), *explicit* (written in code) or *unsafe* (explicit, requires the
 
 ## Syntax
 
+### Form
+
 ```
 <#type#> <#value_expression#>            // explicit
 unsafe(<#type#> <#value_expression#>)    // unsafe
-```
-
-```modest
-Int32 x
-Float64 (a + b)
-*Point nil
-unsafe(Nat64 p)  // pointer address as integer
 ```
 
 The value starts on the line of the type: a type left alone at the end of
@@ -31,6 +26,15 @@ let v = Int32 (
 	a +
 	b
 )
+```
+
+### Instances
+
+```modest
+Int32 x
+Float64 (a + b)
+*Point nil
+unsafe(Nat64 p)  // pointer address as integer
 ```
 
 ## Semantics

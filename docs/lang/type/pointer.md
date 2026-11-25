@@ -4,9 +4,13 @@ A *pointer* holds the address of a value of a known type.
 
 ## Syntax
 
+### Form
+
 ```
 *<#type_expression#>
 ```
+
+### Instances
 
 ```modest
 *Int32    // pointer to Int32

@@ -5,6 +5,8 @@ Binds an [identifier](../identifier.md) to a function with the given
 
 ## Syntax
 
+### Form
+
 ```
 func <#identifier#> <#FuncType#> {
 	<#statements#>
@@ -15,6 +17,8 @@ The return type is mandatory; use `Unit` for functions returning nothing.
 
 A non-`Unit` function must end with `return`; otherwise the compiler warns
 (`expected return operator at end`) and returns a default value.
+
+### Instances
 
 ```modest
 func hello () -> Unit {

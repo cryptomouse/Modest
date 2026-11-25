@@ -4,9 +4,13 @@ A *record* is a composite type with named fields (`struct` in C).
 
 ## Syntax
 
+### Form
+
 ```
 { <#field#>, <#field#>, ... }       // field: name: Type
 ```
+
+### Instances
 
 ```modest
 {x: Int32, y: Int32}  // inline form
