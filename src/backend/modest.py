@@ -340,8 +340,11 @@ def str_value_deref(x, ctx):
 	return '*' + str_value(x.value, parent_expr=x)
 
 
+# one node for both `not` and `~`: the operand's type tells them apart
 def str_value_not(x, ctx):
-	return 'not ' + str_value(x.value, parent_expr=x)
+	if x.value.type.is_bool():
+		return 'not ' + str_value(x.value, parent_expr=x)
+	return '~' + str_value(x.value, parent_expr=x)
 
 
 def str_value_sign(sign, x):

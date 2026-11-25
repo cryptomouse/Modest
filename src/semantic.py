@@ -898,9 +898,11 @@ def do_value_shift_op(op, left, right, ti):
 		mask = (1 << left.type.width) - 1
 		if op == HLIR_VALUE_OP_SHL:
 			num = (left.asset << right.asset) & mask
+			nv = ValueShl(left.type, left, right, ti=ti)
 		else:
 			num = left.asset >> right.asset
-		return value_integer_bits(num, left, ti=ti)
+			nv = ValueShr(left.type, left, right, ti=ti)
+		return value_integer_bits(nv, num, left)
 
 	nv = None
 	asset = None
@@ -1172,7 +1174,7 @@ def do_value_bitwise_not_op(v, ti, ctx):
 			error("expected non-negative integer value", v.ti)
 			return ValueBad(ti=ti)
 		mask = (1 << v.type.width) - 1
-		return value_integer_bits(~v.asset & mask, v, ti=ti)
+		return value_integer_bits(ValueNot(v.type, v, ti=ti), ~v.asset & mask, v)
 
 	nv = ValueNot(v.type, v, ti=ti)
 
@@ -1186,14 +1188,20 @@ def do_value_bitwise_not_op(v, ti, ctx):
 
 
 
-# Литерал - результат `~` или сдвига над литералом `v`: hex-литерал
-# сохраняет свою ширину и запись, десятичный получает ширину по значению
-def value_integer_bits(num, v, ti):
-	nv = value_integer_create(num, ti=ti)
+# `~` или сдвиг `nv` над литералом `v`: у литерала нет типа времени
+# исполнения, так что значение `num` сворачивается сразу - в asset, а
+# узел остается, как у любой другой свертки (бэкенд выбирает, что
+# печатать: modest - запись, C - asset, ведь у C свои ширина и знак:
+#   ~0x0F      // modest: ~0x0F    C: 0xF0, не ~0x0F (это -16)
+# Тип результата - снова литерал: hex-литерал сохраняет ширину записи
+# (Word32 ~0x0F это 0x000000F0), десятичный получает ширину по значению
+def value_integer_bits(nv, num, v):
 	if is_spelled(v.type):
-		nv.change_type(type_integer_spelled(v.type.width, ti=ti))
-		nv.addAttribute('hexadecimal', {})
-		nv.nsigns = (v.type.width + 3) // 4
+		nv.change_type(type_integer_spelled(v.type.width, ti=nv.ti))
+	else:
+		nv.change_type(value_integer_create(num, ti=nv.ti).type)
+	nv.set_asset(num)
+	nv.stage = HLIR_VALUE_STAGE_COMPILETIME
 	return nv
 
 

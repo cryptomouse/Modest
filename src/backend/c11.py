@@ -1421,7 +1421,29 @@ def do_cvalue_access(x, ctx):
 
 
 
+# `~` и сдвиг над литералом (тип Integer) semantic уже свернул в asset -
+# печатаем его: у C свои ширина и знак литерала, и его запись дала бы
+# другое значение
+#   ~0x0F      // C: -16, у нас 0xF0
+#   0x01 << 8  // C: 256, у нас 0 (сдвиг в ширине записи, 8 бит)
+# Запись литерала (hex и число цифр) берем из типа: у hex-литерала он
+# `spelled` и хранит ширину записи - 0x0F -> 8 бит -> две цифры
+def cvalue_folded_literal_bits(x, ctx):
+	t = x.type
+	if not (t.is_integer() and x.is_immediate() and x.asset != None):
+		return None
+	num = int(x.asset)
+	if t.spelled:
+		return cvalue_literal_integer(num, width=t.width, is_unsigned=True,
+			as_hex=True, nsigns=(t.width + 3) // 4, ctx=ctx)
+	return cvalue_literal_integer(num, width=t.width, is_unsigned=num >= 0, ctx=ctx)
+
+
 def do_cvalue_shl(x, ctx):
+	folded = cvalue_folded_literal_bits(x, ctx)
+	if folded != None:
+		return folded
+
 	left = do_cvalue(x.left)
 	#left.mark = '~~~' + str(left.__class__)
 
@@ -1447,6 +1469,10 @@ def cvalue_narrow_word(x, cv):
 
 
 def do_cvalue_shr(x, ctx):
+	folded = cvalue_folded_literal_bits(x, ctx)
+	if folded != None:
+		return folded
+
 	left = do_cvalue(x.left)
 
 	if x.type.width > 32 and x.left.type.width < x.type.width:
@@ -1498,6 +1524,10 @@ def do_cvalue_subexpr(x, ctx):
 
 
 def do_cvalue_not(x, ctx):
+	folded = cvalue_folded_literal_bits(x, ctx)
+	if folded != None:
+		return folded
+
 	v = do_cvalue(x.value)
 	if x.value.type.is_bool():
 		return CValueLogicalNot(v)

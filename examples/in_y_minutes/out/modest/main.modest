@@ -125,8 +125,8 @@ func tourBits () -> Unit {
 	printf("u | v = %x\n", u | v)
 
 	// a hex literal is as wide as it is written
-	var narrow: Word32 = 0xF0  // 0xF0, not 0xFFFFFFF0
-	var full: Word32 = 0xFFFFFFF0  // 0xFFFFFFF0
+	var narrow: Word32 = ~0x0F  // 0xF0, not 0xFFFFFFF0
+	var full: Word32 = ~0x0000000F  // 0xFFFFFFF0
 	printf("~0x0F = %x, ~0x0000000F = %x\n", narrow, full)
 
 	var w: Word64 = Word64 1 << 63  // construction binds tighter than <<

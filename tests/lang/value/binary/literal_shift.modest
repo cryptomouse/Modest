@@ -5,6 +5,8 @@
 // EXPECT-OUT: passed: shift right
 // EXPECT-OUT: passed: keeps width
 // EXPECT-OUT: passed: literal shift
+// EXPECT-CODE(modest): const bit4 = 0x01 << 4
+// EXPECT-CODE(modest): var c: Word8 = 0x01 << 8
 //
 // `<<` and `>>` on a bare *hex* literal.
 //
@@ -14,6 +16,10 @@
 // the same width.  A decimal literal has no written width and cannot be
 // shifted, and a hex one cannot be shifted by a run-time count
 // (literal/reject_bitwise.modest).
+//
+// The shift node stays, its value folded: `-mbackend=modest` prints
+// `0x01 << 8` as written (it used to print `0x00`), C prints the value —
+// its own `0x01 << 8` is `256`.
 
 include "libc/ctypes64"
 include "libc/stdio"

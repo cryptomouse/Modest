@@ -6,6 +6,8 @@
 // EXPECT-OUT: passed: not wider
 // EXPECT-OUT: passed: any spelling
 // EXPECT-OUT: passed: literal tilde
+// EXPECT-CODE(modest): const inverted = ~0x0F
+// EXPECT-CODE(modest): var a: Word8 = ~0x0F
 //
 // `~` applied to a *bare* literal.
 //
@@ -24,6 +26,11 @@
 //
 // A negative literal has no such width and is refused
 // (literal/reject_bitwise.modest).
+//
+// The value is folded, but the `~` node stays, as with any other folding:
+// the `modest` backend prints `~0x0F` as written, C prints `0xF0` — its own
+// `~0x0F` is an int, `-16`.  The node used to be replaced by the literal,
+// and `-mbackend=modest` printed `0xF0`.
 
 include "libc/ctypes64"
 include "libc/stdio"

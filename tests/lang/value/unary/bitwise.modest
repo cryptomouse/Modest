@@ -6,6 +6,7 @@
 // EXPECT-OUT: passed: de morgan
 // EXPECT-OUT: passed: masking
 // EXPECT-OUT: passed: bitwise not
+// EXPECT-CODE(modest): if ~~w != w or ~(~w) != w {
 //
 // `~` on a WordX — the bitwise inversion, and the only unary operator the
 // type has.
