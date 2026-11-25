@@ -133,7 +133,7 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
 :root { --heading-scale: 1; }
 [role="main"] h1 { font-size: calc(2.5rem  * var(--heading-scale)); }
 [role="main"] h2 { font-size: calc(2.0rem    * var(--heading-scale)); }
-[role="main"] h3 { font-size: calc(1.8rem * var(--heading-scale)); }
+[role="main"] h3 { font-size: calc(1.6rem * var(--heading-scale)); }
 [role="main"] h4 { font-size: calc(1.2rem  * var(--heading-scale)); }
 [role="main"] h5 { font-size: calc(0.8rem * var(--heading-scale)); }
 [role="main"] h6 { font-size: calc(0.4rem   * var(--heading-scale)); }
