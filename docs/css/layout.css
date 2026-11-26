@@ -119,7 +119,7 @@ html { scroll-padding-top: calc(var(--navbar-h) + 20px); }
 [role="main"] > :is(h1, h2, h3, h4, h5, h6) { margin-top: 2rem; }
 
 /* headings in the slate blue of the mascot mouse on the logo
-   (docs/modest_logo_cropped_blue_mouse.png); greyer than the link blue
+   (docs/logo/modest_logo_cropped_blue_mouse.png); greyer than the link blue
    #008cba, so they don't read as clickable */
 [role="main"] :is(h1, h2, h3, h4, h5, h6) { color: #5d7187; }
 

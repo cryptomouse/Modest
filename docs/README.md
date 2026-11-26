@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="modest_logo_cropped_blue_mouse_transparent.png" alt="Modest" width="500" style="max-width: 100%; height: auto;">
+  <img src="logo/modest_logo_cropped_blue_mouse_transparent.png" alt="Modest" width="500" style="max-width: 100%; height: auto;">
 </p>
 
 Modest is a Swift-like programming language, created for low level system programming and embedded development.
