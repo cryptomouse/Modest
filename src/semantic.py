@@ -3051,6 +3051,12 @@ def def_const_common(x, annos):
 
 	ctx = None
 
+	# адрес константы не взять, так что ее размещение ничего не меняет
+	for kind in ('alignment', 'section'):
+		anno = pop_anno(annos, kind)
+		if anno != None:
+			error("@%s is not allowed on a constant" % kind, anno['ti'])
+
 	id = do_id(x['id'])
 	definition = StmtDefConst(id, const_value=None, init_value=None, ti=x['ti'])
 	definition.module = cmodule

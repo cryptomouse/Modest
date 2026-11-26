@@ -1,0 +1,32 @@
+// TEST: reject
+// BACKENDS: c11, llvm
+// EXPECT-ERROR: @alignment is not allowed on a constant
+// EXPECT-ERROR: @section is not allowed on a constant
+// EXPECT-ERROR: @alignment is not allowed on a constant
+// EXPECT-ERROR: @section is not allowed on a constant
+// EXPECT-ERROR-COUNT: 4
+//
+// The address of a constant cannot be taken, so where it is placed would
+// change nothing the program can see; a global `const` and a local `let`
+// alike.
+
+include "libc/ctypes64"
+
+
+@alignment(16)
+const k: Int32 = 4
+
+@section("__DATA,.m")
+const m: Int32 = 5
+
+
+func main () -> Int {
+	@alignment(16)
+	let table: [4]Int32 = [1, 2, 3, 4]
+
+	@section("__DATA,.n")
+	let n: Int32 = 6
+
+	return table[0] + k + m + n
+}
+
