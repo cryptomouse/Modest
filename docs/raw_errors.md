@@ -131,7 +131,7 @@
 | [semantic.py:2462](../src/semantic.py#L2462) | error | `do_stmt_assign_op` | `"cannot assign '%s' to '%s'" % (v.type.to_str(), l.type.to_str())` |
 | [parser.py:1924](../src/parser.py#L1924) | error | `stmt_incdec_removed` | `` "`++` was removed, write `x += 1`" `` |
 | [parser.py:1927](../src/parser.py#L1927) | error | `stmt_incdec_removed` | `` "`--` was removed, write `x -= 1`" `` |
-| [semantic.py:2497](../src/semantic.py#L2497) | error | `do_stmt` | `"annotation '%s' not defined2\n" % a['kind']` |
+| [semantic.py:2497](../src/semantic.py#L2497) | error | `do_stmt` | `"annotation '%s' not defined\n" % a['kind']` |
 | [semantic.py:2543](../src/semantic.py#L2543) | error | `def_type_common` | `"expected type expr"` |
 | [semantic.py:2577](../src/semantic.py#L2577) | error | `def_type_common` | `"using a private type in a public context"` |
 | [semantic.py:2610](../src/semantic.py#L2610) | error | `def_type_common` | `"rec dep!"` |

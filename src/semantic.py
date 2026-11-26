@@ -2749,7 +2749,7 @@ def do_stmt(x):
 
 	if annos != []:
 		for a in annos:
-			error("annotation '%s' not defined2\n" % a['kind'], a['ti'])
+			error("annotation '%s' not defined\n" % a['kind'], a['ti'])
 
 	assert(s != None)
 	s.nl = x['nl']

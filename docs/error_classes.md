@@ -31,7 +31,7 @@
 
 ## Наблюдения
 
-**Отладочные / временные тексты, видимые пользователю.** `undefined type2`, `expected immediate value2`, `type error2`, `annotation '%s' not defined2`, `rec dep!`, `is_incompleted`, `do_eval_string??`. Цифра в конце — явно метка «второй экземпляр», её надо убрать и дать нормальный текст.
+**Отладочные / временные тексты, видимые пользователю.** `undefined type2`, `expected immediate value2`, `type error2`, `annotation '%s' not defined`, `rec dep!`, `is_incompleted`, `do_eval_string??`. Цифра в конце — явно метка «второй экземпляр», её надо убрать и дать нормальный текст.
 
 **Нет имени виновника.** `undefined type`, `undefined type2`, `access to private type`, `unsuitable type`, `unknown value`, `expected mutable value`, `type redefinition`, `using of an incompleted type` — не говорят, *какой* тип/значение. Рядом `undefined value '%s'` и `undefined field '%s'` имя дают — стоит выровнять.
 
@@ -48,7 +48,7 @@
 - `extra argument with generic type` — `warning`, непонятно, почему не ошибка.
 - Внутренние ошибки (класс 21) оформлены как обычные `error` — пользователь не отличит свою ошибку от бага компилятора. Стоит завести отдельный уровень вроде `internal error:`.
 
-**Хвостовой `\n` в тексте.** `no input files\n`, `annotation '%s' not defined\n` (×2), `...not defined2\n`, `cannot implicitly construct ...\n` — `str_common_message` и так добавляет перевод строки, получается пустая строка.
+**Хвостовой `\n` в тексте.** `no input files\n`, `annotation '%s' not defined\n` (×2), `...not defined\n`, `cannot implicitly construct ...\n` — `str_common_message` и так добавляет перевод строки, получается пустая строка.
 
 **Опечатки и грамматика.** `unised import`, `has not attribute`, `will returned`, `sizeof(...) are forbidden`, `using of an incompleted type`, `non local VLA are forbidden`, `Cannot cons pointer!!`.
 
@@ -143,7 +143,7 @@
 | [semantic.py:1439](../src/semantic.py#L1439) | error | `"unknown argument '%s'" % a['key']['str']` |
 | [semantic.py:1474](../src/semantic.py#L1474) | error | `"unspecified parameter '%s'" % p_id_str` |
 | [semantic.py:793](../src/semantic.py#L793) | error | `"annotation '%s' not defined\n" % a['kind']` |
-| [semantic.py:2497](../src/semantic.py#L2497) | error | `"annotation '%s' not defined2\n" % a['kind']` |
+| [semantic.py:2497](../src/semantic.py#L2497) | error | `"annotation '%s' not defined\n" % a['kind']` |
 | [semantic.py:3478](../src/semantic.py#L3478) | error | `"annotation '%s' not defined\n" % a['kind']` |
 | [semantic.py:3208](../src/semantic.py#L3208) | error | `"unknown pragma '%s'" % id` |
 | [semantic.py:2174](../src/semantic.py#L2174) | error | `"unknown value kind '%s'" % k` |
