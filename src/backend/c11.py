@@ -117,6 +117,12 @@ def is_local_context():
 	return not is_global_context()
 
 
+# > 0 - печатаем размер массива (см. cvalue_volume): C требует там
+# константу даже в теле функции. Счетчик, а не флаг - печать размера
+# бывает вложенной
+in_array_size_context = 0
+
+
 def value_is_generic_immediate(v):
 	return v.is_immediate() and v.type.is_generic()
 
@@ -282,7 +288,12 @@ def do_ctype_array_volume(t):
 def cvalue_volume(t):
 	if t.frozen_volume != None:
 		return t.frozen_volume
-	return do_cvalue(t.volume)
+	global in_array_size_context
+	in_array_size_context += 1
+	try:
+		return do_cvalue(t.volume)
+	finally:
+		in_array_size_context -= 1
 
 
 # преобразуем Modest TypeArray -> CIR TypeArray
@@ -1308,10 +1319,15 @@ def do_cvalue_cons_fixed(x, ctx):
 
 def do_cvalue_call(x, ctx, sret=None):
 	# вызов чистой функции, свернутый на этапе компиляции (ct_call):
-	# печатаем его значение - вызов в C не константа, и `#define X f(1)`
-	# не годился бы ни в размер массива, ни в инициализатор глобальной
+	# вызов в C не константа, поэтому там, где C ждет константу, печатаем
+	# значение, а в теле функции оставляем сам вызов - C свернет его сам,
+	# а в .c виден исходный вызов
+	#   const n = sq(3)       ->  #define N 9
+	#   var a: [sq(3)]Int32   ->  int32_t a[9];
+	#   x = sq(3)             ->  x = sq(3);
 	if x.is_immediate() and x.asset != None:
-		return do_cvalue_literal_with_type(x, x.type, ctx)
+		if is_global_context() or in_array_size_context > 0:
+			return do_cvalue_literal_with_type(x, x.type, ctx)
 
 	cv = doo_call(x.func, x.args, ctx)
 

@@ -3,6 +3,8 @@
 // EXPECT-EXIT: 0
 // EXPECT-CODE(c11): #define SQUARED 49
 // EXPECT-CODE(c11): #define NESTED 25
+// EXPECT-CODE(c11): quotient(-10, 3) != quotient(m10, i3)
+// EXPECT-CODE(c11): int32_t buf[9]
 // EXPECT-CODE(c11): squareAtRunTime(3)
 // EXPECT-OUT: passed: arithmetic
 // EXPECT-OUT: passed: nested calls
@@ -22,6 +24,10 @@
 // both have to agree, otherwise folding has its own semantics.  The array
 // size case shows the folded call really is a compile-time value, and
 // `@runtime` is the way to keep such a call for run time.
+//
+// The C backend prints the folded value only where C needs a constant (a
+// global constant, an array size); inside a function the call stays a
+// call: `if quotient(-10, 3) != ...` -> `if (quotient(-10, 3) != ...)`.
 
 include "libc/ctypes64"
 include "libc/stdio"

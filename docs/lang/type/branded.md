@@ -36,8 +36,8 @@ var s: Seconds = Seconds 1.0
 
 m = m + m               // operations inherited
 m = Meters (Float64 s)  // deliberate conversion: two explicit steps
-// m = s                   // error: different brands
-// m = 5.0                 // error: construct explicitly
+// m = s                // error: different brands
+// m = 5.0              // error: construct explicitly
 
 // enum idiom
 type Color = @branded Nat8
