@@ -162,7 +162,12 @@ def collect_slot_stmts(x, acc):
 	elif x.is_stmt_def_var() or x.is_stmt_def_const():
 		t = stmt_slot_type(x)
 		if t != None:
-			alignment = t.get_align() if x.is_stmt_def_var() else 0
+			alignment = 0
+			if x.is_stmt_def_var():
+				alignment = t.get_align()
+				# @alignment(N) - как написано, даже меньше естественного
+				if x.hasAttribute('alignment'):
+					alignment = x.getAttribute('alignment').asset
 			acc.append((x, get_id_str(x.value), t, alignment))
 		collect_vla_literal_slot(x.value.type, x.init_value, acc)
 	elif x.is_stmt_assign():

@@ -50,7 +50,7 @@ int32_t main(void) {
 		.sin_addr = (struct in_addr){
 			.s_addr = INADDR_ANY
 		},
-		.sin_port = 0x901F
+		.sin_port = htons(PORT)
 	};
 	struct sockaddr *const socadr = (struct sockaddr *)&serverAddr;
 	int rc = bind(serverSocket, socadr, (socklen_t)sizeof serverAddr);

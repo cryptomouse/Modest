@@ -91,10 +91,10 @@ Annotations are written before a definition, or inside a type expression
 | | |
 | :-- | :-- |
 | `@layout("packed"\|"union"\|"exact")` | record layout |
-| `@alignment(N)` | alignment in bytes |
+| `@alignment(N)` | alignment in bytes; may be below the type's natural one — LLVM takes N as written, C cannot lower it and the C backend warns |
 | `@volatile` | volatile qualifier |
 | `@restrict` | restrict qualifier |
-| `@section("name")` | linker section |
+| `@section("name")` | linker section; functions and global variables only |
 | `@section("name", alignment=N)` | linker section and alignment, a shorthand for `@section("name") @alignment(N)` |
 | `@branded` | nominal type (see [branded](./type/branded.md)) |
 | `@fraction(N)` | in a type, before `FixedX` (`x: @fraction(16) Fixed32`): N fractional bits, the binary point (applied by the fold and at run time alike; remaining limitations in BUG#25) |

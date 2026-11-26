@@ -1,0 +1,22 @@
+// TEST: reject
+// BACKENDS: c11, llvm
+// EXPECT-ERROR: @section is not allowed on a local variable
+// EXPECT-ERROR: @section is not allowed on a local variable
+// EXPECT-ERROR-COUNT: 2
+//
+// A section belongs to a symbol in the object file, and a local variable
+// has none.  Also with `alignment=`, which would otherwise be a way in.
+// Guards BUG#132 (fixed 2026-11-26).
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	@section("__DATA,.a")
+	var a: Int32 = 0
+
+	@section("__DATA,.b", alignment=16)
+	var b: Int32 = 0
+
+	return Int (a + b)
+}

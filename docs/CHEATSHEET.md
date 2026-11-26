@@ -762,7 +762,7 @@ Unit value            // discard a value (suppress warnings)
 @volatile                      // volatile memory
 @restrict                      // restrict qualifier (pointers/arrays)
 @alignment(N)                  // set alignment to N bytes (C: __attribute__((aligned(N))), LLVM: align N)
-@section("segment,section")    // place symbol in a specific linker section
+@section("segment,section")    // place symbol in a specific linker section (not on a local var)
 @section("name", alignment=N)  // same + alignment, a shorthand for @section("name") @alignment(N)
 @fraction(N)                   // in a type, before FixedX: N fractional bits — `x: @fraction(16) Fixed32`; limitations in BUG#25
 ```

@@ -6,52 +6,52 @@ include "libc/stdio"
 import "fsm"
 
 
-var fsm0: FSM
+var fsm0: fsm.FSM
 
-var state0 = StateDesc {id = "state0", nstages = 4, handler = &routine0}
-var state1 = StateDesc {id = "state1", nstages = 4, handler = &routine1}
-var state2 = StateDesc {id = "state2", nstages = 4, handler = &routine2}
+var state0 = fsm.StateDesc {id = "state0", nstages = 4, handler = &routine0}
+var state1 = fsm.StateDesc {id = "state1", nstages = 4, handler = &routine1}
+var state2 = fsm.StateDesc {id = "state2", nstages = 4, handler = &routine2}
 
 
-func routine0 (state: ComplexState, payload: Ptr) -> ComplexState {
+func routine0 (state: fsm.ComplexState, payload: Ptr) -> fsm.ComplexState {
 	Unit payload
-	if state.stage == StageId 0 {
+	if state.stage == fsm.StageId 0 {
 		return fsm.cmdNextStage(&fsm0)
-	} else if state.stage == StageId 1 {
+	} else if state.stage == fsm.StageId 1 {
 		return fsm.cmdNextStageLimited(&fsm0, t=2000)
-	} else if state.stage == StageId 2 {
+	} else if state.stage == fsm.StageId 2 {
 		// just stay
-	} else if state.stage == StageId 3 {
+	} else if state.stage == fsm.StageId 3 {
 		return fsm.cmdSwitchState(&fsm0, &state1)
 	}
 	return state
 }
 
 
-func routine1 (state: ComplexState, payload: Ptr) -> ComplexState {
+func routine1 (state: fsm.ComplexState, payload: Ptr) -> fsm.ComplexState {
 	Unit payload
-	if state.stage == StageId 0 {
+	if state.stage == fsm.StageId 0 {
 		return fsm.cmdNextStage(&fsm0)
-	} else if state.stage == StageId 1 {
+	} else if state.stage == fsm.StageId 1 {
 		return fsm.cmdNextStageLimited(&fsm0, t=2000)
-	} else if state.stage == StageId 2 {
+	} else if state.stage == fsm.StageId 2 {
 		// just stay
-	} else if state.stage == StageId 3 {
+	} else if state.stage == fsm.StageId 3 {
 		return fsm.cmdSwitchState(&fsm0, &state2)
 	}
 	return state
 }
 
 
-func routine2 (state: ComplexState, payload: Ptr) -> ComplexState {
+func routine2 (state: fsm.ComplexState, payload: Ptr) -> fsm.ComplexState {
 	Unit payload
-	if state.stage == StageId 0 {
+	if state.stage == fsm.StageId 0 {
 		return fsm.cmdNextStage(&fsm0)
-	} else if state.stage == StageId 1 {
+	} else if state.stage == fsm.StageId 1 {
 		return fsm.cmdNextStageLimited(&fsm0, t=2000)
-	} else if state.stage == StageId 2 {
+	} else if state.stage == fsm.StageId 2 {
 		// just stay
-	} else if state.stage == StageId 3 {
+	} else if state.stage == fsm.StageId 3 {
 		return fsm.cmdSwitchState(&fsm0, &state0)
 	}
 	return state
@@ -61,7 +61,6 @@ func routine2 (state: ComplexState, payload: Ptr) -> ComplexState {
 var timecnt: Nat32
 
 
-@nonstatic
 func main () -> Int {
 	fsm.init(&fsm0, id="FSM_0", initState=&state0, payload=nil)
 

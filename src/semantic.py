@@ -2423,6 +2423,13 @@ def do_stmt_var(x, annos):
 	if id_already_used(x['id']['str'], shallow=True):
 		error("redefinition of '%s'" % x['id']['str'], x['id']['ti'])
 
+	# Секция - свойство символа в объектном файле, у локальной переменной
+	# его нет (clang: "'section' attribute only applies to functions,
+	# global variables...")
+	section_anno = pop_anno(annos, 'section')
+	if section_anno != None:
+		error("@section is not allowed on a local variable", section_anno['ti'])
+
 	df = def_var_common(x, annos=annos)
 
 	if df.is_stmt_bad():

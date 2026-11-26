@@ -1,0 +1,33 @@
+// TEST: reject
+// BACKENDS: c11
+// FLAGS: -fparanoid
+// EXPECT-ERROR: @alignment(1) is below the natural alignment 4 of the type
+// EXPECT-ERROR: @alignment(2) is below the natural alignment 8 of the type
+// EXPECT-ERROR-COUNT: 2
+//
+// The language allows @alignment below the natural one, and LLVM honours
+// it; C's aligned can only raise alignment, so the C backend warns that
+// it cannot (-fparanoid turns the warning into an error to count it):
+//   @alignment(1) var g: Int32  ->  LLVM: align 1,  C: still 4
+// N equal to the natural alignment is not below it and stays silent.
+// Guards BUG#132 (fixed 2026-11-26).
+
+include "libc/ctypes64"
+
+
+@alignment(1)
+var g: Int32
+
+@alignment(4)
+var h: Int32
+
+
+func main () -> Int {
+	@alignment(2)
+	var x: Int64 = 0
+
+	if x != 0 {
+		return 1
+	}
+	return g + h
+}

@@ -65,7 +65,6 @@ func ptr_example () -> Unit {
 }
 
 
-@nonstatic
 func main () -> Int {
 	// by value
 	let len: Double = lineLength(line)

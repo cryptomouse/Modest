@@ -2290,12 +2290,27 @@ def do_cstmt_var(x):
 	if x.hasAttribute('static'):
 		storage_class = 'static'
 
-	dv = CStmtDefVar(get_id_str(var_value), do_ctype(var_value.type), initializer=civ, storage_class=storage_class)
+	warn_alignment_below_natural(x)
+
+	dv = CStmtDefVar(get_id_str(var_value), do_ctype(var_value.type), initializer=civ, storage_class=storage_class, attributes=x.attributes)
 
 	if dynamic_init:
 		return tuple(volumes) + (dv,) + as_stmts(do_assign_array(var_value, init_value, x.ti))
 
 	return tuple(volumes) + (dv,)
+
+
+# aligned у переменной в C выравнивание только повышает, меньшее молча
+# игнорируется; LLVM же ставит N как написано:
+#   @alignment(1) var x: Int32  ->  C: align 4,  LLVM: align 1
+# Язык это разрешает, а C-бэкенд предупреждает, что не может исполнить
+def warn_alignment_below_natural(x):
+	if not x.hasAttribute('alignment'):
+		return
+	n = x.getAttribute('alignment').asset
+	natural = x.value.type.get_align()
+	if n < natural:
+		warning("@alignment(%d) is below the natural alignment %d of the type; C ignores it, the variable stays aligned to %d" % (n, natural, natural), x.ti)
 
 
 def as_stmts(x):
@@ -2681,6 +2696,9 @@ def do_def_var(x, isdecl=False):
 	civ = None
 	if not (x.init_value.is_undefined() or x.init_value.is_default() or is_extern):
 		civ = do_cvalue_initializer(var_value.type, x.init_value, ctx=[])
+
+	if not (isdecl or is_extern):
+		warn_alignment_below_natural(x)
 
 	dv = CStmtDefVar(get_id_str(var_value), do_ctype(var_value.type), initializer=civ, storage_class=storage_class, attributes=x.attributes)
 

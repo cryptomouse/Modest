@@ -49,7 +49,6 @@ func handleRequest (clientSocket: Int32) -> Unit {
 }
 
 
-@nonstatic
 func main () -> Int32 {
 	let serverSocket: Int = socket(afInet, sockStream, 0)
 	if serverSocket < 0 {
@@ -67,7 +66,7 @@ func main () -> Int32 {
 
 	// Bind socket to address
 	let socadr: *SockAddr = unsafe(*SockAddr &serverAddr)
-	var rc: Int = bind(serverSocket, socadr, unsafe(SocklenT sizeof serverAddr))
+	var rc: Int = bind(serverSocket, socadr, unsafe(SocklenT sizeof(serverAddr)))
 	if rc < 0 {
 		perror("cannot bind socket")
 		close(serverSocket)
@@ -88,7 +87,7 @@ func main () -> Int32 {
 	while true {
 		var clientAddr: SockAddrIn
 		let socadr: *SockAddr = unsafe(*SockAddr &clientAddr)
-		var clientAdrLen: SocklenT = unsafe(SocklenT sizeof clientAddr)
+		var clientAdrLen: SocklenT = unsafe(SocklenT sizeof(clientAddr))
 		let clientSocket: Int = accept(serverSocket, socadr, &clientAdrLen)
 		if clientSocket < 0 {
 			perror("cannot accept connection")

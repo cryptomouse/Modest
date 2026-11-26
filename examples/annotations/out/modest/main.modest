@@ -5,7 +5,9 @@ include "libc/stdio"
 
 
 type MyInt32 = @branded Int32
+@alias("MY_ZERO", backend="c11")
 const myZero = MyInt32 0
+@alias("MY_ONE", backend="c11")
 const myOne = MyInt32 1
 
 // These refined MyInt32 types are compatible with MyInt32
@@ -21,10 +23,10 @@ type ProtocolHeader = @layout("packed") {
 	len: Nat16
 }
 
-@extern
+@extern("name2")
 var name1: Bool
 
-@extern
+@extern("name22")
 var name11: Bool
 
 @extern
@@ -33,8 +35,8 @@ var ext: Int32
 @extern
 var ext_arr: []Int32
 
-@section()
-@alignment()
+@alignment(8)
+@section("__DATA, .xdata")
 var x: Word32
 
 @nonstatic
@@ -52,21 +54,21 @@ var rp: @restrict *Word32
 var vb: @volatile [32]Bool
 
 
-@inline
 @runtime
+@inline
 func staticInlineFunc (x: Int32) -> Int32 {
 	return x + 1
 }
 
 
-@noinline
 @runtime
+@noinline
 func staticNoinlineFunc (x: Int32) -> Int32 {
 	return x + 1
 }
 
-@inlinehint
 @runtime
+@inlinehint
 func staticInlineHintFunc (x: Int32) -> Int32 {
 	return x + 1
 }
@@ -84,8 +86,8 @@ func hello () -> Unit {
 }
 
 
-@nonstatic
 func main () -> Int32 {
+	@static
 	var staticCounter: Nat32 = 0
 
 	hello()

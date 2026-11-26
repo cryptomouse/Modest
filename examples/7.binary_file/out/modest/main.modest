@@ -54,7 +54,6 @@ func readExample () -> Unit {
 }
 
 
-@nonstatic
 func main () -> Int {
 	printf("binary file example\n")
 	writeExample()

@@ -10,8 +10,8 @@ import "./queueWord8" as bq
 import "./ringWord8" as br
 
 
-var bq0: QueueWord8
-var br0: RingWord8
+var bq0: bq.QueueWord8
+var br0: br.RingWord8
 
 var ii: Int32
 
@@ -53,7 +53,6 @@ const qsize = 10
 var qbuf: [qsize]Word8
 
 
-@nonstatic
 func main () -> Int {
 
 	if not bq.init(&bq0, &qbuf, qsize) {

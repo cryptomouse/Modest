@@ -1,0 +1,46 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: alignment_local
+// EXPECT-CODE(c11): __attribute__((aligned(16)))
+// EXPECT-CODE(c11): int32_t x = 1
+// EXPECT-CODE(c11): __attribute__((aligned(32)))
+// EXPECT-CODE(c11): uint8_t buf[8]
+// EXPECT-CODE(llvm): %x = alloca %Int32, align 16
+// EXPECT-CODE(llvm): %buf = alloca [8 x %Word8], align 32
+// EXPECT-CODE(llvm): %small = alloca %Int16, align 1
+//
+// @alignment(N) on a local var, N a literal or a global constant.  It
+// used to be dropped by both backends:
+//   @alignment(16) var x: Int32  ->  %x = alloca %Int32, align 4
+// Below the natural alignment LLVM takes N as written; C cannot, and the
+// C backend warns about it (see reject_alignment_below_natural).
+// Guards BUG#132 (fixed 2026-11-26).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const align = 32
+
+
+func main () -> Int {
+	@alignment(16)
+	var x: Int32 = 1
+
+	@alignment(align)
+	var buf: [8]Word8
+	buf[0] = 2
+
+	@alignment(1)
+	var small: Int16 = 3
+
+	if x + Int32 buf[0] + Int32 small != 6 {
+		printf("x + buf[0] + small != 6\n")
+		return exitFailure
+	}
+
+	printf("passed: alignment_local\n")
+	return exitSuccess
+}

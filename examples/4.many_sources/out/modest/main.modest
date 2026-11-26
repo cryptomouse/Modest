@@ -6,7 +6,6 @@ include "libc/stdio"
 import "lib"
 
 
-@nonstatic
 func main () -> Int {
 	printf("hello from main\n")
 	lib.foo()
