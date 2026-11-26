@@ -3147,9 +3147,14 @@ def def_var_common(x, annos):
 	definition.init_value = init_value
 	var_value.definition = definition
 
-	cdef = prev_cdef
-
+	# Аргументы аннотаций разбираются, пока cdef - сама переменная: ссылка
+	# на глобальную константу становится ее зависимостью (а у глобальной
+	# var prev_cdef == None):
+	#   const align = 16
+	#   @alignment(align) var buf: [64]Word8
 	def_set_placement(definition, annos)
+
+	cdef = prev_cdef
 
 	anno_to_attribute(definition, annos, 'nonstatic')
 

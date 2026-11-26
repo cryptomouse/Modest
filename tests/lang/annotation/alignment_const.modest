@@ -1,0 +1,43 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: alignment_const
+// EXPECT-CODE(c11): __attribute__((aligned(32)))
+// EXPECT-CODE(c11): static uint8_t buf[64]
+// EXPECT-CODE(c11): __attribute__((section("__DATA,.dma"), aligned(16)))
+// EXPECT-CODE(llvm): @buf = internal global [64 x %Word8] zeroinitializer, align 32
+// EXPECT-CODE(llvm): @dmaBuf = internal global [64 x %Word8] zeroinitializer, section "__DATA,.dma", align 16
+//
+// The N of @alignment(N) and of @section(..., alignment=N) may name a
+// global constant, not only a literal; on a global var that used to crash
+// the compiler:
+//   const align = 32
+//   @alignment(align) var buf: [64]Word8
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+const align = 32
+const dmaAlign = 16
+
+
+@alignment(align)
+var buf: [64]Word8
+
+@section("__DATA,.dma", alignment=dmaAlign)
+var dmaBuf: [64]Word8
+
+
+func main () -> Int {
+	buf[0] = 1
+	dmaBuf[0] = 2
+	if Int32 buf[0] + Int32 dmaBuf[0] != 3 {
+		printf("buf[0] + dmaBuf[0] != 3\n")
+		return exitFailure
+	}
+
+	printf("passed: alignment_const\n")
+	return exitSuccess
+}

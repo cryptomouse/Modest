@@ -265,9 +265,10 @@ struct aligned {
   now knows about `@layout`, and `@alignment` is the same kind of thing
   said about the same record — the layout it computes has to answer for
   both.
-- `@alignment` on a `var` is unaffected — it goes through a different path
-  (`src/semantic.py:3263`) that keeps the argument, and the LLVM backend
-  reads it back at `src/backend/llvm.py:2857`.
+- `@alignment` on a global `var` is unaffected — it goes through a
+  different path (`def_set_placement`, `src/semantic.py`) that keeps the
+  argument, and the LLVM backend reads it back in `print_def_var`.
+  On a local `var` it is lost too, see BUG#132.
 - No reproducer in the suite. What is pinned there is the blast radius:
   `tests/lang/type/record/layout.modest` checks that a record asking for 2
   is never *more* than 2 bytes, which holds while the annotation is dropped
@@ -913,3 +914,33 @@ let p: Ptr = &gv                   // -> let p = &gv
 - A fix would mark the definition when its type is written in the source
   and print `: Type` by that mark alone.
 - Same for a global `var`/`const`.  Found on `examples/in_y_minutes`.
+
+
+## BUG#132: `@alignment(N)` on a local `var` is ignored
+
+```modest
+func main () -> Int32 {
+	@alignment(16)
+	var x: Int32 = 0
+	return x
+}
+```
+
+```llvm
+%x = alloca %Int32, align 4     ; expected align 16
+```
+
+```c
+int32_t x = 0;                  // no __attribute__((aligned(16)))
+```
+
+- No diagnostic, in both backends.  The attribute does reach the
+  definition (`def_var_common` → `def_set_placement`, `src/semantic.py`),
+  the same way as on a global `var`, where both backends honour it.
+- LLVM: the function's allocas are gathered in `src/backend/llvm.py`
+  (`alignment = t.get_align() if x.is_stmt_def_var() else 0`), from the
+  type alone; the definition's `alignment` attribute is never consulted.
+- C11: the local definition is printed without the attributes that a
+  global one gets.
+- No reproducer in the suite.  Found 2026-11-26 while fixing the crash on
+  `@alignment(<const>)` on a global `var`.
