@@ -1,0 +1,81 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECTED-FAIL(c11): BUG#133 an array value inside a record or array literal is emitted as a pointer
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: slice into a record literal
+// EXPECT-OUT: passed: slice into an array literal
+// EXPECT-OUT: passed: slice in a literal
+//
+// A slice as a field of a record literal and as a row of an array literal,
+// with literal bounds and with run-time ones.  The field and the row are of
+// a fixed length, so a run-time slice has to be read at that length.
+//
+// Every run-time bound goes through `opaque`, so it cannot be folded away.
+//
+// Guards BUG#75 (fixed 2026-11-27).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Triple = {v: [3]Int32, tag: Int32}
+
+
+@runtime
+func opaque (n: Int32) -> Int32 {
+	return n
+}
+
+
+func testRecord () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+	let i = opaque(3)
+
+	var r: Triple = {v = a[0:3], tag = 7}
+	var s: Triple = {v = a[i:i + 3], tag = 8}
+	if r.v[0] != 1 or r.v[2] != 3 or r.tag != 7 {
+		printf("{v = a[0:3], tag = 7} = {[%d, .., %d], %d}, expected {[1, .., 3], 7}\n",
+			r.v[0], r.v[2], r.tag)
+		return false
+	}
+	if s.v[0] != 4 or s.v[2] != 6 or s.tag != 8 {
+		printf("{v = a[3:6], tag = 8} = {[%d, .., %d], %d}, expected {[4, .., 6], 8}\n",
+			s.v[0], s.v[2], s.tag)
+		return false
+	}
+
+	printf("passed: slice into a record literal\n")
+	return true
+}
+
+
+func testArray () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+	let i = opaque(0)
+
+	var m: [2][3]Int32 = [a[3:6], a[i:i + 3]]
+	if m[0][0] != 4 or m[0][2] != 6 or m[1][0] != 1 or m[1][2] != 3 {
+		printf("[a[3:6], a[0:3]] = [[%d, .., %d], [%d, .., %d]], expected [[4, .., 6], [1, .., 3]]\n",
+			m[0][0], m[0][2], m[1][0], m[1][2])
+		return false
+	}
+
+	printf("passed: slice into an array literal\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testRecord() and result
+	result = testArray() and result
+
+	if not result {
+		printf("failed: slice in a literal\n")
+		return exitFailure
+	}
+
+	printf("passed: slice in a literal\n")
+	return exitSuccess
+}

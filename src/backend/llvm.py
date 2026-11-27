@@ -1619,7 +1619,10 @@ def do_eval_call(v):
 	# eval all args
 	args = []
 	for i, a in enumerate(v.args):
-		arg = do_reval(a.value)
+		if i < nparams:
+			arg = do_reval_as(a.value, callee_type.params[i].type)
+		else:
+			arg = do_reval(a.value)
 		if callee_type.extra_args and i >= nparams:
 			arg = llvm_promote_variadic_arg(arg, a.value.type)
 		args.append(arg)
@@ -2564,7 +2567,7 @@ def do_eval_array_local(v):
 		# нет смысла засовывать в 'массив по значению' нулевые элементы
 		# тк он порождается из zeroinitializer и zero filled by default
 		if not item.is_zero():
-			lliv = do_reval(item)
+			lliv = do_reval_as(item, v.type.of)
 			xv = insertvalue(xv, lliv, i)
 		i = i + 1
 
@@ -2599,8 +2602,8 @@ def do_eval_record(v):
 		# нет смысла засовывать в структуру по значению нулевые элементы
 		# тк она порождается из zeroinitializer и по умолчанию заполнена нулями
 		if not (initializer.value.is_zero() or initializer.value.is_undefined()):
-			iv = do_reval(initializer.value)
 			field = TypeRecord.record_field_get(rec_type, initializer.id.str)
+			iv = do_reval_as(initializer.value, field.type)
 			xv = insertvalue(xv, iv, field.field_no)
 
 	return xv
@@ -2917,6 +2920,21 @@ def do_eval_lengthof_value(x):
 #
 #
 
+# Срез с границами времени исполнения в LLVM - `[0 x T]`, и load такого
+# значения не читает ничего.  В приемник фиксированного размера его читаем
+# типом приемника - C-бэкенд так же копирует sizeof приемника:
+#   %q = bitcast [0 x i32]* %p to [3 x i32]* ; load [3 x i32], [3 x i32]* %q
+# Приемник переменного размера копирует is_vla_copy
+def do_reval_as(value, t):
+	if t.is_runtime_sized() or not value.type.is_runtime_sized():
+		return do_reval(value)
+	p = do_eval(value)
+	q = llvm_cast('bitcast', p, TypePointer(t))
+	q['type'] = t
+	q['is_adr'] = True
+	return llvm_load(q)
+
+
 def print_stmt_assign(x):
 	l = do_eval(x.left)
 	if is_vla_copy(x.left.type, x.right):
@@ -2925,17 +2943,16 @@ def print_stmt_assign(x):
 	if vla_literal_type(x.left.type, x.right) != None:
 		llvm_copy_vla_literal(l, x.left.type, x.right)
 		return
-	r = do_reval(x.right)
+	r = do_reval_as(x.right, x.left.type)
 	llvm_store(l, r)
 
 
-# VLA копируется memcpy по адресу источника: в регистре его значение -
-# `[0 x T]` (размер LLVM неизвестен), и load/store такого значения не
-# копирует ничего. Литерал (`= []`) и срезы идут своим путем
+# VLA и срез с границами времени исполнения копируются memcpy по адресу
+# источника: в регистре их значение - `[0 x T]` (размер LLVM неизвестен),
+# и load/store такого значения не копирует ничего. Литерал (`= []`) идет
+# своим путем (vla_literal_type)
 def is_vla_copy(to, value):
 	if not (to.is_runtime_sized() and value.type.is_runtime_sized()):
-		return False
-	if to.slice or value.type.slice:
 		return False
 	# у `let`, заданной литералом, asset тоже есть, но живет она в памяти
 	return value.asset == None or value.is_const()
@@ -3093,7 +3110,7 @@ def print_stmt_return(x):
 			stackrestore(fctx['stackptr'])
 
 	if x.value != None and not x.value.type.is_unit():
-		v = do_reval(x.value)
+		v = do_reval_as(x.value, fctx['func'].type.to)
 		if not need_sret(fctx['func'].type):
 			release()
 			lo("ret ")
@@ -3156,7 +3173,7 @@ def print_stmt_var(x):
 	elif vla_literal_type(var.type, init_value) != None:
 		llvm_copy_vla_literal(left, var.type, init_value)
 	elif not init_value.is_undefined():
-		iv = do_reval(init_value)
+		iv = do_reval_as(init_value, var.type)
 		llvm_store(left, iv)
 
 	return None

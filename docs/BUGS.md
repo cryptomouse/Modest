@@ -378,33 +378,6 @@ func main () -> Int {
 - No reproducer in the suite yet - `layout_convert.modest` (BUG#73) only
   exercises `var` sources, which this does not affect.
 
-## BUG#75: LLVM backend copies a slice with run-time bounds as `[0 x T]`
-
-```modest
-var a: [6]Int32 = [10, 20, 30, 40, 50, 60]
-let i = opaque(2)
-let j = opaque(5)
-var s = a[i:j]                   // s[0] should be 30
-a[i:j] = b[i:j]                  // should copy three elements
-sum3(a[i:i + 3])                 // should pass a[2], a[3], a[4]
-```
-
-- Every read of such a slice as a *value* — into a `var`, into another
-  slice, as a by-value argument, of a `let` bound to a call — comes out
-  wrong: the target keeps its old contents or gets garbage. Writing *into*
-  a run-time slice (a literal, `= []`) and `&a[i:j]` are fine, as is
-  everything under `-mbackend=c11`.
-- Cause: `do_eval_slice` (`src/backend/llvm.py:1341`) bitcasts the element
-  pointer to a pointer to the slice's type, and a slice whose volume is not
-  a constant becomes `[0 x %Int32]*`. The copy is then a `load` / `store`
-  of `[0 x %Int32]` — zero bytes — into an `alloca %Int32, %n`:
-  `%29 = load [0 x %Int32], [0 x %Int32]* %28`.
-- Fix, probably: a VLA-typed slice has to be copied with `llvm.memcpy` and
-  a run-time byte count (`(j - i) * sizeof(T)`), the way the C backend
-  already does.
-- Reproducer: `tests/lang/value/slice/runtime_value.modest`, marked
-  `EXPECTED-FAIL(llvm)`.
-
 ## BUG#87: C backend overflows `int` on a folded literal expression
 
 ```modest
@@ -913,3 +886,22 @@ let p: Ptr = &gv                   // -> let p = &gv
 - A fix would mark the definition when its type is written in the source
   and print `: Type` by that mark alone.
 - Same for a global `var`/`const`.  Found on `examples/in_y_minutes`.
+
+## BUG#133: C backend emits an array value inside a record or array literal as a pointer
+
+```modest
+var r: Triple = {v = x, tag = 7}        // Triple = {v: [3]Int32, tag: Int32}
+var m: [2][3]Int32 = [x, a[3:6]]        // x: [3]Int32, a: [6]Int32
+```
+
+- clang rejects the program: an array item of a C initializer list has to
+  be a brace list, and an array value there decays to a pointer.
+  `(struct triple){.v = x, .tag = 7}` and `(int32_t [2][3]){x, &a[3]}`:
+  `incompatible pointer to integer conversion`.
+- Any array value that is not itself a literal does it — a variable, a
+  slice with literal or run-time bounds.  A literal item (`{v = [1, 2, 3]}`)
+  works, and so does LLVM.
+- Fix, probably: build such a literal in a temporary and `memcpy` the
+  array items into it, the way an array *assignment* already goes.
+- Reproducer: `tests/lang/value/slice/in_literal.modest`, marked
+  `EXPECTED-FAIL(c11)`.

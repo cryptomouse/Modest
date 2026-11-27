@@ -1,0 +1,196 @@
+// TEST: run
+// BACKENDS: c11, llvm, modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: run-time slice into a typed variable
+// EXPECT-OUT: passed: run-time slice bound by let
+// EXPECT-OUT: passed: run-time slice returned
+// EXPECT-OUT: passed: run-time slice into a record field
+// EXPECT-OUT: passed: run-time slice through a pointer
+// EXPECT-OUT: passed: run-time slice of a parameter
+// EXPECT-OUT: passed: run-time slice compared
+// EXPECT-OUT: passed: run-time slice paths
+//
+// The other places a slice with run-time bounds is read as a value, next
+// to the ones in runtime_value.modest: a receiver of a fixed length
+// (`var t: [3]Int32 = a[i:i + 3]`, a return value, a record field) and a
+// source other than a local array (a pointer, a parameter).  A slice as
+// an item of a record or array literal is in in_literal.modest.
+//
+// Every bound goes through `opaque`, so it cannot be folded away.
+//
+// Guards BUG#75 (fixed 2026-11-27).
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+
+
+type Triple = {v: [3]Int32, tag: Int32}
+
+
+@runtime
+func opaque (n: Int32) -> Int32 {
+	return n
+}
+
+
+func sum3 (a: [3]Int32) -> Int32 {
+	return a[0] + a[1] + a[2]
+}
+
+
+func middle (a: [6]Int32, i: Int32) -> [3]Int32 {
+	return a[i:i + 3]
+}
+
+
+func sumFrom (a: [6]Int32, i: Int32) -> Int32 {
+	return sum3(a[i:i + 3])
+}
+
+
+func testTypedVariable () -> Bool {
+	var a: [6]Int32 = [10, 20, 30, 40, 50, 60]
+	let i = opaque(2)
+
+	var t: [3]Int32 = a[i:i + 3]
+	if t[0] != 30 or t[1] != 40 or t[2] != 50 {
+		printf("t = a[2:5] = [%d, %d, %d], expected [30, 40, 50]\n", t[0], t[1], t[2])
+		return false
+	}
+
+	// Assigning again overwrites the whole of t.
+	t = a[i + 1:i + 4]
+	if t[0] != 40 or t[2] != 60 {
+		printf("t = a[3:6] = [%d, .., %d], expected [40, .., 60]\n", t[0], t[2])
+		return false
+	}
+
+	printf("passed: run-time slice into a typed variable\n")
+	return true
+}
+
+
+func testLet () -> Bool {
+	var a: [6]Int32 = [10, 20, 30, 40, 50, 60]
+	let i = opaque(1)
+	let j = opaque(4)
+
+	let s = a[i:j]
+	a[i] = 0
+	if s[0] != 20 or s[2] != 40 {
+		printf("let s = a[1:4] = [%d, .., %d], expected [20, .., 40]\n", s[0], s[2])
+		return false
+	}
+
+	printf("passed: run-time slice bound by let\n")
+	return true
+}
+
+
+func testReturn () -> Bool {
+	let a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+
+	let m = middle(a, opaque(2))
+	if m[0] != 3 or m[1] != 4 or m[2] != 5 {
+		printf("middle(a, 2) = [%d, %d, %d], expected [3, 4, 5]\n", m[0], m[1], m[2])
+		return false
+	}
+
+	printf("passed: run-time slice returned\n")
+	return true
+}
+
+
+func testRecordField () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+	let i = opaque(3)
+
+	var r: Triple = {tag = 7}
+	r.v = a[i:i + 3]
+	if r.v[0] != 4 or r.v[2] != 6 or r.tag != 7 {
+		printf("r.v = a[3:6] gave {[%d, .., %d], %d}, expected {[4, .., 6], 7}\n",
+			r.v[0], r.v[2], r.tag)
+		return false
+	}
+
+	printf("passed: run-time slice into a record field\n")
+	return true
+}
+
+
+func testPointer () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+	let p = &a
+	let i = opaque(1)
+	let j = opaque(4)
+
+	var s = p[i:j]
+	var t: [3]Int32 = p[i + 2:j + 2]
+	if s[0] != 2 or s[2] != 4 or t[0] != 4 or t[2] != 6 {
+		printf("p[1:4] = [%d, .., %d], p[3:6] = [%d, .., %d], expected [2, .., 4], [4, .., 6]\n",
+			s[0], s[2], t[0], t[2])
+		return false
+	}
+
+	if sum3(p[i:j]) != 9 {
+		printf("sum3(p[1:4]) = %d, expected 9\n", sum3(p[i:j]))
+		return false
+	}
+
+	printf("passed: run-time slice through a pointer\n")
+	return true
+}
+
+
+func testParameter () -> Bool {
+	let a: [6]Int32 = [1, 2, 3, 4, 5, 6]
+
+	if sumFrom(a, opaque(3)) != 15 {
+		printf("sumFrom(a, 3) = %d, expected 15\n", sumFrom(a, opaque(3)))
+		return false
+	}
+
+	printf("passed: run-time slice of a parameter\n")
+	return true
+}
+
+
+func testCompare () -> Bool {
+	var a: [6]Int32 = [1, 2, 3, 1, 2, 3]
+	let i = opaque(0)
+
+	let x: [3]Int32 = [1, 2, 3]
+	let y: [3]Int32 = [1, 2, 4]
+	if x != a[i:i + 3] or x != a[i + 3:i + 6] {
+		printf("[1, 2, 3] != a[0:3] or a[3:6], expected equal\n")
+		return false
+	}
+	if y == a[i:i + 3] {
+		printf("[1, 2, 4] == a[0:3], expected not equal\n")
+		return false
+	}
+
+	printf("passed: run-time slice compared\n")
+	return true
+}
+
+
+func main () -> Int {
+	var result = true
+	result = testTypedVariable() and result
+	result = testLet() and result
+	result = testReturn() and result
+	result = testRecordField() and result
+	result = testPointer() and result
+	result = testParameter() and result
+	result = testCompare() and result
+
+	if not result {
+		printf("failed: run-time slice paths\n")
+		return exitFailure
+	}
+
+	printf("passed: run-time slice paths\n")
+	return exitSuccess
+}

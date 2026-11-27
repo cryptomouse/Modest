@@ -172,7 +172,7 @@ A test for a bug that is not fixed yet stays in the suite, marked:
 
 ```modest
 // EXPECTED-FAIL: BUG#54 an empty record is emitted as void
-// EXPECTED-FAIL(llvm): BUG#75 a run-time slice is copied as [0 x T]
+// EXPECTED-FAIL(c11): BUG#133 an array value inside a literal is emitted as a pointer
 ```
 
 It is then expected to fail, and reported as `XFAIL` without failing the

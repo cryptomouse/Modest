@@ -28,9 +28,16 @@ it says so.
   annotations, they are separated by **exactly one empty line** (not one
   or two, as between bare function definitions) — the comment block
   already sets the next function apart.
-- At the end of a file, the last line is followed by **exactly one extra
-  newline**: the file ends in `}\n\n\n` (or `<last line>\n\n\n`) — not just two `\n\n`, as most languages and tools default to.
-  An editor shows this as two empty lines after the last line.
+- The file ends with the last line, then **one empty line**, and nothing
+  more. The last bytes are exactly `}\n\n` (or `<last line>\n\n`):
+  ```
+  }⏎      ← last line of code
+  ⏎       ← the one empty line
+  ```
+  Not `}\n` (what most editors and tools write), not `}\n\n\n`.
+  VS Code numbers one more line after the final `\n`, so it shows two
+  blank line numbers below `}` — that is correct; three is one too many.
+  Check: `tail -c 3 file.modest | od -c` prints `}  \n  \n`.
   `misc/stylecheck.py` checks it (rule `eof`), `--fix` repairs it.
 
 ```modest

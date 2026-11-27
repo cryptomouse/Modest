@@ -1,6 +1,5 @@
 // TEST: run
 // BACKENDS: c11, llvm, modest
-// EXPECTED-FAIL(llvm): BUG#75 a slice with run-time bounds, read as a value, copies nothing
 // EXPECT-EXIT: 0
 // EXPECT-OUT: passed: run-time slice into a variable
 // EXPECT-OUT: passed: run-time slice into a slice
@@ -14,6 +13,8 @@
 // value.modest, which passes on every backend.
 //
 // Every bound goes through `opaque`, so it cannot be folded away.
+//
+// Guards BUG#75 (fixed 2026-11-27).
 
 include "libc/ctypes64"
 include "libc/stdio"

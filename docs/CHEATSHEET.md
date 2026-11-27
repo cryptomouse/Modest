@@ -826,7 +826,7 @@ The full rules are in the [Style Guide](./STYLE.md); in short:
 - Tabs for indentation; `{` on the same line as its header; `} else {`
 - `func name (params)` in a definition, `name(args)` in a call
 - One empty line between top-level blocks, one or two between function definitions, **two** after the `include`/`import` section and before the first function; a function with a body is never written right under the previous definition
-- The file ends with exactly one extra newline (`}\n\n\n`) — two empty lines in the editor
+- The file ends in exactly `}\n\n`: the last line plus one empty line (VS Code shows two blank line numbers below `}`) — not `}\n`, not `}\n\n\n`
 - Two spaces before an inline `//` comment
 
 
