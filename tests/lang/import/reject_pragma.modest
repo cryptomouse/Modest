@@ -1,0 +1,26 @@
+// TEST: reject
+// EXPECT-ERROR: unknown pragma 'insert'
+// EXPECT-ERROR: expected string literal
+// EXPECT-ERROR-COUNT: 2
+//
+// `pragma insert "text"` was meant to paste text into the output
+// verbatim, but no backend ever emitted it: the pragma was accepted and
+// silently did nothing.  It is gone now (C attributes and the like have
+// annotations and `pragma c_include`), so it must be refused, not ignored.
+//
+// A pragma is visited three times — `prefix` must hold for the
+// definitions after it — and each visit used to report its error again:
+//   pragma prefix 1   ->   error: expected string literal  (x3)
+// Guards BUG#91 (fixed 2026-11-28).
+
+pragma insert "/* HELLO */"
+pragma prefix 1
+
+include "libc/ctypes64"
+
+
+func main () -> Int {
+	return 0
+}
+
+

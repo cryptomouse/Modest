@@ -2776,13 +2776,6 @@ def include_imports(module):
 
 
 
-def print_directive(x):
-	if isinstance(x, StmtDirectiveInsert):
-		out(x.text)
-		newline()
-
-
-
 def is_private(x):
 	if isinstance(x, StmtDef):
 		return x.access_level == HLIR_ACCESS_LEVEL_PRIVATE
@@ -3266,9 +3259,6 @@ def do_cfile(module, hname):
 		elif x.is_stmt_comment():
 			xdefs.extend(do_stmt_comment(x))
 			#print_comment(x)
-			pass
-		elif x.is_stmt_directive():
-#			print_directive(x)
 			pass
 
 	return xdefs

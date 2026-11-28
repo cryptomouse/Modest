@@ -198,8 +198,8 @@ Stmt
   ├─ StmtAgain
   ├─ StmtAsm           .text .outputs .inputs .clobbers
   └─ StmtDirective
-       ├─ StmtDirectiveCInclude  .c_name
-       └─ StmtDirectiveInsert    .text
+       ├─ StmtDirectivePragma    .name .args
+       └─ StmtDirectiveCInclude  .c_name
 ```
 
 ### Checking statement kind

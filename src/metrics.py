@@ -150,7 +150,6 @@ def stmt_kind(s):
 	if isinstance(s, StmtReturn): return 'return'
 	if isinstance(s, StmtAsm): return 'asm'
 	if isinstance(s, StmtDirectiveCInclude): return 'c_include'
-	if isinstance(s, StmtDirectiveInsert): return 'insert'
 	if isinstance(s, StmtDirective): return 'directive'
 	if isinstance(s, StmtBad): return 'bad'
 	return 'other'

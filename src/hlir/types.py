@@ -574,14 +574,6 @@ class StmtDirectiveCInclude(StmtDirective):
 
 
 
-# insert random text into output
-class StmtDirectiveInsert(StmtDirective):
-	def __init__(self, text, ti=None, nl=1):
-		super().__init__(ti, nl)
-		self.text = text
-
-
-
 
 
 ######################################################################

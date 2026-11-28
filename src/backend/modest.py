@@ -1071,8 +1071,6 @@ def print_directive(x):
 		name, args = x.name, x.args
 	elif isinstance(x, StmtDirectiveCInclude):
 		name, args = 'c_include', [x.c_name]
-	elif isinstance(x, StmtDirectiveInsert):
-		name, args = 'insert', [x.text]
 	else:
 		return "// directive: %s" % str(x)
 

@@ -407,25 +407,6 @@ var w: Int64 = 0x40000000 * 2  // c11: -2147483648
   suffix the *result's* width needs.
 - Only the C backend.  No test covers it.
 
-## BUG#91: `pragma insert` is accepted and does nothing
-
-```modest
-pragma insert "/* HELLO */"
-
-func main () -> Int32 {
-	return 0
-}
-```
-
-- `c11` and `llvm` output contain no `/* HELLO */`, and there is no
-  diagnostic.  The pragma becomes a `StmtDirectiveInsert`
-  (`src/semantic.py`, `pragma` handling), but the C backend's call to
-  `print_directive` in the module loop is commented out
-  (`src/backend/c11.py`, `elif x.is_stmt_directive()`), and the LLVM
-  backend has no handling for it at all.
-- Documented in `docs/lang/directive.md` as working.
-- No test covers it.
-
 ## BUG#94: `NatX` of a negative `FloatY` applies `abs()` only when folded
 
 ```modest

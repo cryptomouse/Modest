@@ -3559,6 +3559,13 @@ def do_directive_pragma(x) -> StmtDirective | None:
 	id = x['id']['str']
 	args = x['args']
 
+	# translate() step 0, def_phase1 and def_phase2 all come here for the
+	# same pragma (`prefix` must hold for the definitions after it), so
+	# only the first visit reports:
+	#   pragma foo   ->   error: unknown pragma 'foo'  (x3)
+	report = not x.get('pragma_seen')
+	x['pragma_seen'] = True
+
 	# a pragma that only switches a setting still gets a node:
 	# -mbackend=modest prints it back from there
 	y = None
@@ -3575,16 +3582,15 @@ def do_directive_pragma(x) -> StmtDirective | None:
 	elif id == 'unsafe':
 		cmodule.addAttribute('unsafe')
 		y = StmtDirectivePragma(id, [], x['ti'])
-	elif id == 'insert':
-		y = StmtDirectiveInsert(args[0]['str'], x['ti'])
 	elif id == 'prefix':
 		if args[0]['kind'] != 'string':
-			error("expected string literal", args[0]['ti'])
+			if report:
+				error("expected string literal", args[0]['ti'])
 			return None
 		prefix = args[0]['str']
 		global_prefix = prefix
 		y = StmtDirectivePragma(id, [prefix], x['ti'])
-	else:
+	elif report:
 		error("unknown pragma '%s'" % id, x['ti'])
 
 	return y
