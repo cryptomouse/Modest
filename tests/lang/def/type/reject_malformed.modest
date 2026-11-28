@@ -13,6 +13,7 @@
 // definition, not on a type.
 //
 // Guards BUG#33 (fixed 2026-10-10).
+// Guards BUG#93 (fixed 2026-10-10).
 
 type NoName = (Int32) -> Int
 type NotAType = (123) -> Int

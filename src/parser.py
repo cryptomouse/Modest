@@ -465,15 +465,10 @@ class Parser:
 
 			elif token == '(':
 				self.skip_tokens_class(['nl', 'comment-line', 'comment-block'])
-				#print("ok")
-				# is ` ( <#type_expr#> ) ` ?
 				# `(Int32)` — a parameter without a name; still a func type,
 				# parse_stmt_field() reports it
 				if self.is_type_name_as_field():
 					return True
-
-				if self.is_type_expr():
-					return self.match(')')
 
 				if self.match(")"):
 					return self.match("->") or self.match("{")

@@ -10,6 +10,7 @@
 // semantic pass does not report the missing type again. It used to add
 // "unexpected token '('" for the unparsed tail and a second
 // "expected type expr" for the whole definition.
+// Guards BUG#93 (fixed 2026-10-10).
 
 include "libc/ctypes64"
 
