@@ -2775,6 +2775,41 @@ def include_imports(module):
 	return xs
 
 
+# A 'do_not_include' module is never printed, so its types reach C only by
+# their @alias name; one with no alias has no C name at all (BUG#106):
+#
+#	include "libc/stat"     // public type DevT = Nat32
+#	let d: DevT = 0         // C: unknown type name 'DevT'
+#
+# Such types are printed as typedefs in the header of every module that
+# includes or imports the binding module.  Two headers may both define one,
+# which C11 allows for a typedef of the same type.  Records are left out:
+# a struct can be defined only once.
+def binding_typedefs(module, seen=None):
+	if seen == None:
+		seen = []
+	xs = []
+	deps = list(module.included_modules)
+	for x in module.defs:
+		if x.is_stmt_import() and x.module != None:
+			deps.append(x.module)
+
+	for m in deps:
+		if not m.hasAttribute('do_not_include') or m in seen:
+			continue
+		seen.append(m)
+		xs.extend(binding_typedefs(m, seen))
+		for d in m.defs:
+			if not d.is_stmt_def_type() or d.hasAttribute('extern'):
+				continue
+			if d.type.id.c_alias != None or d.type.id.common != None:
+				continue
+			if d.original_type.is_record():
+				continue
+			xs.append(CStmtDefType(get_id_str(d.type), do_ctype(d.original_type)))
+	return xs
+
+
 
 def is_private(x):
 	if isinstance(x, StmtDef):
@@ -2960,6 +2995,7 @@ def do_header(module, hname):
 	xdefs.extend(include("stddef.h", local=False))
 	xdefs.extend(include("stdint.h", local=False))
 	xdefs.extend(include("stdbool.h", local=False))
+	xdefs.extend(binding_typedefs(module))
 	xdefs.extend(do_helpers(module))
 
 	# TODO: убери это - не место в атрибутах модуля, а то по сути это уже не атрибуты, а зависимости от хелперов

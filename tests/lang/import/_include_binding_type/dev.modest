@@ -1,0 +1,9 @@
+// Names `DevT` in its interface, so its header needs the type too.
+
+include "libc/ctypes64"
+include "libc/stat"
+
+
+public func major (d: DevT) -> DevT {
+	return d / DevT 256
+}

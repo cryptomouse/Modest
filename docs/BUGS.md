@@ -638,23 +638,6 @@ twice(21)      // C: undeclared function 'twice'; LLVM: undefined symbol _twice
 - Coverage: `tests/lang/import/include_func_body.modest`, marked
   `EXPECTED-FAIL`.
 
-## BUG#106: A binding type with no C alias has no name in the C backend
-
-```modest
-include "libc/stat"    // public type DevT = Nat32 — no @alias
-let d: DevT = st.st_dev    // c11: unknown type name 'DevT'
-```
-
-- An `include`d module is never printed by the C backend, so its types
-  reach C only by their `@alias("...", backend="c11")` name.  A type with
-  no alias (`DevT`, `NLinkT`, ... in `lib/libc/stat.modest`; `ModeT`
-  has one) is printed by its Modest name, which nothing defines.  The LLVM backend is
-  not affected.
-- Works as long as the program never names the type: `st.st_mode &
-  sIfmt == sIfdir` compiles, `let d: DevT = st.st_dev` does not.
-- Either give every binding type its C name or print the alias-less
-  ones as `typedef`s.
-
 ## BUG#107: `libc/errno` does not link on macOS
 
 ```modest

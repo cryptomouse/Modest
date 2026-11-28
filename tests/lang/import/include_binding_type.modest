@@ -1,0 +1,53 @@
+// TEST: run
+// BACKENDS: c11, llvm
+// LINK: ./_include_binding_type/dev.modest
+// EXPECT-EXIT: 0
+// EXPECT-OUT: passed: include binding type
+// Guards BUG#106 (fixed 2026-11-28).
+//
+// An included module is never printed in C, so a type of it with no
+// `@alias` had no C name at all:
+//
+//	include "libc/stat"
+//	let d: DevT = 0     // c11: unknown type name 'DevT'
+//
+// Here: `libc/stat` types, a binding module with a prefix, a type defined
+// by another such type and an array type, and `DevT` in the interface of
+// an imported module, which includes `libc/stat` too, so both headers
+// define it.
+
+include "libc/ctypes64"
+include "libc/stdio"
+include "libc/stdlib"
+include "libc/stat"
+include "./_include_binding_type/bind"
+
+import "./_include_binding_type/dev"
+
+
+func main () -> Int {
+	var st: Stat
+	st.st_dev = 0x1234
+	st.st_nlink = 3
+
+	let d: DevT = st.st_dev
+	let n: NLinkT = st.st_nlink
+	let b: BlkSizeT = 4096
+	let c: BlkCntT = 8
+	let i: InoT = 7
+	if dev.major(d) != 0x12 or n != 3 or b != 4096 or c != 8 or i != 7 {
+		printf("failed: libc/stat types\n")
+		return exitFailure
+	}
+
+	let s: Count = 5
+	let l: Len = s
+	var q: Quad = [1, 2, 3, 4]
+	if l != 5 or q[3] != 4 {
+		printf("failed: binding module types\n")
+		return exitFailure
+	}
+
+	printf("passed: include binding type\n")
+	return exitSuccess
+}

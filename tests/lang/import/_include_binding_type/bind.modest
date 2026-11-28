@@ -1,0 +1,11 @@
+// A binding module of our own: no header, no C names.
+
+pragma do_not_include
+pragma prefix "bnd_"
+
+include "libc/ctypes64"
+
+
+public type Len = Nat32
+public type Count = Len
+public type Quad = [4]Word8
