@@ -12,7 +12,7 @@
 // or narrower value, where the C backend used to drop the construction
 // and leave the conversion to C, which does an ordinary numeric one.
 // The pointer case needs a 32-bit target, see cons_ptr32.modest.
-// Guards BUG#128 (fixed 2026-11-18).
+// Guards BUG#90, BUG#128 (fixed 2026-11-18).
 
 include "libc/ctypes64"
 include "libc/stdio"
