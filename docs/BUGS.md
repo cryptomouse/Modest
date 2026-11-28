@@ -235,8 +235,8 @@ type Aligned = @alignment(2) {
 	a: Word8
 }
 
-alignof(Aligned)   // c11: 16   llvm: 1   expected 2
-sizeof(Aligned)    // c11: 16   llvm: 1   expected 2
+alignof(Aligned)   // c11: 1   llvm: 1   expected 2
+sizeof(Aligned)    // c11: 1   llvm: 1   expected 2
 ```
 
 ```c
@@ -245,14 +245,15 @@ struct aligned {
 };
 ```
 
-- The argument is dropped in `Type.copy_with_atts`
-  (`src/hlir/types.py:685`), which stores every type attribute as
-  `nt.addAttribute(k, {})` — the fact of the attribute and nothing else.
-  `alignment` is the one type attribute that carries a number, and
-  `str_gcc_attributes` prints an argument only when the stored value is not
-  `{}`, so nothing is left to print but a bare `aligned`.
+- The argument is dropped in `anno_to_attribute` (`src/semantic.py:771`),
+  which stores every type annotation as `x.addAttribute(anno, {})` — the
+  fact of the attribute and nothing else. `alignment` is the one type
+  attribute that carries a number, and `str_gcc_attributes` (in the
+  `cshape` package the C backend prints through) prints an argument only
+  when the stored value is not `{}`, so nothing is left to print but a bare
+  `aligned`.
 - Which is why the C backend drops the attribute instead of emitting it
-  (`record_c_attributes`, `src/backend/c11.py:236`): bare `aligned` does
+  (`record_c_attributes`, `src/backend/c11.py:312`): bare `aligned` does
   not mean "as written without it" — it asks for the largest alignment the
   target uses for any type, so a record asking for 2 would come out
   16-aligned and 16 bytes long, further from what was written than saying
